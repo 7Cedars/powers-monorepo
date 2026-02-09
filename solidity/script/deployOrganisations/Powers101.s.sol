@@ -11,6 +11,7 @@ import { DeploySetup } from "./DeploySetup.s.sol";
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Nominees } from "@src/helpers/Nominees.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -18,11 +19,14 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helper contracts
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 import { Erc20DelegateElection } from "@mocks/Erc20DelegateElection.sol";
 
 /// @title Powers101 Deployment Script
 contract Powers101 is DeploySetup {
+    using Strings for address;
+
     Configurations helperConfig;
     Configurations.NetworkConfig config;
     PowersTypes.MandateInitData[] constitution;
@@ -30,6 +34,7 @@ contract Powers101 is DeploySetup {
     PowersTypes.Conditions conditions;
     Powers powers;
 
+    Nominees nominees;
     SimpleErc20Votes simpleErc20Votes;
     Erc20DelegateElection erc20DelegateElection;
 
@@ -49,6 +54,7 @@ contract Powers101 is DeploySetup {
         vm.startBroadcast();
         simpleErc20Votes = new SimpleErc20Votes();
         erc20DelegateElection = new Erc20DelegateElection(address(simpleErc20Votes));
+        nominees = new Nominees();
         powers = new Powers(
             "Powers 101", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicbh6txnypkoy6ivngl3l2k6m646hruupqspyo7naf2jpiumn2jqe", // uri
@@ -73,44 +79,45 @@ contract Powers101 is DeploySetup {
     }
 
     function createConstitution() internal returns (uint256 constitutionLength) {
+        // here add a setup mandate: set its own address as treasury + mint additional batch of tokens to the treasury. This is to show that you can have a setup mandate that prepares the organisation for use. In this case, it also shows how you can use the _externalCall function to call an external contract from a mandate. 
+        // need to add the address of the treasury to the description of the minting mandate, so that the user knows what to add as token address in treasury frontend UI. 
         uint16 mandateCount = 0;
-        string[] memory dynamicParamsSimple = new string[](1);
-        dynamicParamsSimple[0] = "bool NominateMe";
+        //////////////////////////////////////////////////////////////////////
+        //                              SETUP                               //
+        //////////////////////////////////////////////////////////////////////
+        targets = new address[](4);
+        values = new uint256[](4);
+        calldatas = new bytes[](4);
+        for (uint256 i = 0; i < targets.length; i++) {
+            targets[i] = address(powers);
+        }
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate");
+        calldatas[2] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
+        calldatas[3] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 
         mandateCount++;
-        conditions.allowedRole = type(uint256).max;
+        conditions.allowedRole = type(uint256).max; // = public role. .
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(erc20DelegateElection), Nominees.nominate.selector, dynamicParamsSimple),
+                nameDescription: "A Single Action: to assign labels to roles and set the treasury. It self-destructs after execution.",
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // delegateSelect
-        mandateCount++;
-        conditions.allowedRole = type(uint256).max; // = role that can call this mandate.
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Delegate Nominees: Call a delegate election. This can be done at any time. Nominations are elected on the amount of delegated tokens they have received. For",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
-                config: abi.encode(
-                    address(erc20DelegateElection),
-                    2, // role to be elected.
-                    3 // max number role holders
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
 
-        // proposalOnly
-        string[] memory inputParams = new string[](3);
-        inputParams[0] = "address[] targets";
-        inputParams[1] = "uint256[] values";
-        inputParams[2] = "bytes[] calldatas";
+        //////////////////////////////////////////////////////////////////////
+        //                      EXECUTIVE MANDATES                          //
+        //////////////////////////////////////////////////////////////////////
+        
+        // MINT NEW TOKENS FLOW // 
+        // Members: propose minting tokens to an address.  
+        string[] memory inputParams = new string[](2);
+        inputParams[0] = "address To";
+        inputParams[1] = "uint256 Quantity";
 
         mandateCount++;
         conditions.allowedRole = 1; // = role that can call this mandate.
@@ -119,7 +126,7 @@ contract Powers101 is DeploySetup {
         conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "StatementOfIntent: Propose any kind of action.",
+                nameDescription: string(abi.encodePacked("Intent to Mint: Propose to mint tokens at ", address(simpleErc20Votes).toHexString(), ".")),
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
@@ -132,7 +139,7 @@ contract Powers101 is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = mandate that must be completed before this one.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Veto an action: Veto an action that has been proposed by the community.",
+                nameDescription: string(abi.encodePacked("Veto a mint: Veto a proposed token mint at", address(simpleErc20Votes).toHexString(), ".")),
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
@@ -149,34 +156,56 @@ contract Powers101 is DeploySetup {
         conditions.needNotFulfilled = mandateCount - 1; // = mandate that must not be completed before this one.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Execute an action: Execute an action that has been proposed by the community and should not have been vetoed by an admin.",
-                targetMandate: initialisePowers.getInitialisedAddress("OpenAction"), // openAction.
-                config: abi.encode(), // empty config.
+                nameDescription: string(abi.encodePacked("Execute a mint: Execute a mint at ", address(simpleErc20Votes).toHexString(), ". it has to be proposed first by the community and should not have been vetoed by an admin.")),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(
+                    address(simpleErc20Votes), // target contract
+                    bytes4(keccak256("mint(address,uint256)")), 
+                    inputParams
+                ), // empty config.
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // PresetActions_Single
-        // Set config
-        targets = new address[](3);
-        values = new uint256[](3);
-        calldatas = new bytes[](3);
-        for (uint256 i = 0; i < targets.length; i++) {
-            targets[i] = address(powers);
-        }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate");
-        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
+        //////////////////////////////////////////////////////////////////////
+        //                      ELECTORAL MANDATES                          //
+        //////////////////////////////////////////////////////////////////////
+        
+        // ELECT DELEGATES FLOW //
+        // Members: nominate themselves for a delegate 
+        string[] memory dynamicParamsSimple = new string[](1);
+        dynamicParamsSimple[0] = "bool NominateMe";
 
-        // set conditions
         mandateCount++;
-        conditions.allowedRole = type(uint256).max; // = public role. .
+        conditions.allowedRole = 1; // = role that can call this mandate = members
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "A Single Action: to assign labels to roles. It self-destructs after execution.",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"), // presetSingleAction
-                config: abi.encode(targets, values, calldatas),
+                nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(
+                    address(erc20DelegateElection), 
+                    Nominees.nominate.selector, 
+                    dynamicParamsSimple
+                    ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Anyone: call delegate select.  
+        mandateCount++;
+        conditions.allowedRole = type(uint256).max; // = role that can call this mandate.
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Delegate Nominees: Call a delegate election. This can be done at any time. Nominations are elected on the amount of delegated tokens they have received. For",
+                targetMandate: initialisePowers.getInitialisedAddress("DelegateTokenSelect"),
+                config: abi.encode(
+                    address(erc20DelegateElection),
+                    address(nominees),
+                    2, // role to be elected.
+                    3 // max number role holders
+                ),
                 conditions: conditions
             })
         );

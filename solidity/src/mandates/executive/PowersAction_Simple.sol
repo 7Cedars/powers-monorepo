@@ -12,7 +12,7 @@ import { IPowers } from "../../interfaces/IPowers.sol";
 contract PowersAction_Simple is Mandate {
     /// @notice Constructor of the BespokeAction_Simple mandate
     constructor() {
-        bytes memory configParams = abi.encode("address PowersTarget", "uint16 MandateIdTarget", "string[] Params");
+        bytes memory configParams = abi.encode("address PowersTarget", "uint16 MandateIdTarget", "string Description", "string[] Params");
         emit Mandate__Deployed(configParams);
     }
 
@@ -22,7 +22,7 @@ contract PowersAction_Simple is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        (,, string[] memory params_) = abi.decode(config, (address, uint16, string[]));
+        (,,, string[] memory params_) = abi.decode(config, (address, uint16, string, string[]));
         super.initializeMandate(index, nameDescription, abi.encode(params_), config);
     }
 
@@ -41,8 +41,8 @@ contract PowersAction_Simple is Mandate {
         override
         returns (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
-        (address powersTarget, uint16 mandateIdTarget,) =
-            abi.decode(getConfig(powers, mandateId), (address, uint16, string[]));
+        (address powersTarget, uint16 mandateIdTarget, string memory description,) =
+            abi.decode(getConfig(powers, mandateId), (address, uint16, string, string[]));
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 
         // Send the calldata to the target function
@@ -53,7 +53,7 @@ contract PowersAction_Simple is Mandate {
             mandateIdTarget,
             mandateCalldata,
             nonce,
-            "" // this can be filled out at a later stage.
+            description // this can be filled out at a later stage.
         );
 
         return (actionId, targets, values, calldatas);

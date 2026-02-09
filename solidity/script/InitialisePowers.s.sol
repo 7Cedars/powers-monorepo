@@ -70,7 +70,8 @@ import { ElectionList_CleanUpVoteMandate } from "@src/mandates/integrations/Elec
 
 // singleton Helper contracts
 import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { Erc20Taxed } from "@mocks/Erc20Taxed.sol"; // though technically not a singleton, deployed here for convenience.
+import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";  
+import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";  
 import { OnchainIdRegistryMock, IdentityRegistryMock, ComplianceRegistryMock, RwaMock } from "@mocks/RwaMock.sol";
 
 /// @title InitialisePowers
@@ -350,6 +351,10 @@ contract InitialisePowers is Script {
 
         names.push("Erc20Taxed");
         creationCodes.push(type(Erc20Taxed).creationCode);
+        constructorArgs.push(abi.encode());
+
+        names.push("SimpleErc20Votes");
+        creationCodes.push(type(SimpleErc20Votes).creationCode);
         constructorArgs.push(abi.encode());
 
         names.push("ComplianceRegistryMock");

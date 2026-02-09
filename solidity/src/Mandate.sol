@@ -64,7 +64,6 @@ abstract contract Mandate is ERC165, IMandate {
     /// @return success True if execution succeeded
     function executeMandate(address caller, uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
         public
-        virtual
         returns (bool success)
     {
         bytes32 mandateHash = MandateUtilities.hashMandate(msg.sender, mandateId);

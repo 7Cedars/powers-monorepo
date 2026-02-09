@@ -244,7 +244,7 @@ contract CulturalStewardsDAO is DeploySetup {
             vm.stopBroadcast();
         } 
         vm.startBroadcast();
-        digitalSubDAO.closeConstitute();
+        digitalSubDAO.closeConstitute(address(primaryDAO)); // set primary DAO as admin
         vm.stopBroadcast();
 
         // step 5: transfer ownership of factories to primary DAO.
@@ -348,8 +348,7 @@ contract CulturalStewardsDAO is DeploySetup {
         //////////////////////////////////////////////////////////////////////
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
-        // CREATE IDEAS DAO // 
-
+        // CREATE IDEAS DAO //   
         // Members: Initiate Ideas sub-DAO creation
         mandateCount++;
         conditions.allowedRole = 1; // = Members
@@ -399,7 +398,7 @@ contract CulturalStewardsDAO is DeploySetup {
                     address(primaryDAO), // target contract
                     IPowers.assignRole.selector, // function selector to call
                     abi.encode(4), // params before (role id 4 = Ideas sub-DAOs)
-                    inputParams, // dynamic params (the input params of the parent mandate)
+                    abi.encode(), // dynamic params (the input params of the parent mandate)
                     mandateCount - 1, // parent mandate id (the create Ideas sub-DAO mandate)
                     abi.encode() // no params after
                 ),
@@ -422,7 +421,9 @@ contract CulturalStewardsDAO is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Veto revoke Ideas sub-DAO: Veto the revoking of an Ideas sub-DAO from Cultural Stewards",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(inputParams),
+                config: abi.encode(
+                    inputParams
+                    ),
                 conditions: conditions
             })
         );
@@ -443,7 +444,7 @@ contract CulturalStewardsDAO is DeploySetup {
                     address(primaryDAO), // target contract
                     IPowers.revokeRole.selector, // function selector to call
                     abi.encode(4), // params before (role id 4 = Ideas sub-DAOs) // the static params
-                    inputParams, // the dynamic params (the input params of the parent mandate)
+                    abi.encode(), // the dynamic params (the input params of the parent mandate)
                     abi.encode() // no args after
                 ),
                 conditions: conditions
@@ -453,6 +454,8 @@ contract CulturalStewardsDAO is DeploySetup {
 
         // CREATE PHYSICAL DAO // 
         // note: an allowance is set when DAO is created.
+        inputParams = new string[](1); 
+        inputParams[0] = "address Admin"; // the address of the admin of the new DAO
 
         // Ideas sub-DAOs: Initiate Physical sub-DAO creation. Any Ideas sub-DAO can propose creating a Physical sub-DAO.
         mandateCount++;
@@ -461,7 +464,9 @@ contract CulturalStewardsDAO is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate Physical sub-DAO: Initiate creation of Physical sub-DAO",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(),
+                config: abi.encode(
+                    inputParams
+                ),
                 conditions: conditions
             })
         );
@@ -481,8 +486,8 @@ contract CulturalStewardsDAO is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     physicalDaoFactory, // calling the Physical factory 
-                    bytes4(keccak256("createPowers()")),
-                    abi.encode() // no params 
+                    bytes4(keccak256("createPowers(address)")), // function selector for createPowers (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
+                    inputParams // no params 
                 ),
                 conditions: conditions
             })
@@ -533,7 +538,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         // REVOKE PHYSICAL DAO //
         inputParams = new string[](2);
-        inputParams[0] = "address IdeasSubDAO";
+        inputParams[0] = "address PhysicalSubDAO";
         inputParams[1] = "bool removeAllowance";
 
         // members veto revoking physical DAO
@@ -1236,7 +1241,7 @@ contract CulturalStewardsDAO is DeploySetup {
         //////////////////////////////////////////////////////////////////////
 
         // REQUEST ALLOWANCES FROM PRIME DAO //
-        string[] memory inputParams = new string[](5);
+        inputParams = new string[](5);
         inputParams[0] = "address Sub-DAO";
         inputParams[1] = "address Token";
         inputParams[2] = "uint96 allowanceAmount";
@@ -1270,6 +1275,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 config: abi.encode(
                     address(primaryDAO), // target contract
                     requestAllowanceDigitalDAOId, // parent mandate id (the request allowance at primary DAO mandate)
+                    "Requesting allowance from Primary DAO Safe Treasury",
                     inputParams // dynamic params (the input params of the parent mandate)
                 ),
                 conditions: conditions
@@ -1815,6 +1821,9 @@ contract CulturalStewardsDAO is DeploySetup {
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
         // REQUEST CREATION NEW PHYSICAL DAO
+        inputParams = new string[](1); // no input params, as all params are set in the config of the mandate.
+        inputParams[0] = "address Admin"; // the only input param is the new URI for the physical sub-DAO, which will be used by conveners when requesting the creation of a new physical sub-DAO.
+
         // Conveners: request at Primary DAO the creation of a new physical DAO.
         // Note: this is a statement of intent. Physical DAOs are requested using a working group, after initated here by conveners.
         mandateCount++;
@@ -1829,7 +1838,8 @@ contract CulturalStewardsDAO is DeploySetup {
                 config: abi.encode( 
                     address(primaryDAO),
                     requestNewPhysicalDaoId, // parent mandate id (the create new physical sub-DAO at primary DAO mandate)
-                    abi.encode()
+                    "Requesting creation of new Physical sub-DAO from Primary DAO", // description
+                    inputParams
                 ),
                 conditions: conditions
             })
@@ -2623,6 +2633,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 config: abi.encode(
                     address(primaryDAO),
                     mintPoapTokenId, // parent mandate id (the mint POAP token at primary DAO mandate)
+                    "Requesting minting of POAP from Primary DAO",
                     inputParams
                 ),
                 conditions: conditions

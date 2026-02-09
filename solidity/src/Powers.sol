@@ -72,9 +72,6 @@ contract Powers is EIP712, IPowers, Context {
     /// @notice Maximum number of execution targets per action
     uint256 public immutable MAX_EXECUTIONS_LENGTH;
 
-    // NB! this is a gotcha: mandates start counting a 1, NOT 0!. 0 is used as a default 'false' value.
-    /// @notice Number of mandates that have been initiated throughout the life of the organisation
-    uint16 public mandateCounter = 1;
     /// @notice Name of the DAO
     string public name;
     /// @notice URI to metadata of the DAO
@@ -82,6 +79,9 @@ contract Powers is EIP712, IPowers, Context {
     string public uri;
     /// @notice Address to the treasury of the organisation
     address payable private treasury;
+    // NB! this is a gotcha: mandates start counting a 1, NOT 0!. 0 is used as a default 'false' value.
+    /// @notice Number of mandates that have been initiated throughout the life of the organisation
+    uint16 public mandateCounter = 1;
     /// @dev Is the constitute phase closed? Note: no actions can be started when the constitute phase is open.
     bool private _constituteClosed;
 
@@ -110,17 +110,6 @@ contract Powers is EIP712, IPowers, Context {
         if (_msgSender() != getRoleHolderAtIndex(ADMIN_ROLE, 0)) revert Powers__OnlyAdmin();
     }
 
-    /// @notice A modifier that sets a function to only be callable by an active mandate.
-    modifier onlyAdoptedMandate(uint16 mandateId) {
-        _onlyAdoptedMandate(mandateId);
-        _;
-    }
-
-    /// @dev Internal check for onlyAdoptedMandate modifier.
-    function _onlyAdoptedMandate(uint16 mandateId) internal view {
-        if (mandates[mandateId].active == false) revert Powers__MandateNotActive();
-    }
-
     //////////////////////////////////////////////////////////////
     //              CONSTRUCTOR & RECEIVE                       //
     //////////////////////////////////////////////////////////////
@@ -138,7 +127,7 @@ contract Powers is EIP712, IPowers, Context {
         uint256 maxReturnDataLength_,
         uint256 maxExecutionsLength_
         // add here the init data for initial mandates?
-    ) EIP712(name_, version()) {
+    ) payable EIP712(name_, version()) {
         if (bytes(name_).length == 0) revert Powers__InvalidName();
         if (maxCallDataLength_ == 0) revert Powers__InvalidMaxCallDataLength();
         if (maxReturnDataLength_ == 0) revert Powers__InvalidReturnCallDataLength();
@@ -161,13 +150,16 @@ contract Powers is EIP712, IPowers, Context {
     function constitute(MandateInitData[] memory constituentMandates) external onlyAdmin {
         if (_constituteClosed) revert Powers__ConstituteClosed();
         
+        uint16 currentId = mandateCounter;
         //  set mandates as active.
         for (uint256 i = 0; i < constituentMandates.length; i++) {
             // note: ignore empty slots in MandateInitData array.
             if (constituentMandates[i].targetMandate != address(0)) {
-                _adoptMandate(constituentMandates[i]);
+                _storeMandate(currentId, constituentMandates[i]);
+                unchecked { ++currentId; }
             }
         }
+        mandateCounter = currentId;
     }
 
     /// @inheritdoc IPowers
@@ -199,13 +191,14 @@ contract Powers is EIP712, IPowers, Context {
     /// @dev The request -> fulfill functions follow a call-and-return mechanism. This allows for async execution of mandates.
     function request(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce, string memory uriAction)
         external
-        onlyAdoptedMandate(mandateId)
         returns (uint256 actionId)
     {
         if (!_constituteClosed) revert Powers__ConstituteOpen();
 
         actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
-        AdoptedMandate memory mandate = mandates[mandateId];
+        AdoptedMandate storage mandate = mandates[mandateId];
+
+        if (!mandate.active) revert Powers__MandateNotActive();
 
         // check 0 is calldata length is too long
         if (mandateCalldata.length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
@@ -216,20 +209,21 @@ contract Powers is EIP712, IPowers, Context {
         // check 2: does caller have access to mandate being executed?
         if (!canCallMandate(_msgSender(), mandateId)) revert Powers__CannotCallMandate();
 
+        Action storage action = _actions[actionId];
+
         // check 3: has action already been set as requested?
-        if (_hasBeenRequested(actionId)) revert Powers__ActionAlreadyInitiated();
+        if (action.requestedAt > 0 || action.fulfilledAt > 0) revert Powers__ActionAlreadyInitiated();
 
         // check 4: is proposedAction cancelled?
-        if (_actions[actionId].cancelledAt > 0) revert Powers__ActionCancelled();
+        if (action.cancelledAt > 0) revert Powers__ActionCancelled();
 
         // check 5: do checks pass?
         Checks.check(mandateId, mandateCalldata, address(this), nonce, mandate.latestFulfillment);
 
         // if not registered yet, register actionId at mandate.
-        if (_actions[actionId].mandateId == 0) mandates[mandateId].actionIds.push(actionId);
+        if (action.mandateId == 0) mandate.actionIds.push(actionId);
 
         // If everything passed, set action as requested.
-        Action storage action = _actions[actionId];
         action.caller = _msgSender(); // note if caller had been set during proposedAction, it will be overwritten.
         action.mandateId = mandateId;
         action.requestedAt = uint48(block.number);
@@ -254,8 +248,8 @@ contract Powers is EIP712, IPowers, Context {
         address[] calldata targets,
         uint256[] calldata values,
         bytes[] calldata calldatas
-    ) external onlyAdoptedMandate(mandateId) {
-        AdoptedMandate memory mandate = mandates[mandateId];
+    ) external {
+        AdoptedMandate storage mandate = mandates[mandateId];
 
         // check 1: is mandate active?
         if (!mandate.active) revert Powers__MandateNotActive();
@@ -263,56 +257,56 @@ contract Powers is EIP712, IPowers, Context {
         // check 2: is _msgSender() the targetMandate?
         if (mandate.targetMandate != _msgSender()) revert Powers__CallerNotTargetMandate();
 
+        Action storage action = _actions[actionId];
+
         // check 3: has action already been set as requested?
-        if (!_hasBeenRequested(actionId)) revert Powers__ActionNotRequested();
+        if (action.requestedAt == 0 || action.cancelledAt > 0) revert Powers__ActionNotRequested();
 
         // check 4: has action already been fulfilled?
-        if (_actions[actionId].fulfilledAt > 0) revert Powers__ActionAlreadyFulfilled();
+        if (action.fulfilledAt > 0) revert Powers__ActionAlreadyFulfilled();
 
         // check 5: are the lengths of targets, values and calldatas equal?
-        if (targets.length != values.length || targets.length != calldatas.length) revert Powers__InvalidCallData();
+        uint256 targetsLength = targets.length;
+        if (targetsLength != values.length || targetsLength != calldatas.length) revert Powers__InvalidCallData();
 
         // check 6: check array length is too long
-        if (targets.length > MAX_EXECUTIONS_LENGTH) revert Powers__ExecutionArrayTooLong();
-
-        // check 7: for each target, check if calldata does not exceed MAX_CALLDATA_LENGTH + targets have not been blacklisted.
-        for (uint256 i = 0; i < targets.length; ++i) {
-            if (calldatas[i].length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
-            if (isBlacklisted(targets[i])) revert Powers__AddressBlacklisted();
-        }
+        if (targetsLength > MAX_EXECUTIONS_LENGTH) revert Powers__ExecutionArrayTooLong();
 
         // set action as fulfilled
-        _actions[actionId].fulfilledAt = uint48(block.number);
+        action.fulfilledAt = uint48(block.number);
 
         // execute targets[], values[], calldatas[] received from mandate.
-        for (uint256 i = 0; i < targets.length; ++i) {
+        for (uint256 i = 0; i < targetsLength;) {
+            if (calldatas[i].length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
+            if (isBlacklisted(targets[i])) revert Powers__AddressBlacklisted();
+
             (bool success, bytes memory returndata) = targets[i].call{ value: values[i] }(calldatas[i]);
             if (!success) {
                 revert Powers__MandateFulfillCallFailed();
             }
             if (returndata.length <= MAX_RETURN_DATA_LENGTH) {
-                _actions[actionId].returnDatas.push(returndata);
+                action.returnDatas.push(returndata);
             } else {
-                _actions[actionId].returnDatas.push(abi.encode(0));
+                action.returnDatas.push(abi.encode(0));
             }
+            unchecked { ++i; }
         }
 
         // emit event. -- commented out to save gas, can be re-enabled if needed.
         // emit ActionFulfilled(mandateId, actionId, targets, values, calldatas);
 
-        // register latestFulfillment at mandate. -- is there anyway to do this more efficiently?
-        mandates[mandateId].latestFulfillment = uint48(block.number);
+        // register latestFulfillment at mandate.
+        mandate.latestFulfillment = uint48(block.number);
     }
 
     /// @inheritdoc IPowers
     function propose(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce, string memory uriAction)
         external
-        onlyAdoptedMandate(mandateId)
         returns (uint256 actionId)
     {
         if (!_constituteClosed) revert Powers__ConstituteOpen();
         
-        AdoptedMandate memory mandate = mandates[mandateId];
+        AdoptedMandate storage mandate = mandates[mandateId];
 
         // check 1: is targetMandate is an active mandate?
         if (!mandate.active) revert Powers__MandateNotActive();
@@ -327,107 +321,71 @@ contract Powers is EIP712, IPowers, Context {
         if (mandateCalldata.length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
 
         // if checks pass: propose.
-        actionId = _propose(_msgSender(), mandateId, mandateCalldata, nonce, uriAction);
+        uint32 votingPeriod = mandate.conditions.votingPeriod;
+        uint8 quorum = mandate.conditions.quorum;
 
-        return actionId;
-    }
-
-    /// @notice Internal propose mechanism.
-    /// @dev The mechanism checks for the length of targets and calldatas.
-    /// @param caller The address of the caller proposing the action.
-    /// @param mandateId The ID of the mandate being proposed for.
-    /// @param mandateCalldata The calldata for the mandate execution.
-    /// @param nonce A unique nonce for the proposal.
-    /// @param uriAction URI with metadata about the action.
-    /// @return actionId The generated ID of the proposed action.
-    ///
-    /// Emits a {PowersEvents::ProposedActionCreated} event.
-    function _propose(
-        address caller,
-        uint16 mandateId,
-        bytes calldata mandateCalldata,
-        uint256 nonce,
-        string memory uriAction
-    ) internal virtual returns (uint256 actionId) {
-        // (uint8 quorum,, uint32 votingPeriod,,,,,) = Mandate(targetMandate).conditions();
-        Conditions memory conditions = getConditions(mandateId);
         actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
 
         // check 1: does target mandate need proposal vote to pass?
-        if (conditions.quorum == 0) revert Powers__NoVoteNeeded();
+        if (quorum == 0) revert Powers__NoVoteNeeded();
 
         // check 2: do we have a proposal with the same targetMandate and mandateCalldata?
-        if (_actions[actionId].voteStart != 0) revert Powers__UnexpectedActionState();
+        Action storage action = _actions[actionId];
+        if (action.voteStart != 0) revert Powers__UnexpectedActionState();
 
         // register actionId at mandate.
-        // £check: is this necessary?
-        mandates[mandateId].actionIds.push(actionId);
+        if (action.mandateId == 0) mandate.actionIds.push(actionId);
 
         // if checks pass: create proposedAction
-        Action storage action = _actions[actionId];
         action.mandateCalldata = mandateCalldata;
         action.proposedAt = uint48(block.number);
         action.mandateId = mandateId;
         action.voteStart = uint48(block.number); // note that the moment proposedAction is made, voting start. Delay functionality has to be implemeted at the mandate level.
-        action.voteDuration = conditions.votingPeriod;
-        action.caller = caller;
+        action.voteDuration = votingPeriod;
+        action.caller = _msgSender();
         action.uri = uriAction;
         action.nonce = nonce;
 
         emit ProposedActionCreated(
             actionId,
-            caller,
+            _msgSender(),
             mandateId,
             "",
             mandateCalldata,
             block.number,
-            block.number + conditions.votingPeriod,
+            block.number + votingPeriod,
             nonce,
             uriAction
         );
+
+        return actionId;
     }
 
     /// @inheritdoc IPowers
     /// @dev the account to cancel must be the account that created the proposedAction.
     function cancel(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
         external
-        onlyAdoptedMandate(mandateId)
         returns (uint256)
     {
+        AdoptedMandate storage mandate = mandates[mandateId];
+        if (!mandate.active) revert Powers__MandateNotActive();
+
         uint256 actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
+        Action storage action = _actions[actionId];
 
-        // check: is caller the caller of the proposedAction?
-        if (_msgSender() != _actions[actionId].caller) revert Powers__NotProposerAction();
+        // check 1: is caller the caller of the proposedAction?
+        if (_msgSender() != action.caller) revert Powers__NotProposerAction();
 
-        return _cancel(mandateId, mandateCalldata, nonce);
-    }
+        // check 2: does action exist?
+        if (action.proposedAt == 0) revert Powers__ActionNotProposed();
 
-    /// @notice Internal cancel mechanism with minimal restrictions.
-    /// @dev A proposal can be cancelled in any state other than Cancelled or Executed.
-    /// Once cancelled a proposal cannot be re-submitted.
-    /// @param mandateId The ID of the mandate.
-    /// @param mandateCalldata The calldata of the action.
-    /// @param nonce The nonce of the action.
-    /// @return actionId The ID of the cancelled action.
-    ///
-    /// Emits a {PowersEvents::ProposedActionCancelled} event.
-    function _cancel(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
-        internal
-        virtual
-        returns (uint256)
-    {
-        uint256 actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
-
-        // check 1: does action exist?
-        if (_actions[actionId].proposedAt == 0) revert Powers__ActionNotProposed();
-
-        // check 2: is action already fulfilled or cancelled?
-        if (_actions[actionId].fulfilledAt > 0 || _actions[actionId].cancelledAt > 0) {
+        // check 3: is action already fulfilled or cancelled?
+        if (action.fulfilledAt > 0 || action.cancelledAt > 0) {
             revert Powers__UnexpectedActionState();
         }
 
         // set action as cancelled.
-        _actions[actionId].cancelledAt = uint48(block.number);
+        action.cancelledAt = uint48(block.number);
 
         // emit event.
         emit ProposedActionCancelled(actionId);
@@ -453,18 +411,24 @@ contract Powers is EIP712, IPowers, Context {
     /// @param reason The reason for the vote.
     ///
     /// Emits a {PowersEvents::VoteCast} event.
-    function _castVote(uint256 actionId, address account, uint8 support, string memory reason) internal virtual {
+    function _castVote(uint256 actionId, address account, uint8 support, string memory reason) internal {
+        Action storage action = _actions[actionId];
+
         // Check that the proposal is active, that it has not been paused, cancelled or ended yet.
-        if (getActionState(actionId) != ActionState.Active) {
+        if (action.proposedAt == 0 ||
+            action.fulfilledAt > 0 ||
+            action.cancelledAt > 0 ||
+            action.requestedAt > 0 ||
+            action.voteStart + action.voteDuration < block.number)
+        {
             revert Powers__ProposedActionNotActive();
         }
-        Action storage proposedAction = _actions[actionId];
 
         // Note that we check if account has access to the mandate targetted in the proposedAction.
-        uint16 mandateId = proposedAction.mandateId;
+        uint16 mandateId = action.mandateId;
         if (!canCallMandate(account, mandateId)) revert Powers__CannotCallMandate();
         // check 2: has account already voted?
-        if (proposedAction.hasVoted[account]) revert Powers__AlreadyCastVote();
+        if (action.hasVoted[account]) revert Powers__AlreadyCastVote();
 
         // if all this passes: cast vote.
         _countVote(actionId, account, support);
@@ -497,7 +461,15 @@ contract Powers is EIP712, IPowers, Context {
     /// @return mandateId The ID of the newly adopted mandate.
     ///
     /// Emits a {PowersEvents::MandateAdopted} event.
-    function _adoptMandate(MandateInitData memory mandateInitData) internal virtual returns (uint16 mandateId) {
+    function _adoptMandate(MandateInitData memory mandateInitData) internal returns (uint16 mandateId) {
+        mandateId = mandateCounter;
+        _storeMandate(mandateId, mandateInitData);
+        unchecked { mandateCounter++; }
+        return mandateId;
+    }
+
+    /// @dev Internal helper to store mandate data and initialize it.
+    function _storeMandate(uint16 mandateId, MandateInitData memory mandateInitData) internal {
         // check if added address is indeed a mandate. Note that this will also revert with address(0).
         if (!ERC165Checker.supportsInterface(mandateInitData.targetMandate, type(IMandate).interfaceId)) {
             revert Powers__IncorrectInterface(mandateInitData.targetMandate);
@@ -511,16 +483,13 @@ contract Powers is EIP712, IPowers, Context {
             revert Powers__VoteWithPublicRoleDisallowed();
         }
 
-        // if checks pass, set mandate as active.
-        mandates[mandateCounter].active = true;
-        mandates[mandateCounter].targetMandate = mandateInitData.targetMandate;
-        mandates[mandateCounter].conditions = mandateInitData.conditions;
-        mandateCounter++;
+        AdoptedMandate storage mandate = mandates[mandateId];
+        mandate.active = true;
+        mandate.targetMandate = mandateInitData.targetMandate;
+        mandate.conditions = mandateInitData.conditions;
 
         Mandate(mandateInitData.targetMandate)
-            .initializeMandate(mandateCounter - 1, mandateInitData.nameDescription, "", mandateInitData.config);
-
-        return mandateCounter - 1;
+            .initializeMandate(mandateId, mandateInitData.nameDescription, "", mandateInitData.config);
     }
 
     /// @inheritdoc IPowers
@@ -554,30 +523,32 @@ contract Powers is EIP712, IPowers, Context {
     /// @param access True to grant role, false to revoke.
     ///
     /// Emits a {PowersEvents::RoleSet} event.
-    function _setRole(uint256 roleId, address account, bool access) internal virtual {
+    function _setRole(uint256 roleId, address account, bool access) internal {
         // check 1: Public role is locked.
         if (roleId == PUBLIC_ROLE) revert Powers__CannotSetPublicRole();
         // check 2: Zero address is not allowed.
         if (account == address(0)) revert Powers__CannotAddZeroAddress();
 
-        bool newMember = roles[roleId].members[account] == 0;
+        Role storage role = roles[roleId];
+        uint256 index = role.members[account];
+        bool hasRole = index != 0;
+
         // add role if role requested and account does not already have role.
-        if (access && newMember) {
-            roles[roleId].members[account] = roles[roleId].membersArray.length + 1; // 'index of new member is length of array + 1. index = 0 is used a 'undefined' value..
-            roles[roleId].membersArray.push(Member({ account: account, since: uint48(block.number) }));
-            // remove role if access set to false and account has role.
-        } else if (!access && !newMember) {
-            uint256 indexEnd = roles[roleId].membersArray.length - 1;
-            Member memory memberEnd = roles[roleId].membersArray[indexEnd];
-            uint256 indexAccount = roles[roleId].members[account];
+        if (access && !hasRole) {
+            role.membersArray.push(Member({ account: account, since: uint48(block.number) }));
+            role.members[account] = role.membersArray.length; // 'index of new member is length of array (which is 1-based index).
+        // remove role if access set to false and account has role.
+        } else if (!access && hasRole) {
+            uint256 indexEnd = role.membersArray.length - 1;
+            Member memory memberEnd = role.membersArray[indexEnd];
 
             // updating array. Note that 1 is added to the index to avoid 0 index of first member in array. We here have to subtract it.
-            roles[roleId].membersArray[indexAccount - 1] = memberEnd; // replace account with last member account.
-            roles[roleId].membersArray.pop(); // remove last member.
+            role.membersArray[index - 1] = memberEnd; // replace account with last member account.
+            role.membersArray.pop(); // remove last member.
 
             // updating indices in mapping.
-            roles[roleId].members[memberEnd.account] = indexAccount; // update index of last member in list
-            roles[roleId].members[account] = 0; // 'index of removed member is set to 0.
+            role.members[memberEnd.account] = index; // update index of last member in list
+            role.members[account] = 0; // 'index of removed member is set to 0.
         }
         // note: nothing happens when 1: access is requested and not a new member 2: access is false and account does not have role. No revert.
 
@@ -585,18 +556,18 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function blacklistAddress(address account, bool blacklisted) public onlyPowers {
+    function blacklistAddress(address account, bool blacklisted) external onlyPowers {
         _blacklist[account] = blacklisted;
         emit BlacklistSet(account, blacklisted);
     }
 
     /// @inheritdoc IPowers
-    function setUri(string memory newUri) public onlyPowers {
+    function setUri(string memory newUri) external onlyPowers {
         uri = newUri;
     }
 
     /// @inheritdoc IPowers
-    function setTreasury(address payable newTreasury) public onlyPowers {
+    function setTreasury(address payable newTreasury) external onlyPowers {
         if (newTreasury == address(0)) revert Powers__CannotSetZeroAddress();
         treasury = newTreasury;
     }
@@ -607,7 +578,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @notice Internal function to check if the quorum for a given proposal has been reached.
     /// @param actionId The ID of the proposal.
     /// @return True if quorum is reached, false otherwise.
-    function _quorumReached(uint256 actionId) internal view virtual returns (bool) {
+    function _quorumReached(uint256 actionId) internal view returns (bool) {
         // retrieve quorum and allowedRole from mandate.
         Action storage proposedAction = _actions[actionId];
         Conditions memory conditions = getConditions(proposedAction.mandateId);
@@ -622,7 +593,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @notice Internal function to check if a given action has been requested.
     /// @param actionId The ID of the action.
     /// @return True if the action has been requested or fulfilled, false otherwise.
-    function _hasBeenRequested(uint256 actionId) internal view virtual returns (bool) {
+    function _hasBeenRequested(uint256 actionId) internal view returns (bool) {
         ActionState state = getActionState(actionId);
         if (state == ActionState.Requested || state == ActionState.Fulfilled) {
             return true;
@@ -633,7 +604,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @notice Internal function to check if a vote for a given proposal has succeeded.
     /// @param actionId The ID of the proposal.
     /// @return True if the vote succeeded, false otherwise.
-    function _voteSucceeded(uint256 actionId) internal view virtual returns (bool) {
+    function _voteSucceeded(uint256 actionId) internal view returns (bool) {
         // retrieve quorum and success threshold from mandate.
         Action storage proposedAction = _actions[actionId];
         Conditions memory conditions = getConditions(proposedAction.mandateId);
@@ -649,7 +620,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @param actionId The ID of the proposal.
     /// @param account The address casting the vote.
     /// @param support The support value (0=Against, 1=For, 2=Abstain).
-    function _countVote(uint256 actionId, address account, uint8 support) internal virtual {
+    function _countVote(uint256 actionId, address account, uint8 support) internal {
         Action storage proposedAction = _actions[actionId];
 
         // set account as voted.
@@ -671,7 +642,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @dev If needed, this function can be overridden with bespoke logic.
     /// @param roleId The ID of the role.
     /// @return amountMembers Number of members in the role.
-    function _countMembersRole(uint256 roleId) internal view virtual returns (uint256 amountMembers) {
+    function _countMembersRole(uint256 roleId) internal view returns (uint256 amountMembers) {
         return roles[roleId].membersArray.length;
     }
 
@@ -684,8 +655,8 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function canCallMandate(address caller, uint16 mandateId) public view virtual returns (bool) {
-        uint256 allowedRole = getConditions(mandateId).allowedRole;
+    function canCallMandate(address caller, uint16 mandateId) public view returns (bool) {
+        uint256 allowedRole = mandates[mandateId].conditions.allowedRole;
         uint48 since = hasRoleSince(caller, allowedRole);
 
         return since != 0 || allowedRole == PUBLIC_ROLE;
@@ -693,11 +664,12 @@ contract Powers is EIP712, IPowers, Context {
 
     /// @inheritdoc IPowers
     function hasRoleSince(address account, uint256 roleId) public view returns (uint48 since) {
-        uint256 index = roles[roleId].members[account];
+        Role storage role = roles[roleId];
+        uint256 index = role.members[account];
         if (index == 0) {
             return 0;
         }
-        return roles[roleId].membersArray[index - 1].since;
+        return role.membersArray[index - 1].since;
     }
 
     /// @inheritdoc IPowers
@@ -707,10 +679,11 @@ contract Powers is EIP712, IPowers, Context {
 
     /// @inheritdoc IPowers
     function getRoleHolderAtIndex(uint256 roleId, uint256 index) public view returns (address account) {
-        if (index >= getAmountRoleHolders(roleId)) {
+        Role storage role = roles[roleId];
+        if (index >= role.membersArray.length) {
             revert Powers__InvalidIndex();
         }
-        return roles[roleId].membersArray[index].account;
+        return role.membersArray[index].account;
     }
 
     /// @inheritdoc IPowers
@@ -719,7 +692,7 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function getActionState(uint256 actionId) public view virtual returns (ActionState) {
+    function getActionState(uint256 actionId) public view returns (ActionState) {
         // We read the struct fields into the stack at once so Solidity emits a single SLOAD
         Action storage action = _actions[actionId];
 
@@ -751,7 +724,6 @@ contract Powers is EIP712, IPowers, Context {
     function getActionData(uint256 actionId)
         public
         view
-        virtual
         returns (
             uint16 mandateId,
             uint48 proposedAt,
@@ -779,7 +751,6 @@ contract Powers is EIP712, IPowers, Context {
     function getActionVoteData(uint256 actionId)
         public
         view
-        virtual
         returns (
             uint48 voteStart,
             uint32 voteDuration,
@@ -802,7 +773,7 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function getActionCalldata(uint256 actionId) public view virtual returns (bytes memory callData) {
+    function getActionCalldata(uint256 actionId) public view returns (bytes memory callData) {
         return _actions[actionId].mandateCalldata;
     }
 
@@ -810,19 +781,18 @@ contract Powers is EIP712, IPowers, Context {
     function getActionReturnData(uint256 actionId, uint256 index)
         public
         view
-        virtual
         returns (bytes memory returnData)
     {
         return _actions[actionId].returnDatas[index];
     }
 
     /// @inheritdoc IPowers
-    function getActionUri(uint256 actionId) public view virtual returns (string memory _uri) {
+    function getActionUri(uint256 actionId) public view returns (string memory _uri) {
         _uri = _actions[actionId].uri;
     }
 
     /// @inheritdoc IPowers
-    function hasVoted(uint256 actionId, address account) public view virtual returns (bool) {
+    function hasVoted(uint256 actionId, address account) public view returns (bool) {
         return _actions[actionId].hasVoted[account];
     }
 
@@ -832,8 +802,9 @@ contract Powers is EIP712, IPowers, Context {
         view
         returns (address mandate, bytes32 mandateHash, bool active)
     {
-        mandate = mandates[mandateId].targetMandate;
-        active = mandates[mandateId].active;
+        AdoptedMandate storage m = mandates[mandateId];
+        mandate = m.targetMandate;
+        active = m.active;
         mandateHash = keccak256(abi.encode(address(this), mandateId));
 
         return (mandate, mandateHash, active);
@@ -856,10 +827,11 @@ contract Powers is EIP712, IPowers, Context {
 
     /// @inheritdoc IPowers
     function getMandateActionAtIndex(uint16 mandateId, uint256 index) external view returns (uint256 actionId) {
-        if (index >= mandates[mandateId].actionIds.length) {
+        AdoptedMandate storage m = mandates[mandateId];
+        if (index >= m.actionIds.length) {
             revert Powers__InvalidIndex();
         }
-        return mandates[mandateId].actionIds[index];
+        return m.actionIds[index];
     }
 
     /// @inheritdoc IPowers
