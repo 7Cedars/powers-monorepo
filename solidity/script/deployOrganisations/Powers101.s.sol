@@ -85,16 +85,15 @@ contract Powers101 is DeploySetup {
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
-        targets = new address[](4);
-        values = new uint256[](4);
-        calldatas = new bytes[](4);
+        targets = new address[](3);
+        values = new uint256[](3);
+        calldatas = new bytes[](3);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate");
-        calldatas[2] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
-        calldatas[3] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate");
+        calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
+        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public role. .
@@ -120,13 +119,10 @@ contract Powers101 is DeploySetup {
         inputParams[1] = "uint256 Quantity";
 
         mandateCount++;
-        conditions.allowedRole = 1; // = role that can call this mandate.
-        conditions.quorum = 20; // = 30% quorum needed
-        conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.allowedRole = type(uint256).max; // = anyone can call this mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: string(abi.encodePacked("Intent to Mint: Propose to mint tokens at ", address(simpleErc20Votes).toHexString(), ".")),
+                nameDescription: string(abi.encodePacked("Propose to Mint: Propose to mint tokens at ", address(simpleErc20Votes).toHexString(), ".")),
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
@@ -148,7 +144,7 @@ contract Powers101 is DeploySetup {
         delete conditions;
 
         mandateCount++;
-        conditions.allowedRole = 2; // = role that can call this mandate.
+        conditions.allowedRole = 1; // = role that can call this mandate.
         conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
         conditions.succeedAt = 66; // = 51% simple majority needed for executing an action.
         conditions.quorum = 20; // = 30% quorum needed
@@ -178,7 +174,7 @@ contract Powers101 is DeploySetup {
         dynamicParamsSimple[0] = "bool NominateMe";
 
         mandateCount++;
-        conditions.allowedRole = 1; // = role that can call this mandate = members
+        conditions.allowedRole = type(uint256).max; // = anyone can nominate themselves as delegate.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
@@ -198,12 +194,12 @@ contract Powers101 is DeploySetup {
         conditions.allowedRole = type(uint256).max; // = role that can call this mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Delegate Nominees: Call a delegate election. This can be done at any time. Nominations are elected on the amount of delegated tokens they have received. For",
+                nameDescription: "Call a delegate election: This can be done at any time. Nominations are elected on the amount of delegated tokens they have received. For",
                 targetMandate: initialisePowers.getInitialisedAddress("DelegateTokenSelect"),
                 config: abi.encode(
                     address(erc20DelegateElection),
                     address(nominees),
-                    2, // role to be elected.
+                    1, // role to be elected.
                     3 // max number role holders
                 ),
                 conditions: conditions

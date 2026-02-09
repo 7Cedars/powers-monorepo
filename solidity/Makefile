@@ -278,7 +278,7 @@ info:
 
 update-builds:
 	@echo "Updating builds..."
-	for contract in ERC20 Erc20Taxed SimpleErc20Votes Mandate Nominees Ownable OpenElection Powers TreasuryPoolGovernance TreasuryPools TreasuryPoolTransfer TreasuryRoleWithTransfer TreasurySimple; do cp out/$${contract}.sol/$${contract}.json ../frontend/context/builds/$${contract}.json; done
+	for contract in ERC20 Erc20Taxed SimpleErc20Votes Erc20DelegateElection Mandate Nominees Ownable Powers; do cp out/$${contract}.sol/$${contract}.json ../frontend/context/builds/$${contract}.json; done
 	
 ###############################
 # 		Deploy Commands  	  # 
@@ -301,7 +301,7 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 deploy-organisation : 
 	@echo "Deploying organisation..."
-	forge script script/deployOrganisations/Powers101.s.sol:Powers101 $(OPT_SEPOLIA_DEPLOY_ARGS)
+	forge script script/deployOrganisations/Powers101.s.sol:Powers101 $(ARB_SEPOLIA_DEPLOY_ARGS)
 
 initialise-powers :
 	@echo "Initialising Powers contract..."

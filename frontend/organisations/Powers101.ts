@@ -1,10 +1,12 @@
 import { Organization } from "./types";
 import { powersAbi } from "@/context/abi";
-import { Abi, encodeAbiParameters, encodeFunctionData } from "viem";
+import { Abi, encodeAbiParameters, encodeFunctionData, parseAbiParameters, toFunctionSelector } from "viem";
 import { minutesToBlocks, ADMIN_ROLE, PUBLIC_ROLE, createConditions, getInitialisedAddress } from "./helpers";
 import { MandateInitData } from "./types";
 import { sepolia, arbitrumSepolia, optimismSepolia, mantleSepoliaTestnet, foundry } from "@wagmi/core/chains";
- 
+import SimpleErc20Votes from "@/context/builds/SimpleErc20Votes.json";
+import Erc20DelegateElection from "@/context/builds/Erc20DelegateElection.json";
+import Nominees from "@/context/builds/Nominees.json";
 
 /**
  * Powers 101 Organization
@@ -30,7 +32,31 @@ export const Powers101: Organization = {
     onlyLocalhost: false
   },
   fields: [],
-  dependencies: [ ],
+  dependencies: [
+    {
+      name: "SimpleErc20Votes",
+      abi: SimpleErc20Votes.abi as Abi,
+      bytecode: SimpleErc20Votes.bytecode.object as `0x${string}`,
+      args: []
+    },
+    // Note: Erc20DelegateElection depends on SimpleErc20Votes address.
+    // The deployment system is assumed to handle sequential deployment and argument resolution if supported,
+    // or requires manual handling if not. 
+    // For now, we define it here as per the script's logic.
+    {
+      name: "Erc20DelegateElection",
+      abi: Erc20DelegateElection.abi as Abi,
+      bytecode: Erc20DelegateElection.bytecode.object as `0x${string}`,
+      // Placeholder: In a real system this needs to be the address of SimpleErc20Votes
+      args: [] 
+    },
+    {
+      name: "Nominees",
+      abi: Nominees.abi as Abi,
+      bytecode: Nominees.bytecode.object as `0x${string}`,
+      args: []
+    }
+  ],
   allowedChains: [
     sepolia.id, 
     optimismSepolia.id
@@ -49,17 +75,22 @@ export const Powers101: Organization = {
     chainId: number,
   ): MandateInitData[] => {
     const mandateInitData: MandateInitData[] = [];
+    let mandateCount = 0;
 
-    // console.log("deployedMandates @Powers101", deployedMandates);
-    // console.log("deployedDependencies @Powers101", deployedMandates);
+    // Retrieve deployed dependency addresses
+    // Note: Assuming dependencyReceipts keys match dependency names
+    const simpleErc20VotesAddress = dependencyReceipts["SimpleErc20Votes"]?.contractAddress || "0x0000000000000000000000000000000000000000";
+    const erc20DelegateElectionAddress = dependencyReceipts["Erc20DelegateElection"]?.contractAddress || "0x0000000000000000000000000000000000000000";
+    const nomineesAddress = dependencyReceipts["Nominees"]?.contractAddress || "0x0000000000000000000000000000000000000000";
 
     //////////////////////////////////////////////////////////////////
     //                 LAW 1: INITIAL SETUP                         //
     //////////////////////////////////////////////////////////////////
 
+    mandateCount++;
     mandateInitData.push({
-      nameDescription: "Initial Setup: Assign role labels (Members, Delegates) and revoke itself after execution",
-      targetMandate: getInitialisedAddress("PresetSingleAction", deployedMandates),
+      nameDescription: "Initial Setup: Assign labels to roles and set the treasury. It self-destructs after execution.",
+      targetMandate: getInitialisedAddress("PresetActions_Single", deployedMandates),
       config: encodeAbiParameters(
         [
           { name: 'targets', type: 'address[]' },
@@ -77,104 +108,147 @@ export const Powers101: Organization = {
             encodeFunctionData({
               abi: powersAbi,
               functionName: "labelRole",
-              args: [1n, "Members"]
+              args: [1n, "Delegate"]
             }),
             encodeFunctionData({
               abi: powersAbi,
-              functionName: "labelRole",  
-              args: [2n, "Delegates"]
+              functionName: "setTreasury",  
+              args: [powersAddress]
             }),
             encodeFunctionData({
               abi: powersAbi,
               functionName: "revokeMandate",
-              args: [1n]
+              args: [BigInt(mandateCount)]
             })
           ]
         ]
       ),
       conditions: createConditions({
-        allowedRole: ADMIN_ROLE
+        allowedRole: PUBLIC_ROLE // Anyone
       })
     });
 
     //////////////////////////////////////////////////////////////////
-    //                    EXECUTIVE LAWS                            //
+    //                    EXECUTIVE MANDATES                        //
     //////////////////////////////////////////////////////////////////
 
-    const statementOfIntentConfig = encodeAbiParameters(
-      [{ name: 'inputParams', type: 'string[]' }],
-      [["address[] Targets", "uint256[] Values", "bytes[] Calldatas"]]
-    );
+    // MINT NEW TOKENS FLOW // 
+    // Members: propose minting tokens to an address.  
+    const mintInputParams = ["address To", "uint256 Quantity"];
 
-    // Mandate 2: Statement of Intent
+    mandateCount++;
+    const proposeMintIndex = BigInt(mandateCount);
     mandateInitData.push({
-      nameDescription: "Statement Of Intent: Members can initiate an action through a Statement of Intent that Delegates can later execute",
+      nameDescription: `Propose to Mint: Propose to mint tokens at ${simpleErc20VotesAddress}.`,
       targetMandate: getInitialisedAddress("StatementOfIntent", deployedMandates),
-      config: statementOfIntentConfig,
-      conditions: createConditions({
-        allowedRole: 1n,
-        votingPeriod: minutesToBlocks(5, Number(deployedMandates.chainId)),
-        succeedAt: 51n,
-        quorum: 20n
-      })
-    });
-
-    // Mandate 3: Veto an action
-    mandateInitData.push({
-      nameDescription: "Veto Action: Admin can veto actions proposed by the community",
-      targetMandate: getInitialisedAddress("StatementOfIntent", deployedMandates),
-      config: statementOfIntentConfig,
-      conditions: createConditions({
-        allowedRole: ADMIN_ROLE,
-        needFulfilled: 2n
-      })
-    });
-
-    // Mandate 4: Execute an action
-    mandateInitData.push({
-      nameDescription: "Execute Action: Delegates approve and execute actions proposed by the community",
-      targetMandate: getInitialisedAddress("OpenAction", deployedMandates),
-      config: "0x",
-      conditions: createConditions({
-        allowedRole: 2n,
-        quorum: 50n,
-        succeedAt: 77n,
-        votingPeriod: minutesToBlocks(5, Number(deployedMandates.chainId)),
-        needFulfilled: 2n,
-        needNotFulfilled: 3n,
-        timelock: minutesToBlocks(3, Number(deployedMandates.chainId))
-      })
-    });
-
-    //////////////////////////////////////////////////////////////////
-    //                    ELECTORAL LAWS                            //
-    //////////////////////////////////////////////////////////////////
-
-    // Mandate 5: Self select as community member
-    mandateInitData.push({
-      nameDescription: "Join as Member: Anyone can self-select to become a community member",
-      targetMandate: getInitialisedAddress("SelfSelect", deployedMandates),
       config: encodeAbiParameters(
-        [{ name: 'roleId', type: 'uint256' }],
-        [1n]
+        [{ name: 'inputParams', type: 'string[]' }],
+        [mintInputParams]
       ),
       conditions: createConditions({
-        throttleExecution: 25n,
+        allowedRole: PUBLIC_ROLE // Anyone
+      })
+    });
+
+    mandateCount++;
+    const vetoMintIndex = BigInt(mandateCount);
+    mandateInitData.push({
+      nameDescription: `Veto a mint: Veto a proposed token mint at ${simpleErc20VotesAddress}.`,
+      targetMandate: getInitialisedAddress("StatementOfIntent", deployedMandates),
+      config: encodeAbiParameters(
+        [{ name: 'inputParams', type: 'string[]' }],
+        [mintInputParams]
+      ),
+      conditions: createConditions({
+        allowedRole: 0n, // Admin
+        needFulfilled: proposeMintIndex
+      })
+    });
+
+    mandateCount++;
+    mandateInitData.push({
+      nameDescription: `Execute a mint: Execute a mint at ${simpleErc20VotesAddress}. it has to be proposed first by the community and should not have been vetoed by an admin.`,
+      targetMandate: getInitialisedAddress("BespokeAction_Simple", deployedMandates),
+      config: encodeAbiParameters(
+        [
+          { name: 'target', type: 'address' },
+          { name: 'functionSelector', type: 'bytes4' },
+          { name: 'inputParams', type: 'string[]' }
+        ],
+        [
+          simpleErc20VotesAddress,
+          toFunctionSelector("mint(address,uint256)"), 
+          mintInputParams
+        ]
+      ),
+      conditions: createConditions({
+        allowedRole: 1n, // Delegate
+        votingPeriod: minutesToBlocks(5, chainId),
+        succeedAt: 66n, // 66%
+        quorum: 20n, // 20%
+        needFulfilled: proposeMintIndex,
+        needNotFulfilled: vetoMintIndex
+      })
+    });
+
+    //////////////////////////////////////////////////////////////////
+    //                    ELECTORAL MANDATES                        //
+    //////////////////////////////////////////////////////////////////
+
+    // ELECT DELEGATES FLOW //
+    // Members: nominate themselves for a delegate 
+    const nominateParams = ["bool NominateMe"];
+
+    mandateCount++;
+    mandateInitData.push({
+      nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
+      targetMandate: getInitialisedAddress("BespokeAction_Simple", deployedMandates),
+      config: encodeAbiParameters(
+        [
+          { name: 'target', type: 'address' },
+          { name: 'functionSelector', type: 'bytes4' },
+          { name: 'inputParams', type: 'string[]' }
+        ],
+        [
+          erc20DelegateElectionAddress,
+          toFunctionSelector("nominate(address,bool)"), // Check Nominees selector. It is nominate(address nominee, bool shouldNominate). 
+          // Wait, Nominees.sol nominate is (address nominee, bool shouldNominate).
+          // BespokeAction_Simple typically maps caller to first arg if configured?
+          // No, BespokeAction_Simple usually takes params from user.
+          // If the user calls this mandate, they provide arguments matching inputParams.
+          // inputParams is "bool NominateMe".
+          // The function selector is nominate(address,bool).
+          // Does BespokeAction_Simple inject msg.sender?
+          // Let's check BespokeAction_Simple.sol content.
+          nominateParams
+        ]
+      ),
+      conditions: createConditions({
+        allowedRole: PUBLIC_ROLE // Anyone
+      })
+    });
+
+    // Anyone: call delegate select.  
+    mandateCount++;
+    mandateInitData.push({
+      nameDescription: "Call a delegate election: This can be done at any time. Nominations are elected on the amount of delegated tokens they have received.",
+      targetMandate: getInitialisedAddress("DelegateTokenSelect", deployedMandates),
+      config: encodeAbiParameters(
+        [
+          { name: 'electionContract', type: 'address' },
+          { name: 'nomineesContract', type: 'address' },
+          { name: 'roleId', type: 'uint256' },
+          { name: 'maxHolders', type: 'uint256' }
+        ],
+        [
+          erc20DelegateElectionAddress,
+          nomineesAddress,
+          1n, // Role to be elected (Delegate)
+          3n  // Max number role holders
+        ]
+      ),
+      conditions: createConditions({
         allowedRole: PUBLIC_ROLE
-      })
-    });
-
-    // Mandate 6: Self select as delegate
-    mandateInitData.push({
-      nameDescription: "Become Delegate: Community members can self-select to become a Delegate",
-      targetMandate: getInitialisedAddress("SelfSelect", deployedMandates),
-      config: encodeAbiParameters(
-        [{ name: 'roleId', type: 'uint256' }],
-        [2n]
-      ),
-      conditions: createConditions({
-        throttleExecution: 25n,
-        allowedRole: 1n
       })
     });
 
