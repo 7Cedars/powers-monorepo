@@ -1,3 +1,72 @@
 # Soulbound1155_GatedAccess
 
-Under development.
+Soulbound1155_GatedAccess is an access control mandate that automatically assigns a role to users who can prove ownership of specific Soulbound tokens minted by authorized issuers.
+
+## Overview
+
+This mandate integrates with the `Soulbound1155` standard to create a flexible, decentralized access system. It allows an organization to grant a specific role (`assignRoleId`) to any user who holds a sufficient number of valid tokens.
+
+A token is considered "valid" if:
+1.  The user owns it.
+2.  It was minted recently enough (within a `blocksThreshold`).
+3.  It was minted by an account holding a specific role (`checkRoleId`) at the time of minting.
+
+This is useful for reputation systems, ticketing, or proof-of-participation mechanisms.
+
+## Configuration
+
+When adopting a Soulbound1155_GatedAccess instance, the following parameters are required:
+
+1.  `soulbound1155` (address): The address of the Soulbound1155 contract.
+2.  `assignRoleId` (uint256): The Role ID to be assigned to the user upon successful verification.
+3.  `checkRoleId` (uint256): The Role ID that the minter of the token must hold for the token to be valid.
+4.  `blocksThreshold` (uint48): The maximum age (in blocks) of a token for it to be considered valid.
+5.  `tokensThreshold` (uint48): The minimum number of valid tokens required to grant access.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the user must provide the list of token IDs they wish to use for verification:
+
+1.  `tokenIds` (uint256[]): An array of token IDs to check.
+
+### Execution Flow
+
+1.  **Validation Loop**
+    *   Iterates through each provided `tokenId`.
+    *   **Ownership Check:** Verifies that the caller has a balance > 0 for the token.
+    *   **Age Check:** Extracts the mint block from the token ID and checks if `currentBlock <= mintBlock + blocksThreshold`.
+    *   **Minter Check:** Extracts the minter address from the token ID and checks if they held `checkRoleId` at the time of minting.
+
+2.  **Threshold Check**
+    *   Counts the number of tokens that pass all checks.
+    *   Reverts if the count is less than `tokensThreshold`.
+
+3.  **Role Assignment**
+    *   If successful, generates a call to `IPowers.assignRole`.
+    *   Assigns `assignRoleId` to the caller.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Initializes the verification criteria.
+-   Sets input parameters to `(uint256[] tokenIds)`.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Performs all validation checks.
+-   Constructs the role assignment call.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

@@ -19,10 +19,10 @@ interface PowersTypes {
 
     struct AdoptedMandate {
         address targetMandate;
-        Conditions conditions;
-        bool active;
-        uint256[] actionIds; 
         uint48 latestFulfillment;
+        bool active;
+        Conditions conditions;
+        uint256[] actionIds; 
     }
 
     struct MandateInitData {

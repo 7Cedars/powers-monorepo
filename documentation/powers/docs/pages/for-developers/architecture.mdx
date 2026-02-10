@@ -22,7 +22,7 @@ These principles are managed through a combination of the `Powers.sol` engine an
 * Assigning, revoking, and labeling roles.
 * Adopting and revoking mandates.
 
-In addition, there is a `constitute` function that allows adopting multiple mandates at once. This function can only be called by the admin, and only once. 
+In addition, there is a `constitute` function that allows adopting multiple mandates at once. This function can only be called by the admin, and only once. The constitution phase is then formally closed.
 
 <Callout type="info">
 Since mandates encode power relations, the ability to adopt or revoke mandates is the power to reform the governance system itself. 
@@ -33,19 +33,19 @@ In the Powers protocol, reform is treated like any other executive action and ha
 
 Mandates define under what conditions a role is allowed to execute which actions.
 
-Mandates are smart contracts that follow the `imandate.sol` interface. They can be created by inheriting mandate.sol and only have to be deployed once. One mandate can be adopted by multiple `Powers.sol` instances.
+Mandates are smart contracts that follow the `IMandate.sol` interface. They can be created by inheriting `Mandate.sol` and only have to be deployed once. One mandate can be adopted by multiple `Powers.sol` instances.
 
 The power a mandate grants is constrained by two key factors: **conditional requirements** and **degrees of freedom**.
 
 
 ### Conditional Requirements
 
-Conditional requirements are the rules that restrict a mandate's execution. These checks can include:
+Conditional requirements are the rules that restrict a mandate's execution. These checks correspond to the `Conditions` struct and include:
 
-* **Role Restriction**: Mandates are restricted by a single role.
-* **Voting**: A mandate can be conditional on a successful vote. Conditions include the length of a vote, its quorum, and pass threshold. 
-* **Time Delays**: A mandate can be throttled to execute only once per given period, or following a delay after the end of a succesful vote. 
-* **Cross-Mandate Conditions**: A mandate can check if an action has passed at another mandate. It can either be enabled or blocked by the state of the other mandate.
+* **Role Restriction** (`allowedRole`): Mandates are restricted by a single role.
+* **Voting**: A mandate can be conditional on a successful vote. Conditions include the length of a vote (`votingPeriod`), its `quorum`, and pass threshold (`succeedAt`). 
+* **Time Delays**: A mandate can be throttled to execute only once per given period (`throttleExecution`), or following a delay after the end of a successful vote (`timelock`). 
+* **Cross-Mandate Conditions**: A mandate can check if an action has passed at another mandate. It can either be enabled (`needFulfilled`) or blocked (`needNotFulfilled`) by the state of the other mandate.
 
 ### Degrees of Freedom
 
@@ -63,10 +63,11 @@ In practice, mandates that grant a high degree of freedom should be paired with 
 
 Additionally, mandates have the following functionalities:
 
-* They have an `initializeMandate` function, which is called when the mandate is initialsed by a `Powers` instance and is used to configure the mandate adoption.
-* They have an `handleRequest` function, that contains the core translation logic of the mandate. It is an unrestricted view function that computes the return values for a given input.
-* They have an `executeMandate` function, which is called when the mandate executes an action. It calls the `handleRequest` function, performs any additional checks, and returns the computed function calls to the Powers contract.
-* All functionalities are restricted along the `Powers.sol` deployment that adopted the mandate by calling initializeMandate.
+* They have an `initializeMandate` function, which is called when the mandate is initialised by a `Powers` instance and is used to configure the mandate adoption.
+* They have a `handleRequest` function, that contains the core translation logic of the mandate. It is a view function that computes the return values for a given input.
+* They have an `executeMandate` function, which is called when the mandate executes an action. It calls `handleRequest`, performs `_externalCall` if needed, and finally calls `_replyPowers`.
+* They have a `_replyPowers` function that calls back to the `Powers` contract to fulfill the action.
+* All functionalities are restricted along the `Powers.sol` deployment that adopted the mandate by calling `initializeMandate`.
 
 ## 🏛️ Powers + Mandates = Institutional Governance
 
@@ -92,7 +93,7 @@ Cross-mandate conditions allow for the creation of on-chain checks and balances:
 
 This structure highlights a core feature of the Powers protocol: its inherently asynchronous nature. Because the protocol checks the state of different mandates rather than requiring a single transaction, governance steps can be separated by time and triggered by different actors.
 
-Together, Powers and Mandates allow communities to build any governance structure that fits their needs. A community starts by deploying a `Powers.sol` instance, configuring `mandate.sol` implementations, and adopting them in their `Powers.sol` instance.
+Together, Powers and Mandates allow communities to build any governance structure that fits their needs. A community starts by deploying a `Powers.sol` instance, configuring `Mandate.sol` implementations, and adopting them in their `Powers.sol` instance.
 
 This DAO is deployed as [Powers 101](powers-protocol.vercel.app/protocol/11155420/0x7f62d52c9b176dc6c27e2870bba57ff67adb28c2) on Optimism sepolia.
 
@@ -103,7 +104,7 @@ While the protocol is flexible, the core flow between `Powers.sol` and `Mandate.
 ### Governance Flow Restrictions
 
 The governance flow is defined by the following restrictions:
-* All actions are executed via Powers' execute function in reference to a mandate. There are no exceptions.
+* All actions are executed via Powers' `request` function in reference to a mandate. There are no exceptions.
 * Executing, proposing, and voting can only be done in reference to a role-restricted mandate.
 * Roles and mandates can only be assigned and revoked through the request function of the protocol itself.
 
@@ -113,20 +114,21 @@ What is not flexible is how `Powers.sol` interacts with `Mandate.sol` implementa
 ::::steps 
 
 ##### Request an action 
-A user calls `Powers::Request` to request an action. 
+A user calls `Powers::request` to request an action. 
 
 ##### Run Standard Checks
-The `Powers::Request` function runs checks.  
+The `Powers::request` function runs checks (roles, active mandate, etc.).  
 
 ##### Call ExecuteMandate 
-If all checks pass, it calls `Mandate::executeMandate` to execute an action. 
+If all checks pass, it calls `Mandate::executeMandate` to execute the action logic. 
 
-##### Translate Input to Output Function Calls 
-The `Mandate::executeMandate` decodes input calldata, runs any optional additional checks and computes return function calls to `Powers::Fulfill`. 
+##### Translate & Execute
+The `Mandate::executeMandate` function calls `handleRequest` to decode input and prepare execution data. It may then call `_externalCall` for external interactions.
+
+##### Reply to Powers
+Finally, `Mandate` calls `_replyPowers`, which calls back to `Powers::fulfill`.
 
 ##### Fulfilling an Action
-`Powers::Fulfill` executes the returned function calls and stores any resulting state changes.
+`Powers::fulfill` executes the returned function calls and stores any resulting state changes.
 
 ::::
-
-

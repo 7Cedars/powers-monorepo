@@ -8,7 +8,7 @@ Powers is a role-restricted governance protocol that provides a modular, flexibl
 
 1.  **Serve as the Governance Hub**: All governance actions, from proposing a vote to executing a transaction, are initiated through `Powers.sol`. It provides a single, secure entry point for all interactions.
 2.  **Run checks**: Before any action is executed, `Powers.sol` checks the relevant Mandate conditions to validate the request. This ensures that all governance actions adhere to the rules defined by the organisation's mandates. 
-3.  **Manage State**: It is the authoritative source for the organisation's state, including which mandates are active, which accounts hold which roles, and the status of all ongoing proposals and actions.
+3.  **Manage State**: It is the authoritative source for the organisation's state, including which mandates are active, which accounts hold which roles, and the status of all ongoing proposals and actions. It prefers to save as much data as possible on-chain to reduce reliance on off-chain indexing.
 4.  **Enforce Outcomes**: After a `Mandate.sol` contract has validated an action and returned the execution data, `Powers.sol` is responsible for reliably executing the final transaction and updating the state accordingly.
 
 In essence, `Powers.sol` acts as the immutable foundation of the organisation, providing the core mechanics for state management and execution, while the modular `Mandate.sol` contracts provide the flexible, adaptable governance logic. This separation makes the system both secure and highly extensible.
@@ -35,6 +35,9 @@ An admin uses `revokeRole()` to remove a role from a user's account.
 #### Labelling a Role
 To make roles easier to identify, an admin can use `labelRole()` to give it a human-readable name.
 
+#### Blacklisting an Address
+An admin uses `blacklistAddress()` to prevent an account from interacting with the protocol.
+
 ::::
 
 ## Mandates: Adopting and Revoking
@@ -47,7 +50,7 @@ Managing the lifecycle of mandates is a core administrative task.
 ::::steps
 
 #### Initial Constitution
-The organisation is born when an admin calls `constitute()` with the initial set of mandates. This can only be done once.
+The organisation is born when an admin calls `constitute()` with the initial set of mandates (an array of `MandateInitData`). This can only be done once. The constitution phase is then closed using `closeConstitute()`.
 
 #### Adopting New Mandates
 As the organisation evolves, new mandates can be added by an admin using `adoptMandate()`.
@@ -65,7 +68,7 @@ Proposals are used when an action requires community consensus.
 ::::steps 
 
 #### Creating a Proposal
-A user calls `propose()` with the mandate details.
+A user calls `propose()` with the mandate details and a metadata URI description.
 
 #### Voting Period
 The proposal enters a voting period defined by the mandate.
@@ -84,7 +87,7 @@ The execution flow involves a request and callback logic between `Powers.sol` an
 ::::steps
 
 #### Request Action
-A user initiates an action by calling `request()` in `Powers.sol`.
+A user initiates an action by calling `request()` in `Powers.sol` with the mandate details and a metadata URI description.
 
 #### Mandate Validation
 `Powers.sol` calls `executeMandate()` on the target mandate contract, which validates the request and prepares the execution data.
@@ -103,25 +106,26 @@ See [the github repo here](https://github.com/7Cedars/powers/blob/main/solidity/
 1. DAO actions must be encoded in role-restricted external contracts (mandates) following the `IMandate` interface.
 2. Proposing, voting, cancelling and executing actions are role-restricted along the target mandate.
 3. All DAO actions must run through the governance flow provided by `Powers.sol`.
-4. Uses a non-weighted voting mechanism: one account has one vote.
-5. Core protocol is intentionally minimalistic - complexity must be integrated through mandates.
+4. Uses a non-weighted voting mechanism: one account has one vote. Accounts vote with their roles, not with their tokens.
+5. Core protocol is intentionally minimalistic - complexity (multi-chain, oracles, timelocks, etc.) must be integrated through mandates.
 
 ### State Variables
 - `_actions`: `mapping(uint256 actionId => Action)`
-- `_mandates`: `mapping(uint16 mandateId => AdoptedMandate)`
-- `_roles`: `mapping(uint256 roleId => Role)`
-- `_deposits`: `mapping(address account => Deposit[])`
+- `mandates`: `mapping(uint16 mandateId => AdoptedMandate)`
+- `roles`: `mapping(uint256 roleId => Role)`
+- `_blacklist`: `mapping(address account => bool blacklisted)`
 
 ### Functions
 - **Governance**: `request`, `fulfill`, `propose`, `cancel`, `castVote`, `castVoteWithReason`
-- **Admin**: `constitute`, `adoptMandate`, `revokeMandate`, `assignRole`, `revokeRole`, `labelRole`
+- **Admin**: `constitute`, `closeConstitute`, `adoptMandate`, `revokeMandate`, `assignRole`, `revokeRole`, `labelRole`, `blacklistAddress`, `setUri`, `setTreasury`
 
 ### Structs
-- `Action`: Tracks a proposal's state and voting information.
-- `AdoptedMandate`: Tracks an active mandate's address and status.
+- `Action`: Tracks a proposal's state, voting information, and execution data.
+- `AdoptedMandate`: Tracks an active mandate's address, status, and conditions.
 - `Role`: Tracks role assignments and membership.
-- `Deposit`: Tracks a deposit's amount and block number.
+- `Conditions`: Defines the governance parameters for a mandate (quorum, voting period, etc.).
+- `MandateInitData`: Used for initializing mandates during constitution or adoption.
 
 ### Events
-- **Governance**: `ActionRequested`, `ActionFulfilled`, `ProposedActionCreated`, `ProposedActionCancelled`, `VoteCast`
-- **Admin**: `RoleSet`, `RoleLabel`, `MandateAdopted`, `MandateRevoked`
+- **Governance**: `ActionRequested`, `ProposedActionCreated`, `ProposedActionCancelled`, `VoteCast`
+- **Admin**: `RoleSet`, `RoleLabel`, `MandateAdopted`, `MandateRevoked`, `BlacklistSet`, `Powers__Initialized`
