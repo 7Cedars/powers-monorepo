@@ -5,8 +5,6 @@ import { minutesToBlocks, ADMIN_ROLE, PUBLIC_ROLE, createConditions, getInitiali
 import { MandateInitData } from "./types";
 import { sepolia, arbitrumSepolia, optimismSepolia, mantleSepoliaTestnet, foundry } from "@wagmi/core/chains";
 import SimpleErc20Votes from "@/context/builds/SimpleErc20Votes.json";
-import Erc20DelegateElection from "@/context/builds/Erc20DelegateElection.json";
-import Nominees from "@/context/builds/Nominees.json";
 
 /**
  * Powers 101 Organization
@@ -38,23 +36,6 @@ export const Powers101: Organization = {
       abi: SimpleErc20Votes.abi as Abi,
       bytecode: SimpleErc20Votes.bytecode.object as `0x${string}`,
       args: []
-    },
-    // Note: Erc20DelegateElection depends on SimpleErc20Votes address.
-    // The deployment system is assumed to handle sequential deployment and argument resolution if supported,
-    // or requires manual handling if not. 
-    // For now, we define it here as per the script's logic.
-    {
-      name: "Erc20DelegateElection",
-      abi: Erc20DelegateElection.abi as Abi,
-      bytecode: Erc20DelegateElection.bytecode.object as `0x${string}`,
-      // Placeholder: In a real system this needs to be the address of SimpleErc20Votes
-      args: [] 
-    },
-    {
-      name: "Nominees",
-      abi: Nominees.abi as Abi,
-      bytecode: Nominees.bytecode.object as `0x${string}`,
-      args: []
     }
   ],
   allowedChains: [
@@ -78,10 +59,8 @@ export const Powers101: Organization = {
     let mandateCount = 0;
 
     // Retrieve deployed dependency addresses
-    // Note: Assuming dependencyReceipts keys match dependency names
     const simpleErc20VotesAddress = dependencyReceipts["SimpleErc20Votes"]?.contractAddress || "0x0000000000000000000000000000000000000000";
-    const erc20DelegateElectionAddress = dependencyReceipts["Erc20DelegateElection"]?.contractAddress || "0x0000000000000000000000000000000000000000";
-    const nomineesAddress = dependencyReceipts["Nominees"]?.contractAddress || "0x0000000000000000000000000000000000000000";
+    const electionListAddress = getInitialisedAddress("ElectionList", deployedMandates);
 
     //////////////////////////////////////////////////////////////////
     //                 LAW 1: INITIAL SETUP                         //
@@ -89,7 +68,7 @@ export const Powers101: Organization = {
 
     mandateCount++;
     mandateInitData.push({
-      nameDescription: "Initial Setup: Assign labels to roles and set the treasury. It self-destructs after execution.",
+      nameDescription: "Setup:  assigns labels to roles and set the treasury. It self-destructs after execution.",
       targetMandate: getInitialisedAddress("PresetActions_Single", deployedMandates),
       config: encodeAbiParameters(
         [
@@ -192,65 +171,43 @@ export const Powers101: Organization = {
     });
 
     //////////////////////////////////////////////////////////////////
-    //                    ELECTORAL MANDATES                        //
-    //////////////////////////////////////////////////////////////////
-
-    // ELECT DELEGATES FLOW //
-    // Members: nominate themselves for a delegate 
-    const nominateParams = ["bool NominateMe"];
-
+    //                    ELECTORAL LAWS                            //
+    ///////////////////////////////////////////////////////////////// 
     mandateCount++;
     mandateInitData.push({
-      nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
+      nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
       targetMandate: getInitialisedAddress("BespokeAction_Simple", deployedMandates),
       config: encodeAbiParameters(
+      parseAbiParameters('address powers, bytes4 FunctionSelector, string[] Params'),
         [
-          { name: 'target', type: 'address' },
-          { name: 'functionSelector', type: 'bytes4' },
-          { name: 'inputParams', type: 'string[]' }
-        ],
-        [
-          erc20DelegateElectionAddress,
-          toFunctionSelector("nominate(address,bool)"), // Check Nominees selector. It is nominate(address nominee, bool shouldNominate). 
-          // Wait, Nominees.sol nominate is (address nominee, bool shouldNominate).
-          // BespokeAction_Simple typically maps caller to first arg if configured?
-          // No, BespokeAction_Simple usually takes params from user.
-          // If the user calls this mandate, they provide arguments matching inputParams.
-          // inputParams is "bool NominateMe".
-          // The function selector is nominate(address,bool).
-          // Does BespokeAction_Simple inject msg.sender?
-          // Let's check BespokeAction_Simple.sol content.
-          nominateParams
+          powersAddress,
+          toFunctionSelector("assignRole(uint256,address)"),
+          ["uint256 roleId","address account"]
         ]
       ),
       conditions: createConditions({
-        allowedRole: PUBLIC_ROLE // Anyone
+        allowedRole: ADMIN_ROLE
       })
     });
+    const assignAnyRole = BigInt(mandateCount);
 
-    // Anyone: call delegate select.  
     mandateCount++;
     mandateInitData.push({
-      nameDescription: "Call a delegate election: This can be done at any time. Nominations are elected on the amount of delegated tokens they have received.",
-      targetMandate: getInitialisedAddress("DelegateTokenSelect", deployedMandates),
+      nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
+      targetMandate: getInitialisedAddress("BespokeAction_Simple", deployedMandates),
       config: encodeAbiParameters(
+      parseAbiParameters('address powers, bytes4 FunctionSelector, string[] Params'),
         [
-          { name: 'electionContract', type: 'address' },
-          { name: 'nomineesContract', type: 'address' },
-          { name: 'roleId', type: 'uint256' },
-          { name: 'maxHolders', type: 'uint256' }
-        ],
-        [
-          erc20DelegateElectionAddress,
-          nomineesAddress,
-          1n, // Role to be elected (Delegate)
-          3n  // Max number role holders
+          powersAddress,
+          toFunctionSelector("revokeRole(uint256,address)"),
+          ["uint256 roleId","address account"]
         ]
       ),
       conditions: createConditions({
-        allowedRole: PUBLIC_ROLE
+        allowedRole: 1n,
+        needFulfilled: assignAnyRole
       })
-    });
+    });  
 
     return mandateInitData;
   }

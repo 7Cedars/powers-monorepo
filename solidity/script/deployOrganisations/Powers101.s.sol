@@ -74,8 +74,13 @@ contract Powers101 is DeploySetup {
         vm.startBroadcast();
         powers.constitute(constitution);
         powers.closeConstitute();
+
+        nominees.transferOwnership(address(powers));
+        erc20DelegateElection.transferOwnership(address(powers));
         vm.stopBroadcast();
         console2.log("Powers successfully constituted.");
+
+        return powers;
     }
 
     function createConstitution() internal returns (uint256 constitutionLength) {
@@ -99,7 +104,7 @@ contract Powers101 is DeploySetup {
         conditions.allowedRole = type(uint256).max; // = public role. .
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "A Single Action: to assign labels to roles and set the treasury. It self-destructs after execution.",
+                nameDescription: "Setup:  assigns labels to roles and set the treasury. It self-destructs after execution.",
                 targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
@@ -168,21 +173,16 @@ contract Powers101 is DeploySetup {
         //                      ELECTORAL MANDATES                          //
         //////////////////////////////////////////////////////////////////////
         
-        // ELECT DELEGATES FLOW //
+        // ELECT DELEGATES FLOW // 
         // Members: nominate themselves for a delegate 
-        string[] memory dynamicParamsSimple = new string[](1);
-        dynamicParamsSimple[0] = "bool NominateMe";
-
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = anyone can nominate themselves as delegate.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: initialisePowers.getInitialisedAddress("Nominate"),
                 config: abi.encode(
-                    address(erc20DelegateElection), 
-                    Nominees.nominate.selector, 
-                    dynamicParamsSimple
+                    address(nominees)
                     ),
                 conditions: conditions
             })

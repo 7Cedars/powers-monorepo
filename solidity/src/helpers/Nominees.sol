@@ -22,10 +22,8 @@ contract Nominees is Ownable {
     event NominationRevoked(address indexed nominee);
 
     constructor() Ownable(msg.sender) { }
-
-    // --- Nomination API ---
-
-    function nominate(address nominee, bool shouldNominate) public virtual onlyOwner {
+ 
+    function nominate(address nominee, bool shouldNominate) external onlyOwner {
         if (shouldNominate) {
             if (nominations[nominee] == true) revert("already nominated");
             nominations[nominee] = true;

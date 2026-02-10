@@ -1,3 +1,66 @@
 # Safe_ExecTransaction_OnReturnValue
 
-Under development.
+Safe_ExecTransaction_OnReturnValue is an advanced integration mandate that executes a transaction on a Gnosis Safe, dynamically constructing the call data using the return value of a previous action.
+
+## Overview
+
+This mandate allows for complex, multi-step workflows where the output of one action (e.g., a deployed contract address or a calculated value) becomes a parameter in a subsequent Safe transaction. It "sandwiches" the dynamic return data between static byte arrays to form the complete function call.
+
+It assumes that the Powers contract is an owner of the target Safe, allowing it to authorize transactions directly.
+
+## Configuration
+
+When adopting a Safe_ExecTransaction_OnReturnValue instance, the following parameters are required:
+
+1.  `TargetContract` (address): The destination address for the internal Safe transaction.
+2.  `FunctionSelector` (bytes4): The function selector of the call to be made.
+3.  `paramsBefore` (bytes): Static bytes to append *before* the dynamic return data.
+4.  `Params` (string[]): The description of input parameters required by the parent mandate.
+5.  `parentMandateId` (uint16): The ID of the parent mandate that generates the dynamic data.
+6.  `paramsAfter` (bytes): Static bytes to append *after* the dynamic return data.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the inputs provided must match the inputs expected by the parent `parentMandateId`. These inputs are used to re-compute the parent's Action ID to look up its result.
+
+### Execution Flow
+
+1.  **Data Retrieval**
+    *   Computes the `parentActionId` using the provided calldata.
+    *   Retrieves the `returnData` from the executed parent action.
+
+2.  **Transaction Construction**
+    *   Assembles the full transaction data: `FunctionSelector + paramsBefore + returnData + paramsAfter`.
+    *   Constructs a signature (`v=1`) authorizing the transaction as the Powers contract (owner).
+
+3.  **Safe Execution**
+    *   Identifies the Safe Treasury address.
+    *   Generates a call to `Safe.execTransaction`.
+    *   The Safe executes the internal call to `TargetContract` with the assembled data.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Initializes the mandate configuration.
+-   Sets the input parameter descriptions.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Retrieves dynamic data.
+-   Constructs the composite call data.
+-   Generates the Safe transaction.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

@@ -76,7 +76,7 @@ export const Bicameralism: Organization = {
     mandateCounter++;
     mandateInitData.push({
       nameDescription: "Initial Setup: Assign role labels (Delegates, Funders) and revokes itself after execution",
-      targetMandate: getInitialisedAddress("PresetSingleAction", deployedMandates),
+      targetMandate: getInitialisedAddress("PresetActions_Single", deployedMandates),
       config: encodeAbiParameters(
         [
           { name: 'targets', type: 'address[]' },
@@ -155,7 +155,7 @@ export const Bicameralism: Organization = {
     mandateCounter++;
     mandateInitData.push({
       nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
-      targetMandate: getInitialisedAddress("BespokeActionSimple", deployedMandates),
+      targetMandate: getInitialisedAddress("BespokeAction_Simple", deployedMandates),
       config: encodeAbiParameters(
       parseAbiParameters('address powers, bytes4 FunctionSelector, string[] Params'),
         [
@@ -173,7 +173,7 @@ export const Bicameralism: Organization = {
     mandateCounter++;
     mandateInitData.push({
       nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
-      targetMandate: getInitialisedAddress("BespokeActionSimple", deployedMandates),
+      targetMandate: getInitialisedAddress("BespokeAction_Simple", deployedMandates),
       config: encodeAbiParameters(
       parseAbiParameters('address powers, bytes4 FunctionSelector, string[] Params'),
         [
