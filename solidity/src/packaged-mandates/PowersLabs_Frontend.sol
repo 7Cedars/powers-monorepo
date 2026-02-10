@@ -91,11 +91,11 @@ contract PowerLabs_Frontend is Mandate {
         );
 
         // 2: assign labels to roles - same as in PowerLabs Constitution.
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders");
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors");
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders", ""); // label role 1 as Funders, no URI for simplicity.
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", ""); // label role 2 as Doc Contributors, no URI for simplicity.
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", ""); // label role 3 as Frontend Contributors, no URI for simplicity.
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", ""); // label role 4 as Protocol Contributors, no URI for simplicity.
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members", ""); // label role 5 as Members, no URI for simplicity.
 
         // 3: set final call to self-destruct the MandatePackage after adopting the mandates
         calldatas[NUMBER_OF_CALLS - 1] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateId);

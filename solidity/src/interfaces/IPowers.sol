@@ -115,11 +115,12 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param account The address to remove the role from
     function revokeRole(uint256 roleId, address account) external;
 
-    /// @notice Assigns a human-readable label to a role
+    /// @notice Assigns a human-readable label and URI to a role  
     /// @dev Optional. Can only be called through the protocol itself
     /// @param roleId The identifier of the role to label
     /// @param label The human-readable label for the role
-    function labelRole(uint256 roleId, string calldata label) external;
+    /// @param uri The URI for the role metadata
+    function labelRole(uint256 roleId, string calldata label, string calldata uri) external;
 
     /// @notice Updates the protocol's metadata URI
     /// @dev Can only be called through the protocol itself

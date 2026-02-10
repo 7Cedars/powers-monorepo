@@ -79,8 +79,8 @@ contract TokenDelegates is DeploySetup {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Voters");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegates");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Voters", ""); // label role 1 as Voters, no URI for simplicity.
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegates", ""); // label role 2 as Delegates, no URI for simplicity.
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;

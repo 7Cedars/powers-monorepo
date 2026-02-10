@@ -287,11 +287,11 @@ contract CulturalStewardsDAO is DeploySetup {
         targets[11] = treasury; // the Safe treasury address.
         targets[12] = treasury; // the Safe treasury address.
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives");
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Physical sub-DAOs");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Ideas sub-DAOs");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Digital sub-DAOs");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "");
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Physical sub-DAOs", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Ideas sub-DAOs", "");
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Digital sub-DAOs", "");
         calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount1);
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount2);
@@ -1217,7 +1217,7 @@ contract CulturalStewardsDAO is DeploySetup {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(digitalSubDAO);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
@@ -1795,10 +1795,10 @@ contract CulturalStewardsDAO is DeploySetup {
         //////////////////////////////////////////////////////////////////////
         // setup role labels // 
         calldatas = new bytes[](9);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Moderators"); // accounts that moderate on forum and assess potential members.
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Primary DAO");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Moderators", ""); // accounts that moderate on forum and assess potential members.
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Primary DAO", "");
         calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
@@ -2317,9 +2317,9 @@ contract CulturalStewardsDAO is DeploySetup {
         //////////////////////////////////////////////////////////////////////
         // setup role labels // 
         calldatas = new bytes[](7);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Primary DAO");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Primary DAO", "");
         calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
         calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, address(primaryDAO)); 

@@ -97,5 +97,6 @@ interface PowersTypes {
         mapping(address account => uint256 index) members;
         Member[] membersArray;
         string label;
+        string uri; 
     }
 }

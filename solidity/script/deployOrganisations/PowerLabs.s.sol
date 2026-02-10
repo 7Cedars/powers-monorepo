@@ -117,11 +117,11 @@ contract PowerLabs is DeploySetup {
         targets[4] = address(powersParent);
         targets[5] = address(powersParent);
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors");
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders", ""); // label role 1 as Funders, no URI for simplicity.
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", ""); // label role 2 as Doc Contributors, no URI for simplicity.
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", ""); // label role 3 as Frontend Contributors, no URI for simplicity.
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "");
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members", "");
         calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke this mandate after execution
 
         mandateCount++;
@@ -620,11 +620,11 @@ contract PowerLabs is DeploySetup {
             targets[i] = address(powersChild);
         }
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors");
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders", ""); // label role 1 as Funders, no URI for simplicity.
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", ""); // label role 2 as Doc Contributors, no URI for simplicity.
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "");
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members", "");
         calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;

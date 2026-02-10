@@ -73,8 +73,8 @@ contract OptimisticExecution is DeploySetup {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "");
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;

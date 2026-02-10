@@ -787,13 +787,13 @@ contract SetRoleTest is TestSetupPowers {
         vm.expectEmit(true, false, false, false);
         emit RoleLabel(ROLE_THREE, "This is role three");
         vm.prank(address(daoMock));
-        daoMock.labelRole(ROLE_THREE, "This is role three");
+        daoMock.labelRole(ROLE_THREE, "This is role three", "");
     }
 
     function testLabelRoleRevertsForLockedRoles() public {
         vm.expectRevert(Powers__LockedRole.selector);
         vm.prank(address(daoMock));
-        daoMock.labelRole(ADMIN_ROLE, "Admin role");
+        daoMock.labelRole(ADMIN_ROLE, "Admin role", "");
     }
 }
 
@@ -892,7 +892,7 @@ contract RoleManagementTest is TestSetupPowers {
     function testLabelRoleRevertsWithEmptyLabel() public {
         vm.expectRevert(PowersErrors.Powers__InvalidLabel.selector);
         vm.prank(address(daoMock));
-        daoMock.labelRole(ROLE_THREE, "");
+        daoMock.labelRole(ROLE_THREE, "", "");
     }
 
     function testLabelRoleRevertsWithLabelTooLong() public {
@@ -902,7 +902,7 @@ contract RoleManagementTest is TestSetupPowers {
 
         vm.expectRevert(PowersErrors.Powers__LabelTooLong.selector);
         vm.prank(address(daoMock));
-        daoMock.labelRole(ROLE_THREE, longLabel);
+        daoMock.labelRole(ROLE_THREE, longLabel, "");
     }
 
     function testSetRoleRevertsWithPublicRole() public {

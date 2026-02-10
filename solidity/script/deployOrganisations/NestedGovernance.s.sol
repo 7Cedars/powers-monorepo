@@ -97,7 +97,7 @@ contract NestedGovernance is DeploySetup {
         targets[1] = address(powersParent);
         targets[2] = address(powersParent);
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powersParent));
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
@@ -195,7 +195,7 @@ contract NestedGovernance is DeploySetup {
         targets[1] = address(powersChild);
         targets[2] = address(powersChild);
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powersChild));
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 

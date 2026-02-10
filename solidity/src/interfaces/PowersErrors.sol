@@ -116,6 +116,9 @@ interface PowersErrors {
     /// @notice Emitted when a label is too long.
     error Powers__LabelTooLong();
 
+    /// @notice Emitted when a URI is too long.
+    error Powers__UriTooLong();
+
     /// @notice Emitted when a vote with public role is attempted.
     error Powers__VoteWithPublicRoleDisallowed();
 

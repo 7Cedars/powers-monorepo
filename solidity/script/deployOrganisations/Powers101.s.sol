@@ -96,7 +96,7 @@ contract Powers101 is DeploySetup {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", ""); // label role 1 as Delegate, no URI for simplicity.
         calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 

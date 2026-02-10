@@ -1,0 +1,95 @@
+# LimitBreak Registry Governance Specification
+
+## Organisational Structure & Context
+
+### *Vision & Mission*
+
+To provide an open, decentralized, and secure governance structure for managing creator token registries (whitelists and blacklists) using the Powers protocol. This ensures that creators and collectors (Members) have a voice in maintaining the integrity of the ecosystem while empowering elected Executives to manage day-to-day operations efficiently.
+
+### *Treasury Management*
+
+The organization may control a treasury, but its primary asset is the control over the LimitBreak `CreatorTokenTransferValidator` lists.
+
+## Roles
+
+<div class="table-mandates">
+| **Role Id** | **Role name** | **Selection criteria** |
+| :--- | :--- | :--- |
+| 0 | Admin | Initial deployer. Restricted powers. |
+| 1 | Member | Holders of the ERC-721C token collection. |
+| 2 | Executive | Elected by Members through a formal election cycle. |
+| … | Public | Everyone. |
+</div> 
+
+## On-chain Mandates
+
+### *Membership Mandates*
+
+<div class="table-mandates">
+| **Role** | **Name & Description** | **Base contract** | **User Input** | **Executable Output** | **Conditions** |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Public | **Join Membership**<br/>Assigns Member role if caller holds ERC-721C token. | `ERC721_GatedAccess` | None | `Powers.assignRole(MEMBER)` | Balance check > 0. |
+</div> 
+
+### *Electoral Mandates (assigning Executive role)*
+
+<div class="table-mandates">
+| **Role** | **Name & Description** | **Base contract** | **User Input** | **Executable Output** | **Conditions** |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Member | **Nominate Self**<br/>Add self to candidate list. | `ElectionList_Nominate` | `bool nominate` | Call to `ElectionList.nominate` | None. |
+| Member | **Start Election**<br/>Initiates an election cycle. | `ElectionList_CreateVoteMandate` | `Title, Start, End` | `Powers.adoptMandate(VoteMandate)` | None (or rate limited). |
+| Member | **Cast Vote**<br/>Vote for candidates. | `ElectionList_Vote` (Temporary) | `bool[] choices` | Call to `ElectionList.vote` | During election period only. |
+| Public | **Tally Votes**<br/>Count votes and assign roles. | `ElectionList_Tally` | `Title, Start, End` | `Powers.assignRole(EXECUTIVE)` | Election period ended. |
+| Public | **Cleanup Election**<br/>Remove temporary vote mandate. | `ElectionList_CleanUpVoteMandate` | `Title, Start, End` | `Powers.revokeMandate(VoteMandate)` | Tally completed. |
+</div> 
+
+### *Executive Mandates (Registry Management)*
+
+*Note: The following pattern repeats for **Remove Blacklist**, **Add Whitelist**, and **Remove Whitelist**.*
+
+<div class="table-mandates">
+| **Role** | **Name & Description** | **Base contract** | **User Input** | **Executable Output** | **Conditions** |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Executive | **Propose Add Blacklist**<br/>Initiates a proposal to blacklist an account. | `StatementOfIntent` | `address[] accounts` | None (Signal) | Voting Period: 5 days.<br/>Quorum: 1 (Executive). |
+| Member | **Veto Add Blacklist**<br/>Vetoes an active proposal. | `StatementOfIntent` | `address[] accounts` | None (Signal) | Voting Period: 3 days.<br/>Quorum: 10%. |
+| Executive | **Execute Add Blacklist**<br/>Executes the blacklist addition if not vetoed. | `BespokeAction_Simple` | `address[] accounts` | Call to `Registry.addAccountsToBlacklist` | **Need Fulfilled**: Proposal.<br/>**Need Not Fulfilled**: Veto. |
+</div> 
+
+### *Constitutional Mandates (Reform)*
+
+<div class="table-mandates">
+| **Role** | **Name & Description** | **Base contract** | **User Input** | **Executable Output** | **Conditions** |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Member | **Constitutional Reform**<br/>Adopt new mandates. | `Mandates_Adopt` | `MandateInitData` | `Powers.adoptMandate` | Voting Period: 14 days.<br/>Quorum: 20%.<br/>Succeed At: 66%. |
+</div> 
+
+## Description of Governance
+
+The governance system uses an **Optimistic Execution with Veto** model for daily operations, and a **Direct Democracy** model for elections and constitutional changes.
+
+1.  **Optimistic Execution**: Executives can propose changes to the registry. These proposals have a delay (e.g., 5 days). If Members do not explicitly veto the proposal within a shorter window (e.g., 3 days), the Executive can execute the change. This balances efficiency with safety.
+2.  **Veto Power**: Members hold the ultimate check on power. A successful veto (requiring 10% quorum) blocks the Executive's action.
+3.  **Elections**: Executives serve at the pleasure of the Members and are elected through a transparent on-chain process.
+4.  **Reform**: The constitution (set of mandates) can only be changed by a supermajority of Members.
+
+## Governance Flow Diagrams
+
+### Registry Update Flow
+
+```mermaid
+graph TD
+    A[Executive Proposes Action] -->|Wait 5 Days| B{Vetoed by Members?}
+    B -- Yes --> C[Action Blocked]
+    B -- No --> D[Executive Executes Action]
+    D --> E[Registry Updated]
+```
+
+### Election Flow
+
+```mermaid
+graph TD
+    A[Member Self-Nominates] --> B[Election Started]
+    B --> C[Members Vote]
+    C --> D[Tally & Assign Roles]
+    D --> E[Cleanup]
+```
