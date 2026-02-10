@@ -696,6 +696,11 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
+    function getRoleUri(uint256 roleId) public view returns (string memory uri) {
+        return roles[roleId].uri;
+    }
+
+    /// @inheritdoc IPowers
     function getActionState(uint256 actionId) public view returns (ActionState) {
         // We read the struct fields into the stack at once so Solidity emits a single SLOAD
         Action storage action = _actions[actionId];

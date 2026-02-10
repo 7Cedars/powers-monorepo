@@ -217,12 +217,19 @@ export const usePowers = () => {
 
     if (rolesIds.size > 0) {
     try {
-      // Build a multicall to fetch labels and holder counts for all roles
+      // Build a multicall to fetch labels, uris and holder counts for all roles
       const contracts = Array.from(rolesIds).flatMap((roleId) => ([
         {
           abi: powersAbi,
           address: mandates[0].powers as `0x${string}`,
           functionName: 'getRoleLabel' as const,
+          args: [roleId] as [bigint],
+          chainId: parseChainId(chainId)
+        },
+        {
+          abi: powersAbi,
+          address: mandates[0].powers as `0x${string}`,
+          functionName: 'getRoleUri' as const,
           args: [roleId] as [bigint],
           chainId: parseChainId(chainId)
         },
@@ -241,11 +248,12 @@ export const usePowers = () => {
       })
       // console.log("@fetchRoles, waypoint 1", {results})
       
-      // results are in pairs [label, holders] per role in same order
+      // results are in triplets [label, uri, holders] per role in same order
       for (let i = 0; i < rolesIds.size; i++) {
-        const label = results[i * 2] as string
-        const holders = results[i * 2 + 1] as bigint
-        updatedRoleLabels.push({ roleId: Array.from(rolesIds)[i] as bigint, label, amountHolders: holders })
+        const label = results[i * 3] as string
+        const uri = results[i * 3 + 1] as string
+        const holders = results[i * 3 + 2] as bigint
+        updatedRoleLabels.push({ roleId: Array.from(rolesIds)[i] as bigint, label, uri, amountHolders: holders })
       }
       // console.log("@fetchRoles, waypoint 2", {updatedRoleLabels})
       return updatedRoleLabels

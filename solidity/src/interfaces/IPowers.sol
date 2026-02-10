@@ -237,6 +237,11 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @return label The label of the role
     function getRoleLabel(uint256 roleId) external view returns (string memory label);
 
+    /// @notice Gets the URI of a role
+    /// @param roleId The identifier of the role
+    /// @return uri The URI of the role
+    function getRoleUri(uint256 roleId) external view returns (string memory uri);
+
     /// @notice Checks if a mandate is currently active
     /// @param mandateId The id of the mandate
     /// @return mandate The address of the mandate

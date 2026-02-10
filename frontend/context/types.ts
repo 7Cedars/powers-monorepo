@@ -135,6 +135,7 @@ export type Powers = {
 export type Role = { 
   roleId: bigint; 
   label: string; 
+  uri?: string;
   amountHolders?: bigint;
   members?: Member[];
 }
