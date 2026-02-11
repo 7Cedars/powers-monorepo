@@ -282,7 +282,15 @@ contract Powers is EIP712, IPowers, Context {
 
             (bool success, bytes memory returndata) = targets[i].call{ value: values[i] }(calldatas[i]);
             if (!success) {
-                revert Powers__MandateFulfillCallFailed();
+                // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
+                if (returndata.length > 0) {
+                    assembly {
+                        let returndata_size := mload(returndata)
+                        revert(add(32, returndata), returndata_size)
+                    }
+                } else {
+                    revert Powers__MandateFulfillCallFailed();
+                }
             }
             if (returndata.length <= MAX_RETURN_DATA_LENGTH) {
                 action.returnDatas.push(returndata);
