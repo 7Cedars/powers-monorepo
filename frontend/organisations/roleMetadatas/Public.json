@@ -1,4 +1,4 @@
 {
-  "description": "The public role is a default role that is assigned to all users in the organization. It typically has limited permissions and is used to provide basic access to resources or information that is available to everyone in the organization. The public role may be used for general communication, announcements, or access to shared resources that do not require specific permissions.",
-  "icon": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeia55ug6szb52nxehuau5bji7qidzgz4jqawdqlphtvgm5ape3tjzi"
+  "description": "The public role is a default role that is assigned to all accounts: in- and outside the organization.",
+  "icon": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"
 }

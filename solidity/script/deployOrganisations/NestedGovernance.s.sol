@@ -68,7 +68,7 @@ contract NestedGovernance is DeploySetup {
         console2.log("Powers Child deployed at:", address(powersChild));
 
         // step 2: create constitution
-        uint256 primaryConstitutionLength = createPrimaryConstitution();
+        uint256 primaryConstitutionLength = createParentConstitution();
         console2.log("Parent Constitution created with length:");
         console2.logUint(primaryConstitutionLength);
 
@@ -87,19 +87,21 @@ contract NestedGovernance is DeploySetup {
         console2.log("Parent and Child Powers successfully constituted.");
     }
 
-    function createPrimaryConstitution() internal returns (uint256 constitutionLength) {
+    function createParentConstitution() internal returns (uint256 constitutionLength) {
         uint16 mandateCount = 0;
         // Mandate 1: Initial Setup
-        targets = new address[](3);
-        values = new uint256[](3);
-        calldatas = new bytes[](3);
-        targets[0] = address(powersParent);
-        targets[1] = address(powersParent);
-        targets[2] = address(powersParent);
+        targets = new address[](5);
+        values = new uint256[](5);
+        calldatas = new bytes[](5); 
+        for (uint256 i = 0; i < targets.length; i++) {
+            targets[i] = address(powersParent);
+        }
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
-        calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powersParent));
-        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powersParent));
+        calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin
@@ -191,11 +193,11 @@ contract NestedGovernance is DeploySetup {
         targets = new address[](3);
         values = new uint256[](3);
         calldatas = new bytes[](3);
-        targets[0] = address(powersChild);
-        targets[1] = address(powersChild);
-        targets[2] = address(powersChild);
+        for (uint256 i = 0; i < targets.length; i++) {
+            targets[i] = address(powersChild);
+        }
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
         calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powersChild));
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 

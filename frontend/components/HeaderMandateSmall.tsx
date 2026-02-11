@@ -5,6 +5,7 @@ import { Powers } from '@/context/types';
 interface HeaderMandateSmallProps {
   powers: Powers;
   mandateName: string;
+  roleId: bigint | number | string;
   roleName: string;
   numHolders: number | string;
   contractAddress: string;
@@ -15,6 +16,7 @@ interface HeaderMandateSmallProps {
 export const HeaderMandateSmall: React.FC<HeaderMandateSmallProps> = ({
   powers,
   mandateName,
+  roleId,
   roleName,
   numHolders,
   contractAddress,
@@ -26,7 +28,7 @@ export const HeaderMandateSmall: React.FC<HeaderMandateSmallProps> = ({
       {/* Thumbnail */}
       <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden">
         <DynamicThumbnail
-          roleId={roleName}
+          roleId={BigInt(roleId)}
           powers={powers as Powers}
           size={48}
           className="object-cover w-12 h-12"

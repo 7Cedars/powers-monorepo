@@ -33,6 +33,7 @@ export function MandateBoxStatic({powers, mandate, selectedExecution }: MandateB
           powers={powers}
           mandateName={mandate?.nameDescription ? `#${Number(mandate.index)}: ${mandate.nameDescription.split(':')[0]}` : `#${Number(mandate.index)}`}
           roleName={mandate?.conditions && powers ? bigintToRole(mandate.conditions.allowedRole, powers) : ''}
+          roleId={mandate?.conditions && powers ? BigInt(mandate.conditions.allowedRole) : ""}
           numHolders={mandate?.conditions && powers ? bigintToRoleHolders(mandate.conditions.allowedRole, powers).toString() : ''}
           description={mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}
           contractAddress={mandate.mandateAddress}

@@ -301,7 +301,7 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 deploy-organisation : 
 	@echo "Deploying organisation..."
-	forge script script/deployOrganisations/LimitBreakRegistryGovernance.s.sol:LimitBreakRegistryGovernance $(OPT_SEPOLIA_DEPLOY_ARGS)
+	forge script script/deployOrganisations/Bicameralism.s.sol:Bicameralism $(OPT_SEPOLIA_DEPLOY_ARGS)
 
 initialise-powers :
 	@echo "Initialising Powers contract..."

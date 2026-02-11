@@ -119,8 +119,8 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @dev Optional. Can only be called through the protocol itself
     /// @param roleId The identifier of the role to label
     /// @param label The human-readable label for the role
-    /// @param uri The URI for the role metadata
-    function labelRole(uint256 roleId, string calldata label, string calldata uri) external;
+    /// @param metadata The URI for the role metadata
+    function labelRole(uint256 roleId, string memory label, string memory metadata) external;
 
     /// @notice Updates the protocol's metadata URI
     /// @dev Can only be called through the protocol itself
@@ -240,7 +240,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @notice Gets the URI of a role
     /// @param roleId The identifier of the role
     /// @return uri The URI of the role
-    function getRoleUri(uint256 roleId) external view returns (string memory uri);
+    function getRoleMetadata(uint256 roleId) external view returns (string memory uri);
 
     /// @notice Checks if a mandate is currently active
     /// @param mandateId The id of the mandate

@@ -277,29 +277,31 @@ contract CulturalStewardsDAO is DeploySetup {
             uint8(1) // v = 1 This is a type 1 call. See Safe.sol for details.
         );
 
-        targets = new address[](14);
-        values = new uint256[](14);
-        calldatas = new bytes[](14);
+        targets = new address[](16);
+        values = new uint256[](16);
+        calldatas = new bytes[](16);
 
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(primaryDAO);
         }
-        targets[11] = treasury; // the Safe treasury address.
-        targets[12] = treasury; // the Safe treasury address.
+        targets[13] = treasury; // the Safe treasury address.
+        targets[14] = treasury; // the Safe treasury address.
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "");
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Physical sub-DAOs", "");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Ideas sub-DAOs", "");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Digital sub-DAOs", "");
-        calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
-        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount1);
-        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount2);
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifke7bfkxxs45unssm6hdr6s6464yrkwds3nw3jkn74cblf5oziea");
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Physical sub-DAOs", "");
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Ideas sub-DAOs", "");
+        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Digital sub-DAOs", "");
+        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
+        calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount1);
+        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount2);
         // calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount3);
-        calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
-        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, address(digitalSubDAO));
-        calldatas[10] = abi.encodeWithSelector(IPowers.setTreasury.selector, treasury);
-        calldatas[11] = abi.encodeWithSelector( // cal to set allowance module to the Safe treasury.
+        calldatas[10] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
+        calldatas[11] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, address(digitalSubDAO));
+        calldatas[12] = abi.encodeWithSelector(IPowers.setTreasury.selector, treasury);
+        calldatas[13] = abi.encodeWithSelector( // cal to set allowance module to the Safe treasury.
             Safe.execTransaction.selector,
             treasury, // The internal transaction's destination
             0, // The internal transaction's value in this mandate is always 0. To transfer Eth use a different mandate.
@@ -315,7 +317,7 @@ contract CulturalStewardsDAO is DeploySetup {
             address(0), // refundReceiver
             signature // the signature constructed above
         );
-        calldatas[12] = abi.encodeWithSelector( // call to set Digital sub-DAO as delegate to the Safe treasury.
+        calldatas[14] = abi.encodeWithSelector( // call to set Digital sub-DAO as delegate to the Safe treasury.
             Safe.execTransaction.selector,
             config.safeAllowanceModule, // The internal transaction's destination: the Allowance Module.
             0, // The internal transaction's value in this mandate is always 0. To transfer Eth use a different mandate.
@@ -331,7 +333,7 @@ contract CulturalStewardsDAO is DeploySetup {
             address(0), // refundReceiver
             signature // the signature constructed above
         );
-        calldatas[13] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
+        calldatas[15] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.
@@ -1211,18 +1213,20 @@ contract CulturalStewardsDAO is DeploySetup {
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
         // setup role labels //
-        targets = new address[](6);
-        values = new uint256[](6);
-        calldatas = new bytes[](6);
+        targets = new address[](8);
+        values = new uint256[](8);
+        calldatas = new bytes[](8);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(digitalSubDAO);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
-        calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
-        calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
-        calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib6j5h6g5m2l5t7k3y4n2c5s6q3z5v6s2y4j3x7g7w3qlhnfvtzc5u"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
+        calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
+        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
+        calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.
@@ -1794,16 +1798,18 @@ contract CulturalStewardsDAO is DeploySetup {
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
         // setup role labels // 
-        calldatas = new bytes[](9);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", ""); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Moderators", ""); // accounts that moderate on forum and assess potential members.
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Primary DAO", "");
-        calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
-        calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
-        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
-        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 4, address(primaryDAO)); 
-        calldatas[8] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
+        calldatas = new bytes[](11);
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiatsgf7h76uakvcgtk4mxug2ptsbbc7wrlfytkaxufjirmixpdr6u"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Moderators", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiazvqzk3pfi6ymtxm4hs73skd7cyehwwawqbhe5z4ndkdprc5vyxy"); // For now uses the uri of auditors. 
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Primary DAO", "");
+        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
+        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
+        calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
+        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 4, address(primaryDAO)); 
+        calldatas[10] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.
@@ -2316,14 +2322,16 @@ contract CulturalStewardsDAO is DeploySetup {
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
         // setup role labels // 
-        calldatas = new bytes[](7);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", ""); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Primary DAO", "");
-        calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
-        calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
-        calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, address(primaryDAO)); 
-        calldatas[6] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
+        calldatas = new bytes[](9);
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiatsgf7h76uakvcgtk4mxug2ptsbbc7wrlfytkaxufjirmixpdr6u"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Primary DAO", "");
+        calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
+        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
+        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, address(primaryDAO)); 
+        calldatas[8] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         // £todo: NEED TO SET UP SAFE WALLET HERE TOO! 
 

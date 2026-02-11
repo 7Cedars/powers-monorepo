@@ -439,6 +439,7 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
   // Helper values for HeaderMandate
   const mandateName = mandate.nameDescription ? `#${Number(mandate.index)}: ${mandate.nameDescription.split(':')[0]}` : `#${Number(mandate.index)}`;
   const roleName = mandate.conditions && powers ? bigintToRole(mandate.conditions.allowedRole, powers) : '';
+  const roleId = mandate.conditions && powers ? BigInt(mandate.conditions.allowedRole) : "";
   const numHolders = mandate.conditions && powers ? bigintToRoleHolders(mandate.conditions.allowedRole, powers) : '';
   const description = mandate.nameDescription ? mandate.nameDescription.split(':')[1] || '' : '';
   const contractAddress = mandate.mandateAddress;
@@ -456,6 +457,7 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
             powers={powers as Powers}
             mandateName={mandateName}
             roleName={roleName}
+            roleId={roleId}
             numHolders={numHolders}
             description={description}
             contractAddress={contractAddress}
@@ -840,6 +842,7 @@ const FlowContent: React.FC = () => {
 
   // Function to load saved layout from localStorage
   const loadSavedLayout = React.useCallback((): Record<string, { x: number; y: number }> | undefined => {
+    if (typeof window === 'undefined') return undefined
     try {
       const localStore = localStorage.getItem("powersProtocols")
       if (!localStore || localStore === "undefined") return undefined
@@ -860,6 +863,7 @@ const FlowContent: React.FC = () => {
 
   // Function to save powers object to localStorage (similar to usePowers.ts)
   const savePowersToLocalStorage = React.useCallback((updatedPowers: Powers) => {
+    if (typeof window === 'undefined') return
     try {
       const localStore = localStorage.getItem("powersProtocols")
       const saved: Powers[] = localStore && localStore != "undefined" ? JSON.parse(localStore) : []

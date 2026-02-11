@@ -493,14 +493,13 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function labelRole(uint256 roleId, string memory label, string memory uri) external onlyPowers {
-        if (roleId == ADMIN_ROLE || roleId == PUBLIC_ROLE) revert Powers__LockedRole();
+    function labelRole(uint256 roleId, string memory label, string memory metadata) external onlyPowers {
         if (bytes(label).length == 0) revert Powers__InvalidLabel();
         if (bytes(label).length > 255) revert Powers__LabelTooLong();
-        if (bytes(uri).length > 255) revert Powers__UriTooLong();
-
+        if (bytes(metadata).length > 255) revert Powers__UriTooLong();
+        
         roles[roleId].label = label;
-        roles[roleId].uri = uri;
+        roles[roleId].metadata = metadata;
         emit RoleLabel(roleId, label);
     }
 
@@ -696,8 +695,8 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function getRoleUri(uint256 roleId) public view returns (string memory uri) {
-        return roles[roleId].uri;
+    function getRoleMetadata(uint256 roleId) public view returns (string memory metadata) {
+        return roles[roleId].metadata;
     }
 
     /// @inheritdoc IPowers
