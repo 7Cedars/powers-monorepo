@@ -351,6 +351,9 @@ contract CulturalStewardsDAO is DeploySetup {
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
         // CREATE IDEAS DAO //   
+        inputParams = new string[](1);
+        inputParams[0] = "address Admin";
+
         // Members: Initiate Ideas sub-DAO creation
         mandateCount++;
         conditions.allowedRole = 1; // = Members
@@ -361,7 +364,7 @@ contract CulturalStewardsDAO is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate Ideas sub-DAO: Initiate creation of Ideas sub-DAO",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(),
+                config: abi.encode(inputParams),
                 conditions: conditions
             })
         );
@@ -380,8 +383,8 @@ contract CulturalStewardsDAO is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     address(ideasDaoFactory), // calling the ideas factory
-                    bytes4(keccak256("createPowers()")),
-                    abi.encode() //  
+                    bytes4(keccak256("createPowers(address)")),
+                    inputParams //  
                 ),
                 conditions: conditions
             })
@@ -400,7 +403,7 @@ contract CulturalStewardsDAO is DeploySetup {
                     address(primaryDAO), // target contract
                     IPowers.assignRole.selector, // function selector to call
                     abi.encode(4), // params before (role id 4 = Ideas sub-DAOs)
-                    abi.encode(), // dynamic params (the input params of the parent mandate)
+                    inputParams, // dynamic params (the input params of the parent mandate)
                     mandateCount - 1, // parent mandate id (the create Ideas sub-DAO mandate)
                     abi.encode() // no params after
                 ),
@@ -1802,8 +1805,8 @@ contract CulturalStewardsDAO is DeploySetup {
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiatsgf7h76uakvcgtk4mxug2ptsbbc7wrlfytkaxufjirmixpdr6u"); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Moderators", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiazvqzk3pfi6ymtxm4hs73skd7cyehwwawqbhe5z4ndkdprc5vyxy"); // For now uses the uri of auditors. 
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigtyqevb7k36goevp6qzc6we4svp2lgrat766yuek4c4uqwkkbzj4"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Moderators", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreih7dlv7qlbei3tbxazdkx4bzbjf2mpf656tr5v5uhmy5k4vtdcnqm"); // For now uses the uri of auditors. 
         calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Primary DAO", "");
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
@@ -2326,7 +2329,7 @@ contract CulturalStewardsDAO is DeploySetup {
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiatsgf7h76uakvcgtk4mxug2ptsbbc7wrlfytkaxufjirmixpdr6u"); 
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigtyqevb7k36goevp6qzc6we4svp2lgrat766yuek4c4uqwkkbzj4"); 
         calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Primary DAO", "");
         calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);

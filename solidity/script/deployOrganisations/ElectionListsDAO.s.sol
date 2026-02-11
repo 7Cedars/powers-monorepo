@@ -81,7 +81,7 @@ contract ElectionListsDAO is DeploySetup {
         }
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Voters", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib7oy747wpbil47yauxqdgcfpnxyyo5brqfptr5gbl6c4qbven6du"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Voters", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreias53gijbmn3cwu7kab6hfim7vopbr3vnx7gswhemeg7c55y3ylnq"); 
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegates", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjqthpltw7crvqm3omqplelatqt6yd52qgwlret7nl4jptlfjhq"); // .
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 

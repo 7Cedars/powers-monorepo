@@ -72,24 +72,3 @@ The governance system uses an **Optimistic Execution with Veto** model for daily
 3.  **Elections**: Executives serve at the pleasure of the Members and are elected through a transparent on-chain process.
 4.  **Reform**: The constitution (set of mandates) can only be changed by a supermajority of Members.
 
-## Governance Flow Diagrams
-
-### Registry Update Flow
-
-```mermaid
-graph TD
-    A[Executive Proposes Action] -->|Wait 5 Days| B{Vetoed by Members?}
-    B -- Yes --> C[Action Blocked]
-    B -- No --> D[Executive Executes Action]
-    D --> E[Registry Updated]
-```
-
-### Election Flow
-
-```mermaid
-graph TD
-    A[Member Self-Nominates] --> B[Election Started]
-    B --> C[Members Vote]
-    C --> D[Tally & Assign Roles]
-    D --> E[Cleanup]
-```

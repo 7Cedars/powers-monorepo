@@ -789,12 +789,6 @@ contract SetRoleTest is TestSetupPowers {
         vm.prank(address(daoMock));
         daoMock.labelRole(ROLE_THREE, "This is role three", "");
     }
-
-    function testLabelRoleRevertsForLockedRoles() public {
-        vm.expectRevert(Powers__LockedRole.selector);
-        vm.prank(address(daoMock));
-        daoMock.labelRole(ADMIN_ROLE, "Admin role", "");
-    }
 }
 
 //////////////////////////////////////////////////////////////

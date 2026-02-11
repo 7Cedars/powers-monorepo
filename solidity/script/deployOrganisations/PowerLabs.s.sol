@@ -113,9 +113,9 @@ contract PowerLabs is DeploySetup {
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiflc53da4vs2oaevcr6thdio5tlj4bqvstoubofonnz4owqbnlcde"); // label role 1 as Funders, no URI for simplicity.
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", ""); // label role 2 as Doc Contributors, no URI for simplicity.
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", ""); // label role 3 as Frontend Contributors, no URI for simplicity.
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny"); // label role 2 as Doc Contributors, no URI for simplicity.
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny"); // label role 3 as Frontend Contributors, no URI for simplicity.
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny");
         calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
         calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke this mandate after execution
 
@@ -617,9 +617,9 @@ contract PowerLabs is DeploySetup {
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiflc53da4vs2oaevcr6thdio5tlj4bqvstoubofonnz4owqbnlcde");  
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", ""); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", "");
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny");
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny");
         calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
         calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 

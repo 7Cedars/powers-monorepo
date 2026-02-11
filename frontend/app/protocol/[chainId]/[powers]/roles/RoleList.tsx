@@ -19,7 +19,6 @@ export function RoleList({powers}: RoleListProps) {
 
   const roles = powers?.roles
 
-  console.log("@RoleList:", {roles, powers})
 
   return (
     <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden">

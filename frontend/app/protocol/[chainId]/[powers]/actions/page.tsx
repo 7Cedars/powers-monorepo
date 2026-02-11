@@ -8,10 +8,6 @@ import { usePowersStore } from "@/context/store";
 export default function Page() { 
   const powers = usePowersStore(); 
 
-  useEffect(() => {
-    console.log("@Actions page: waypoint 0", {powers})
-  }, [powers])
-
   return (
     <main className="w-full h-fit flex flex-col justify-start items-center pb-20 pt-16 ps-4">
       <div className="w-full flex flex-row justify-between items-end gap-4 mb-2">

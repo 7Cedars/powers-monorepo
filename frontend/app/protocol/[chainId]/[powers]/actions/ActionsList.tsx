@@ -18,9 +18,7 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
   const [ deselectedStatus, setDeselectedStatus] = useState<string[]>([])
   const allActions = powers?.mandates && powers?.mandates?.length > 0 ? powers?.mandates?.flatMap(mandate => mandate.actions) : []
   const mandates = powers?.mandates && powers?.mandates?.length > 0 ? powers?.mandates : []
-
-  console.log("@ActionsList:", {allActions, powers})
-
+ 
   useEffect(() => {
     if (allActions) {
       fetchTimestamps(allActions.flatMap(action => [action?.requestedAt, action?.proposedAt, action?.fulfilledAt, action?.cancelledAt].filter((timestamp): timestamp is bigint => timestamp !== undefined && timestamp !== null)), chainId)

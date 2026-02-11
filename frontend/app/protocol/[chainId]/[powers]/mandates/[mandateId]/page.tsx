@@ -71,10 +71,7 @@ const Page = () => {
       const isDifferentContent = !isDifferentLength && actionDataTypes.some((type, index) => type !== mandateDataTypes[index]);
       const shouldReset = isDifferentLength || isDifferentContent;
       
-      console.log("useEffect triggered at Mandate page:", {shouldReset, action, mandate})
-      
-      if (shouldReset) {
-        console.log("useEffect triggered at Mandate page, action.dataTypes != dataTypes")
+      if (shouldReset) { 
         setAction({
           mandateId: mandate.index,
           dataTypes: mandateDataTypes,
@@ -83,8 +80,7 @@ const Page = () => {
           callData: '0x0',
           upToDate: false
         })
-      } else {
-        console.log("useEffect triggered at Mandate page, action.dataTypes == dataTypes")
+      } else { 
         setAction({
           ...action,  
           mandateId: mandate.index,
