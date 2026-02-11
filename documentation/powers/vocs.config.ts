@@ -307,6 +307,10 @@ export default defineConfig({
           text: 'Cultural Stewards DAO', 
           link: '/organisations/culturalStewardshipDao', 
         }, 
+        { 
+          text: 'ERC-721C Registry Governance', 
+          link: '/organisations/ERC721CRegistryGovernance', 
+        }, 
       ], 
     }, 
   ],
