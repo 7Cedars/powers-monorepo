@@ -102,27 +102,22 @@ contract PowerLabs is DeploySetup {
         delete conditions;
 
         // Mandate 2: Configure Organisation (Role Labels)
-        targets = new address[](6);
-        values = new uint256[](6);
-        calldatas = new bytes[](6);
+        targets = new address[](8);
+        values = new uint256[](8);
+        calldatas = new bytes[](8);
 
-        // Roles: 1=Funders, 2=Doc, 3=Frontend, 4=Protocol, 5=Members
-        // Note: TS does not explicitly list role IDs in labeling mandate, but "Apply for Member Role" uses 1,2,3,4 to get 5.
-        // And "Apply for Contributor Role" gives 2,3,4.
-        // So I'll assume standard IDs.
-        targets[0] = address(powersParent);
-        targets[1] = address(powersParent);
-        targets[2] = address(powersParent);
-        targets[3] = address(powersParent);
-        targets[4] = address(powersParent);
-        targets[5] = address(powersParent);
+        for (uint256 i = 0; i < targets.length; i++) {
+            targets[i] = address(powersParent);
+        }
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors");
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members");
-        calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke this mandate after execution
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiflc53da4vs2oaevcr6thdio5tlj4bqvstoubofonnz4owqbnlcde"); // label role 1 as Funders, no URI for simplicity.
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny"); // label role 2 as Doc Contributors, no URI for simplicity.
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny"); // label role 3 as Frontend Contributors, no URI for simplicity.
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny");
+        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke this mandate after execution
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin
@@ -613,19 +608,20 @@ contract PowerLabs is DeploySetup {
     {
         uint16 mandateCount = 0;
         // Mandate 1: Initial Setup
-        targets = new address[](6);
-        values = new uint256[](6);
-        calldatas = new bytes[](6);
-        for (uint256 i = 0; i < 6; i++) {
+        targets = new address[](8);
+        values = new uint256[](8);
+        calldatas = new bytes[](8);
+        for (uint256 i = 0; i < 8; i++) {
             targets[i] = address(powersChild);
         }
-
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors");
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members");
-        calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Funders", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiflc53da4vs2oaevcr6thdio5tlj4bqvstoubofonnz4owqbnlcde");  
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Doc Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Frontend Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny");
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Protocol Contributors", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihgo2lf6xdfzmzeaanus7vt63zzeptmlhpuk5figh5lligb5wrwny");
+        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin

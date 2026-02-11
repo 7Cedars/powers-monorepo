@@ -147,7 +147,7 @@ contract MandateBasicTest is TestSetupMandate {
         values[0] = 0;
 
         calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(daoMock.labelRole.selector, ROLE_ONE, "Member");
+        calldatas[0] = abi.encodeWithSelector(daoMock.labelRole.selector, ROLE_ONE, "Member", "");
 
         vm.prank(address(daoMock));
         daoMock.adoptMandate(

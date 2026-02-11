@@ -59,6 +59,7 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
                     ?.filter(mandate => mandate.conditions?.allowedRole != undefined && !deselectedRoles?.includes(BigInt(`${mandate.conditions?.allowedRole}`)))
                     ?.map((mandate: Mandate, i) => {
                       const roleName = mandate.conditions?.allowedRole != undefined ? bigintToRole(mandate.conditions?.allowedRole, powers as Powers) : "-";
+                      const roleId = mandate.conditions?.allowedRole != undefined ? BigInt(mandate.conditions?.allowedRole) : "";
                       const numHolders = "-"; // You can add actual holder count if available
                       
                       return (
@@ -71,6 +72,7 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
                             <HeaderMandateSmall
                               powers={powers as Powers}
                               mandateName={mandate.nameDescription || `Mandate #${mandate.index}`}
+                              roleId={roleId}
                               roleName={roleName}
                               numHolders={numHolders}
                               contractAddress={mandate.mandateAddress || ""}

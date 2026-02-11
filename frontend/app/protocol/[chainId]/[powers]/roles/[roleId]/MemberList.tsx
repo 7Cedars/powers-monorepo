@@ -17,7 +17,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
   const [error, setError] = useState<Error | null>(null)
   const [members, setMembers] = useState<`0x${string}`[]>([])
 
-  console.log("@MemberList: ", {powers, roleId, status, error, chainId})
+  // console.log("@MemberList: ", {powers, roleId, status, error, chainId})
   const blockExplorerUrl = chains.find(chain => chain.id === parseInt(chainId))?.blockExplorers?.default.url;
 
   const fetchRoleHolders = useCallback(
@@ -43,7 +43,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
           }
           
           const amount = Number(amountResult.result)
-          console.log("@fetchRoleHolders amount: ", {amount})
+          // console.log("@fetchRoleHolders amount: ", {amount})
           
           if (amount === 0) {
             setMembers([])
@@ -69,7 +69,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
             .filter(result => result.status === 'success')
             .map(result => result.result as `0x${string}`)
           
-          console.log("@fetchRoleHolders members: ", {fetchedMembers})
+          // console.log("@fetchRoleHolders members: ", {fetchedMembers})
           setMembers(fetchedMembers)
           setStatus("success")
         } catch (error) {

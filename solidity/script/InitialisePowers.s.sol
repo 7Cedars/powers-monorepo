@@ -60,6 +60,7 @@ import { SafeAllowance_Action } from "@src/mandates/integrations/SafeAllowance_A
 import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory_AssignRole.sol";
 import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory_AddSafeDelegate.sol";
 import { Soulbound1155_GatedAccess } from "@src/mandates/integrations/Soulbound1155_GatedAccess.sol";
+import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721_GatedAccess.sol";
 import { Soulbound1155_MintEncodedToken } from "@src/mandates/integrations/Soulbound1155_MintEncodedToken.sol";
 import { Safe_ExecTransaction_OnReturnValue } from "@src/mandates/integrations/Safe_ExecTransaction_OnReturnValue.sol";
 import { ElectionList_Nominate } from "@src/mandates/integrations/ElectionList_Nominate.sol";
@@ -317,6 +318,10 @@ contract InitialisePowers is Script {
         names.push("Soulbound1155_GatedAccess");
         creationCodes.push(type(Soulbound1155_GatedAccess).creationCode);
         constructorArgs.push(abi.encode("Soulbound1155_GatedAccess"));
+
+        names.push("ERC721_GatedAccess");
+        creationCodes.push(type(ERC721_GatedAccess).creationCode);
+        constructorArgs.push(abi.encode("ERC721_GatedAccess"));
 
         names.push("Soulbound1155_MintEncodedToken");
         creationCodes.push(type(Soulbound1155_MintEncodedToken).creationCode);

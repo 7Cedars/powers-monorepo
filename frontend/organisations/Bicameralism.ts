@@ -84,18 +84,28 @@ export const Bicameralism: Organization = {
           { name: 'calldatas', type: 'bytes[]' }
         ],
         [
-          [ powersAddress, powersAddress,  powersAddress ],
-          [0n, 0n, 0n],
+          [ powersAddress, powersAddress, powersAddress, powersAddress, powersAddress ],
+          [0n, 0n, 0n, 0n, 0n],
           [
             encodeFunctionData({
               abi: powersAbi,
               functionName: "labelRole",
-              args: [1n, "Delegates"]
+              args: [0n, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q"]
+            }),
+            encodeFunctionData({
+              abi: powersAbi,
+              functionName: "labelRole",
+              args: [PUBLIC_ROLE, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"]
+            }),
+            encodeFunctionData({
+              abi: powersAbi,
+              functionName: "labelRole",
+              args: [1n, "Delegates", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjqthpltw7crvqm3omqplelatqt6yd52qgwlret7nl4jptlfjhq"]
             }),
             encodeFunctionData({
               abi: powersAbi,
               functionName: "labelRole",  
-              args: [2n, "Funders"]
+              args: [2n, "Funders", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiflc53da4vs2oaevcr6thdio5tlj4bqvstoubofonnz4owqbnlcde"]
             }),
             encodeFunctionData({
               abi: powersAbi,

@@ -84,18 +84,28 @@ export const OptimisticExecution: Organization = {
           { name: 'calldatas', type: 'bytes[]' }
         ],
         [
-          [ powersAddress, powersAddress,  powersAddress ],
-          [0n, 0n, 0n],
+          [ powersAddress, powersAddress, powersAddress, powersAddress, powersAddress ],
+          [0n, 0n, 0n, 0n, 0n],
           [
             encodeFunctionData({
               abi: powersAbi,
               functionName: "labelRole",
-              args: [1n, "Members"]
+              args: [0n, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q"]
+            }),
+            encodeFunctionData({
+              abi: powersAbi,
+              functionName: "labelRole",
+              args: [PUBLIC_ROLE, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"]
+            }),
+            encodeFunctionData({
+              abi: powersAbi,
+              functionName: "labelRole",
+              args: [1n, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy"]
             }),
             encodeFunctionData({
               abi: powersAbi,
               functionName: "labelRole",  
-              args: [2n, "Executives"]
+              args: [2n, "Executives", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifke7bfkxxs45unssm6hdr6s6464yrkwds3nw3jkn74cblf5oziea"]
             }),
             encodeFunctionData({
               abi: powersAbi,

@@ -9,7 +9,7 @@
                                                       
 */
 /// @title Powers Protocol v.0.4
-/// @notice Powers is a Role Based Governance Protocol. It provides a modular, flexible,  DAOs.
+/// @notice Institutional governance for on-chain communities. 
 ///
 /// @dev This contract is the core engine of the protocol. It is meant to be used in combination with implementations of {Mandate.sol}. The contract should be used as is, making changes to this contract should be avoided.
 /// @dev Code is derived from OpenZeppelin's Governor.sol and AccessManager contracts, in addition to Haberdasher Labs Hats protocol.
@@ -18,11 +18,11 @@
 /// Note several key differences from openzeppelin's {Governor.sol}.
 /// 1 - Any DAO action needs to be encoded in role restricted external contracts, or mandates, that follow the {IMandate} interface.
 /// 2 - Proposing, voting, cancelling and executing actions are role restricted along the target mandate that is called.
-/// 3 - All DAO actions need to run through the governance flow provided by Powers.sol. Calls to mandates that do not need a proposedAction vote, FOR instance, still need to be executed through the {execute} function.
+/// 3 - All DAO actions need to run through the governance flow provided by Powers.sol. Calls to mandates that do not need a proposedAction vote, for instance, still need to be executed through the {execute} function.
 /// 4 - The core protocol uses a non-weighted voting mechanism: one account has one vote. Accounts vote with their roles, not with their tokens.
 /// 5 - The core protocol is intentionally minimalistic. Any complexities (multi-chain governance, oracle based governance, timelocks, delayed execution, guardian roles, weighted votes, staking, etc.) has to be integrated through mandates.
 ///
-/// For example organisational implementations, see testConstitutions.sol in the /test folder.
+/// For example organisational implementations, see the script/deployOrganisations folder.
 ///
 /// Note This protocol is a work in progress. A number of features are planned to be added in the future.
 /// - Gas efficiency improvements.
@@ -282,7 +282,15 @@ contract Powers is EIP712, IPowers, Context {
 
             (bool success, bytes memory returndata) = targets[i].call{ value: values[i] }(calldatas[i]);
             if (!success) {
-                revert Powers__MandateFulfillCallFailed();
+                // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
+                if (returndata.length > 0) {
+                    assembly {
+                        let returndata_size := mload(returndata)
+                        revert(add(32, returndata), returndata_size)
+                    }
+                } else {
+                    revert Powers__MandateFulfillCallFailed();
+                }
             }
             if (returndata.length <= MAX_RETURN_DATA_LENGTH) {
                 action.returnDatas.push(returndata);
@@ -493,6 +501,18 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
+    function labelRole(uint256 roleId, string memory label, string memory metadata) external onlyPowers {
+        if (bytes(label).length == 0) revert Powers__InvalidLabel();
+        if (bytes(label).length > 255) revert Powers__LabelTooLong();
+        if (bytes(metadata).length > 255) revert Powers__UriTooLong();
+        
+        roles[roleId].label = label;
+        roles[roleId].metadata = metadata;
+        emit RoleLabel(roleId, label);
+    }
+
+
+    /// @inheritdoc IPowers
     function assignRole(uint256 roleId, address account) external onlyPowers {
         if (isBlacklisted(account)) revert Powers__AddressBlacklisted();
 
@@ -502,16 +522,6 @@ contract Powers is EIP712, IPowers, Context {
     /// @inheritdoc IPowers
     function revokeRole(uint256 roleId, address account) external onlyPowers {
         _setRole(roleId, account, false);
-    }
-
-    /// @inheritdoc IPowers
-    function labelRole(uint256 roleId, string memory label) external onlyPowers {
-        if (roleId == ADMIN_ROLE || roleId == PUBLIC_ROLE) revert Powers__LockedRole();
-        if (bytes(label).length == 0) revert Powers__InvalidLabel();
-        if (bytes(label).length > 255) revert Powers__LabelTooLong();
-
-        roles[roleId].label = label;
-        emit RoleLabel(roleId, label);
     }
 
     /// @notice Internal version of {setRole} without access control.
@@ -554,6 +564,7 @@ contract Powers is EIP712, IPowers, Context {
 
         emit RoleSet(roleId, account, access);
     }
+
 
     /// @inheritdoc IPowers
     function blacklistAddress(address account, bool blacklisted) external onlyPowers {
@@ -689,6 +700,11 @@ contract Powers is EIP712, IPowers, Context {
     /// @inheritdoc IPowers
     function getRoleLabel(uint256 roleId) public view returns (string memory label) {
         return roles[roleId].label;
+    }
+
+    /// @inheritdoc IPowers
+    function getRoleMetadata(uint256 roleId) public view returns (string memory metadata) {
+        return roles[roleId].metadata;
     }
 
     /// @inheritdoc IPowers

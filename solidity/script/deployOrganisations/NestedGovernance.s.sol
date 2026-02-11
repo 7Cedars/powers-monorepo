@@ -10,6 +10,9 @@ import { DeploySetup } from "./DeploySetup.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { SafeProxyFactory } from "lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
+import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
+import { ModuleManager } from "lib/safe-smart-account/contracts/base/ModuleManager.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -17,7 +20,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
+import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 
 /// @title Nested Governance Deployment Script
 contract NestedGovernance is DeploySetup {
@@ -26,17 +29,19 @@ contract NestedGovernance is DeploySetup {
     Configurations.NetworkConfig public config;
 
     PowersTypes.Conditions conditions;
-    PowersTypes.MandateInitData[] primaryConstitution;
+    PowersTypes.MandateInitData[] parentConstitution;
     PowersTypes.MandateInitData[] childConstitution;
     Powers powersParent;
-    Powers powersChild;
-    SimpleErc20Votes votesToken;
-
+    PowersFactory powersChildFactory;
+    
+    address treasury;
     address[] targets;
     uint256[] values;
     bytes[] calldatas;
     string[] inputParams;
     string[] dynamicParams;
+
+    uint16 requestAllowanceMandateId; 
 
     function run() external {
         // step 0, setup.
@@ -45,67 +50,129 @@ contract NestedGovernance is DeploySetup {
         helperConfig = new Configurations();
         config = helperConfig.getConfig();
 
-        // step 1: deploy Bicameralism Powers
+        // step 1: deploy Parent Powers
         vm.startBroadcast();
-        votesToken = new SimpleErc20Votes(); // SimpleErc20Votes
         powersParent = new Powers(
-            "Nested Governance", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreian4g4wbuollclyml5xyao3hvnbxxduuoyjdiucdmau3t62rj46am", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
-        );
-
-        powersChild = new Powers(
-            "Nested Governance Child", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreig4aaje57wiv3rfboadft5pp2kgwzfurwgbjwleugc3ddbnjlc6um", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            "Nested Governance Parent", 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreian4g4wbuollclyml5xyao3hvnbxxduuoyjdiucdmau3t62rj46am", 
+            config.maxCallDataLength,
+            config.maxReturnDataLength,
+            config.maxExecutionsLength
         );
         vm.stopBroadcast();
         console2.log("Powers Parent deployed at:", address(powersParent));
-        console2.log("Powers Child deployed at:", address(powersChild));
+        
 
-        // step 2: create constitution
-        uint256 primaryConstitutionLength = createPrimaryConstitution();
-        console2.log("Parent Constitution created with length:");
-        console2.logUint(primaryConstitutionLength);
-
-        // Mandate 3 in Parent is "Allow Child to mint vote tokens"
-        uint256 childConstitutionLength = createChildConstitution(address(powersParent), 3);
-        console2.log("Child Constitution created with length:");
-        console2.logUint(childConstitutionLength);
-
-        // step 3: run constitute.
+        // step 2: deploy Child PowersFactory
         vm.startBroadcast();
-        powersParent.constitute(primaryConstitution);
-        powersParent.closeConstitute();
-        powersChild.constitute(childConstitution);
-        powersChild.closeConstitute();
+        powersChildFactory = new PowersFactory(
+            "Nested Governance Child",
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreig4aaje57wiv3rfboadft5pp2kgwzfurwgbjwleugc3ddbnjlc6um", 
+            config.maxCallDataLength,
+            config.maxReturnDataLength,
+            config.maxExecutionsLength
+        );
         vm.stopBroadcast();
-        console2.log("Parent and Child Powers successfully constituted.");
+        console2.log("Powers Child Factory deployed at:", address(powersChildFactory));
+
+        // step 3: setup Safe treasury for Parent
+        address[] memory owners = new address[](1);
+        owners[0] = address(powersParent);
+
+        vm.startBroadcast();
+        treasury = address(
+            SafeProxyFactory(config.safeProxyFactory)
+                .createProxyWithNonce(
+                    config.safeL2Canonical,
+                    abi.encodeWithSelector(
+                        Safe.setup.selector,
+                        owners,
+                        1, // threshold
+                        address(0), // to
+                        "", // data
+                        address(0), // fallbackHandler
+                        address(0), // paymentToken
+                        0, // payment
+                        address(0) // paymentReceiver
+                    ),
+                    block.timestamp // nonce using timestamp to ensure uniqueness
+                )
+        );
+        vm.stopBroadcast();
+        console2.log("Safe treasury deployed at:", treasury);
+
+        // step 4: create constitutions
+        createParentConstitution();
+        console2.log("Number of Mandates:", parentConstitution.length);
+        createChildConstitution();
+        console2.log("Number of Mandates in Child Factory:", childConstitution.length);
+
+        // step 5: add mandates to factory
+        vm.startBroadcast();
+        powersChildFactory.addMandates(childConstitution);
+        vm.stopBroadcast();
+
+        // step 6: constitute Parent
+        vm.startBroadcast();
+        powersParent.constitute(parentConstitution);
+        powersParent.closeConstitute();
+        vm.stopBroadcast();
+        console2.log("Parent Powers constituted.");
+
+        // step 7: transfer ownership of factory to parent
+        vm.startBroadcast();
+        powersChildFactory.transferOwnership(address(powersParent));
+        vm.stopBroadcast();
+        console2.log("Child Factory ownership transferred to Parent.");
     }
 
-    function createPrimaryConstitution() internal returns (uint256 constitutionLength) {
+    function createParentConstitution() internal {
         uint16 mandateCount = 0;
-        // Mandate 1: Initial Setup
-        targets = new address[](3);
-        values = new uint256[](3);
-        calldatas = new bytes[](3);
-        targets[0] = address(powersParent);
-        targets[1] = address(powersParent);
-        targets[2] = address(powersParent);
+        
+        // signature for Safe module enabling call
+        bytes memory signature = abi.encodePacked(
+            uint256(uint160(address(powersParent))), // r = address of the signer (powers contract)
+            uint256(0), // s = 0
+            uint8(1) // v = 1 This is a type 1 call. See Safe.sol for details.
+        );
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
-        calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powersParent));
-        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+        // Mandate 1: Setup
+        targets = new address[](7);
+        values = new uint256[](7);
+        calldatas = new bytes[](7); 
+        for (uint256 i = 0; i < targets.length; i++) {
+            targets[i] = address(powersParent);
+        }
+        targets[5] = treasury; 
+
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Executive", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Child", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibgdw6nknrwg25sdbslhqn3ismroaoxhl5pdcrvintz7jncja6f4a");
+        calldatas[4] = abi.encodeWithSelector(IPowers.setTreasury.selector, treasury);
+        calldatas[5] = abi.encodeWithSelector( 
+            Safe.execTransaction.selector,
+            treasury, 
+            0, 
+            abi.encodeWithSelector( 
+                ModuleManager.enableModule.selector,
+                config.safeAllowanceModule
+            ),
+            0, // operation = Call
+            0, // safeTxGas
+            0, // baseGas
+            0, // gasPrice
+            address(0), // gasToken
+            address(0), // refundReceiver
+            signature // the signature constructed above
+        );
+        calldatas[6] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin
-        primaryConstitution.push(
+        parentConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Initial Setup: Assign role labels (Members), set treasury address and revokes itself after execution",
+                nameDescription: "Initial Setup: Assign role labels, set treasury and enable allowance module.",
                 targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
@@ -113,51 +180,148 @@ contract NestedGovernance is DeploySetup {
         );
         delete conditions;
 
-        // Mandate 2: Update URI
-        dynamicParams = new string[](1);
-        dynamicParams[0] = "string Uri";
+
+        // Mandate: Child can request allowance
+        inputParams = new string[](5);
+        inputParams[0] = "address Sub-DAO";
+        inputParams[1] = "address Token";
+        inputParams[2] = "uint96 allowanceAmount";
+        inputParams[3] = "uint16 resetTimeMin";
+        inputParams[4] = "uint32 resetBaseMin";
 
         mandateCount++;
-        conditions.allowedRole = 0; // Admin
-        primaryConstitution.push(
+        conditions.allowedRole = 2; // Child
+        parentConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Update URI: The admin can update the organization's URI.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powersParent), IPowers.setUri.selector, dynamicParams),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // Mandate 3: Allow Child to mint vote tokens (StatementOfIntent)
-        inputParams = new string[](1);
-        inputParams[0] = "uint256 Quantity";
-
-        mandateCount++;
-        conditions.allowedRole = 1; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // ~5 mins
-        conditions.succeedAt = 51;
-        conditions.quorum = 33;
-        primaryConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Allow Child to mint vote tokens: The parent organisation allows the child organisation to mint vote tokens.",
+                nameDescription: "Request Allowance: Child DAO can request allowance.",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
         );
         delete conditions;
+        requestAllowanceMandateId = mandateCount;
 
-        // Mandate 4: Admin can assign any role
+        // Mandate: Executive can set allowance (fulfilling request)
+        mandateCount++;
+        conditions.allowedRole = 1; // Executive
+        conditions.needFulfilled = mandateCount - 1; // Need request
+        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
+            conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+            conditions.succeedAt = 51; // >50% to pass
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Set Allowance: Executive can set allowance for Child DAO.",
+                targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Action"),
+                config: abi.encode(
+                    inputParams,
+                    bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector 
+                    config.safeAllowanceModule
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Initiate Child DAO Creation
+        inputParams = new string[](1);
+        inputParams[0] = "address Admin";
+
+        // Mandate: Create Child DAO
+        mandateCount++;
+        conditions.allowedRole = 1; // Executive 
+        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.succeedAt = 51; // >50% to pass
+        conditions.quorum = 20; // 20% quorum for voting on Parent to create child
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Create Child DAO: Executive can execute creation of Child DAO.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(
+                    address(powersChildFactory), 
+                    bytes4(keccak256("createPowers(address)")), 
+                    inputParams
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Assign Child Role to new DAO
+        mandateCount++;
+        conditions.allowedRole = 1; // Executive
+        conditions.needFulfilled = mandateCount - 1; // Need creation
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Assign Child Role: Assign Child role (2) to the new DAO.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                config: abi.encode(
+                    address(powersParent), 
+                    IPowers.assignRole.selector, 
+                    abi.encode(2), // roleId 2 (Child)
+                    inputParams, 
+                    mandateCount - 1, // parent mandate id (create child)
+                    abi.encode() 
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Add Delegate to Allowance Module
+        mandateCount++;
+        conditions.allowedRole = 1; // Executive
+        conditions.needFulfilled = mandateCount - 2; // Need creation (to get address)
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Add Delegate: Add new Child DAO as delegate to Allowance Module.",
+                targetMandate: initialisePowers.getInitialisedAddress("Safe_ExecTransaction_OnReturnValue"),
+                config: abi.encode(
+                    config.safeAllowanceModule, 
+                    bytes4(0xe71bdf41), // == AllowanceModule.addDelegate.selector
+                    abi.encode(), 
+                    inputParams, 
+                    mandateCount - 2, // parent mandate id (create child)
+                    abi.encode() 
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Veto Transfer at Child DAO level  
+        inputParams = new string[](3);
+        inputParams[0] = "address Token";
+        inputParams[1] = "uint96 Amount";
+        inputParams[2] = "address PayableTo"; 
+
+        mandateCount++;
+        conditions.allowedRole = 1; // Members
+        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
+        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.succeedAt = 51; // >50% to pass
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Veto Transfer at Child: A parent organisation can veto a transfer at a child.",
+                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Flexible"),
+                config: abi.encode(inputParams),
+                conditions: conditions
+            })  
+        );
+        delete conditions;
+
+        // ELECTORAL MANDATES // 
+
+        // Mandate: Admin can assign any role
         dynamicParams = new string[](2);
         dynamicParams[0] = "uint256 roleId";
         dynamicParams[1] = "address account";
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin
-        primaryConstitution.push(
+        parentConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
+                nameDescription: "Admin can assign any role: The admin can assign any role to an account.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(address(powersParent), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
@@ -165,117 +329,155 @@ contract NestedGovernance is DeploySetup {
         );
         delete conditions;
 
-        // Mandate 5: A delegate can revoke a role
+        // Mandate: Executive can revoke role
         mandateCount++;
-        conditions.allowedRole = 2; // Role 2 (Delegates presumed)
-        conditions.needFulfilled = mandateCount - 1; // Mandate 4
-        primaryConstitution.push(
+        conditions.allowedRole = 1; // Executive
+        conditions.needFulfilled = mandateCount - 1; // Need admin assignment
+        parentConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powersParent), IPowers.revokeRole.selector, dynamicParams),
+                nameDescription: "Executive can revoke role: Executive can revoke a role.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                config: abi.encode(IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        return primaryConstitution.length;
     }
 
-    function createChildConstitution(address parent, uint16 mintMandateId)
-        internal
-        returns (uint256 constitutionLength)
-    {
+    function createChildConstitution() internal {
         uint16 mandateCount = 0;
-        // Mandate 1: Initial Setup
-        targets = new address[](3);
-        values = new uint256[](3);
-        calldatas = new bytes[](3);
-        targets[0] = address(powersChild);
-        targets[1] = address(powersChild);
-        targets[2] = address(powersChild);
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members");
-        calldatas[1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powersChild));
-        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+        // Mandate 1: Setup
+        calldatas = new bytes[](6);
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Parent DAO", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifwvrlo3jsu2i4trkgfu4vy6v5tk2y5iiu5hf3d6fez34d43y5yn4");
+        calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, address(powersParent)); // No treasury for child, but could be set to own Safe if desired
+        calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;
-        conditions.allowedRole = 0; // Admin
+        conditions.allowedRole = 0; // Admin (Factory sets this)
         childConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Initial Setup: Assign role labels (Members), set treasury address and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
-                config: abi.encode(targets, values, calldatas),
+                nameDescription: "Initial Setup: Assign role labels and revoke self.",
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_OnOwnPowers"),
+                config: abi.encode(calldatas),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 2: Update URI
-        dynamicParams = new string[](1);
-        dynamicParams[0] = "string Uri";
-
-        mandateCount++;
-        conditions.allowedRole = 0; // Admin
-        childConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Update URI: The admin can update the organization's URI.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powersChild), IPowers.setUri.selector, dynamicParams),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // Mandate 3: Check Parent
-        inputParams = new string[](1);
-        inputParams[0] = "uint256 Quantity";
+        // Mandate 4: Public Request Transfer
+        inputParams = new string[](3);
+        inputParams[0] = "address Token";
+        inputParams[1] = "uint256 Amount";
+        inputParams[2] = "address PayableTo";
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // Public
         childConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Check Parent: Check if parent has passed action to mint tokens.",
-                targetMandate: initialisePowers.getInitialisedAddress("CheckExternalActionState"),
-                config: abi.encode(parent, mintMandateId, inputParams),
+                nameDescription: "Request Transfer: Public can request transfer of funds from Parent Treasury.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(inputParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 4: Mint Tokens
+        // Mandate 5: Parent DAO Veto Transfer
+        mandateCount++;
+        conditions.allowedRole = 2; // Parent DAO
+        conditions.needFulfilled = mandateCount - 1; // Need request
+        childConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Veto Transfer: Parent DAO can veto transfer.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(inputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 6: Members Execute Transfer
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.needFulfilled = mandateCount - 1; // Check Parent
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // ~5 mins
+        conditions.needFulfilled = mandateCount - 2; // Need request (4)
+        conditions.needNotFulfilled = mandateCount - 1; // Need NO veto (5)
+        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
         conditions.succeedAt = 51;
-        conditions.quorum = 33;
         childConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Mint Tokens: Call the mint function at token.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(votesToken), bytes4(keccak256("mint(uint256)")), inputParams),
+                nameDescription: "Execute Transfer: Members vote to execute transfer from Parent Treasury.",
+                targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Transfer"),
+                config: abi.encode(config.safeAllowanceModule, treasury), // Treasury is Parent's treasury
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 5: Sync Member status (Adopt Role)
+        // Mandate 7: Request Additional Allowance from Parent
+        inputParams = new string[](5);
+        inputParams[0] = "address Sub-DAO";
+        inputParams[1] = "address Token";
+        inputParams[2] = "uint96 allowanceAmount";
+        inputParams[3] = "uint16 resetTimeMin";
+        inputParams[4] = "uint32 resetBaseMin";
+
         mandateCount++;
-        conditions.allowedRole = type(uint256).max; // Public
+        conditions.allowedRole = 1; // Members
+        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
+        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.succeedAt = 51; // >50% to pass
         childConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Sync Member status: An account that has role Member at the parent organization can be assigned the same role here - and visa versa.",
-                targetMandate: initialisePowers.getInitialisedAddress("AssignExternalRole"),
+                nameDescription: "Request Additional Allowance: Members can request additional allowance from Parent.",
+                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
                 config: abi.encode(
-                    parent,
-                    1 // roleId (Members)
+                    address(powersParent),
+                    requestAllowanceMandateId, // ID from Parent Constitution
+                    "Requesting allowance from Parent",
+                    inputParams
                 ),
                 conditions: conditions
             })
         );
         delete conditions;
+        
 
-        return childConstitution.length;
+        // ELECTORAL MANDATES //
+        // Mandate 2: Admin can assign any role
+        dynamicParams = new string[](2);
+        dynamicParams[0] = "uint256 roleId";
+        dynamicParams[1] = "address account";
+
+        mandateCount++;
+        conditions.allowedRole = 0; // Admin
+        childConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Admin can assign any role: The admin can assign any role to an account.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                config: abi.encode(IPowers.assignRole.selector, dynamicParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 3: Members can revoke role
+        mandateCount++;
+        conditions.allowedRole = 1; // Members
+        conditions.needFulfilled = mandateCount - 1; // Need admin assignment
+        childConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Members can revoke role: Members can revoke a role.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                config: abi.encode(IPowers.revokeRole.selector, dynamicParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
     }
 }

@@ -13,6 +13,7 @@ export const usePowers = () => {
 
   // function to save powers to local storage
   const savePowers = (powers: Powers) => {
+    if (typeof window === 'undefined') return
     // console.log("@savePowers, waypoint 0", {powers})
     const localStore = localStorage.getItem("powersProtocols")
     // console.log("@savePowers, waypoint 1", {localStore})
@@ -213,43 +214,79 @@ export const usePowers = () => {
   const fetchRoles = async (mandates: Mandate[]): Promise<Role[] | undefined> => {
     const rolesIds = new Set(mandates.filter((mandate) => mandate.active).flatMap((mandate) => mandate.conditions?.allowedRole) || [])
  
-    let updatedRoleLabels: Role[] = []
-
     if (rolesIds.size > 0) {
-    try {
-      // Build a multicall to fetch labels and holder counts for all roles
-      const contracts = Array.from(rolesIds).flatMap((roleId) => ([
-        {
-          abi: powersAbi,
-          address: mandates[0].powers as `0x${string}`,
-          functionName: 'getRoleLabel' as const,
-          args: [roleId] as [bigint],
-          chainId: parseChainId(chainId)
-        },
-        {
-          abi: powersAbi,
-          address: mandates[0].powers as `0x${string}`,
-          functionName: 'getAmountRoleHolders' as const,
-          args: [roleId] as [bigint],
-          chainId: parseChainId(chainId)
-        }
-      ]))
+      try {
+        // Build a multicall to fetch labels, uris and holder counts for all roles
+        const contracts = Array.from(rolesIds).flatMap((roleId) => ([
+          {
+            abi: powersAbi,
+            address: mandates[0].powers as `0x${string}`,
+            functionName: 'getRoleLabel' as const,
+            args: [roleId] as [bigint],
+            chainId: parseChainId(chainId)
+          },
+          {
+            abi: powersAbi,
+            address: mandates[0].powers as `0x${string}`,
+            functionName: 'getRoleMetadata' as const,
+            args: [roleId] as [bigint],
+            chainId: parseChainId(chainId)
+          },
+          {
+            abi: powersAbi,
+            address: mandates[0].powers as `0x${string}`,
+            functionName: 'getAmountRoleHolders' as const,
+            args: [roleId] as [bigint],
+            chainId: parseChainId(chainId)
+          }
+        ]))
 
-      const results = await readContracts(wagmiConfig, {
-        allowFailure: false,
-        contracts
-      })
-      // console.log("@fetchRoles, waypoint 1", {results})
-      
-      // results are in pairs [label, holders] per role in same order
-      for (let i = 0; i < rolesIds.size; i++) {
-        const label = results[i * 2] as string
-        const holders = results[i * 2 + 1] as bigint
-        updatedRoleLabels.push({ roleId: Array.from(rolesIds)[i] as bigint, label, amountHolders: holders })
-      }
-      // console.log("@fetchRoles, waypoint 2", {updatedRoleLabels})
-      return updatedRoleLabels
-    } catch (error) {
+        const results = await readContracts(wagmiConfig, {
+          allowFailure: true,
+          contracts
+        })
+        
+        // Process results and fetch metadata in parallel
+        const rolePromises = Array.from(rolesIds).map(async (roleId, i) => {
+          const labelResult = results[i * 3]
+          const metadataResult = results[i * 3 + 1]
+          const holdersResult = results[i * 3 + 2]
+          
+          const label = labelResult.status === 'success' ? labelResult.result as string : `Role ${roleId}`
+          const metadata = metadataResult.status === 'success' ? metadataResult.result as string : undefined
+          const holders = holdersResult.status === 'success' ? holdersResult.result as bigint : undefined
+
+          let description: string | undefined
+          let icon: string | undefined
+
+          if (metadata && metadata.startsWith('http')) {
+             try {
+               const response = await fetch(metadata)
+               const json = await response.json()
+               if (json && typeof json === 'object') {
+                 // @ts-ignore
+                 description = json.description 
+                 // @ts-ignore
+                 icon = json.icon 
+               }
+             } catch (e) {
+               console.warn(`Failed to fetch metadata for role ${roleId}`, e)
+             }
+          }
+
+          return { 
+            roleId: roleId as bigint, 
+            label, 
+            metadata, 
+            amountHolders: holders,
+            description,
+            icon
+          } as Role
+        })
+
+        const updatedRoleLabels = await Promise.all(rolePromises)
+        return updatedRoleLabels
+      } catch (error) {
         setStatus({status: "error"})
         setError({error: error as Error})
         return []
@@ -285,7 +322,7 @@ export const usePowers = () => {
   const populateActions = async(actionIds: string[], powersAddress: `0x${string}`): Promise<Action[]> => {
     if (actionIds.length === 0) return []
 
-    const [stateResults, dataResults, calldataResults, uriResults] = await Promise.all([
+    const [stateResults, dataResults, calldataResults, metadataResults] = await Promise.all([
       readContracts(wagmiConfig, {
         allowFailure: false,
         contracts: actionIds.map((actionId) => ({
@@ -352,7 +389,7 @@ export const usePowers = () => {
         caller: data[5],
         nonce: String(data[6]),
         callData: calldataResults[idx],
-        description: uriResults[idx],
+        description: metadataResults[idx],
         state: stateResults[idx]
       }
     })
@@ -524,9 +561,12 @@ export const usePowers = () => {
       let mandateWithActions: Mandate[] | undefined
       let roles: Role[] | undefined
 
-      const localStore = localStorage.getItem("powersProtocols")
-      const saved: Powers[] = localStore && localStore != "undefined" ? JSON.parse(localStore) : []
-      const existing = saved.find(item => item.contractAddress == address)
+      let existing: Powers | undefined
+      if (typeof window !== 'undefined') {
+        const localStore = localStorage.getItem("powersProtocols")
+        const saved: Powers[] = localStore && localStore != "undefined" ? JSON.parse(localStore) : []
+        existing = saved.find(item => item.contractAddress == address)
+      }
 
       const powersToBeUpdated = existing ? existing : {
         contractAddress: address,

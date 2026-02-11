@@ -161,8 +161,8 @@ contract TestConstitutions is Test {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = daoMock; // = Powers contract.
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate", "");
         calldatas[2] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, makeAddr("alice"));
         calldatas[3] = abi.encodeWithSelector(IPowers.revokeMandate.selector, 6); // revoke mandate after use.
 
@@ -281,8 +281,8 @@ contract TestConstitutions is Test {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = daoMock; // = Powers contract.
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate", "");
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, 7); // revoke mandate after use.
 
         // set conditions
@@ -433,8 +433,8 @@ contract TestConstitutions is Test {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = daoMock; // = Powers contract.
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate", "");
         calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, 7); // revoke mandate after use.
 
         // set conditions
@@ -549,8 +549,8 @@ contract TestConstitutions is Test {
         targets[1] = daoMock;
         values[0] = 0;
         values[1] = 0;
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member");
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate", "");
 
         conditions.allowedRole = 1;
         constitution.push(
