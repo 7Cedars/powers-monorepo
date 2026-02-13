@@ -65,7 +65,7 @@ contract ElectionList_Tally is Mandate {
         /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

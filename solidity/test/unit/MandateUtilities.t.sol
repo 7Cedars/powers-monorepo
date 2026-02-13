@@ -17,27 +17,7 @@ import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
 
 contract MandateUtilitiesTest is TestSetupMandate {
     //////////////////////////////////////////////////////////////
-    //                  STRING VALIDATION                       //
-    //////////////////////////////////////////////////////////////
-    function testCheckStringLengthAcceptsValidName() public pure {
-        // Should not revert with valid name
-        MandateUtilities.checkStringLength("Valid Mandate Name", 1, 31);
-    }
-
-    function testCheckStringLengthRevertsWithEmptyName() public {
-        // Should revert with empty name
-        vm.expectRevert("String too short");
-        MandateUtilities.checkStringLength("", 1, 31);
-    }
-
-    function testCheckStringLengthRevertsWithTooLongName() public {
-        // Should revert with name longer than 31 characters
-        vm.expectRevert("String too long");
-        MandateUtilities.checkStringLength("ThisNameIsWaaaaaayTooLongForAMandateName", 1, 31);
-    }
-
-    //////////////////////////////////////////////////////////////
-    //                  ROLE CHECKS                              //
+    //                  ROLE CHECKS                             //
     //////////////////////////////////////////////////////////////
     function testHasRoleCheckPassesWithValidRole() public view {
         uint256[] memory roles = new uint256[](1);

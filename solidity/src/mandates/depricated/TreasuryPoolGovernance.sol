@@ -126,7 +126,7 @@ pragma solidity 0.8.26;
 //         /* caller */
 //         address powers,
 //         uint16 mandateId,
-//         bytes memory mandateCalldata, // Contains createPoolActionId
+//         bytes calldata mandateCalldata, // Contains createPoolActionId
 //         uint256 nonce
 //     )
 //         public

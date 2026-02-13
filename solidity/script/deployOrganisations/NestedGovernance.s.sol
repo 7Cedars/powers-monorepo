@@ -207,8 +207,8 @@ contract NestedGovernance is DeploySetup {
         conditions.allowedRole = 1; // Executive
         conditions.needFulfilled = mandateCount - 1; // Need request
         conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
-            conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
-            conditions.succeedAt = 51; // >50% to pass
+        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.succeedAt = 51; // >50% to pass
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Set Allowance: Executive can set allowance for Child DAO.",
@@ -229,10 +229,6 @@ contract NestedGovernance is DeploySetup {
 
         // Mandate: Create Child DAO
         mandateCount++;
-        conditions.allowedRole = 1; // Executive 
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
-        conditions.succeedAt = 51; // >50% to pass
-        conditions.quorum = 20; // 20% quorum for voting on Parent to create child
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create Child DAO: Executive can execute creation of Child DAO.",
@@ -404,6 +400,9 @@ contract NestedGovernance is DeploySetup {
         // Mandate 6: Members Execute Transfer
         mandateCount++;
         conditions.allowedRole = 1; // Members
+        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
+        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.succeedAt = 51; // >50% to pass
         conditions.needFulfilled = mandateCount - 2; // Need request (4)
         conditions.needNotFulfilled = mandateCount - 1; // Need NO veto (5)
         conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
@@ -428,9 +427,6 @@ contract NestedGovernance is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
-        conditions.succeedAt = 51; // >50% to pass
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Additional Allowance: Members can request additional allowance from Parent.",

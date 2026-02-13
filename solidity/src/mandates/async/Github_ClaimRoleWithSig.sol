@@ -160,7 +160,7 @@ contract Github_ClaimRoleWithSig is Mandate, FunctionsClient {
         address caller, // The user requesting the role
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

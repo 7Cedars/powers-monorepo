@@ -82,7 +82,7 @@ pragma solidity 0.8.26;
 //     /// @return targets The target addresses for the action
 //     /// @return values The values for the action
 //     /// @return calldatas The calldatas for the action
-//     function handleRequest(address caller, address powers, uint16 mandateId, bytes memory mandateCalldata, uint256 nonce)
+//     function handleRequest(address caller, address powers, uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
 //         public
 //         view
 //         virtual

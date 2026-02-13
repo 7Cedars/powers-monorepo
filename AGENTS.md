@@ -34,9 +34,6 @@ The user interface for interacting with the protocol.
 Project documentation website.
 -   **Content**: Developer guides, mandate specifications, and organization examples.
 
-### `ai/`
-Contains resources for AI agents.
--   `prompts/`: Specific instructions for tasks like institutional design (`institutionalDesign.md`) and common coding tasks (`AIPrompts.md`).
 
 ## 3. Core Concepts
 

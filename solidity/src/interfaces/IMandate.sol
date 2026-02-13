@@ -10,6 +10,12 @@ import { IERC165 } from "../../lib/openzeppelin-contracts/contracts/utils/intros
 
 interface IMandate is IERC165 {
     //////////////////////////////////////////////////////////////
+    //                        ERRORS                            //
+    //////////////////////////////////////////////////////////////
+    
+    error OnlyPowers();
+
+    //////////////////////////////////////////////////////////////
     //                        EVENTS                            //
     //////////////////////////////////////////////////////////////
 
@@ -66,7 +72,7 @@ interface IMandate is IERC165 {
         address caller,
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         external

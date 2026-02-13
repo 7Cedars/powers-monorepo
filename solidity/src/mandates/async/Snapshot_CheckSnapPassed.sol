@@ -108,7 +108,7 @@ contract SnapToGov_CheckSnapPassed is Mandate, FunctionsClient, ConfirmedOwner {
         address /*caller*/,
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

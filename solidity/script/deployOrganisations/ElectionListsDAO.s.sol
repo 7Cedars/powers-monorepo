@@ -20,7 +20,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 
 /// @title Open Elections Deployment Script
-contract ElectionListsDAO is DeploySetup {
+contract OpenElectionsDAO is DeploySetup {
     Configurations helperConfig;
     Configurations.NetworkConfig public config;
     PowersTypes.MandateInitData[] constitution;

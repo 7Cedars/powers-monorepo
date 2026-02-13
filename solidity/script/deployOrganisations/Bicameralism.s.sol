@@ -100,7 +100,7 @@ contract Bicameralism is DeploySetup {
         conditions.allowedRole = 1; // = Delegates
         conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes approx (depends on block time, 300 is ~5 mins on 1s chain, 1h on 12s)
         conditions.succeedAt = 51; // = 51% majority
-        conditions.quorum = 33; // = 33% quorum
+        conditions.quorum = 51; // = 33% quorum
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate action: Delegates can initiate an action",

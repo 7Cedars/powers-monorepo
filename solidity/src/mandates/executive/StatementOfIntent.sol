@@ -43,7 +43,7 @@ contract StatementOfIntent is Mandate {
         address, /*caller*/
         address, /*powers*/
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

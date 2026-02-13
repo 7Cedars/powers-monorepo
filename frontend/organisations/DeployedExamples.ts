@@ -20,15 +20,6 @@ export const DeployedExamples = [
         address: '0x2A98763dB1F1c6446F9C3183219c6a314534B98f'
     },
     {
-        id: "open-elections",
-        title: "Open Elections",
-        uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiaaprfqxtgyxa5v2dnf7edfbc3mxewdh4axf4qtkurpz66jh2f2ve",
-        banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeideyeixpz7bkqxpasrlhu7ia3plir6z5b2vh3d7w26e5is27nqyfu",
-        description: "Open Elections demonstrates how, using the Powers protocol, electoral lists can be used to assign roles to accounts. (These type of approaches are becoming more popular, see for instance the elections for Arbitrum's Security council, or multiple options votes). The specific logic used for an electoral list can be customised in its mandate implementation.",
-        chainId: optimismSepolia.id,
-        address: '0x4E70ad934DfDB78263dA30609FBc203263FB7F4C'
-    },
-    {
         id: "optimistic-execution",
         title: "Optimistic Execution",
         uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibzf5td4orxnfknmrz5giiifw4ltsbzciaam7izm6dok5pkm6aqqa",
@@ -37,14 +28,23 @@ export const DeployedExamples = [
         chainId: optimismSepolia.id,
         address: '0x681eC1a272De799456aA7B15e1F13Ff0eC3046Ea'
     },
+    // {
+    //     id: "power-labs",
+    //     title: "Power Labs",
+    //     uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibnvjwah2wdgd3fhak3sedriwt5xemjlacmrabt6mrht7f24m5w3i",
+    //     banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeideomrrzq4goct7we74barpvwte7qvbaljrj3azlwiyzzjku6wsou",
+    //     description: "This is an alpha implementation of the Power Labs organisation. It manages protocol development funding via Safe Smart Accounts and governance based on GitHub contributions verified by commit signatures. Also it is possible to buy Funder roles through ETH donations.",
+    //     chainId: optimismSepolia.id,
+    //     address: '0xfCc77b6a992FBd5Af6b41D5d572d50377588c5E5'
+    // },
     {
-        id: "power-labs",
-        title: "Power Labs",
-        uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibnvjwah2wdgd3fhak3sedriwt5xemjlacmrabt6mrht7f24m5w3i",
-        banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeideomrrzq4goct7we74barpvwte7qvbaljrj3azlwiyzzjku6wsou",
-        description: "This is an alpha implementation of the Power Labs organisation. It manages protocol development funding via Safe Smart Accounts and governance based on GitHub contributions verified by commit signatures. Also it is possible to buy Funder roles through ETH donations.",
+        id: "open-elections",
+        title: "Open Elections",
+        uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiaaprfqxtgyxa5v2dnf7edfbc3mxewdh4axf4qtkurpz66jh2f2ve",
+        banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeideyeixpz7bkqxpasrlhu7ia3plir6z5b2vh3d7w26e5is27nqyfu",
+        description: "Open Elections demonstrates how, using the Powers protocol, electoral lists can be used to assign roles to accounts. (These type of approaches are becoming more popular, see for instance the elections for Arbitrum's Security council, or multiple options votes). The specific logic used for an electoral list can be customised in its mandate implementation.",
         chainId: optimismSepolia.id,
-        address: '0xfCc77b6a992FBd5Af6b41D5d572d50377588c5E5'
+        address: '0x4E70ad934DfDB78263dA30609FBc203263FB7F4C'
     },
     {
         id: "token-delegates",

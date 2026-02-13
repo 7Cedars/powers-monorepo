@@ -68,7 +68,7 @@ abstract contract Mandate is ERC165, IMandate {
     {
         bytes32 mandateHash = MandateUtilities.hashMandate(msg.sender, mandateId);
         if (mandates[mandateHash].powers != msg.sender) {
-            revert("Only Powers");
+            revert IMandate.OnlyPowers();
         }
 
         // Simulate and execute the mandate's logic. This might include additional conditional checks.
@@ -96,7 +96,7 @@ abstract contract Mandate is ERC165, IMandate {
         address caller,
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public
@@ -159,6 +159,9 @@ abstract contract Mandate is ERC165, IMandate {
     function getConfig(address powers, uint16 mandateId) public view returns (bytes memory config) {
         return mandates[MandateUtilities.hashMandate(powers, mandateId)].config;
     }
+
+    // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate. 
+    // this function would then be virtual, so that when not overridden, it returns an empty string or a default uri. 
 
     //////////////////////////////////////////////////////////////
     //                      UTILITIES                           //

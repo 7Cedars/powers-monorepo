@@ -1,6 +1,6 @@
 export const powersApplications = [
   {
-    title: "Trustless Multisig", 
+    title: "Granular Upgrades", 
     details: [
       "Start with a centralized-but-constrained team mandate: Core teams can spend funds within strict code-enforced limits.",
       "Progressively introduce Veto or Council Mandates as the organization scales.",
@@ -8,7 +8,7 @@ export const powersApplications = [
     ]
   }, 
   {
-    title: "Accountable Working Groups",
+    title: "Bespoke Delegation",
     details: [
       "Delegate tasks to specialized bodies with clear boundaries.",
       "Grant working groups high degrees of freedom within budget caps or domain restrictions.",

@@ -22,7 +22,7 @@ import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 
 // organisations
 import { Powers101 } from "../script/deployOrganisations/Powers101.s.sol";
-import { ElectionListsDAO } from "../script/deployOrganisations/ElectionListsDAO.s.sol";
+import { OpenElectionsDAO } from "../script/deployOrganisations/OpenElectionsDAO.s.sol";
 import { CulturalStewardsDAO } from "../script/deployOrganisations/CulturalStewardsDAO.s.sol";
 
 // helpers
@@ -48,7 +48,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     PowersMock daoMock;
     PowersMock daoMockChild1;
     PowersMock daoMockChild2;
-    ElectionListsDAO openElections;
+    OpenElectionsDAO openElections;
     InitialisePowers initialisePowers;
     string[] mandateNames;
     address[] mandateAddresses;
@@ -858,7 +858,7 @@ abstract contract TestSetupPowers101 is BaseSetup {
 }
 
 // Open Elections Setup
-abstract contract TestSetupElectionListsDAO is BaseSetup {
+abstract contract TestSetupOpenElectionsDAO is BaseSetup {
     function setUpVariables() public override {
         // Note: this test runs the full initalisation scripts. It takes a while to run.
         // But it is needed to be able to test the full deployment flow of an organisation.
@@ -866,7 +866,7 @@ abstract contract TestSetupElectionListsDAO is BaseSetup {
 
         super.setUpVariables();
 
-        ElectionListsDAO openElections = new ElectionListsDAO();
+        OpenElectionsDAO openElections = new OpenElectionsDAO();
         (powers, openElection) = openElections.run();
         daoMock = PowersMock(payable(address(powers)));
 
@@ -892,7 +892,7 @@ abstract contract TestSetupCulturalStewardsDAO is BaseSetup {
 
         super.setUpVariables();
 
-        ElectionListsDAO openElections = new ElectionListsDAO();
+        OpenElectionsDAO openElections = new OpenElectionsDAO();
         (powers, openElection) = openElections.run();
         daoMock = PowersMock(payable(address(powers)));
 

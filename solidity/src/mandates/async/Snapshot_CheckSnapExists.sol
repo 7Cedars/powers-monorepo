@@ -113,7 +113,7 @@ contract SnapToGov_CheckSnapExists is Mandate, FunctionsClient, ConfirmedOwner {
     /// @return targets Empty arrays (execution handled in callback)
     /// @return values Empty arrays
     /// @return calldatas Encoded data for _externalCall
-    function handleRequest(address /*caller*/, address powers, uint16 mandateId, bytes memory mandateCalldata, uint256 nonce)
+    function handleRequest(address /*caller*/, address powers, uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
         public
         view
         override

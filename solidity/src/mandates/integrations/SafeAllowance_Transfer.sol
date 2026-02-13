@@ -58,7 +58,7 @@ contract SafeAllowance_Transfer is Mandate {
         address, /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public
@@ -79,7 +79,7 @@ contract SafeAllowance_Transfer is Mandate {
         return (actionId, targets, values, calldatas);
     }
 
-    function _createCalldata(address powers, uint16 mandateId, bytes memory mandateCalldata)
+    function _createCalldata(address powers, uint16 mandateId, bytes calldata mandateCalldata)
         internal
         view
         returns (bytes memory)

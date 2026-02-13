@@ -33,7 +33,7 @@ library Checks {
     /// @param latestFulfillment The latest fulfillment of the mandate
     function check(
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         address powers,
         uint256 nonce,
         uint48 latestFulfillment
@@ -97,7 +97,7 @@ library Checks {
     /// @param mandateCalldata Encoded function call data
     /// @param nonce The nonce for the action
     /// @return actionId Unique identifier for the action
-    function computeActionId(uint16 mandateId, bytes memory mandateCalldata, uint256 nonce)
+    function computeActionId(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
         public
         pure
         returns (uint256 actionId)

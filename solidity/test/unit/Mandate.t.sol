@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { Mandate } from "../../src/Mandate.sol";
+import { IMandate } from "../../src/interfaces/IMandate.sol";
 import { MandateUtilities } from "../../src/libraries/MandateUtilities.sol";
 import { IMandate } from "../../src/interfaces/IMandate.sol";
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
@@ -126,7 +127,7 @@ contract MandateBasicTest is TestSetupMandate {
         );
 
         // act & assert: verify execution reverts when not called from Powers
-        vm.expectRevert("Only Powers");
+        vm.expectRevert(IMandate.OnlyPowers.selector);
         vm.prank(alice);
         testMandate.executeMandate(alice, mandateId, abi.encode(true), nonce);
     }
@@ -324,21 +325,6 @@ contract MandateUtilitiesTest is TestSetupMandate {
     function testCheckStringLengthWithValidString() public pure {
         // act & assert: verify valid string length passes
         MandateUtilities.checkStringLength("Valid String", 1, 100);
-    }
-
-    function testCheckStringLengthRevertsWithTooShort() public {
-        // act & assert: verify too short string reverts
-        vm.expectRevert("String too short");
-        MandateUtilities.checkStringLength("", 1, 100);
-    }
-
-    function testCheckStringLengthRevertsWithTooLong() public {
-        // prep: create a string longer than max length
-        string memory longString = string(abi.encodePacked(new bytes(300)));
-
-        // act & assert: verify too long string reverts
-        vm.expectRevert("String too long");
-        MandateUtilities.checkStringLength(longString, 1, 100);
     }
 }
 

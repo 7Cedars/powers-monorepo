@@ -53,7 +53,7 @@ type VoteData = {
 
 export const Voting = ({ powers }: {powers: Powers | undefined}) => {
   const { chainId } = useParams<{ chainId: string }>()
-  const { data: blockNumber } = useBlockNumber()
+  const { data: blockNumber } = useBlockNumber({ watch: true })
   const constants = getConstants(parseChainId(chainId) as number)
   const action = useActionStore()
   const mandate = powers?.mandates?.find(mandate => mandate.index == action?.mandateId)
@@ -77,8 +77,8 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
 
   // Use updated action data if available, otherwise use prop
   const allVotes = Number(actionVote?.forVotes || 0) + Number(actionVote?.againstVotes || 0) + Number(actionVote?.abstainVotes || 0)
-  const quorum = roleHolders > 0 ? Math.floor((roleHolders * Number(mandate?.conditions?.quorum || 0)) / 100) : 0
-  const threshold = roleHolders > 0 ? Math.floor((roleHolders * Number(mandate?.conditions?.succeedAt || 0)) / 100) : 0
+  const quorum = roleHolders > 0 ? Math.ceil((roleHolders * Number(mandate?.conditions?.quorum || 0)) / 100) : 0
+  const threshold = roleHolders > 0 ? Math.ceil((roleHolders * Number(mandate?.conditions?.succeedAt || 0)) / 100) : 0
   const deadline = Number(actionVote?.voteEnd || 0)
   const layout = `w-full flex flex-row justify-center items-center px-2 py-1 text-bold rounded-md`
 
