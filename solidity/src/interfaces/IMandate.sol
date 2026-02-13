@@ -4,7 +4,7 @@
 /// @notice Interface for the Mandate contract, which provides core functionality for institutional mandates.
 /// @dev Defines the interface for implementing role restricted conditional powers to transform input data into executable calldata.
 /// @author 7Cedars
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { IERC165 } from "../../lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 

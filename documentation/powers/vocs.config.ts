@@ -293,7 +293,7 @@ export default defineConfig({
         }, 
         { 
           text: 'Election List DAO', 
-          link: '/organisations/OpenElectionsDAO', 
+          link: '/organisations/electionListsDao', 
         }, 
         { 
           text: 'Token Delegates', 

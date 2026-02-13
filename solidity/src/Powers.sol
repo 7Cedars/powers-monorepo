@@ -31,7 +31,7 @@
 ///
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "./Mandate.sol";
 import { IMandate } from "./interfaces/IMandate.sol";

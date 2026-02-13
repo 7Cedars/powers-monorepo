@@ -32,8 +32,10 @@ remappings = [
     "@chainlink/contracts-ccip/=lib/chainlink-ccip/chains/evm/contracts",
     "@mocks/=test/mocks/", 
     "@src/=src/",
-    "@script/=script"
-    
+    "@script/=script",
+    "@zkpassport/registry-sdk/=lib/zkpassport-packages/packages/registry-sdk/",
+    "@zkpassport/registry-contracts/=lib/zkpassport-packages/packages/registry-contracts/",
+    "@zkpassport/circuits/=lib/circuits/src/solidity/"
 ] 
 
 [fmt]

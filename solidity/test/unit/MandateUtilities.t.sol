@@ -5,7 +5,7 @@
 /// @dev Provides comprehensive coverage of all MandateUtilities functions
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { MandateUtilities } from "../../src/libraries/MandateUtilities.sol";

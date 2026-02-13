@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { TestSetupMandate } from "../TestSetup.t.sol";
 import { IMandate } from "../../src/interfaces/IMandate.sol";

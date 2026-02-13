@@ -3,7 +3,7 @@
 /// @notice A base contract that executes a bespoke call to the powers contract's request function.
 /// Especially useful if one Powers instance has to call a law at another powers instance.
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";

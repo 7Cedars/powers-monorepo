@@ -2,7 +2,7 @@
 
 /// @notice Assign roles based on a selected donation an account made to a Treasury contract.
 /// @author 7Cedars
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // import { Mandate } from "../../Mandate.sol";
 // import { Powers } from "../../Powers.sol";

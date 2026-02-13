@@ -19,6 +19,7 @@
     "@types/react-blockies": "^1.4.4",
     "@wagmi/core": "latest",
     "@xyflow/react": "^12.6.4",
+    "@zkpassport/sdk": "^0.12.5",
     "blockies-react-svg": "^0.0.13",
     "clsx": "^2.1.1",
     "elkjs": "^0.10.0",

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // scripts
 import { Script } from "forge-std/Script.sol";
@@ -20,7 +20,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 
 /// @title Open Elections Deployment Script
-contract OpenElectionsDAO is DeploySetup {
+contract ElectionListsDAO is DeploySetup {
     Configurations helperConfig;
     Configurations.NetworkConfig public config;
     PowersTypes.MandateInitData[] constitution;
@@ -46,7 +46,7 @@ contract OpenElectionsDAO is DeploySetup {
         vm.startBroadcast();
         openElection = new ElectionList();
         powers = new Powers(
-            "Open Elections", // name
+            "Open Election", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiaaprfqxtgyxa5v2dnf7edfbc3mxewdh4axf4qtkurpz66jh2f2ve", // uri
             config.maxCallDataLength, // max call data length
             config.maxReturnDataLength, // max return data length

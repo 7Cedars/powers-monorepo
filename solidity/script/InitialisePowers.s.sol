@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // --- Forge/OpenZeppelin Imports ---
 import { Script } from "forge-std/Script.sol";
@@ -15,6 +15,7 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 // async mandates
 import { Github_ClaimRoleWithSig } from "@src/mandates/async/Github_ClaimRoleWithSig.sol";
 import { Github_AssignRoleWithSig } from "@src/mandates/async/Github_AssignRoleWithSig.sol";
+import { ZKPassport_Check } from "@src/mandates/async/ZKPassport_Check.sol";
 
 // Electoral mandates
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
@@ -74,6 +75,7 @@ import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";  
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";  
 import { OnchainIdRegistryMock, IdentityRegistryMock, ComplianceRegistryMock, RwaMock } from "@mocks/RwaMock.sol";
+import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 /// @title InitialisePowers
 /// @notice Deploys all library and mandate contracts deterministically using CREATE2
@@ -148,6 +150,10 @@ contract InitialisePowers is Script {
 
         names.push("Github_AssignRoleWithSig");
         creationCodes.push(type(Github_AssignRoleWithSig).creationCode);
+        constructorArgs.push(abi.encode());
+
+        names.push("ZKPassport_Check");
+        creationCodes.push(type(ZKPassport_Check).creationCode);
         constructorArgs.push(abi.encode());
 
         //////////////////////////////////////////////////////////////////////////
@@ -369,7 +375,15 @@ contract InitialisePowers is Script {
         names.push("RwaMock");
         creationCodes.push(type(RwaMock).creationCode);
         constructorArgs.push(abi.encode());
+
+        names.push("OnchainIdRegistryMock");
+        creationCodes.push(type(OnchainIdRegistryMock).creationCode);
+        constructorArgs.push(abi.encode());
  
+        names.push("ZKPassport_PowersRegistry");
+        creationCodes.push(type(ZKPassport_PowersRegistry).creationCode);
+        constructorArgs.push(abi.encode());
+
         //////////////////////////////////////////////////////////////////////////
         //                          DEPLOY SEQUENCE                             //
         //////////////////////////////////////////////////////////////////////////

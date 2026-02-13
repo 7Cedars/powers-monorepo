@@ -14,7 +14,7 @@
 /// - Inheriting and implementing bespoke logic in the {handleRequest} {_replyPowers} and {_externalCall} functions.
 ///
 /// @author 7Cedars
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { IPowers } from "./interfaces/IPowers.sol";
 import { MandateUtilities } from "./libraries/MandateUtilities.sol";

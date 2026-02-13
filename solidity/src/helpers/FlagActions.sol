@@ -5,7 +5,7 @@
 /// @dev Standalone pattern with immutable powers address and onlyPowers modifier
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IPowers } from "../../src/interfaces/IPowers.sol";

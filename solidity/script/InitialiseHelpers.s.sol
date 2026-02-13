@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Script } from "forge-std/Script.sol"; 
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";

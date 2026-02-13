@@ -5,7 +5,7 @@
 /// @dev Provides common functionality for Powers implementation and validation
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Powers } from "../Powers.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";

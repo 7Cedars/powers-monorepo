@@ -5,7 +5,7 @@
 /// @dev Provides common functionality for Mandate implementation and validation
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { ERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import { Powers } from "../Powers.sol";

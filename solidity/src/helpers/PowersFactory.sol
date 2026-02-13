@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Powers } from "../Powers.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";

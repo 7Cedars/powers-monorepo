@@ -5,7 +5,7 @@
 /// open onboarding flows where a base role can be freely claimed.
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";

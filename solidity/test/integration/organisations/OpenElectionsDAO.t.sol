@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Test, console, console2 } from "lib/forge-std/src/Test.sol";
 import { Powers } from "@src/Powers.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { TestSetupOpenElectionsDAO } from "../../TestSetup.t.sol";
+import { TestSetupElectionListsDAO } from "../../TestSetup.t.sol";
 
-// contract OpenElectionsDAO_IntegrationTest is TestSetupOpenElectionsDAO {
-//     // Mandate IDs from OpenElectionsDAO.s.sol
+// contract ElectionListsDAO_IntegrationTest is TestSetupElectionListsDAO {
+//     // Mandate IDs from ElectionListsDAO.s.sol
 //     // 1: Initial Setup (Revoked)
 //     // 2: Nominate
 //     // 3: Start Election
@@ -23,7 +23,7 @@ import { TestSetupOpenElectionsDAO } from "../../TestSetup.t.sol";
 //     // So next mandate is 7.
 //     uint16 constant VOTE_MANDATE_ID = 7;
 
-//     function testOpenElectionsDAO_FullFlow() public {
+//     function testElectionListsDAO_FullFlow() public {
 
 //         // --- 1. NOMINATION FLOW ---
 //         console2.log("--- Step 1: Nomination ---");

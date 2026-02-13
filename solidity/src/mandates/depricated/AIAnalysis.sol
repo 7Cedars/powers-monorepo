@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // /// @notice A mandate that analyzes addresses using AI via cross-chain communication
 // /// @dev This mandate sends msg.sender to AiCCIPProxy for AI analysis and assigns roles based on results
