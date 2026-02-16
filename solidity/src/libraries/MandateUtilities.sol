@@ -25,31 +25,6 @@ library MandateUtilities {
         }
     }
 
-    /// @notice Verifies if an address has all specified roles
-    /// @dev Checks each role against the Powers contract's role system
-    /// @param caller Address to check roles for
-    /// @param roles Array of role IDs to check
-    function hasRoleCheck(address caller, uint256[] memory roles, address powers) internal view {
-        for (uint32 i = 0; i < roles.length; i++) {
-            uint48 since = Powers(payable(powers)).hasRoleSince(caller, roles[i]);
-            if (since == 0) {
-                revert("Does not have role.");
-            }
-        }
-    }
-
-    /// @notice Verifies if an address does not have any of the specified roles
-    /// @dev Checks each role against the Powers contract's role system
-    /// @param caller Address to check roles for
-    /// @param roles Array of role IDs to check
-    function hasNotRoleCheck(address caller, uint256[] memory roles, address powers) internal view {
-        for (uint32 i = 0; i < roles.length; i++) {
-            uint48 since = Powers(payable(powers)).hasRoleSince(caller, roles[i]);
-            if (since != 0) {
-                revert("Has role.");
-            }
-        }
-    }
 
     //////////////////////////////////////////////////////////////
     //                      HELPER FUNCTIONS                    //

@@ -6,23 +6,6 @@ import { Script } from "forge-std/Script.sol";
 contract Configurations is Script {
     error Configurations__UnsupportedChain();
 
-    // @dev we only save the contract addresses of tokens, because any other params (name, symbol, etc) can and should be taken from contract itself.
-    struct NetworkConfig {
-        uint256 BLOCKS_PER_HOUR; // a basic way of establishing time. As long as block times are fairly stable on a chain, this will work.
-        uint256 maxReturnDataLength; // for now these are all set at 10,000.
-        uint256 maxCallDataLength; // for now these are all set at 10,000.
-        uint256 maxExecutionsLength; // for now these are all set at 25.
-        address chainlinkFunctionsRouter;
-        uint64 chainlinkFunctionsSubscriptionId;
-        uint32 chainlinkFunctionsGasLimit;
-        bytes32 chainlinkFunctionsDonId;
-        string chainlinkFunctionsEncryptedSecretsEndpoint;
-        address safeCanonical;
-        address safeL2Canonical;
-        address safeProxyFactory;
-        address safeAllowanceModule;
-    }
-
     uint256 constant LOCAL_CHAIN_ID = 31_337;
     uint256 constant ETH_SEPOLIA_CHAIN_ID = 11_155_111;
     uint256 constant OPT_SEPOLIA_CHAIN_ID = 11_155_420;
@@ -30,155 +13,164 @@ contract Configurations is Script {
     uint256 constant BASE_SEPOLIA_CHAIN_ID = 84_532;
     uint256 constant MANTLE_SEPOLIA_CHAIN_ID = 5003;
 
-    NetworkConfig public networkConfig;
-    mapping(uint256 chainId => NetworkConfig) public networkConfigs;
-
-    constructor() {
-        networkConfigs[LOCAL_CHAIN_ID] = getOrCreateAnvilEthConfig();
-        networkConfigs[ETH_SEPOLIA_CHAIN_ID] = getEthSepoliaConfig();
-        networkConfigs[ARB_SEPOLIA_CHAIN_ID] = getArbSepoliaConfig();
-        networkConfigs[OPT_SEPOLIA_CHAIN_ID] = getOptSepoliaConfig();
-        networkConfigs[BASE_SEPOLIA_CHAIN_ID] = getBaseSepoliaConfig();
-        networkConfigs[MANTLE_SEPOLIA_CHAIN_ID] = getMantleSepoliaConfig();
+    function getBlocksPerHour(uint256 chainId) public pure returns (uint256) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 300;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 14_400;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 1800;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 1800;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 360_000;
+        if (chainId == LOCAL_CHAIN_ID) return 3600;
+        revert Configurations__UnsupportedChain();
     }
 
-    function getConfig() public view returns (NetworkConfig memory) {
-        return getConfigByChainId(block.chainid);
-    }
-
-    function getConfigByChainId(uint256 chainId) public view returns (NetworkConfig memory) {
-        if (networkConfigs[chainId].BLOCKS_PER_HOUR != 0) {
-            return networkConfigs[chainId];
-        } else {
-            revert Configurations__UnsupportedChain();
+    function getMaxReturnDataLength(uint256 chainId) public pure returns (uint256) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
+            chainId == ARB_SEPOLIA_CHAIN_ID || 
+            chainId == OPT_SEPOLIA_CHAIN_ID || 
+            chainId == BASE_SEPOLIA_CHAIN_ID || 
+            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
+            chainId == LOCAL_CHAIN_ID) {
+            return 10_000;
         }
+        revert Configurations__UnsupportedChain();
     }
 
-    function getEthSepoliaConfig() public returns (NetworkConfig memory) {
-        networkConfig.BLOCKS_PER_HOUR = 300; // new block every 12 seconds
-        networkConfig.maxCallDataLength = 10_000;
-        networkConfig.maxReturnDataLength = 10_000;
-        networkConfig.maxExecutionsLength = 25;
-
-        networkConfig.chainlinkFunctionsRouter = 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0;
-        networkConfig.chainlinkFunctionsSubscriptionId = 5819;
-        networkConfig.chainlinkFunctionsGasLimit = 300_000;
-        networkConfig.chainlinkFunctionsDonId = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000;
-        networkConfig.chainlinkFunctionsEncryptedSecretsEndpoint = "https://01.functions-gateway.testnet.chain.link/";
-
-        networkConfig.safeCanonical = 0x41675C099F32341bf84BFc5382aF534df5C7461a;
-        networkConfig.safeL2Canonical = 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
-        networkConfig.safeProxyFactory = 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
-        networkConfig.safeAllowanceModule = 0xCBE43419274415F51e66bd3136c4237172831b59; // self deployed allowance module on sepolia. Standard address: 0xAA46724893dedD72658219405185Fb0Fc91e091C;
-
-        return networkConfig;
+    function getMaxCallDataLength(uint256 chainId) public pure returns (uint256) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
+            chainId == ARB_SEPOLIA_CHAIN_ID || 
+            chainId == OPT_SEPOLIA_CHAIN_ID || 
+            chainId == BASE_SEPOLIA_CHAIN_ID || 
+            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
+            chainId == LOCAL_CHAIN_ID) {
+            return 10_000;
+        }
+        revert Configurations__UnsupportedChain();
     }
 
-    function getArbSepoliaConfig() public returns (NetworkConfig memory) {
-        networkConfig.BLOCKS_PER_HOUR = 14_400; // new block every 0.25 seconds
-        networkConfig.maxCallDataLength = 10_000;
-        networkConfig.maxReturnDataLength = 10_000;
-        networkConfig.maxExecutionsLength = 25;
-
-        networkConfig.chainlinkFunctionsRouter = 0x234a5fb5Bd614a7AA2FfAB244D603abFA0Ac5C5C;
-        networkConfig.chainlinkFunctionsSubscriptionId = 1;
-        networkConfig.chainlinkFunctionsGasLimit = 300_000;
-        networkConfig.chainlinkFunctionsDonId = 0x66756e2d617262697472756d2d7365706f6c69612d3100000000000000000000;
-        networkConfig.chainlinkFunctionsEncryptedSecretsEndpoint = "https://01.functions-gateway.testnet.chain.link/";
-
-        networkConfig.safeCanonical = 0x41675C099F32341bf84BFc5382aF534df5C7461a;
-        networkConfig.safeL2Canonical = 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
-        networkConfig.safeProxyFactory = 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
-        networkConfig.safeAllowanceModule = 0x7320c89189364C9F0154Bfd3ddb510Fb252cB10C; // self deployed allowance module on ArbSepolia
-
-        return networkConfig;
+    function getMaxExecutionsLength(uint256 chainId) public pure returns (uint256) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
+            chainId == ARB_SEPOLIA_CHAIN_ID || 
+            chainId == OPT_SEPOLIA_CHAIN_ID || 
+            chainId == BASE_SEPOLIA_CHAIN_ID || 
+            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
+            chainId == LOCAL_CHAIN_ID) {
+            return 25;
+        }
+        revert Configurations__UnsupportedChain();
     }
 
-    function getOptSepoliaConfig() public returns (NetworkConfig memory) {
-        networkConfig.BLOCKS_PER_HOUR = 1800; // new block every 2 seconds
-        networkConfig.maxCallDataLength = 10_000;
-        networkConfig.maxReturnDataLength = 10_000;
-        networkConfig.maxExecutionsLength = 25;
-
-        networkConfig.chainlinkFunctionsRouter = 0xC17094E3A1348E5C7544D4fF8A36c28f2C6AAE28;
-        networkConfig.chainlinkFunctionsSubscriptionId = 256;
-        networkConfig.chainlinkFunctionsGasLimit = 300_000;
-        networkConfig.chainlinkFunctionsDonId = 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
-        networkConfig.chainlinkFunctionsEncryptedSecretsEndpoint = "https://01.functions-gateway.testnet.chain.link/";
-
-        networkConfig.safeCanonical = 0x41675C099F32341bf84BFc5382aF534df5C7461a;
-        networkConfig.safeL2Canonical = 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
-        networkConfig.safeProxyFactory = 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
-        networkConfig.safeAllowanceModule = 0xaff1B87A225846c50e147ceAd5baA68004ec0f7c; // self deployed allowance module on OptSepolia
-
-        return networkConfig;
+    function getChainlinkFunctionsRouter(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x234a5fb5Bd614a7AA2FfAB244D603abFA0Ac5C5C;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0xC17094E3A1348E5C7544D4fF8A36c28f2C6AAE28;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0xf9B8fc078197181C841c296C876945aaa425B278;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == LOCAL_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        revert Configurations__UnsupportedChain();
     }
 
-    function getBaseSepoliaConfig() public returns (NetworkConfig memory) {
-        networkConfig.BLOCKS_PER_HOUR = 1800; // new block every 2 seconds
-        networkConfig.maxCallDataLength = 10_000;
-        networkConfig.maxReturnDataLength = 10_000;
-        networkConfig.maxExecutionsLength = 25;
-
-        networkConfig.chainlinkFunctionsRouter = 0xf9B8fc078197181C841c296C876945aaa425B278;
-        networkConfig.chainlinkFunctionsSubscriptionId = 1;
-        networkConfig.chainlinkFunctionsGasLimit = 300_000;
-        networkConfig.chainlinkFunctionsDonId = 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
-        networkConfig.chainlinkFunctionsEncryptedSecretsEndpoint = "https://01.functions-gateway.testnet.chain.link/";
-
-        networkConfig.safeCanonical = 0x41675C099F32341bf84BFc5382aF534df5C7461a;
-        networkConfig.safeL2Canonical = 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
-        networkConfig.safeProxyFactory = 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
-        networkConfig.safeAllowanceModule = 0xAA46724893dedD72658219405185Fb0Fc91e091C;
-
-        return networkConfig;
+    function getChainlinkFunctionsSubscriptionId(uint256 chainId) public pure returns (uint64) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 5819;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 1;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 256;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 1;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 1;
+        if (chainId == LOCAL_CHAIN_ID) return 1;
+        revert Configurations__UnsupportedChain();
     }
 
-    function getMantleSepoliaConfig() public returns (NetworkConfig memory) {
-        networkConfig.BLOCKS_PER_HOUR = 360_000; // new block every 2 seconds
-        networkConfig.maxCallDataLength = 10_000;
-        networkConfig.maxReturnDataLength = 10_000;
-        networkConfig.maxExecutionsLength = 25;
-
-        networkConfig.chainlinkFunctionsRouter = 0x0000000000000000000000000000000000000000;
-        networkConfig.chainlinkFunctionsSubscriptionId = 1;
-        networkConfig.chainlinkFunctionsGasLimit = 300_000;
-        networkConfig.chainlinkFunctionsDonId = 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
-        networkConfig.chainlinkFunctionsEncryptedSecretsEndpoint = "https://01.functions-gateway.testnet.chain.link/";
-
-        networkConfig.safeCanonical = 0x0000000000000000000000000000000000000000;
-        networkConfig.safeL2Canonical = 0x0000000000000000000000000000000000000000;
-        networkConfig.safeProxyFactory = 0x0000000000000000000000000000000000000000;
-        networkConfig.safeAllowanceModule = 0x0000000000000000000000000000000000000000;
-
-        return networkConfig;
+    function getChainlinkFunctionsGasLimit(uint256 chainId) public pure returns (uint32) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
+            chainId == ARB_SEPOLIA_CHAIN_ID || 
+            chainId == OPT_SEPOLIA_CHAIN_ID || 
+            chainId == BASE_SEPOLIA_CHAIN_ID || 
+            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
+            chainId == LOCAL_CHAIN_ID) {
+            return 300_000;
+        }
+        revert Configurations__UnsupportedChain();
     }
 
-    function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
-        networkConfig.BLOCKS_PER_HOUR = 3600; // new block per 1 second
-        networkConfig.maxCallDataLength = 10_000;
-        networkConfig.maxReturnDataLength = 10_000;
-        networkConfig.maxExecutionsLength = 25;
+    function getChainlinkFunctionsDonId(uint256 chainId) public pure returns (bytes32) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x66756e2d617262697472756d2d7365706f6c69612d3100000000000000000000;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000; // Using same as Optimism as per original file
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
+        if (chainId == LOCAL_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
+        revert Configurations__UnsupportedChain();
+    }
 
-        networkConfig.chainlinkFunctionsRouter = 0x0000000000000000000000000000000000000000;
-        networkConfig.chainlinkFunctionsSubscriptionId = 1;
-        networkConfig.chainlinkFunctionsGasLimit = 300_000;
-        networkConfig.chainlinkFunctionsDonId = 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
-        networkConfig.chainlinkFunctionsEncryptedSecretsEndpoint = "https://01.functions-gateway.testnet.chain.link/";
+    function getChainlinkFunctionsEncryptedSecretsEndpoint(uint256 chainId) public pure returns (string memory) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
+            chainId == ARB_SEPOLIA_CHAIN_ID || 
+            chainId == OPT_SEPOLIA_CHAIN_ID || 
+            chainId == BASE_SEPOLIA_CHAIN_ID || 
+            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
+            chainId == LOCAL_CHAIN_ID) {
+            return "https://01.functions-gateway.testnet.chain.link/";
+        }
+        revert Configurations__UnsupportedChain();
+    }
 
-        networkConfig.safeCanonical = 0x41675C099F32341bf84BFc5382aF534df5C7461a;
-        networkConfig.safeL2Canonical = 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
-        networkConfig.safeProxyFactory = 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
-        networkConfig.safeAllowanceModule = 0xaff1B87A225846c50e147ceAd5baA68004ec0f7c; // self deployed allowance module on OptSepolia
+    function getSafeCanonical(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0x41675C099F32341bf84BFc5382aF534df5C7461a;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x41675C099F32341bf84BFc5382aF534df5C7461a;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0x41675C099F32341bf84BFc5382aF534df5C7461a;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0x41675C099F32341bf84BFc5382aF534df5C7461a;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == LOCAL_CHAIN_ID) return 0x41675C099F32341bf84BFc5382aF534df5C7461a;
+        revert Configurations__UnsupportedChain();
+    }
 
-        return networkConfig;
+    function getSafeL2Canonical(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == LOCAL_CHAIN_ID) return 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762;
+        revert Configurations__UnsupportedChain();
+    }
+
+    function getSafeProxyFactory(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == LOCAL_CHAIN_ID) return 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67;
+        revert Configurations__UnsupportedChain();
+    }
+
+    function getSafeAllowanceModule(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0xCBE43419274415F51e66bd3136c4237172831b59;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x7320c89189364C9F0154Bfd3ddb510Fb252cB10C;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0xaff1B87A225846c50e147ceAd5baA68004ec0f7c;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0xAA46724893dedD72658219405185Fb0Fc91e091C;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == LOCAL_CHAIN_ID) return 0xaff1B87A225846c50e147ceAd5baA68004ec0f7c;
+        revert Configurations__UnsupportedChain();
+    }
+
+    function getZkPassportVerifier(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID) {
+            return 0x1D000001000EFD9a6371f4d90bB8920D5431c0D8;
+        }
+        return 0x0000000000000000000000000000000000000123;
+    }
+
+    function getZkPassportRootRegistry(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID) {
+            return 0x1D0000020038d6E40E1d98e09fA1bb3A7DAA8B70;
+        }
+        return 0x0000000000000000000000000000000000000123;
+    }
+
+    function getZkPassportHelper(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID) {
+            return 0xd76aA09811dE7c7871E9BFc25eB85F4634adA5C6;
+        }
+        return 0x0000000000000000000000000000000000000123;
     }
 }
-
-//////////////////////////////////////////////////////////////////
-//                      Acknowledgements                        //
-//////////////////////////////////////////////////////////////////
-
-/**
- * - Patrick Collins & Cyfrin: @https://updraft.cyfrin.io/courses/advanced-foundry/account-abstraction
- */

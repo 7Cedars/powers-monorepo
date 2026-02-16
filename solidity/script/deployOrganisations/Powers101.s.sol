@@ -27,8 +27,7 @@ import { Erc20DelegateElection } from "@mocks/Erc20DelegateElection.sol";
 contract Powers101 is DeploySetup {
     using Strings for address;
 
-    Configurations helperConfig;
-    Configurations.NetworkConfig config;
+    Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -47,8 +46,7 @@ contract Powers101 is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // step 1: deploy Vanilla Powers
         vm.startBroadcast();
@@ -58,9 +56,9 @@ contract Powers101 is DeploySetup {
         powers = new Powers(
             "Powers 101", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicbh6txnypkoy6ivngl3l2k6m646hruupqspyo7naf2jpiumn2jqe", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -152,7 +150,7 @@ contract Powers101 is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = 1; // = role that can call this mandate.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.succeedAt = 66; // = 51% simple majority needed for executing an action.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.needFulfilled = mandateCount - 2; // = mandate that must be completed before this one.

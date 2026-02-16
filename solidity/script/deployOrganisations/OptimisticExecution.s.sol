@@ -18,8 +18,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 
 /// @title Optimistic Execution Deployment Script
 contract OptimisticExecution is DeploySetup {
-    Configurations helperConfig;
-    Configurations.NetworkConfig public config;
+    Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -35,8 +34,7 @@ contract OptimisticExecution is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // step 1: deploy Optimistic Execution Powers
 
@@ -44,9 +42,9 @@ contract OptimisticExecution is DeploySetup {
         powers = new Powers(
             "Optimistic Execution", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibzf5td4orxnfknmrz5giiifw4ltsbzciaam7izm6dok5pkm6aqqa", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -99,7 +97,7 @@ contract OptimisticExecution is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes approx
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes approx
         conditions.succeedAt = 66; // = 66% majority (high threshold)
         conditions.quorum = 66; // = 66% quorum (high quorum)
         constitution.push(
@@ -115,7 +113,7 @@ contract OptimisticExecution is DeploySetup {
         // Mandate 3: Execute an action (OpenAction)
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.needNotFulfilled = mandateCount - 1; // = Mandate 2 (Veto Actions)
         conditions.quorum = 33;

@@ -22,8 +22,7 @@ import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 
 /// @title Token Delegates Deployment Script
 contract TokenDelegates is DeploySetup {
-    Configurations helperConfig;
-    Configurations.NetworkConfig public config;
+    Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -40,8 +39,7 @@ contract TokenDelegates is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // step 1: deploy Token Delegates Powers
         vm.startBroadcast();
@@ -50,9 +48,9 @@ contract TokenDelegates is DeploySetup {
         powers = new Powers(
             "Token Delegates", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicpqpipzetgtcbqdeehcg33ibipvrb3pnikes6oqixa7ntzaniinm", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -113,7 +111,7 @@ contract TokenDelegates is DeploySetup {
         // Mandate 3: Elect Delegates
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = Public Role
-        conditions.throttleExecution = minutesToBlocks(10, config.BLOCKS_PER_HOUR); // = 10 minutes approx
+        conditions.throttleExecution = minutesToBlocks(10, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes approx
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Elect Delegates: Run the election for delegates. In this demo, the top 3 nominees by token delegation of token VOTES_TOKEN become Delegates.",

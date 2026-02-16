@@ -152,7 +152,7 @@ abstract contract Mandate is ERC165, IMandate {
         return mandates[MandateUtilities.hashMandate(powers, mandateId)].nameDescription;
     }
 
-    function getInputParams(address powers, uint16 mandateId) public view returns (bytes memory inputParams) {
+    function getInputParams(address powers, uint16 mandateId) public view virtual returns (bytes memory inputParams) {
         return mandates[MandateUtilities.hashMandate(powers, mandateId)].inputParams;
     }
 

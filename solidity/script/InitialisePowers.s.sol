@@ -82,8 +82,7 @@ import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistr
 /// and saves their names and addresses to a obj1 file.
 contract InitialisePowers is Script {
     string outputFile;
-    Configurations helperConfig;
-    Configurations.NetworkConfig public config;
+    Configurations helperConfig; 
     string[] names;
     address[] addresses;
     bytes[] creationCodes;
@@ -108,8 +107,7 @@ contract InitialisePowers is Script {
         vm.serializeString(obj1, "powers", powersBytecode);
 
         helperConfig = new Configurations();
-        config = helperConfig.getConfig();
-        outputJson = deployAndRecordMandates(config);
+        outputJson = deployAndRecordMandates();
 
         string memory finalJson = vm.serializeString(obj1, "mandates", outputJson);
 
@@ -137,7 +135,7 @@ contract InitialisePowers is Script {
     }
 
     /// @notice Deploys all mandate contracts and uses 'serialize' to record their addresses.
-    function deployAndRecordMandates(Configurations.NetworkConfig memory config_)
+    function deployAndRecordMandates()
         internal
         returns (string memory outputJson)
     {
@@ -146,7 +144,7 @@ contract InitialisePowers is Script {
         //////////////////////////////////////////////////////////////////////////
         names.push("Github_ClaimRoleWithSig");
         creationCodes.push(type(Github_ClaimRoleWithSig).creationCode);
-        constructorArgs.push(abi.encode(config_.chainlinkFunctionsRouter));
+        constructorArgs.push(abi.encode(helperConfig.getChainlinkFunctionsRouter(block.chainid)));
 
         names.push("Github_AssignRoleWithSig");
         creationCodes.push(type(Github_AssignRoleWithSig).creationCode);
@@ -368,22 +366,27 @@ contract InitialisePowers is Script {
         creationCodes.push(type(SimpleErc20Votes).creationCode);
         constructorArgs.push(abi.encode());
 
-        names.push("ComplianceRegistryMock");
-        creationCodes.push(type(ComplianceRegistryMock).creationCode);
-        constructorArgs.push(abi.encode());
+        // names.push("ComplianceRegistryMock");
+        // creationCodes.push(type(ComplianceRegistryMock).creationCode);
+        // constructorArgs.push(abi.encode());
         
-        names.push("RwaMock");
-        creationCodes.push(type(RwaMock).creationCode);
-        constructorArgs.push(abi.encode());
+        // names.push("RwaMock");
+        // creationCodes.push(type(RwaMock).creationCode);
+        // constructorArgs.push(abi.encode());
 
-        names.push("OnchainIdRegistryMock");
-        creationCodes.push(type(OnchainIdRegistryMock).creationCode);
-        constructorArgs.push(abi.encode());
+        // names.push("OnchainIdRegistryMock");
+        // creationCodes.push(type(OnchainIdRegistryMock).creationCode);
+        // constructorArgs.push(abi.encode());
  
         names.push("ZKPassport_PowersRegistry");
         creationCodes.push(type(ZKPassport_PowersRegistry).creationCode);
-        constructorArgs.push(abi.encode());
-
+        constructorArgs.push(abi.encode(
+            helperConfig.getZkPassportVerifier(block.chainid),
+            helperConfig.getZkPassportHelper(block.chainid),
+            "https://powers-protocol.vercel.app/verifier",
+            "PowersProtocol"
+        ));
+ 
         //////////////////////////////////////////////////////////////////////////
         //                          DEPLOY SEQUENCE                             //
         //////////////////////////////////////////////////////////////////////////
@@ -416,8 +419,7 @@ contract InitialisePowers is Script {
     // @dev wrapper function to expose deployAndRecordMandates externally and only return addresses and names of mandates.
     function getDeployed() external returns (string[] memory mandateNames, address[] memory mandateAddresses) {
         helperConfig = new Configurations();
-        config = helperConfig.getConfig();
-        deployAndRecordMandates(config);
+        deployAndRecordMandates();
         return (names, addresses);
     }
 

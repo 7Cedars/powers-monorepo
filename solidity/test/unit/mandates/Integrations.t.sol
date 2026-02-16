@@ -206,7 +206,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
         super.setUp();
 
         // skip these tests if allowance module is not set
-        if (config.safeAllowanceModule == address(0)) {
+        if (helperConfig.getSafeAllowanceModule(block.chainid) == address(0)) {
             console2.log("Safe Allowance Module not set in config, skipping tests.");
             vm.skip(true);
         }
@@ -245,7 +245,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
     // we will try to add a delegate.
     function test_Safe_ExecTransaction_Success() public { 
         // We are trying to add a delegate (address(0x456)) to the Safe via execTransaction mandate
-        address functionTarget = config.safeAllowanceModule;
+        address functionTarget = helperConfig.getSafeAllowanceModule(block.chainid);
         bytes4 functionSelector = bytes4(0xe71bdf41); // addDelegate(address)
         bytes memory functionCalldata = abi.encode(address(0x456));
 
@@ -262,7 +262,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
 
     function test_SafeAllowance_Transfer_Success() public {
         // 1. Assign Delegate Status to Child DAO
-        address functionTarget = config.safeAllowanceModule;
+        address functionTarget = helperConfig.getSafeAllowanceModule(block.chainid);
         bytes4 functionSelector = bytes4(0xe71bdf41); // addDelegate(address)
 
         // Execute via DAO

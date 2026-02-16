@@ -31,7 +31,6 @@ import { RwaMock, ComplianceRegistryMock } from "@mocks/RwaMock.sol";
 contract CulturalStewardsDAO is DeploySetup {
     InitialisePowers initialisePowers;
     Configurations helperConfig;
-    Configurations.NetworkConfig public config;
     PowersTypes.Conditions conditions;
 
     PowersTypes.MandateInitData[] primaryConstitution;
@@ -77,8 +76,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // Deploy vanilla DAOs (parent and digital) and DAO factories (for ideas and physical).
         vm.startBroadcast();
@@ -86,17 +84,17 @@ contract CulturalStewardsDAO is DeploySetup {
         primaryDAO = new Powers(
             "Primary DAO", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihtpfkpjxianudgvf7pdq7toccccrztvckqpkc3vfnai4x7l3zmme", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
 
         digitalSubDAO = new Powers(
             "Digital sub-DAO", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiemrhwiqju7msjxbszlrk73cn5omctzf2xf2jxaenyw7is2r4takm", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
 
         console2.log("Deploying Organisation's Helper contracts...");
@@ -115,9 +113,9 @@ contract CulturalStewardsDAO is DeploySetup {
         vm.startBroadcast();
         console2.log("Setting up Safe treasury for Primary DAO...");
         treasury = address(
-            SafeProxyFactory(config.safeProxyFactory)
+            SafeProxyFactory(helperConfig.getSafeProxyFactory(block.chainid))
                 .createProxyWithNonce(
-                    config.safeL2Canonical,
+                    helperConfig.getSafeL2Canonical(block.chainid),
                     abi.encodeWithSelector(
                         Safe.setup.selector,
                         owners,
@@ -141,9 +139,9 @@ contract CulturalStewardsDAO is DeploySetup {
         physicalDaoFactory = new PowersFactory(
             "Physical sub-DAO", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihqwcrtlrcqkgarehvqxubzhxtuxyvw444mt4erxzowbjdvggfpqu", // uri 
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Physical sub-DAO factory deployed at:", address(physicalDaoFactory));
@@ -153,9 +151,9 @@ contract CulturalStewardsDAO is DeploySetup {
         ideasDaoFactory = new PowersFactory(
             "Ideas sub-DAO", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiazlaxewkjkny7r2unmqeqhhzvpzeevrneyimcuowhpnol7bogc2e", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Ideas sub-DAO factory deployed at:", address(ideasDaoFactory));
@@ -307,7 +305,7 @@ contract CulturalStewardsDAO is DeploySetup {
             0, // The internal transaction's value in this mandate is always 0. To transfer Eth use a different mandate.
             abi.encodeWithSelector( // the call to be executed by the Safe: enabling the module.
                 ModuleManager.enableModule.selector,
-                config.safeAllowanceModule
+                helperConfig.getSafeAllowanceModule(block.chainid)
             ),
             0, // operation = Call
             0, // safeTxGas
@@ -319,7 +317,7 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         calldatas[14] = abi.encodeWithSelector( // call to set Digital sub-DAO as delegate to the Safe treasury.
             Safe.execTransaction.selector,
-            config.safeAllowanceModule, // The internal transaction's destination: the Allowance Module.
+            helperConfig.getSafeAllowanceModule(block.chainid), // The internal transaction's destination: the Allowance Module.
             0, // The internal transaction's value in this mandate is always 0. To transfer Eth use a different mandate.
             abi.encodeWithSignature(
                 "addDelegate(address)", // == AllowanceModule.addDelegate.selector,  (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
@@ -357,7 +355,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Initiate Ideas sub-DAO creation
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 5; // = 5% quorum. Note: very low quorum to encourage experimentation.
         primaryConstitution.push(
@@ -373,7 +371,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Execute Ideas sub-DAO creation
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
@@ -419,7 +417,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Veto Revoke Ideas sub-DAO creation mandate //
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         primaryConstitution.push(
@@ -439,7 +437,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.allowedRole = 2;
         conditions.quorum = 66;
         conditions.succeedAt = 51;
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -481,7 +479,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Execute Physical sub-DAO creation
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
@@ -529,7 +527,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 nameDescription: "Assign Delegate status: Assign delegate status at Safe treasury to the Physical sub-DAO",
                 targetMandate: initialisePowers.getInitialisedAddress("Safe_ExecTransaction_OnReturnValue"),
                 config: abi.encode(
-                    config.safeAllowanceModule, // target contract
+                    helperConfig.getSafeAllowanceModule(block.chainid), // target contract
                     bytes4(0xe71bdf41), // == AllowanceModule.addDelegate.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
                     abi.encode(), // params before (role id 4 = Ideas sub-DAOs)
                     inputParams, // dynamic params (the input params of the parent mandate)
@@ -549,7 +547,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // members veto revoking physical DAO
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         primaryConstitution.push(
@@ -565,10 +563,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Revoke Physical sub-DAO (Revoke Role ID) //
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -597,7 +595,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 config: abi.encode(
                     inputParams,
                     bytes4(0xdd43a79f), // == AllowanceModule.removeDelegate.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly
-                    config.safeAllowanceModule // target contract
+                    helperConfig.getSafeAllowanceModule(block.chainid) // target contract
                 ),
                 conditions: conditions
             })
@@ -617,7 +615,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.allowedRole = 3; // = Physical sub-DAOs
         conditions.quorum = 66; // = 66% quorum needed
         conditions.succeedAt = 66; // = 66% majority needed for veto.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto allowance: Veto setting an allowance to either Digital sub-DAO or a Physical sub-DAO.",
@@ -647,10 +645,10 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.allowedRole = 2; // = Executives.
         conditions.quorum = 30; // = 30% quorum needed
         conditions.succeedAt = 51; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = the proposal mandate.
         conditions.needNotFulfilled = mandateCount - 2; // = the veto mandate.
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Set Allowance: Execute and set allowance for a Physical sub-DAO.",
@@ -658,7 +656,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
-                    config.safeAllowanceModule
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions // everythign zero == Only admin can call directly
             })
@@ -684,10 +682,10 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.allowedRole = 2; // = Executives.
         conditions.quorum = 30; // = 30% quorum needed
         conditions.succeedAt = 51; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = the proposal mandate.
         conditions.needNotFulfilled = mandateCount - 4; // = the veto mandate.
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Set Allowance: Execute and set allowance for the Digital sub-DAO.",
@@ -695,7 +693,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
-                    config.safeAllowanceModule
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions // everythign zero == Only admin can call directly
             })
@@ -710,7 +708,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executioners: Veto call to Powers instance and mandateIds in other sub-DAOs
         mandateCount++;
         conditions.allowedRole = 2; // = executioners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         primaryConstitution.push(
@@ -730,7 +728,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Veto update URI
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         primaryConstitution.push(
@@ -746,7 +744,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Update URI
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         conditions.needNotFulfilled = mandateCount - 1; // the previous VETO mandate should not have been fulfilled.
@@ -787,7 +785,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("Safe_RecoverTokens"),
                 config: abi.encode(
                     treasury, // this should be the safe treasury!
-                    config.safeAllowanceModule // allowance module address
+                    helperConfig.getSafeAllowanceModule(block.chainid) // allowance module address
                 ),
                 conditions: conditions
             })
@@ -811,7 +809,7 @@ contract CulturalStewardsDAO is DeploySetup {
                     address(soulbound1155), // soulbound token contract
                     type(uint256).max - 1, // assigns a nonsense role Id. This mandate is just to check ownership of tokens.
                     3, // checks if token is from address that is a Physical sub-DAO
-                    daysToBlocks(180, config.BLOCKS_PER_HOUR), // look back period in blocks = 30 days.
+                    daysToBlocks(180, helperConfig.getBlocksPerHour(block.chainid)), // look back period in blocks = 30 days.
                     2 // number of tokens required
                 ),
                 conditions: conditions
@@ -830,7 +828,7 @@ contract CulturalStewardsDAO is DeploySetup {
                     address(soulbound1155), // soulbound token contract
                     1, // member role Id
                     4, // checks if token is from address that is an Ideas sub-DAO
-                    daysToBlocks(180, config.BLOCKS_PER_HOUR), // look back period in blocks = 30 days.
+                    daysToBlocks(180, helperConfig.getBlocksPerHour(block.chainid)), // look back period in blocks = 30 days.
                     20 // number of tokens required
                 ),
                 conditions: conditions
@@ -845,7 +843,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: veto Revoke Membership
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         primaryConstitution.push(
@@ -861,10 +859,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Revoke Membership
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -891,7 +889,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: create election
         mandateCount++;
         conditions.allowedRole = 1; // = Members (should be Executives according to MD, but code says Members)
-        conditions.throttleExecution = minutesToBlocks(7, config.BLOCKS_PER_HOUR); // = once every 7 minutes
+        conditions.throttleExecution = minutesToBlocks(7, helperConfig.getBlocksPerHour(block.chainid)); // = once every 7 minutes
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create an election: an election can be initiated be any member.",
@@ -974,7 +972,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Vote of No Confidence 
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 77; // high majority
         conditions.quorum = 60; // = high quorum 
         primaryConstitution.push(
@@ -1123,7 +1121,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Veto Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 77;
         conditions.needFulfilled = mandateCount - 1;
@@ -1140,7 +1138,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Physical sub-DAOs: Ok Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 3; // Physical sub-DAO
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.quorum = 20;
         conditions.needFulfilled = mandateCount - 2;
@@ -1158,7 +1156,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Ideas sub-DAOs: Ok Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 4; // Ideas sub-DAO
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.quorum = 20;
         conditions.needFulfilled = mandateCount - 1;
@@ -1190,7 +1188,7 @@ contract CulturalStewardsDAO is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 2; // Executives
         conditions.needFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         primaryConstitution.push(
@@ -1272,7 +1270,7 @@ contract CulturalStewardsDAO is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 2; // Conveners 
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         digitalConstitution.push(
@@ -1326,7 +1324,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Conveners: Approve Payment of Receipt
         mandateCount++;
         conditions.allowedRole = 2; // Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 67;
         conditions.quorum = 50;
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
@@ -1334,7 +1332,7 @@ contract CulturalStewardsDAO is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Approve payment of receipt: Execute a transaction from the Safe Treasury.",
                 targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Transfer"),
-                config: abi.encode(config.safeAllowanceModule, treasury),
+                config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury),
                 conditions: conditions
             })
         );
@@ -1349,7 +1347,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Submit a project (Payment Before Action)
         mandateCount++;
         conditions.allowedRole = 1; // Members can propose a project.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.quorum = 5; // note the low quorum to encourage proposals.
         digitalConstitution.push(
@@ -1365,7 +1363,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Conveners: Approve Funding of Project
         mandateCount++;
         conditions.allowedRole = 2; // Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 67;
         conditions.quorum = 50;
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
@@ -1373,7 +1371,7 @@ contract CulturalStewardsDAO is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Approve funding of project: Execute a transaction from the Safe Treasury.",
                 targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Transfer"),
-                config: abi.encode(config.safeAllowanceModule, treasury),
+                config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury),
                 conditions: conditions
             })
         );
@@ -1386,7 +1384,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Conveners: Update URI
         mandateCount++;
         conditions.allowedRole = 2; // = Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         digitalConstitution.push(
@@ -1411,7 +1409,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("Safe_RecoverTokens"),
                 config: abi.encode(
                     treasury, // this should be the safe treasury!
-                    config.safeAllowanceModule // allowance module address
+                    helperConfig.getSafeAllowanceModule(block.chainid) // allowance module address
                 ),
                 conditions: conditions
             })
@@ -1436,7 +1434,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Public: Apply for member role
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // Public
-        conditions.throttleExecution = minutesToBlocks(3, config.BLOCKS_PER_HOUR); // to avoid spamming, the law is throttled.
+        conditions.throttleExecution = minutesToBlocks(3, helperConfig.getBlocksPerHour(block.chainid)); // to avoid spamming, the law is throttled.
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Apply for Member Role: Anyone can claim member roles based on their GitHub contributions to the DAO's repository", // crrently the path is set at cedars/powers
@@ -1446,9 +1444,9 @@ contract CulturalStewardsDAO is DeploySetup {
                     paths,
                     roleIds,
                     "signed", // signatureString
-                    config.chainlinkFunctionsSubscriptionId,
-                    config.chainlinkFunctionsGasLimit,
-                    config.chainlinkFunctionsDonId
+                    helperConfig.getChainlinkFunctionsSubscriptionId(block.chainid),
+                    helperConfig.getChainlinkFunctionsGasLimit(block.chainid),
+                    helperConfig.getChainlinkFunctionsDonId(block.chainid)
                 ),
                 conditions: conditions
             })
@@ -1476,7 +1474,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: veto Revoke Membership
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         digitalConstitution.push(
@@ -1492,10 +1490,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Revoke Membership
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
         digitalConstitution.push(
             PowersTypes.MandateInitData({
@@ -1523,7 +1521,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: create election
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.throttleExecution = minutesToBlocks(120, config.BLOCKS_PER_HOUR); // = once every 2 hours
+        conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create an election: an election can be initiated be any member.",
@@ -1606,7 +1604,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Vote of No Confidence 
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 77; // high majority
         conditions.quorum = 60; // = high quorum 
         digitalConstitution.push(
@@ -1743,7 +1741,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: initiate Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 77;
         digitalConstitution.push(
@@ -1775,7 +1773,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.allowedRole = 2; // Conveners
         conditions.needFulfilled = mandateCount - 2;
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         digitalConstitution.push(
@@ -1838,7 +1836,7 @@ contract CulturalStewardsDAO is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 2; // = Conveners
         conditions.quorum = 51; // simple majority
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         conditions.succeedAt = 51; // simple majority
         ideasConstitution.push(
             PowersTypes.MandateInitData({
@@ -1863,7 +1861,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Conveners: Update URI
         mandateCount++;
         conditions.allowedRole = 2; // = Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         ideasConstitution.push(
@@ -1888,7 +1886,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("Safe_RecoverTokens"),
                 config: abi.encode(
                     treasury, // this should be the safe treasury!
-                    config.safeAllowanceModule // allowance module address
+                    helperConfig.getSafeAllowanceModule(block.chainid) // allowance module address
                 ),
                 conditions: conditions
             })
@@ -1908,7 +1906,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = Public
-        conditions.throttleExecution = minutesToBlocks(10, config.BLOCKS_PER_HOUR); // to avoid spamming, the law is throttled.
+        conditions.throttleExecution = minutesToBlocks(10, helperConfig.getBlocksPerHour(block.chainid)); // to avoid spamming, the law is throttled.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Apply for Membership: Anyone can apply for membership to the DAO by submitting an application.",
@@ -1945,7 +1943,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: veto Revoke Membership
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         ideasConstitution.push(
@@ -1961,10 +1959,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Moderators: Revoke Membership
         mandateCount++;
         conditions.allowedRole = 3; // = Moderators
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
@@ -1988,7 +1986,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // members: veto assigning moderator role.
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 70; // = Note: high threshold.
         ideasConstitution.push(
@@ -2004,7 +2002,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // conveners: assign moderator role.
         mandateCount++;
         conditions.allowedRole = 2; // = Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = simple majority
         conditions.quorum = 30; // = relatively low threshold.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
@@ -2026,7 +2024,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // members: veto revoking moderator role.
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 70; // = Note: high threshold.
         conditions.needFulfilled = mandateCount - 1; // The moderator needs to have been assigned in the first place..
@@ -2043,7 +2041,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // conveners: revoke moderator role.
         mandateCount++;
         conditions.allowedRole = 2; // = Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = simple majority
         conditions.quorum = 30; // = relatively low threshold.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
@@ -2071,7 +2069,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: create election
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.throttleExecution = minutesToBlocks(120, config.BLOCKS_PER_HOUR); // = once every 2 hours
+        conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create an election: an election can be initiated be any member.",
@@ -2147,7 +2145,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Vote of No Confidence 
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 77; // high majority
         conditions.quorum = 60; // = high quorum 
         ideasConstitution.push(
@@ -2282,7 +2280,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Veto Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 77;
         ideasConstitution.push(
@@ -2299,7 +2297,7 @@ contract CulturalStewardsDAO is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 2; // Conveners
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         ideasConstitution.push(
@@ -2383,7 +2381,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Conveners: Approve Payment of Receipt
         mandateCount++;
         conditions.allowedRole = 2; // Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 67;
         conditions.quorum = 50;
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
@@ -2391,7 +2389,7 @@ contract CulturalStewardsDAO is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Approve payment of receipt: Execute a transaction from the Safe Treasury.",
                 targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Transfer"),
-                config: abi.encode(config.safeAllowanceModule, treasury),
+                config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury),
                 conditions: conditions
             })
         );
@@ -2410,7 +2408,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 1; // = Members.
         // conditions.quorum = 40; //  
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 67; // two thirds majority
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2426,9 +2424,9 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 2; // = Conveners.
         // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minute timelock after passing
+        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
         // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2458,7 +2456,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 1; // = Members.
         // conditions.quorum = 40; //  
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 67; // two thirds majority
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2474,9 +2472,9 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 2; // = Conveners.
         // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minute timelock after passing
+        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
         // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2502,7 +2500,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 1; // = Members.
         // conditions.quorum = 40;  
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 67; // two thirds majority
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2518,9 +2516,9 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 2; // = Conveners.
         // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minute timelock after passing
+        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
         // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2548,7 +2546,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 1; // = Members.
         // conditions.quorum = 40;  
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 67; // two thirds majority
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2564,9 +2562,9 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 2; // = Conveners.
         // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minute timelock after passing
+        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
         // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2595,7 +2593,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 1; // = Members.
         // conditions.quorum = 20;  
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 51; // More than two thirds majority
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2612,9 +2610,9 @@ contract CulturalStewardsDAO is DeploySetup {
         // mandateCount++;
         // conditions.allowedRole = 2; // = Conveners.
         // conditions.quorum = 40; //
-        // conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minutes to vote
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         // conditions.succeedAt = 67; // simple majority
-        // conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // 10 minute timelock after passing
+        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
         // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
         // physicalConstitution.push(
         //     PowersTypes.MandateInitData({
@@ -2659,7 +2657,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Conveners: Update URI
         mandateCount++;
         conditions.allowedRole = 2; // = Conveners
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         physicalConstitution.push(
@@ -2684,7 +2682,7 @@ contract CulturalStewardsDAO is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("Safe_RecoverTokens"),
                 config: abi.encode(
                     treasury, // this should be the safe treasury!
-                    config.safeAllowanceModule // allowance module address
+                    helperConfig.getSafeAllowanceModule(block.chainid) // allowance module address
                 ),
                 conditions: conditions
             })
@@ -2706,7 +2704,7 @@ contract CulturalStewardsDAO is DeploySetup {
                     1, // member role Id
                     0, // checks if token is from address that holds role Id 0 (meaning the admin, which is the DAO itself).
                     1, // number of tokens required. Only one POAP needed for membership.
-                    daysToBlocks(15, config.BLOCKS_PER_HOUR) // look back period in blocks = 15 days.
+                    daysToBlocks(15, helperConfig.getBlocksPerHour(block.chainid)) // look back period in blocks = 15 days.
                 ),
                 conditions: conditions
             })
@@ -2720,7 +2718,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: veto Revoke Membership
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         physicalConstitution.push(
@@ -2736,10 +2734,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Revoke Membership
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
-        conditions.timelock = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
         physicalConstitution.push(
             PowersTypes.MandateInitData({
@@ -2766,7 +2764,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: create election
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.throttleExecution = minutesToBlocks(120, config.BLOCKS_PER_HOUR); // = once every 2 hours
+        conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create an election: an election can be initiated be any member.",
@@ -2842,7 +2840,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: Vote of No Confidence 
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 77; // high majority
         conditions.quorum = 60; // = high quorum 
         physicalConstitution.push(
@@ -2978,7 +2976,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: initiate Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 77;
         physicalConstitution.push(
@@ -3010,7 +3008,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.allowedRole = 2; // Conveners
         conditions.needFulfilled = mandateCount - 2;
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         physicalConstitution.push(
@@ -3037,10 +3035,6 @@ contract CulturalStewardsDAO is DeploySetup {
 
     function getTreasury() public view returns (address treasuryAddress) {
         return primaryDAO.getTreasury();   
-    }
-
-    function getConfig() public view returns (Configurations.NetworkConfig memory) {
-        return config;   
-    }
+    } 
 }
 

@@ -24,7 +24,6 @@ import { ElectionList } from "@src/helpers/ElectionList.sol";
 /// @title LimitBreak Registry Governance Deployment Script
 contract ERC721CRegistryGovernance is DeploySetup {
     Configurations helperConfig;
-    Configurations.NetworkConfig public config;
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -49,7 +48,6 @@ contract ERC721CRegistryGovernance is DeploySetup {
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
         helperConfig = new Configurations();
-        config = helperConfig.getConfig();
 
         // step 1: deploy Mocks and Powers
         vm.startBroadcast();
@@ -60,9 +58,9 @@ contract ERC721CRegistryGovernance is DeploySetup {
         powers = new Powers(
             "ERC-721C Registry Governance", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiag5f7kaaskjumzfcmxf7mjv6toqupjwedhl2povvbtkhwqshz2fq", // uri
-            config.maxCallDataLength,
-            config.maxReturnDataLength,
-            config.maxExecutionsLength
+            helperConfig.getMaxCallDataLength(block.chainid),
+            helperConfig.getMaxReturnDataLength(block.chainid),
+            helperConfig.getMaxExecutionsLength(block.chainid)
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -282,7 +280,7 @@ contract ERC721CRegistryGovernance is DeploySetup {
         conditions.allowedRole = MEMBER_ROLE;
         conditions.quorum = 20;
         conditions.succeedAt = 66;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); 
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); 
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Mandates: Members can adopt new mandates.",
@@ -304,7 +302,7 @@ contract ERC721CRegistryGovernance is DeploySetup {
 
         conditions.allowedRole = EXECUTIVE_ROLE;
         conditions.quorum = 1; // Executive quorum
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);  
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));  
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string.concat("Proposal: ", actionName),
@@ -319,7 +317,7 @@ contract ERC721CRegistryGovernance is DeploySetup {
         // 2. Veto (Member)
         conditions.allowedRole = MEMBER_ROLE;
         conditions.quorum = 10;
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);  
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));  
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string.concat("Veto: ", actionName),

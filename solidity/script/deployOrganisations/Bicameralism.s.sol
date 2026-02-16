@@ -19,7 +19,6 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 /// @title Bicameralism Deployment Script
 contract Bicameralism is DeploySetup {
     Configurations helperConfig;
-    Configurations.NetworkConfig public config;
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -36,16 +35,15 @@ contract Bicameralism is DeploySetup {
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
         helperConfig = new Configurations();
-        config = helperConfig.getConfig();
 
         // step 1: deploy Bicameralism Powers
         vm.startBroadcast();
         powers = new Powers(
             "Bicameralism", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreidlcgxe2mnwghrk4o5xenybljieurrxhtio6gq5fq5u6lxduyyl6e", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -98,7 +96,7 @@ contract Bicameralism is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = 1; // = Delegates
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = 5 minutes approx (depends on block time, 300 is ~5 mins on 1s chain, 1h on 12s)
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes approx (depends on block time, 300 is ~5 mins on 1s chain, 1h on 12s)
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 51; // = 33% quorum
         constitution.push(
@@ -114,7 +112,7 @@ contract Bicameralism is DeploySetup {
         // Mandate 3: Execute action (OpenAction)
         mandateCount++;
         conditions.allowedRole = 2; // = Funders
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.needFulfilled = mandateCount - 1; // = Mandate 2 (Initiate action)
         conditions.quorum = 33;

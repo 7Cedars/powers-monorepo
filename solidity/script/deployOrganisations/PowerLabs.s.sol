@@ -22,8 +22,7 @@ import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 /// @title Power Labs Deployment Script
 contract PowerLabs is DeploySetup {
     InitialisePowers initialisePowers;
-    Configurations helperConfig;
-    Configurations.NetworkConfig public config;
+    Configurations helperConfig; 
 
     PowersTypes.Conditions conditions;
     PowersTypes.MandateInitData[] primaryConstitution;
@@ -41,25 +40,24 @@ contract PowerLabs is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // step 1: deploy Powers
         vm.startBroadcast();
         powersParent = new Powers(
             "Power Labs", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibnvjwah2wdgd3fhak3sedriwt5xemjlacmrabt6mrht7f24m5w3i", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
 
         powersChild = new Powers(
             "Power Labs Child", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreichqvnlmfgkw2jeqgerae2torhgbcgdomxzqxiymx77yhflpnniii", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Powers Parent deployed at:", address(powersParent));
@@ -95,7 +93,11 @@ contract PowerLabs is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Setup Safe: Create a SafeProxy, set up allowance module and register it as treasury.",
                 targetMandate: initialisePowers.getInitialisedAddress("Safe_Setup"),
-                config: abi.encode(config.safeProxyFactory, config.safeL2Canonical, config.safeAllowanceModule),
+                config: abi.encode(
+                    helperConfig.getSafeProxyFactory(block.chainid),
+                    helperConfig.getSafeL2Canonical(block.chainid), 
+                    helperConfig.getSafeAllowanceModule(block.chainid) 
+                    ),
                 conditions: conditions
             })
         );
@@ -159,7 +161,7 @@ contract PowerLabs is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // Public
-        conditions.throttleExecution = minutesToBlocks(3, config.BLOCKS_PER_HOUR);
+        conditions.throttleExecution = minutesToBlocks(3, helperConfig.getBlocksPerHour(block.chainid)); // 3 minutes throttle between executions to prevent spamming.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Apply for Contributor Role: Anyone can claim contributor roles based on their GitHub contributions to the 7cedars/powers repository",
@@ -169,9 +171,9 @@ contract PowerLabs is DeploySetup {
                     paths,
                     roleIds,
                     "signed", // signatureString
-                    config.chainlinkFunctionsSubscriptionId,
-                    config.chainlinkFunctionsGasLimit,
-                    config.chainlinkFunctionsDonId
+                    helperConfig.getChainlinkFunctionsSubscriptionId(block.chainid),
+                    helperConfig.getChainlinkFunctionsGasLimit(block.chainid),
+                    helperConfig.getChainlinkFunctionsDonId(block.chainid)
                 ),
                 conditions: conditions
             })
@@ -234,10 +236,10 @@ contract PowerLabs is DeploySetup {
         // Mandate 8: Revoke Role (BespokeAction_Simple)
         mandateCount++;
         conditions.allowedRole = 5; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes voting period
         conditions.succeedAt = 51;
         conditions.quorum = 5;
-        conditions.timelock = minutesToBlocks(3, config.BLOCKS_PER_HOUR);
+        conditions.timelock = minutesToBlocks(3, helperConfig.getBlocksPerHour(block.chainid));
         conditions.needNotFulfilled = mandateCount - 1; // veto mandate
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -265,7 +267,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 5; // = Members can call this mandate.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Propose to add a new Child Powers as a delegate to the Safe Treasury.",
@@ -280,7 +282,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 1; // = funders.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = mandate that must be completed before this one.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -296,7 +298,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 2; // = doc contributors.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 2; // = the proposal mandate.
         conditions.needNotFulfilled = mandateCount - 1; // = the funders veto mandate.
         primaryConstitution.push(
@@ -313,7 +315,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 3; // = frontend contributors.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = the proposal mandate.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -329,7 +331,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 4; // = protocol contributors.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = the proposal mandate.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -338,7 +340,7 @@ contract PowerLabs is DeploySetup {
                 config: abi.encode(
                     inputParams,
                     bytes4(0xe71bdf41), // == AllowanceModule.addDelegate.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
-                    config.safeAllowanceModule
+                    helperConfig.getSafeAllowanceModule(block.chainid) 
                 ),
                 conditions: conditions // everythign zero == Only admin can call directly
             })
@@ -361,7 +363,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 5; // = Members can call this mandate.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Propose to set allowance for a Powers Child at the Safe Treasury.",
@@ -376,7 +378,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 1; // = funders.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = mandate that must be completed before this one.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -392,7 +394,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 2; // = doc contributors.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 2; // = the proposal mandate.
         conditions.needNotFulfilled = mandateCount - 1; // = the funders veto mandate.
         primaryConstitution.push(
@@ -409,7 +411,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 3; // = frontend contributors.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = the proposal mandate.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -425,7 +427,7 @@ contract PowerLabs is DeploySetup {
         conditions.allowedRole = 4; // = protocol contributors.
         conditions.quorum = 20; // = 30% quorum needed
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR); // = number of blocks
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = number of blocks
         conditions.needFulfilled = mandateCount - 1; // = the proposal mandate.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
@@ -434,7 +436,7 @@ contract PowerLabs is DeploySetup {
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
-                    config.safeAllowanceModule
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions // everythign zero == Only admin can call directly
             })
@@ -449,7 +451,7 @@ contract PowerLabs is DeploySetup {
         // Mandate: Propose Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 5; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.quorum = 50;
         primaryConstitution.push(
@@ -465,7 +467,7 @@ contract PowerLabs is DeploySetup {
         // Mandate: Veto Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Funders
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 33;
         conditions.quorum = 50;
         conditions.needFulfilled = mandateCount - 1;
@@ -500,7 +502,7 @@ contract PowerLabs is DeploySetup {
         // Mandate: Propose Revoking Mandates
         mandateCount++;
         conditions.allowedRole = 5; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.quorum = 50;
         primaryConstitution.push(
@@ -516,7 +518,7 @@ contract PowerLabs is DeploySetup {
         // Mandate: Veto Revoking Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Funders
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 33;
         conditions.quorum = 50;
         conditions.needFulfilled = mandateCount - 1;
@@ -554,7 +556,7 @@ contract PowerLabs is DeploySetup {
         // Mandate: Propose adopting a Child Mandate
         mandateCount++;
         conditions.allowedRole = 5; // Members
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.quorum = 50;
         primaryConstitution.push(
@@ -570,7 +572,7 @@ contract PowerLabs is DeploySetup {
         // Mandate: Veto Adopting A child Mandate
         mandateCount++;
         conditions.allowedRole = 1; // Funders
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 33;
         conditions.quorum = 50;
         conditions.needFulfilled = mandateCount - 1;
@@ -637,19 +639,19 @@ contract PowerLabs is DeploySetup {
 
         // Mandate: Execute Allowance Transaction
         // TS uses SafeAllowance_Transfer. config: allowanceModule, safeProxy
-        // We use config.safeAllowanceModule and address(powersParent) as placeholder for safeProxy
+        // We use helperConfig.getSafeAllowanceModule(block.chainid) and address(powersParent) as placeholder for safeProxy
         mandateCount++;
         conditions.allowedRole = 1; // Assuming RoleId 1 (Funders) as placeholder for formData["RoleId"]
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 67;
         conditions.quorum = 50;
-        conditions.timelock = minutesToBlocks(3, config.BLOCKS_PER_HOUR);
+        conditions.timelock = minutesToBlocks(3, helperConfig.getBlocksPerHour(block.chainid));
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Allowance Transaction: Execute a transaction from the Safe Treasury within the allowance set.",
                 targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Transfer"),
                 config: abi.encode(
-                    config.safeAllowanceModule,
+                    helperConfig.getSafeAllowanceModule(block.chainid),  
                     address(parent) // Placeholder for SafeProxyTreasury
                 ),
                 conditions: conditions
@@ -723,10 +725,10 @@ contract PowerLabs is DeploySetup {
         // Mandate: Revoke Mandates
         mandateCount++;
         conditions.allowedRole = 1; // RoleId 1 (Funders)
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 67;
         conditions.quorum = 50;
-        conditions.timelock = minutesToBlocks(3, config.BLOCKS_PER_HOUR);
+        conditions.timelock = minutesToBlocks(3, helperConfig.getBlocksPerHour(block.chainid));
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Mandates: Admin can revoke mandates from the organization",

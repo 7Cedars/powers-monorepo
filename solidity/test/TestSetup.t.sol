@@ -52,8 +52,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     InitialisePowers initialisePowers;
     string[] mandateNames;
     address[] mandateAddresses;
-    TestConstitutions testConstitutions;
-    Configurations.NetworkConfig config;
+    TestConstitutions testConstitutions; 
     PowersTypes.Conditions conditions;
     address powersAddress;
     address[] mandates;
@@ -408,8 +407,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         // deploy external contracts
         initialisePowers = new InitialisePowers();
         (mandateNames, mandateAddresses) = initialisePowers.getDeployed();
-        Configurations helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // deploy constitutions mock
         vm.startPrank(address(daoMock));
@@ -573,9 +571,9 @@ abstract contract TestSetupIntegrations is BaseSetup {
         powersFactory = new PowersFactory(
             "Powers Factory", // name
             "https://testURI", // uri
-            config.maxCallDataLength,
-            config.maxReturnDataLength,
-            config.maxExecutionsLength
+            helperConfig.getMaxCallDataLength(block.chainid),
+            helperConfig.getMaxReturnDataLength(block.chainid),
+            helperConfig.getMaxExecutionsLength(block.chainid) 
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();
@@ -810,7 +808,9 @@ abstract contract TestSetupSafeProtocolFlow is BaseSetup {
 
         // initiate multi constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
-            testConstitutions.safeProtocol_Parent_IntegrationTestConstitution(config.safeAllowanceModule);
+            testConstitutions.safeProtocol_Parent_IntegrationTestConstitution(
+                helperConfig.getSafeAllowanceModule(block.chainid)
+            );
 
         // constitute daoMock.
         daoMock.constitute(mandateInitData_);
