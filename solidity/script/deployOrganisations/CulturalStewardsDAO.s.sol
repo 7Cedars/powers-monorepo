@@ -67,6 +67,7 @@ contract CulturalStewardsDAO is DeploySetup {
     uint256 constant PACKAGE_SIZE = 15; // number of mandates per packaged mandate.
     uint16 requestAllowanceDigitalDAOId; // mandate id for request allowance on digital subDAO.
     uint16 requestAllowancePhysicalDAOId; // mandate id for request allowance on ideas subDAO.
+    uint16 requestMembershipPrimaryDaoId; // mandate id for requesting membership in the primary DAO (i.e. getting the Members role).
     uint16 mintPoapTokenId; // mandate id for minting POAP tokens on soulbound1155.
     uint16 mintActivityTokenId; 
     uint16 requestNewPhysicalDaoId; 
@@ -83,7 +84,7 @@ contract CulturalStewardsDAO is DeploySetup {
         console2.log("Deploying Vanilla Powers contracts...");
         primaryDAO = new Powers(
             "Primary DAO", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihtpfkpjxianudgvf7pdq7toccccrztvckqpkc3vfnai4x7l3zmme", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiho3ac3huvnqauz67takzcb5m65emr3vsvtxba7rme7mf6fqocm2i", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -91,7 +92,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         digitalSubDAO = new Powers(
             "Digital sub-DAO", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiemrhwiqju7msjxbszlrk73cn5omctzf2xf2jxaenyw7is2r4takm", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreies7pigq5iwkd627uk6n5l34o3vyzavdcsdar2srd2brdrfbnkahm", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -138,7 +139,7 @@ contract CulturalStewardsDAO is DeploySetup {
         vm.startBroadcast();
         physicalDaoFactory = new PowersFactory(
             "Physical sub-DAO", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihqwcrtlrcqkgarehvqxubzhxtuxyvw444mt4erxzowbjdvggfpqu", // uri 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreid5embkqobey2pv5bf4zzz3zjs2fgeivkd6kfp7244sbd4yp2ky2u", // uri 
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -150,7 +151,7 @@ contract CulturalStewardsDAO is DeploySetup {
         vm.startBroadcast();
         ideasDaoFactory = new PowersFactory(
             "Ideas sub-DAO", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiazlaxewkjkny7r2unmqeqhhzvpzeevrneyimcuowhpnol7bogc2e", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiaoqlyll5yjvlkcfblegcdf4j4szqjfabf7qaybkmnrufgdsq5t4a", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -258,7 +259,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
-    //                         PRIME DAO CONSTITUTION                         //
+    //                       PRIMARY DAO CONSTITUTION                         //
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
 
@@ -275,23 +276,14 @@ contract CulturalStewardsDAO is DeploySetup {
             uint8(1) // v = 1 This is a type 1 call. See Safe.sol for details.
         );
 
-        targets = new address[](16);
-        values = new uint256[](16);
         calldatas = new bytes[](16);
-
-        for (uint256 i = 0; i < targets.length; i++) {
-            targets[i] = address(primaryDAO);
-        }
-        targets[13] = treasury; // the Safe treasury address.
-        targets[14] = treasury; // the Safe treasury address.
-
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifke7bfkxxs45unssm6hdr6s6464yrkwds3nw3jkn74cblf5oziea");
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Physical sub-DAOs", "");
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Ideas sub-DAOs", "");
-        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Digital sub-DAOs", "");
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Physical sub-DAOs", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigwx7isovolegdy3m74bsyaziwitbm3ooo7y5dghatq5ek64r3qsq");
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Ideas sub-DAOs", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreih52wl5ahxjpabk7bz7wltkxynispszxjyqonwkwsv3rggbkrzjxy");
+        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Digital sub-DAOs", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifo54ut4s5lm43ngb5b6icgvlwggdovj2i72o7z5fottcsxo737cq");
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount1);
         calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount2);
@@ -338,8 +330,8 @@ contract CulturalStewardsDAO is DeploySetup {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assigns role labels, sets up the allowance module, the treasury and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
-                config: abi.encode(targets, values, calldatas),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_OnOwnPowers"),
+                config: abi.encode(calldatas),
                 conditions: conditions
             })
         );
@@ -349,9 +341,6 @@ contract CulturalStewardsDAO is DeploySetup {
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
         // CREATE IDEAS DAO //   
-        inputParams = new string[](1);
-        inputParams[0] = "address Admin";
-
         // Members: Initiate Ideas sub-DAO creation
         mandateCount++;
         conditions.allowedRole = 1; // = Members
@@ -362,7 +351,7 @@ contract CulturalStewardsDAO is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate Ideas sub-DAO: Initiate creation of Ideas sub-DAO",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(inputParams),
+                config: abi.encode(),
                 conditions: conditions
             })
         );
@@ -381,8 +370,8 @@ contract CulturalStewardsDAO is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     address(ideasDaoFactory), // calling the ideas factory
-                    bytes4(keccak256("createPowers(address)")),
-                    inputParams //  
+                    bytes4(keccak256("createPowers()")),
+                    abi.encode()  
                 ),
                 conditions: conditions
             })
@@ -401,7 +390,7 @@ contract CulturalStewardsDAO is DeploySetup {
                     address(primaryDAO), // target contract
                     IPowers.assignRole.selector, // function selector to call
                     abi.encode(4), // params before (role id 4 = Ideas sub-DAOs)
-                    inputParams, // dynamic params (the input params of the parent mandate)
+                    abi.encode(), // dynamic params (the input params of the parent mandate)
                     mandateCount - 1, // parent mandate id (the create Ideas sub-DAO mandate)
                     abi.encode() // no params after
                 ),
@@ -796,40 +785,37 @@ contract CulturalStewardsDAO is DeploySetup {
         //                      ELECTORAL MANDATES                          //
         //////////////////////////////////////////////////////////////////////
 
-        // CLAIM MEMBERSHIP PARENT DAO // -- on the basis of activity token and POAP ownership.
-        // Public: Check ownership POAPS.
-        // insert: all tokens owned.
+        // CLAIM MEMBERSHIP PARENT DAO // -- on the basis of request at ideas DAO and POAP ownership.
+        // Ideas DAO: request membership - statement of intent.
+        inputParams = new string[](1);
+        inputParams[0] = "uint256[] TokenIds";
+
         mandateCount++;
-        conditions.allowedRole = type(uint256).max; // = public
+        conditions.allowedRole = 4; // = ideas sub-DAO
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Request Membership Step 1: 2 POAPS from physical DAO and 20 activity tokens from ideas DAOs needed that are not older than 6 months.",
-                targetMandate: initialisePowers.getInitialisedAddress("Soulbound1155_GatedAccess"),
-                config: abi.encode(
-                    address(soulbound1155), // soulbound token contract
-                    type(uint256).max - 1, // assigns a nonsense role Id. This mandate is just to check ownership of tokens.
-                    3, // checks if token is from address that is a Physical sub-DAO
-                    daysToBlocks(180, helperConfig.getBlocksPerHour(block.chainid)), // look back period in blocks = 30 days.
-                    2 // number of tokens required
-                ),
+                nameDescription: "Request Membership Step 1: A forwarded quest to become member from an ideas-DAO",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode( inputParams ),
                 conditions: conditions
             })
         );
         delete conditions;
+        requestMembershipPrimaryDaoId = mandateCount;
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Request Membership Step 2: 2 POAPS from physical DAO and 20 activity tokens from ideas DAOs needed that are not older than 6 months.",
+                nameDescription: "Request Membership Step 2: 2 POAPS from physical DAO are needed that are not older than 6 months.",
                 targetMandate: initialisePowers.getInitialisedAddress("Soulbound1155_GatedAccess"),
                 config: abi.encode(
                     address(soulbound1155), // soulbound token contract
                     1, // member role Id
-                    4, // checks if token is from address that is an Ideas sub-DAO
+                    5, // checks if token is from address that is an Ideas sub-DAO
                     daysToBlocks(180, helperConfig.getBlocksPerHour(block.chainid)), // look back period in blocks = 30 days.
-                    20 // number of tokens required
+                    2 // number of tokens required
                 ),
                 conditions: conditions
             })
@@ -892,7 +878,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.throttleExecution = minutesToBlocks(7, helperConfig.getBlocksPerHour(block.chainid)); // = once every 7 minutes
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create an Executive election: an election for the executive role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -910,7 +896,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Create election
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Executive election: Members can open the vote for an executive election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -929,7 +915,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Executive role to the winners.",
+                nameDescription: "Tally Executive elections: After an executive election has finished, assign the Executive role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -944,10 +930,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: clean up election
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.needFulfilled = mandateCount - 1; // = Tally election
+        conditions.needFulfilled = mandateCount - 1; // = Tally Executive election
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Executive election: After an executive election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(primaryDAO), // target contract
@@ -994,7 +980,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = previous Vote of No Confidence mandate. Note: NO throttle on this one.
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create an Executive election: an election for the executive role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -1012,7 +998,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Create election
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Executive election: Members can open the vote for an executive election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -1031,7 +1017,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Executive role to the winners.",
+                nameDescription: "Tally Executive elections: After an executive election has finished, assign the Executive role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -1049,7 +1035,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Tally election
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Executive election: After an executive election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(primaryDAO), // target contract
@@ -1105,9 +1091,14 @@ contract CulturalStewardsDAO is DeploySetup {
         adoptMandatesParams[0] = "address[] mandates";
         adoptMandatesParams[1] = "uint256[] roleIds";
 
-        // Any executive: Propose Adopting Mandates
+        // executives: Propose Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 2; // Executives
+        // Note: voting time is longer than the voting time for the 
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); 
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // timelock after voting before execution to give organisations the time to veto.
+        conditions.succeedAt = 66;
+        conditions.quorum = 80;
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate mandate adoption: Any executive can propose adopting new mandates into the organization.",
@@ -1118,13 +1109,15 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
+        uint16 initiateReformId = mandateCount; // Store the ID of the initiate mandate
+
         // Members: Veto Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Members
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 77;
-        conditions.needFulfilled = mandateCount - 1;
+        conditions.needFulfilled = initiateReformId;
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Adopting Mandates: Members can veto proposals to adopt new mandates",
@@ -1134,63 +1127,117 @@ contract CulturalStewardsDAO is DeploySetup {
             })
         );
         delete conditions;
+        uint16 vetoMembersId = mandateCount;
 
-        // Physical sub-DAOs: Ok Adopting Mandates
+        // Digital sub-DAO: Veto Adopting Mandates
         mandateCount++;
-        conditions.allowedRole = 3; // Physical sub-DAO
+        conditions.allowedRole = 5; // Digital sub-DAO
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
-        conditions.quorum = 20;
-        conditions.needFulfilled = mandateCount - 2;
-        conditions.needNotFulfilled = mandateCount - 1;
+        conditions.quorum = 10;
+        conditions.needFulfilled = initiateReformId;
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Ok adopting Mandates: Ok to adopt new mandates into the organization",
+                nameDescription: "Veto Adopting Mandates: Digital sub-DAO can veto proposals to adopt new mandates",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
         );
         delete conditions;
+        uint16 vetoDigitalId = mandateCount;
 
-        // Ideas sub-DAOs: Ok Adopting Mandates
+        // Ideas sub-DAOs: Veto Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 4; // Ideas sub-DAO
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
-        conditions.quorum = 20;
-        conditions.needFulfilled = mandateCount - 1;
+        conditions.quorum = 10;
+        conditions.needFulfilled = initiateReformId;
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Ok adopting Mandates: Ok to adopt new mandates into the organization",
+                nameDescription: "Veto Adopting Mandates: Ideas sub-DAO can veto proposals to adopt new mandates",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
         );
         delete conditions;
+        uint16 vetoIdeasId = mandateCount;
 
-        // Digital sub-DAO: Ok Adopting Mandates
+        // Physical sub-DAOs: Veto Adopting Mandates
         mandateCount++;
-        conditions.allowedRole = 5; // Digital sub-DAO
-        conditions.needFulfilled = mandateCount - 1;
+        conditions.allowedRole = 3; // Physical sub-DAO
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.succeedAt = 51;
+        conditions.quorum = 10;
+        conditions.needFulfilled = initiateReformId;
         primaryConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Ok adopting Mandates: Ok to adopt new mandates into the organization",
+                nameDescription: "Veto Adopting Mandates: Physical sub-DAO can veto proposals to adopt new mandates",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
         );
         delete conditions;
+        uint16 vetoPhysicalId = mandateCount;
 
-        // Executives: Adopt Mandates
+        // Checkpoint 1: Executives confirm Members Veto passed (or timed out without veto)
+        string[] memory emptyParams = new string[](0);
         mandateCount++;
         conditions.allowedRole = 2; // Executives
-        conditions.needFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
-        conditions.succeedAt = 66;
-        conditions.quorum = 80;
+        conditions.needFulfilled = initiateReformId;
+        conditions.needNotFulfilled = vetoMembersId;
+        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // Match voting period
+        primaryConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Reform Checkpoint 1: Executives confirm Members did not veto.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+        uint16 checkpoint1Id = mandateCount;
+
+        // Checkpoint 2: Executives confirm Digital Veto passed
+        mandateCount++;
+        conditions.allowedRole = 2; // Executives
+        conditions.needFulfilled = checkpoint1Id;
+        conditions.needNotFulfilled = vetoDigitalId;
+        primaryConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Reform Checkpoint 2: Executives confirm Digital sub-DAO did not veto.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+        uint16 checkpoint2Id = mandateCount;
+
+        // Checkpoint 3: Executives confirm Ideas Veto passed
+        mandateCount++;
+        conditions.allowedRole = 2; // Executives
+        conditions.needFulfilled = checkpoint2Id;
+        conditions.needNotFulfilled = vetoIdeasId;
+        primaryConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Reform Checkpoint 3: Executives confirm Ideas sub-DAO did not veto.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+        uint16 checkpoint3Id = mandateCount;
+
+        // Executives: Adopt Mandates (Final Step)
+        mandateCount++;
+        conditions.allowedRole = 2; // Executives
+        conditions.needFulfilled = checkpoint3Id;
+        conditions.needNotFulfilled = vetoPhysicalId;
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt new Mandates: Executives can adopt new mandates into the organization",
@@ -1213,29 +1260,25 @@ contract CulturalStewardsDAO is DeploySetup {
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
-        // setup role labels //
-        targets = new address[](8);
-        values = new uint256[](8);
-        calldatas = new bytes[](8);
-        for (uint256 i = 0; i < targets.length; i++) {
-            targets[i] = address(digitalSubDAO);
-        }
+        calldatas = new bytes[](10);
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib6j5h6g5m2l5t7k3y4n2c5s6q3z5v6s2y4j3x7g7w3qlhnfvtzc5u"); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
-        calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
-        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
-        calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigtyqevb7k36goevp6qzc6we4svp2lgrat766yuek4c4uqwkkbzj4"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 6, "Primary DAO", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjza3njovqsfaoi2x752igidfieg4yny6thzijbykjvkkzlvkdy"); 
+        calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
+        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
+        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
+        calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 6, primaryDAO);
+        calldatas[9] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
-                config: abi.encode(targets, values, calldatas),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_OnOwnPowers"),
+                config: abi.encode(calldatas),
                 conditions: conditions
             })
         );
@@ -1498,9 +1541,8 @@ contract CulturalStewardsDAO is DeploySetup {
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Membership: Executives can revoke membership from members.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
                 config: abi.encode(
-                    address(primaryDAO), // target contract
                     IPowers.revokeRole.selector, // function selector to call
                     abi.encode(1), // params before (role id 1 = Members) // the static params
                     inputParams, // the dynamic params (the input params of the parent mandate)
@@ -1524,7 +1566,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create a Convener election: an election for the convener role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -1542,7 +1584,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Create election
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Convener election: Members can open the vote for a convener election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -1561,7 +1603,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Convener role to the winners.",
+                nameDescription: "Tally Convener elections: After a convener election has finished, assign the Convener role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -1579,7 +1621,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Tally election
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Convener election: After an election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(digitalSubDAO), // target contract
@@ -1626,7 +1668,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = previous Vote of No Confidence mandate. Note: NO throttle on this one.
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create a Convener election: an election for the convener role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -1644,7 +1686,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Create election
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Convener election: Members can open the vote for a convener election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -1663,7 +1705,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Convener role to the winners.",
+                nameDescription: "Tally Convener elections: After a convener election has finished, assign the Convener role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -1678,10 +1720,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Members: clean up election
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.needFulfilled = mandateCount - 1; // = Tally election
+        conditions.needFulfilled = mandateCount - 1; // = Tally Convener election
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Convener election: After a convener election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(primaryDAO), // target contract
@@ -1756,7 +1798,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         // PrimaryDAO: Veto Adopting Mandates
         mandateCount++;
-        conditions.allowedRole = 0; // PrimaryDAO = Admin. 
+        conditions.allowedRole = 6; // PrimaryDAO
         conditions.needFulfilled = mandateCount - 1;
         digitalConstitution.push(
             PowersTypes.MandateInitData({
@@ -1805,11 +1847,11 @@ contract CulturalStewardsDAO is DeploySetup {
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigtyqevb7k36goevp6qzc6we4svp2lgrat766yuek4c4uqwkkbzj4"); 
         calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Moderators", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreih7dlv7qlbei3tbxazdkx4bzbjf2mpf656tr5v5uhmy5k4vtdcnqm"); // For now uses the uri of auditors. 
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Primary DAO", "");
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 6, "Primary DAO", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjza3njovqsfaoi2x752igidfieg4yny6thzijbykjvkkzlvkdy");
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
         calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
-        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 4, address(primaryDAO)); 
+        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 6, address(primaryDAO)); 
         calldatas[10] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
@@ -1831,6 +1873,36 @@ contract CulturalStewardsDAO is DeploySetup {
         inputParams = new string[](1); // no input params, as all params are set in the config of the mandate.
         inputParams[0] = "address Admin"; // the only input param is the new URI for the physical sub-DAO, which will be used by conveners when requesting the creation of a new physical sub-DAO.
 
+        // Members: Initialise request for new physical sub-DAO.
+        mandateCount++;
+        conditions.allowedRole = 1; // = Members
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes to vote
+        conditions.succeedAt = 51; // simple majority
+        conditions.quorum = 5; // low quorum. Many members might not be very active.
+        ideasConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Request new Physical sub-DAO: Members can initiate the request for creating a new Physical sub-DAO under the Primary DAO.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(inputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions; 
+
+        // Moderators: Veto request for new physical sub-DAO
+        mandateCount++;
+        conditions.allowedRole = 3; // = Moderators
+        conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled (Members need to have initiated the request for a new physical sub-DAO).
+        ideasConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Veto request for new Physical sub-DAO: Moderators can veto the request for creating a new Physical sub-DAO under the Primary DAO.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(inputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         // Conveners: request at Primary DAO the creation of a new physical DAO.
         // Note: this is a statement of intent. Physical DAOs are requested using a working group, after initated here by conveners.
         mandateCount++;
@@ -1838,6 +1910,8 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.quorum = 51; // simple majority
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
         conditions.succeedAt = 51; // simple majority
+        conditions.needFulfilled = mandateCount - 2; // need the Members to have initiated the request for a new physical sub-DAO.
+        conditions.needNotFulfilled = mandateCount - 1; // need the Moderators to NOT have vetoed the request for a new physical sub-DAO.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request new Physical sub-DAO: Conveners can create a new Physical sub-DAO.",
@@ -1937,15 +2011,13 @@ contract CulturalStewardsDAO is DeploySetup {
         delete conditions;
 
         // REVOKE MEMBERSHIP // Moderators can revoke membership following bad behaviour on forum etc.
-        inputParams = new string[](1);
-        inputParams[0] = "address MemberAccount";
-
         // Members: veto Revoke Membership
         mandateCount++;
         conditions.allowedRole = 1; // = Members
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
+        conditions.needFulfilled = mandateCount - 1; // need the revoke membership mandate to have been fulfilled for the veto to be valid.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Revoke Membership: Members can veto revoking membership from other members.",
@@ -1957,6 +2029,7 @@ contract CulturalStewardsDAO is DeploySetup {
         delete conditions;
 
         // Moderators: Revoke Membership
+        // Note: even though the inputParams also have the URI included (which is not needed for revoking membership), we keep the same inputParams for both the assign and revoke mandate, as the excess params will simply be ignored.
         mandateCount++;
         conditions.allowedRole = 3; // = Moderators
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
@@ -1964,6 +2037,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.quorum = 77; // = Note: high threshold.
         conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
+        conditions.needFulfilled = mandateCount - 2; // need the revoke membership mandate to have been fulfilled.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Membership: Moderators can revoke membership from members.",
@@ -1977,6 +2051,45 @@ contract CulturalStewardsDAO is DeploySetup {
                 conditions: conditions
             })
         );
+        delete conditions;
+
+        // REQUEST MEMBERSHIP OF PRIMARY DAO //
+        inputParams = new string[](1);
+        inputParams[0] = "uint256[] TokenIds";
+
+        // Members: apply for membership of primary DAO. 
+        mandateCount++;
+        conditions.allowedRole = 1; // = Members
+        ideasConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Apply for Membership of Primary DAO: Members can apply for membership of the Primary DAO by submitting a request with their POAPs.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(inputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // moderators: ok and send request to primary DAO. 
+        mandateCount++;
+        conditions.allowedRole = 3; // = Moderators
+        conditions.needFulfilled = mandateCount - 1; // need the application to have been submitted.
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes to vote
+        conditions.succeedAt = 51; // simple majority
+        conditions.quorum = 77; // high quorum to ensure only clear applications pass.
+        ideasConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Request Membership of Primary DAO: Moderators can ok requests for membership of the Primary DAO and send them to the Primary DAO for assessment.",
+                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
+                config: abi.encode( 
+                    address(primaryDAO),
+                    requestMembershipPrimaryDaoId, // parent mandate id (the request membership of primary DAO mandate)
+                    "Requesting membership of Primary DAO", // description
+                    inputParams
+                ),
+                conditions: conditions
+            })
+        ); 
         delete conditions;
 
         // ASSIGN AND REVOKE MODERATORS // 
@@ -2045,6 +2158,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.succeedAt = 51; // = simple majority
         conditions.quorum = 30; // = relatively low threshold.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
+        conditions.needFulfilled = mandateCount - 2; // The moderator role needs to have been assigned.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Moderator Role: Conveners can revoke the Moderator role from an account.",
@@ -2072,7 +2186,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create a Convener election: an election for the convener role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2084,13 +2198,13 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
-        // Members: Open Vote for election
+        // Members: Open Vote for Convener election
         mandateCount++;
         conditions.allowedRole = 1; // = Members
-        conditions.needFulfilled = mandateCount - 1; // = Create election
+        conditions.needFulfilled = mandateCount - 1; // = Create Convener election
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Convener election: Members can open the vote for a convener election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2109,7 +2223,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Convener role to the winners.",
+                nameDescription: "Tally Convener elections: After a convener election has finished, assign the Convener role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -2121,13 +2235,13 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
-        // Members: clean up election
+        // Members: clean up Convener election
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.needFulfilled = mandateCount - 1; // = Tally election
+        conditions.needFulfilled = mandateCount - 1; // = Tally Convener election
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Convener election: After a convener election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CleanUpVoteMandate"),
                 config: abi.encode(mandateCount - 2), // The create vote mandate)
                 conditions: conditions
@@ -2161,13 +2275,13 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
-        // Members: create election
+        // Members: create Convener election
         mandateCount++;
         conditions.allowedRole = 1; // = Members (should be Convener according to MD, but code says Members)
         conditions.needFulfilled = mandateCount - 1; // = previous Vote of No Confidence mandate. Note: NO throttle on this one.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create a Convener election: an election for the convener role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2185,7 +2299,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Create election
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Convener election: Members can open the vote for a convener election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2204,7 +2318,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Convener role to the winners.",
+                nameDescription: "Tally Convener elections: After a convener election has finished, assign the Convener role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -2216,13 +2330,13 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
-        // Members: clean up election
+        // Members: clean up Convener election
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.needFulfilled = mandateCount - 1; // = Tally election
+        conditions.needFulfilled = mandateCount - 1; // = Tally Convener election
         ideasConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Convener election: After a convener election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
                 config: abi.encode( 
                     IPowers.revokeMandate.selector, // function selector to call
@@ -2328,10 +2442,10 @@ contract CulturalStewardsDAO is DeploySetup {
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigtyqevb7k36goevp6qzc6we4svp2lgrat766yuek4c4uqwkkbzj4"); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Primary DAO", "");
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 6, "Primary DAO", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjza3njovqsfaoi2x752igidfieg4yny6thzijbykjvkkzlvkdy");
         calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
-        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, address(primaryDAO)); 
+        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 6, address(primaryDAO)); 
         calldatas[8] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         // £todo: NEED TO SET UP SAFE WALLET HERE TOO! 
@@ -2395,238 +2509,11 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
+        //////////////////////////////////////////////////////////////////////////////////////////////////////
         // £todo 
         // REDEMPTION OF LOCAL ACTIVITY TOKENS // - no direct link to physical art yet.
         // Public: Redeem local activity tokens. -- Local activity tokens are burned, and the caller is whitelisted for redeeming in person at the physical space.
-
-
-        // // CREATE NEW RWA TOKEN //
-        // inputParams = new string[](1); 
-        // inputParams[0] = "string Name";
-
-        // // role 1: veto creating RWA token
-        // mandateCount++;
-        // conditions.allowedRole = 1; // = Members.
-        // conditions.quorum = 40; //  
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 67; // two thirds majority
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Veto creating new RWA item: Role 1 can veto creating new RWA item",
-        //         targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-        //         config: abi.encode(inputParams),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        // // role 2: create RWA token
-        // mandateCount++;
-        // conditions.allowedRole = 2; // = Conveners.
-        // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
-        // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Creating RWA token: Role 2 (conveners) can create RWA token",
-        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-        //         config: abi.encode(
-        //             initialisePowers.getInitialisedAddress("RwaMock"), // RWA token contract
-        //             RwaMock.createToken.selector, // 
-        //             inputParams // 
-        //         ),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-    
-        // // SET COMPLIANCE TOKEN //
-        // inputParams = new string[](6); 
-        // inputParams[0] = "uint256 tokenId";
-        // inputParams[1] = "address from"; 
-        // inputParams[2] = "address to";
-        // inputParams[3] = "uint256 amount";
-        // inputParams[4] = "uint256 currentToBalance";
-        // inputParams[5] = "uint256 currentTotalSupply";
-
-        // // role 1: veto setting compliance token
-        // mandateCount++;
-        // conditions.allowedRole = 1; // = Members.
-        // conditions.quorum = 40; //  
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 67; // two thirds majority
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Veto setting compliance token: Role 1 can veto setting compliance token",
-        //         targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-        //         config: abi.encode(inputParams),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        //  // role 2: set compliance token
-        // mandateCount++;
-        // conditions.allowedRole = 2; // = Conveners.
-        // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
-        // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Setting compliance token: Role 2 (conveners) can set compliance token",
-        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-        //         config: abi.encode(
-        //             initialisePowers.getInitialisedAddress("ComplianceRegistryMock"), // compliance registry contract
-        //             ComplianceRegistryMock.setComplianceChecks.selector, //  
-        //             inputParams // 
-        //         ),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        // // MINT AND TRANSFER RWA TOKEN TO TREASURY // 
-        // inputParams = new string[](3); 
-        // inputParams[0] = "address To";
-        // inputParams[1] = "uint256 TokenId";
-        // inputParams[2] = "uint256 Amount";
-
-        // // role 1: veto minting RWA token to treasury
-        // mandateCount++;
-        // conditions.allowedRole = 1; // = Members.
-        // conditions.quorum = 40;  
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 67; // two thirds majority
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Veto minting RWA token to treasury: Role 1 can veto minting RWA token to treasury",
-        //         targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-        //         config: abi.encode(inputParams),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        // // role 2: mint RWA token to treasury
-        // mandateCount++;
-        // conditions.allowedRole = 2; // = Conveners.
-        // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
-        // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Minting RWA token to treasury: Role 2 (conveners) can mint RWA token to treasury",
-        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-        //         config: abi.encode(
-        //             initialisePowers.getInitialisedAddress("RwaMock"), // RWA token contract
-        //             RwaMock.mint.selector, // 
-        //             inputParams // 
-        //         ),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        // // TRANSFER RWA TOKEN TO THIRD PARTY //
-        // inputParams = new string[](5); 
-        // inputParams[0] = "address From";
-        // inputParams[1] = "address To";
-        // inputParams[2] = "uint256 TokenId";
-        // inputParams[3] = "uint256 Amount";
-        // inputParams[4] = "bytes Data";
-
-        // // role 1: veto transfer RWA token to third party
-        // mandateCount++;
-        // conditions.allowedRole = 1; // = Members.
-        // conditions.quorum = 40;  
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 67; // two thirds majority
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Veto transfer RWA token to third party: Role 1 can veto transfer RWA token to third party",
-        //         targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-        //         config: abi.encode(inputParams),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        // // role 2: transfer RWA token to third party
-        // mandateCount++;
-        // conditions.allowedRole = 2; // = Conveners.
-        // conditions.quorum = 20; //
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 51; // simple majority
-        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
-        // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Transfer RWA token to third party: Role 2 (conveners) can transfer RWA token to third party",
-        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-        //         config: abi.encode(
-        //             initialisePowers.getInitialisedAddress("RwaMock"), // RWA token contract
-        //             RwaMock.safeTransferFrom.selector, // 
-        //             inputParams // 
-        //         ),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        // // FORCED TRANSFER RWA TO TREASURY //
-        // // Note the higher thresholds for passing this governance flow. 
-        // inputParams = new string[](4); 
-        // inputParams[0] = "address From";
-        // inputParams[1] = "address To";
-        // inputParams[2] = "uint256 TokenId";
-        // inputParams[3] = "uint256 Amount"; 
-
-        // // role 1: veto forced transfer RWA token to treasury
-        // // Lower threshold here: = easier to veto. 
-        // mandateCount++;
-        // conditions.allowedRole = 1; // = Members.
-        // conditions.quorum = 20;  
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 51; // More than two thirds majority
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Veto forced transfer RWA token to treasury: Role 1 can veto forced transfer RWA token to treasury",
-        //         targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-        //         config: abi.encode(inputParams),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
-
-        // // role 2: forced transfer RWA token to treasury
-        // // higher threshold here: = harder to pass.
-        // mandateCount++;
-        // conditions.allowedRole = 2; // = Conveners.
-        // conditions.quorum = 40; //
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minutes to vote
-        // conditions.succeedAt = 67; // simple majority
-        // conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 10 minute timelock after passing
-        // conditions.needNotFulfilled = mandateCount - 1; // need role 1 not to have vetoed.
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Forced transfer RWA token to treasury: Role 2 (conveners) can transfer RWA token to treasury",
-        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-        //         config: abi.encode(
-        //             initialisePowers.getInitialisedAddress("RwaMock"), // RWA token contract    
-        //             RwaMock.safeTransferFrom.selector, // 
-        //             inputParams // 
-        //         ),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
+        //////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // MINT POAPS // 
         inputParams = new string[](1);
@@ -2742,9 +2629,8 @@ contract CulturalStewardsDAO is DeploySetup {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Membership: Executives can revoke membership from members.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
                 config: abi.encode(
-                    address(primaryDAO), // target contract
                     IPowers.revokeRole.selector, // function selector to call
                     abi.encode(1), // params before (role id 1 = Members) // the static params
                     inputParams, // the dynamic params (the input params of the parent mandate)
@@ -2767,7 +2653,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create a Convener election: an election for the convener role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2785,7 +2671,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Create election
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Convener election: Members can open the vote for a convener election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2804,7 +2690,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Convener role to the winners.",
+                nameDescription: "Tally Convener elections: After a convener election has finished, assign the Convener role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -2816,13 +2702,13 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
-        // Members: clean up election
+        // Members: clean up Convener election
         mandateCount++;
         conditions.allowedRole = 1;
-        conditions.needFulfilled = mandateCount - 1; // = Tally election
+        conditions.needFulfilled = mandateCount - 1; // = Tally Convener election
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Convener election: After a convener election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CleanUpVoteMandate"),
                 config: abi.encode(mandateCount - 2), // The create vote mandate)
                 conditions: conditions
@@ -2862,7 +2748,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = previous Vote of No Confidence mandate. Note: NO throttle on this one.
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Create an election: an election can be initiated be any member.",
+                nameDescription: "Create a Convener election: an election for the convener role can be initiated be any member.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2880,7 +2766,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Create election
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+                nameDescription: "Open voting for Convener election: Members can open the vote for a convener election. This will create a dedicated vote mandate.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"), // election list contract
@@ -2899,7 +2785,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Open Vote election
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Tally elections: After an election has finished, assign the Convener role to the winners.",
+                nameDescription: "Tally Convener elections: After a convener election has finished, assign the Convener role to the winners.",
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
@@ -2917,7 +2803,7 @@ contract CulturalStewardsDAO is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // = Tally election
         physicalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
+                nameDescription: "Clean up Convener election: After a convener election has finished, clean up related mandates.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(primaryDAO), // target contract
@@ -2991,7 +2877,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         // PrimaryDAO: Veto Adopting Mandates
         mandateCount++;
-        conditions.allowedRole = 4; // PrimaryDAO = role 4. 
+        conditions.allowedRole = 6; // PrimaryDAO = role 6. 
         conditions.needFulfilled = mandateCount - 1;
         physicalConstitution.push(
             PowersTypes.MandateInitData({
