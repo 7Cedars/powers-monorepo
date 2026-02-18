@@ -104,6 +104,7 @@ export default function VerificationPage() {
         logo: "https://powers.7cedars.xyz/logo1_notext.png",
         purpose: "Verify identity for governance participation",
         scope: "powers",
+        mode: "compressed-evm",
         devMode: true, // Assuming dev mode based on example
       });
 
@@ -365,14 +366,7 @@ export default function VerificationPage() {
                                   <CheckCircleIcon className="w-8 h-8 text-green-500" />
                                 </div>
                                 <h4 className="text-lg font-semibold text-green-900 mb-1">Proof Generated!</h4>
-                                <p className="text-sm text-green-700">Your zero-knowledge proof is ready for submission.</p>
-                                
-                                <button 
-                                  onClick={generateProof}
-                                  className="mt-4 text-xs text-green-600 hover:text-green-800 underline decoration-green-600/30 hover:decoration-green-800/50"
-                                >
-                                  Generate New Proof
-                                </button>
+                                <p className="text-sm text-green-700">Your zero-knowledge proof is being submitted.</p>
                             </div>
                         )}
                     </div>
@@ -390,16 +384,16 @@ export default function VerificationPage() {
                     
                     <div className="ml-11 space-y-3">
                       {isPending && (
-                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md flex items-center">
-                              <TwoSeventyRingWithBg className="w-5 h-5 text-blue-600 mr-3 animate-spin" />
-                              <span className="text-blue-800">Please confirm the transaction in your wallet...</span>
+                          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
+                              <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
+                              <span className="text-yellow-800">Please confirm the transaction in your wallet...</span>
                           </div>
                       )}
 
                       {isConfirming && (
-                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md flex items-center">
-                              <TwoSeventyRingWithBg className="w-5 h-5 text-blue-600 mr-3 animate-spin" />
-                              <span className="text-blue-800">Verifying transaction on-chain...</span>
+                          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
+                              <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
+                              <span className="text-yellow-800">Your zero-knowledge proof is being submitted...</span>
                           </div>
                       )}
                       
