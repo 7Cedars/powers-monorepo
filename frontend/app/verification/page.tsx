@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from "wagmi";
 import { ZKPassport, ProofResult } from "@zkpassport/sdk";
 import { parseEther, keccak256, toHex, encodeAbiParameters, parseAbiParameters, encodeFunctionData } from "viem";
 import { Button } from "../../components/Button";
 import { LoadingBox } from "../../components/LoadingBox";
-import { CheckCircleIcon, XCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { getInitialisedAddress } from "../../organisations/helpers";
+import { CheckCircleIcon, XCircleIcon, ExclamationCircleIcon, QrCodeIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import ZKPassportPowersRegistry from "../../context/builds/ZKPassport_PowersRegistry.json";
 import QRCode from "react-qr-code";
 import { ConnectButton } from "../../components/ConnectButton";
@@ -36,21 +37,44 @@ const AVAILABLE_FIELDS = [
 
 export default function VerificationPage() {
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  const targetChainId = 11155111; // Sepolia
 
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [proof, setProof] = useState<any>(null);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const [queryUrl, setQueryUrl] = useState("");
-  // Hardcoded dummy address for Powers registry
-  const [registryAddress, setRegistryAddress] = useState("0x1234567890123456789012345678901234567890");
+  const [deployedMandates, setDeployedMandates] = useState<Record<string, `0x${string}`>>({});
   
   const zkPassportRef = useRef<ZKPassport | null>(null);
 
   useEffect(() => {
+    const fetchPowered = async () => {
+      try {
+        const response = await fetch(`/powered/${chainId}.json`);
+        if (!response.ok) {
+            console.warn(`Failed to fetch powered data for chain ${chainId}`);
+            return;
+        }
+        const data = await response.json();
+        setDeployedMandates(data.mandates || {});
+      } catch (error) {
+        console.error('Error loading powered data:', error);
+      }
+    };
+    
+    if (chainId) {
+        fetchPowered();
+    }
+  }, [chainId]);
+
+  useEffect(() => {
     if (!zkPassportRef.current) {
-      zkPassportRef.current = new ZKPassport();
+      zkPassportRef.current = new ZKPassport("https://powers-git-develop-7cedars-projects.vercel.app/verifier");
     }
   }, []);
 
@@ -58,6 +82,7 @@ export default function VerificationPage() {
     // Reset proof and query URL when selected fields change
     setProof(null);
     setQueryUrl("");
+    setIsGeneratingProof(false);
   }, [selectedFields]);
 
   const handleFieldToggle = (fieldId: string) => {
@@ -147,7 +172,16 @@ export default function VerificationPage() {
   };
 
   const verifyOnChain = (proofResult: ProofResult, isIDCard: boolean) => {
-    if (!registryAddress || !zkPassportRef.current) return;
+    if (!zkPassportRef.current) return;
+
+    let registryAddress: `0x${string}`;
+    try {
+      registryAddress = getInitialisedAddress("ZKPassport_PowersRegistry", deployedMandates);
+    } catch (e) {
+      console.error("Registry address not found:", e);
+      alert("ZKPassport Registry contract not found for this network. Please switch to a supported network.");
+      return;
+    }
 
     try {
         const params = zkPassportRef.current.getSolidityVerifierParameters({
@@ -157,9 +191,9 @@ export default function VerificationPage() {
         });
         
         writeContract({
-          address: registryAddress as `0x${string}`,
+          address: registryAddress,
           abi: ZKPassportPowersRegistry.abi,
-          functionName: "register", // Updated to match contract function name if it was register, checking... ABI has register or verifyAndRegister?
+          functionName: "register", 
           args: [params, isIDCard],
         });
     } catch (error) {
@@ -169,26 +203,33 @@ export default function VerificationPage() {
   };
 
   return (
-    <section className="min-h-screen flex flex-col justify-start items-center px-4 snap-start snap-always bg-gradient-to-b from-slate-100 to-slate-50 sm:pt-16 pt-4 pb-20">
-      <div className="w-full flex flex-col gap-8 justify-start items-center max-w-4xl">
+    <section className="min-h-screen w-full flex flex-col justify-start items-center px-4 snap-start snap-always bg-gradient-to-b from-indigo-600 to-slate-50 sm:pt-16 pt-4 pb-20">
+      <div className="w-full flex flex-col gap-12 justify-start items-center max-w-4xl">
         
         {/* Header Section */}
         <div className="flex flex-col items-center text-center space-y-2">
-          <h1 className="text-4xl font-bold text-slate-600">ZKPassport Verification</h1>
-          <p className="text-xl text-slate-500 max-w-2xl">
-            Prove your identity privacy-preservingly using ZKPassport to participate in governance.
+          <h1 className="text-4xl font-bold text-slate-50">ZKPassport Verification</h1>
+          <p className="text-xl text-slate-100 max-w-2xl">
+            Prove your identity privacy-preservingly using ZKPassport to participate in on-chain governance.
           </p>
         </div>
 
         {/* Main Content Card */}
-        <div className="w-full bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
+        <div className="w-full bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden max-w-6xl">
           
           {/* Card Header */}
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-slate-700">Identity Verification</h2>
             <div className="flex items-center gap-2">
+                {isConnected && address && (
+                    <span className="text-sm text-slate-600">
+                        {address.slice(0, 6)}...{address.slice(-4)}
+                    </span>
+                )}
                 <span className={`h-2.5 w-2.5 rounded-full ${isConnected ? 'bg-green-500' : 'bg-slate-300'}`}></span>
-                <span className="text-sm text-slate-600">{isConnected ? 'Wallet Connected' : 'Wallet Not Connected'}</span>
+                <span className="text-sm text-slate-600 hidden sm:inline">
+                    {isConnected ? 'Wallet Connected' : 'Wallet Not Connected'}
+                </span>
             </div>
           </div>
 
@@ -208,87 +249,140 @@ export default function VerificationPage() {
                   <ConnectButton />
                 </div>
               </div>
+            ) : chainId !== targetChainId ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                <div className="p-4 bg-yellow-50 rounded-full">
+                   <ExclamationCircleIcon className="w-8 h-8 text-yellow-600" />
+                </div>
+                <h3 className="text-lg font-medium text-slate-700">Wrong Network</h3>
+                <p className="text-slate-500 max-w-sm">Please switch to Sepolia testnet to continue.</p>
+                <div className="pt-2">
+                  <Button onClick={() => switchChain({ chainId: targetChainId })}>
+                    Switch to Sepolia
+                  </Button>
+                </div>
+              </div>
             ) : (
               <>
-                {/* Step 1: Configuration */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">1</div>
-                    <h3 className="text-lg font-medium text-slate-800">Select Data to Disclose</h3>
-                  </div>
-                  
-                  <div className="ml-11 space-y-4">
-                    <p className="text-slate-600 text-sm">
-                        Select the information you want to verify and disclose on-chain. The zero-knowledge proof ensures only this data is revealed.
-                    </p>
+                <div className="flex flex-col lg:flex-row gap-8 pb-4">
+                  {/* Step 1: Configuration */}
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">1</div>
+                      <h3 className="text-lg font-medium text-slate-800">Select Data to Disclose</h3>
+                    </div>
                     
-                    <div className="bg-slate-50 p-4 rounded-md border border-slate-200 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Registry Address</label>
-                        <SimpleInput 
-                            value={registryAddress} 
-                            onChange={setRegistryAddress} 
-                            placeholder="0x..." 
-                        />
-                      </div>
+                    <div className="ml-11 space-y-4">
+                      <p className="text-slate-600 text-sm">
+                          Select the information you want to verify and disclose on-chain. The zero-knowledge proof ensures only this data is revealed.
+                      </p>
+                      
+                      <div className="bg-slate-50 p-4 rounded-md border border-slate-200 space-y-4 h-full">
+                        <div className="grid gap-3 grid-cols-1 h-full content-start">
+                          {/* Always selected Proof of Uniqueness button */}
+                          <button 
+                            className="p-3 rounded-md border text-sm font-medium transition-colors text-left flex items-center justify-between bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-default"
+                            title="This field is required for verification"
+                          >
+                            Proof of Uniqueness (type of ID)
+                            <CheckCircleIcon className="w-5 h-5 text-white ml-2" />
+                          </button>
 
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {AVAILABLE_FIELDS.map((field) => (
-                          <label key={field.id} className="flex items-center space-x-3 p-3 bg-white border border-slate-200 rounded cursor-pointer hover:border-indigo-300 transition-colors">
-                            <input
-                              type="checkbox"
-                              checked={selectedFields.includes(field.id)}
-                              onChange={() => handleFieldToggle(field.id)}
-                              className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <span className="text-sm font-medium text-slate-700">{field.label}</span>
-                          </label>
-                        ))}
+                          {AVAILABLE_FIELDS.map((field) => (
+                            <button 
+                              key={field.id}
+                              onClick={() => handleFieldToggle(field.id)}
+                              className={`p-3 rounded-md border text-sm font-medium transition-colors text-left flex items-center justify-between group ${
+                                selectedFields.includes(field.id) 
+                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                              }`}
+                            >
+                              {field.label}
+                              {selectedFields.includes(field.id) && (
+                                <CheckCircleIcon className="w-5 h-5 text-white ml-2" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Step 2: Proof Generation */}
-                <div className="space-y-4 border-t border-slate-100 pt-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">2</div>
-                    <h3 className="text-lg font-medium text-slate-800">Generate Proof</h3>
-                  </div>
-                  
-                  <div className="ml-11 space-y-4">
-                    <p className="text-slate-600 text-sm">
+                  {/* Divider for mobile / Spacer for desktop */}
+                  <div className="block lg:hidden h-px bg-slate-100 w-full my-4"></div>
+
+                  {/* Step 2: Proof Generation */}
+                  <div className="flex-1 flex flex-col space-y-4">
+                    <div className="flex items-center gap-3 mb-2 shrink-0">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">2</div>
+                      <h3 className="text-lg font-medium text-slate-800">Generate Proof</h3>
+                    </div>
+                    
+                    <div className="ml-11 flex flex-col flex-grow space-y-4">
+                    <p className="text-slate-600 text-sm shrink-0">
                       Scan the QR code with your ZKPassport mobile app to generate the proof.
                     </p>
                     
-                    <div className="w-full sm:w-fit">
-                        <Button 
-                            onClick={generateProof} 
-                            statusButton={isGeneratingProof ? "pending" : selectedFields.length === 0 ? "disabled" : "idle"}
-                        >
-                        {isGeneratingProof ? "Generating..." : "Generate ZK Proof"}
-                        </Button>
-                    </div>
-                    
-                    {queryUrl && !proof && (
-                        <div className="flex flex-col items-center justify-center p-6 bg-white border border-slate-200 rounded-lg shadow-sm max-w-sm mx-auto">
-                            <QRCode value={queryUrl} size={200} />
-                            <p className="mt-4 text-slate-600 text-sm text-center font-medium">Scan with ZKPassport App</p>
-                        </div>
-                    )}
+                    {/* Integrated QR Code / Button Area */}
+                    <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] flex-grow">
+                        {!queryUrl && !isGeneratingProof && (
+                           <button 
+                             onClick={generateProof}
+                             className="group relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed rounded-xl transition-all duration-200 border-indigo-300 bg-indigo-50/30 hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer"
+                           >
+                              <div className="p-4 bg-white rounded-full shadow-sm mb-3 group-hover:scale-105 transition-transform duration-200">
+                                <QrCodeIcon className="w-8 h-8 text-indigo-600" />
+                              </div>
+                              <span className="text-sm font-semibold text-indigo-600">
+                                Create QR Code
+                              </span>
+                              <span className="text-xs text-slate-400 mt-1 max-w-[160px] text-center">
+                                Click to generate a unique QR code
+                              </span>
+                           </button>
+                        )}
 
-                    {proof && (
-                        <div className="p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
-                            <CheckCircleIcon className="w-6 h-6 text-green-600 mr-3 flex-shrink-0" />
-                            <span className="text-green-800 font-medium">Proof Generated Successfully</span>
-                        </div>
-                    )}
+                        {isGeneratingProof && !queryUrl && (
+                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-white border border-slate-200 rounded-xl shadow-sm">
+                                <TwoSeventyRingWithBg className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+                                <span className="text-sm font-medium text-slate-600">Generating QR Code...</span>
+                            </div>
+                        )}
+
+                        {queryUrl && !proof && (
+                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] p-6 bg-white rounded-xl">
+                                <QRCode value={queryUrl} size={300} />
+                                <div className="mt-4 flex items-center gap-2">
+                                  <p className="text-slate-600 text-sm font-medium">Scan with ZKPassport App</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {proof && (
+                            <div className="w-full max-w-md p-6 bg-green-50 border border-green-200 rounded-xl flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                <div className="p-3 bg-white rounded-full shadow-sm mb-3">
+                                  <CheckCircleIcon className="w-8 h-8 text-green-500" />
+                                </div>
+                                <h4 className="text-lg font-semibold text-green-900 mb-1">Proof Generated!</h4>
+                                <p className="text-sm text-green-700">Your zero-knowledge proof is ready for submission.</p>
+                                
+                                <button 
+                                  onClick={generateProof}
+                                  className="mt-4 text-xs text-green-600 hover:text-green-800 underline decoration-green-600/30 hover:decoration-green-800/50"
+                                >
+                                  Generate New Proof
+                                </button>
+                            </div>
+                        )}
+                    </div>
                   </div>
+                </div>
                 </div>
 
                 {/* Step 3: Submission Status */}
                 {(isPending || isConfirming || hash || isConfirmed || writeError) && (
-                  <div className="space-y-4 border-t border-slate-100 pt-6">
+                  <div className="space-y-4 border-t border-slate-100 pt-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">3</div>
                       <h3 className="text-lg font-medium text-slate-800">Registry Submission</h3>
@@ -350,14 +444,23 @@ export default function VerificationPage() {
               </>
             )}
           </div>
+
+          <div className="bg-red-50 border-t border-red-100 p-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+            <div className="flex-shrink-0 bg-red-100 p-2 rounded-full">
+              <ExclamationCircleIcon className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-red-900">Privacy Warning</h4>
+              <p className="text-sm text-red-700">
+                Any data you choose to disclose will be publicly available on-chain and linked to your account address as long as Ethereum remains active. 
+                Be selective in what you choose to disclose.
+              </p>
+            </div>
+          </div>
+
         </div>
 
-        <div className="text-center max-w-2xl">
-           <p className="text-sm text-slate-400">
-             This verification process uses zero-knowledge proofs to ensure your personal data remains private. 
-             Only the specific attributes you choose to disclose are verified on-chain.
-           </p>
-        </div>
+
       </div>
       
       {/* Global loading overlay if needed, though we handle loading states inline now */}

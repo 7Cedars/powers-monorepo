@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { ZKPassportRootVerifier } from "@zkpassport/circuits/src/ZKPassportRootVerifier.sol";
-import { ZKPassportHelper } from "@zkpassport/circuits/src/ZKPassportHelper.sol";
 import { DisclosedData, ProofVerificationParams, BoundData } from "@zkpassport/circuits/src/Types.sol";
 import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassport.sol";
 
@@ -20,18 +18,15 @@ contract ZKPassport_PowersRegistry {
 
         bool success;
         bytes returnData;
-
-        ZKPassportRootVerifier verifier;
-        ZKPassportHelper helper;
     }
 
     //////////////////////////////////////////////////////////////
     //                        STORAGE                           //
     //////////////////////////////////////////////////////////////
     
-    // ZKPassport Verifier contract
-    ZKPassportRootVerifier public immutable zkPassportVerifier; // £contrib? check immutable set in repo.  
-    ZKPassportHelper public immutable zkPassportHelper;
+    // ZKPassport Verifier contract -- why save this to state? Why not just call the contract directly?
+    IZKPassportVerifier public immutable zkPassportVerifier; // £contrib? check immutable set in repo.  
+    IZKPassportHelper public immutable zkPassportHelper;
 
     // Mapping from account address to unique passport identifier (e.g. hash of nullifier)
     mapping(address => bytes32) internal accountIdentifiers;
@@ -64,8 +59,8 @@ contract ZKPassport_PowersRegistry {
         string memory _scope
     ) {
         if (_zkPassportVerifier == address(0)) revert ("ZKPassport: Invalid zero address");
-        zkPassportVerifier = ZKPassportRootVerifier(_zkPassportVerifier);
-        zkPassportHelper = ZKPassportHelper(_zkPassportHelper);
+        zkPassportVerifier = IZKPassportVerifier(_zkPassportVerifier);  
+        zkPassportHelper = IZKPassportHelper(_zkPassportHelper);  
         validDomain = _domain; 
         validScope = _scope;
     }
@@ -85,12 +80,12 @@ contract ZKPassport_PowersRegistry {
         Mem memory mem;
 
         // 1. Verify the proof using ZKPassport Root Verifier
-        (mem.verified, mem.uniqueIdentifier, mem.helper) = zkPassportVerifier.verify(params);
+        (mem.verified, mem.uniqueIdentifier, ) = zkPassportVerifier.verify(params);
         require(mem.verified, "Proof is invalid");
 
         // 2. Verify domain and scope
         require(
-          mem.helper.verifyScopes(params.proofVerificationData.publicInputs, validDomain, validScope),
+          zkPassportHelper.verifyScopes(params.proofVerificationData.publicInputs, validDomain, validScope),
           "Invalid scope"
         );
 
@@ -101,11 +96,11 @@ contract ZKPassport_PowersRegistry {
         );
 
         // 4. Verify Freshness proof. 
-        mem.proofTimestamp = mem.helper.getProofTimestamp(params.proofVerificationData.publicInputs);
+        mem.proofTimestamp = zkPassportHelper.getProofTimestamp(params.proofVerificationData.publicInputs);
         require(block.timestamp - mem.proofTimestamp < 1 hours, "Proof is too old"); // e.g., 1 hour window
 
         // Use the getBoundData function to get the data bound to the proof
-        mem.boundData = mem.helper.getBoundData(params.committedInputs);
+        mem.boundData = zkPassportHelper.getBoundData(params.committedInputs);
         // Make sure the user's address is the one that is calling the contract
         require(mem.boundData.senderAddress == msg.sender, "Not the expected sender");
         // Make sure the chain id is the same as the one you specified in the query builder

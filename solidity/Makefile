@@ -303,11 +303,15 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 deploy-organisation : 
 	@echo "Deploying organisation..."
-	forge script script/deployOrganisations/CulturalStewardsDAO.s.sol:CulturalStewardsDAO $(SEPOLIA_DEPLOY_ARGS)  
+	forge script script/deployOrganisations/Bicameralism.s.sol:Bicameralism $(SEPOLIA_DEPLOY_ARGS)  
 
 initialise-powers :
 	@echo "Initialising Powers contract..."
 	forge script script/InitialisePowers.s.sol:InitialisePowers $(SEPOLIA_DEPLOY_ARGS)
+
+# deploy-zkregistry : 
+# 	@echo "Deploying ZKPassport Registry..."
+# 	forge script script/DeployZKPassportRegistry.s.sol:DeployZKPassportRegistry $(SEPOLIA_DEPLOY_ARGS)
 
 # deploy allowance module to Sepolia. Only needs to be done once.
 deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:DeployAllowanceModule $(OPT_SEPOLIA_DEPLOY_ARGS) 

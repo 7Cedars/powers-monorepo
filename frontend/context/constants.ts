@@ -21,7 +21,7 @@ type Constants = {
   POWER_LABS_CONFIG?: `0x${string}`;
   POWER_LABS_DOCUMENTATION?: `0x${string}`;
   POWER_LABS_FRONTEND?: `0x${string}`;
-  POWER_LABS_PROTOCOL?: `0x${string}`;
+  POWER_LABS_PROTOCOL?: `0x${string}`; 
 }
 
 export const getConstants = (chainId: number): Constants => {
@@ -45,7 +45,7 @@ export const getConstants = (chainId: number): Constants => {
       POWER_LABS_CONFIG: `0x25c53CCBE46d4A1771F209ca6a159895046740F6`,
       POWER_LABS_DOCUMENTATION: `0xb002Dc13c007d519f6c176B129f51963618f6b79`,
       POWER_LABS_FRONTEND: `0xb4C909D4888603E941e38b706365f97949c877d1`,
-      POWER_LABS_PROTOCOL: `0x5b5B9cE87Ba7fCddD3Cbe78bE19b1920645d0359`,
+      POWER_LABS_PROTOCOL: `0x5b5B9cE87Ba7fCddD3Cbe78bE19b1920645d0359`, 
     }
     case 421614: // arb sepolia
       return {
@@ -65,7 +65,7 @@ export const getConstants = (chainId: number): Constants => {
         POWER_LABS_CONFIG: `0x831faa5763E5D100c7737D81c5910833f9Bba20c`,
         POWER_LABS_DOCUMENTATION: `0xF5E19a158623c4FBFF7E2A4576B20Bb1fF238D15`,
         POWER_LABS_FRONTEND: `0x524E402c8836cF58212b942fb370ee020A2AB37C`,
-        POWER_LABS_PROTOCOL: `0x3BA99f0FcF149b62D107301725Bc9BE3B8Af76F1`,
+        POWER_LABS_PROTOCOL: `0x3BA99f0FcF149b62D107301725Bc9BE3B8Af76F1`, 
       }
     case 11155420: // optimism sepolia
       return {
@@ -85,7 +85,7 @@ export const getConstants = (chainId: number): Constants => {
         POWER_LABS_CONFIG: `0xA6B901C0FdF44cc53e24b3E0976d08D26865a8dC`,
         POWER_LABS_DOCUMENTATION: `0x690AF0b3fc59BB45F0bAF30a52efEe86A52e7d40`,
         POWER_LABS_FRONTEND: `0xEddC118c4439f41e911deB5137C263780Dc056BB`,
-        POWER_LABS_PROTOCOL: `0xD8Af42E4E561aAf1b5669b11f90e524e5aA21D86`,
+        POWER_LABS_PROTOCOL: `0xD8Af42E4E561aAf1b5669b11f90e524e5aA21D86`, 
       }
     case 5003: // mantle sepolia
       return {
