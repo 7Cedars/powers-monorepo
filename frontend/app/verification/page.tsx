@@ -204,7 +204,7 @@ export default function VerificationPage() {
   };
 
   return (
-    <section className="min-h-screen w-full flex flex-col justify-start items-center px-4 snap-start snap-always bg-gradient-to-b from-indigo-600 to-slate-50 sm:pt-16 pt-4 pb-20">
+    <section className="min-h-screen w-full flex flex-col justify-start items-center px-4 bg-gradient-to-b from-indigo-600 to-slate-50 sm:pt-16 pt-4 pb-20 overflow-y-auto">
       <div className="w-full flex flex-col gap-12 justify-start items-center max-w-4xl">
         
         {/* Header Section */}
@@ -327,7 +327,7 @@ export default function VerificationPage() {
                     
                     {/* Integrated QR Code / Button Area */}
                     <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] flex-grow">
-                        {!queryUrl && !isGeneratingProof && (
+                        {!queryUrl && !isGeneratingProof && !proof && (
                            <button 
                              onClick={generateProof}
                              className="group relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed rounded-xl transition-all duration-200 border-indigo-300 bg-indigo-50/30 hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer"
@@ -361,12 +361,12 @@ export default function VerificationPage() {
                         )}
 
                         {proof && (
-                            <div className="w-full max-w-md p-6 bg-green-50 border border-green-200 rounded-xl flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            <div className="w-full h-full min-h-[300px] p-6 bg-green-50 border border-green-200 rounded-xl flex flex-col items-center justify-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
                                 <div className="p-3 bg-white rounded-full shadow-sm mb-3">
                                   <CheckCircleIcon className="w-8 h-8 text-green-500" />
                                 </div>
                                 <h4 className="text-lg font-semibold text-green-900 mb-1">Proof Generated!</h4>
-                                <p className="text-sm text-green-700">Your zero-knowledge proof is being submitted.</p>
+                                <p className="text-sm text-green-700">Your zero-knowledge proof can now be submitted.</p>
                             </div>
                         )}
                     </div>
@@ -375,66 +375,71 @@ export default function VerificationPage() {
                 </div>
 
                 {/* Step 3: Submission Status */}
-                {(isPending || isConfirming || hash || isConfirmed || writeError) && (
-                  <div className="space-y-4 border-t border-slate-100 pt-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">3</div>
-                      <h3 className="text-lg font-medium text-slate-800">Registry Submission</h3>
-                    </div>
-                    
-                    <div className="ml-11 space-y-3">
-                      {isPending && (
-                          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
-                              <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
-                              <span className="text-yellow-800">Please confirm the transaction in your wallet...</span>
-                          </div>
-                      )}
-
-                      {isConfirming && (
-                          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
-                              <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
-                              <span className="text-yellow-800">Your zero-knowledge proof is being submitted...</span>
-                          </div>
-                      )}
-                      
-                      {hash && (
-                          <div className="text-sm">
-                              <a 
-                                  href={`https://etherscan.io/tx/${hash}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center"
-                              >
-                                  View Transaction on Etherscan
-                                  <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                  </svg>
-                              </a>
-                          </div>
-                      )}
-                      
-                      {isConfirmed && (
-                          <div className="p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
-                              <CheckCircleIcon className="w-6 h-6 text-green-600 mr-3 flex-shrink-0" />
-                              <div>
-                                <p className="text-green-800 font-medium">Verified & Registered!</p>
-                                <p className="text-green-700 text-sm mt-1">Your identity has been successfully verified on-chain.</p>
-                              </div>
-                          </div>
-                      )}
-                      
-                      {writeError && (
-                          <div className="p-4 bg-red-50 border border-red-200 rounded-md flex items-start">
-                              <XCircleIcon className="w-6 h-6 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="text-red-800 font-medium">Transaction Failed</p>
-                                <p className="text-red-700 text-sm mt-1">{writeError.message}</p>
-                              </div>
-                          </div>
-                      )}
-                    </div>
+                <div className="space-y-4 pt-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">3</div>
+                    <h3 className="text-lg font-medium text-slate-800">Registry Submission</h3>
                   </div>
-                )}
+                  
+                  <div className="ml-11 space-y-3">
+                    {!isPending && !isConfirming && !hash && !isConfirmed && !writeError && (
+                       <div className="p-4 bg-slate-50 border border-slate-200 rounded-md flex items-center">
+                           <div className="w-5 h-5 mr-3 flex-shrink-0 rounded-full border-2 border-slate-300"></div>
+                           <span className="text-slate-500 text-sm">Waiting for proof generation...</span>
+                       </div>
+                    )}
+
+                    {isPending && (
+                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
+                            <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
+                            <span className="text-yellow-800">Please confirm the transaction in your wallet...</span>
+                        </div>
+                    )}
+
+                    {isConfirming && (
+                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
+                            <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
+                            <span className="text-yellow-800">Your zero-knowledge proof is being submitted...</span>
+                        </div>
+                    )}
+                    
+                    {hash && (
+                        <div className="text-sm">
+                            <a 
+                                href={`https://etherscan.io/tx/${hash}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center"
+                            >
+                                View Transaction on Etherscan
+                                <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                            </a>
+                        </div>
+                    )}
+                    
+                    {isConfirmed && (
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
+                            <CheckCircleIcon className="w-6 h-6 text-green-600 mr-3 flex-shrink-0" />
+                            <div>
+                              <p className="text-green-800 font-medium">Verified & Registered!</p>
+                              <p className="text-green-700 text-sm mt-1">Your identity has been successfully verified on-chain.</p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {writeError && (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-md flex items-start overflow-hidden">
+                            <XCircleIcon className="w-6 h-6 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-red-800 font-medium">Transaction Failed</p>
+                              <p className="text-red-700 text-sm mt-1 break-words whitespace-pre-wrap">{writeError.message}</p>
+                            </div>
+                        </div>
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </div>
