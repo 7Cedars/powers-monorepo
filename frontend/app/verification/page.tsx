@@ -12,6 +12,7 @@ import ZKPassportPowersRegistry from "../../context/builds/ZKPassport_PowersRegi
 import QRCode from "react-qr-code";
 import { ConnectButton } from "../../components/ConnectButton";
 import { TwoSeventyRingWithBg } from "react-svg-spinners";
+import build from "next/dist/build";
 
 // Simple Input Component matching project style (light theme)
 const SimpleInput = ({ value, onChange, placeholder, className = "" }: { value: string, onChange: (v: string) => void, placeholder?: string, className?: string }) => (
@@ -123,6 +124,7 @@ export default function VerificationPage() {
           }
       });
 
+      builder.bind("chain", "ethereum_sepolia");
       builder.bind("custom_data", "");
       
       const {
