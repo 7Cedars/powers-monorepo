@@ -190,12 +190,14 @@ export default function VerificationPage() {
           scope: "powers",
           devMode: true,
         });
+
+        console.log({verificationParams: params});
         
         writeContract({
           address: registryAddress,
           abi: ZKPassportPowersRegistry.abi,
           functionName: "register", 
-          args: [params, isIDCard],
+          args: [params],
         });
     } catch (error) {
         console.error("Error preparing verification:", error);

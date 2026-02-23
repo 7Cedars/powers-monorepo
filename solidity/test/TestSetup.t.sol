@@ -368,7 +368,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         MAX_FUZZ_CALLDATA_LENGTH = 2000;
 
         // users
-        alice = makeAddr("alice");
+        alice = makeAddr("Alice");
         bob = makeAddr("bob");
         charlotte = makeAddr("charlotte");
         david = makeAddr("david");
@@ -422,12 +422,17 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
 
 abstract contract TestSetupPowers is BaseSetup {
     function setUpVariables() public override {
+        vm.selectFork(sepoliaFork);
+
         super.setUpVariables();
 
         // initiate constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
             testConstitutions.powersTestConstitution(address(daoMock));
 
+            
+        console2.log("Chain Id:");
+        console2.logUint(block.chainid);
         console2.log("Mandate Init Data Length:");
         console2.logUint(mandateInitData_.length);
 

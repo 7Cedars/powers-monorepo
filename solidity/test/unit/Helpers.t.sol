@@ -20,7 +20,7 @@ import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
-import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
+import { IZKPassport_PowersRegistry, ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassport.sol";
 import { DisclosedData, ProofVerificationParams, BoundData, ProofVerificationData, FaceMatchMode, OS, ServiceConfig } from "@zkpassport/circuits/src/Types.sol";
 
@@ -2756,27 +2756,6 @@ contract AllowedTokensTest is TestSetupPowers {
 //////////////////////////////////////////////////////////////
 //          ZKPASSPORT POWERS REGISTRY TESTS                //
 //////////////////////////////////////////////////////////////
-
-contract MockZKPassportVerifier is IZKPassportVerifier {
-    bool public shouldVerify;
-    bytes32 public uniqueIdentifierToReturn;
-    IZKPassportHelper public helperToReturn;
-
-    constructor(bool _shouldVerify, bytes32 _uniqueIdentifier, address _helper) {
-        shouldVerify = _shouldVerify;
-        uniqueIdentifierToReturn = _uniqueIdentifier;
-        helperToReturn = IZKPassportHelper(_helper);
-    }
-
-    function verify(ProofVerificationParams calldata) external view returns (bool, bytes32, IZKPassportHelper) {
-        return (shouldVerify, uniqueIdentifierToReturn, helperToReturn);
-    }
-    
-    function setShouldVerify(bool _shouldVerify) external {
-        shouldVerify = _shouldVerify;
-    }
-}
-
 contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     // this should run on forked mainnet. 
     // Deploy the ZKregistry as is, with existing verifiers and helpers. 
@@ -2786,12 +2765,12 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     ZKPassport_PowersRegistry registry;
 
     function setUp() public override {
+        super.setUp();
+
         registryAddress = findMandateAddress("ZKPassport_PowersRegistry"); 
+        console.log("Registry address on Sepolia fork:", registryAddress);
         registry = ZKPassport_PowersRegistry(registryAddress);
 
-        vm.selectFork(sepoliaFork);
-
-        super.setUp();
         // We will deploy the registry in the test function itself, since it needs to be deployed by the daoMock. 
     }
 
@@ -2804,30 +2783,34 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
 
         // Check that the registry has the expected verifiers and helpers (from the constitution)
         // We can only check that they are set, not their internal logic, since we are using real contracts on mainnet fork.
-        address verifierAddress = registry.zkPassportVerifier(); 
-        address helperAddress = registry.zkPassportHelper1();
+        address verifierAddress = address(registry.zkPassportVerifier()); 
+        address helperAddress = address(registry.zkPassportHelper());
 
         assertTrue(verifierAddress != address(0));
         assertTrue(helperAddress != address(0));
-
-        // We can also check that the verifier and helper are functional by calling them through the registry.
-        // However, since we are on a forked mainnet, we need to use real proof data that matches what the verifiers expect. 
-        // This is complex and may require setting up specific state on the fork before running the test. 
-        // For now, we will just check that we can call the verify function without reverting.
-
-        IZKPassportVerifier verifier = IZKPassportVerifier(verifierAddress);
-        IZKPassportHelper helper = IZKPassportHelper(helperAddress);
-
-        // Call verify with dummy data (this will likely fail verification, but should not revert)
-        ProofVerificationParams memory params = ProofVerificationParams({
-            proof: new bytes(0),
-            publicInputs: new bytes(0)
-        });
-
-        (bool success, bytes32 uniqueId, IZKPassportHelper returnedHelper) = verifier.verify(params);
-        
-        // We can't assert on success or uniqueId since we are using dummy data, but we can check that it returns a helper
-        assertTrue(address(returnedHelper) != address(0));
     } 
+
+    function testSubmitProof() public {
+        // This is a placeholder for the test that will submit a proof to the registry.
+        // Since we are on a forked mainnet, we would need to have a valid proof and the corresponding inputs to test this properly.
+        // For now, we will just check that the function can be called without reverting, using dummy data.
+        
+        bytes memory proofBytes = vm.envBytes("ZKP_PROOF");
+        console.log("Proof bytes length:", proofBytes.length);
+        console2.logBytes((vm.envBytes("ZKP_PROOF")));
+
+        ( ProofVerificationParams memory proof ) = abi.decode(proofBytes, (ProofVerificationParams)); 
+ 
+        //isIdCard is a boolean that indicates whether the proof is for an ID card or not. We can log it as well.
+        // console2.log("Is ID Card proof:", isIdCard);
+
+        // ZKP_PROOF 
+
+        vm.prank(address(daoMock));
+        registryAddress.call(abi.encodeWithSelector(IZKPassport_PowersRegistry.register.selector, proof));
+        // registry.submitProof(proof, dummyPublicInputs);
+    }
+
+    // HEre build function to submit proof to registry -- and see what happens.  
    
 }

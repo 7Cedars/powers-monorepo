@@ -7,6 +7,12 @@ import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassp
 /// @title ZKPassport Powers Registry
 /// @notice Helper contract to verify and register ZKPassport identities for the Powers protocol.
 /// @author 7Cedars
+interface IZKPassport_PowersRegistry {
+    function register(ProofVerificationParams calldata params, bool isIDCard) external returns (bytes32 identifier);
+    function deleteRegistration() external;
+    function verifyProof(address account, uint256 staleAfterSeconds, bytes4 functionSelector, bytes calldata input) external view returns (bool);
+}
+
 contract ZKPassport_PowersRegistry {
 
     struct Mem {
@@ -70,12 +76,10 @@ contract ZKPassport_PowersRegistry {
     //////////////////////////////////////////////////////////////
 
     /// @notice Verify a ZKPassport proof and register the identity and disclosed data.
-    /// @param params The proof verification parameters from ZKPassport SDK.
-    /// @param isIDCard Whether the document is an ID card (affects disclosed data format).
+    /// @param params The proof verification parameters from ZKPassport SDK. 
     /// @return identifier The unique identifier of the passport.
     function register(
-        ProofVerificationParams calldata params,
-        bool isIDCard
+        ProofVerificationParams calldata params
     ) external returns (bytes32 identifier) {
         Mem memory mem;
 
@@ -92,7 +96,7 @@ contract ZKPassport_PowersRegistry {
         // 3. Verify uniqueness 
         require (
             identifierAccounts[mem.uniqueIdentifier] == address(0) || identifierAccounts[mem.uniqueIdentifier] == msg.sender, 
-            "Passport already registered to another account"
+            "ID already registered to another account"
         );
 
         // 4. Verify Freshness proof. 
@@ -168,6 +172,7 @@ contract ZKPassport_PowersRegistry {
             abi.encodeWithSelector(functionSelector, 
             abi.encode(input, params.committedInputs))
             );
+        // £todo here error message needs to be bubbled up.  
         require (mem.success, "Proof verification call failed");
 
         mem.verified = abi.decode(mem.returnData, (bool));

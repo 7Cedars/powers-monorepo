@@ -366,17 +366,17 @@ contract InitialisePowers is Script {
         creationCodes.push(type(SimpleErc20Votes).creationCode);
         constructorArgs.push(abi.encode());
 
-        // names.push("ComplianceRegistryMock");
-        // creationCodes.push(type(ComplianceRegistryMock).creationCode);
-        // constructorArgs.push(abi.encode());
+        names.push("ComplianceRegistryMock");
+        creationCodes.push(type(ComplianceRegistryMock).creationCode);
+        constructorArgs.push(abi.encode());
         
-        // names.push("RwaMock");
-        // creationCodes.push(type(RwaMock).creationCode);
-        // constructorArgs.push(abi.encode());
+        names.push("RwaMock");
+        creationCodes.push(type(RwaMock).creationCode);
+        constructorArgs.push(abi.encode());
 
-        // names.push("OnchainIdRegistryMock");
-        // creationCodes.push(type(OnchainIdRegistryMock).creationCode);
-        // constructorArgs.push(abi.encode());
+        names.push("OnchainIdRegistryMock");
+        creationCodes.push(type(OnchainIdRegistryMock).creationCode);
+        constructorArgs.push(abi.encode());
  
         names.push("ZKPassport_PowersRegistry");
         creationCodes.push(type(ZKPassport_PowersRegistry).creationCode);
