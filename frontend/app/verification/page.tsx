@@ -122,6 +122,8 @@ export default function VerificationPage() {
               });
           }
       });
+
+      builder.bind("custom_data", "");
       
       const {
         url,
