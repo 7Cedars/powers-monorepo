@@ -49,6 +49,7 @@ export default function VerificationPage() {
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [proof, setProof] = useState<any>(null);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
+  const [isRequestReceived, setIsRequestReceived] = useState(false);
   const [queryUrl, setQueryUrl] = useState("");
   const [deployedMandates, setDeployedMandates] = useState<Record<string, `0x${string}`>>({});
   
@@ -85,6 +86,7 @@ export default function VerificationPage() {
     setProof(null);
     setQueryUrl("");
     setIsGeneratingProof(false);
+    setIsRequestReceived(false);
   }, [selectedFields]);
 
   const handleFieldToggle = (fieldId: string) => {
@@ -96,9 +98,10 @@ export default function VerificationPage() {
   const generateProof = async () => {
     if (!zkPassportRef.current) return;
     
-    setIsGeneratingProof(true);
+    // setIsGeneratingProof(true); // Don't set this here, wait for callback
     setQueryUrl("");
     setProof(null);
+    setIsRequestReceived(false);
     
     try {
       const queryBuilder = await zkPassportRef.current.request({
@@ -146,10 +149,12 @@ export default function VerificationPage() {
 
       onRequestReceived(() => {
         console.log("QR code scanned");
+        setIsRequestReceived(true);
       });
 
       onGeneratingProof(() => {
         console.log("Generating proof");
+        setIsGeneratingProof(true);
       });
 
       let generatedProof: ProofResult | null = null;
@@ -223,7 +228,7 @@ export default function VerificationPage() {
         <div className="flex flex-col items-center text-center space-y-2">
           <h1 className="text-4xl font-bold text-slate-50">ZKPassport Verification</h1>
           <p className="text-xl text-slate-100 max-w-2xl">
-            Prove your identity privacy-preservingly using ZKPassport to participate in on-chain governance.
+            Prove your identity privacy-preservingly using ZKPassport.
           </p>
         </div>
 
@@ -339,7 +344,7 @@ export default function VerificationPage() {
                     
                     {/* Integrated QR Code / Button Area */}
                     <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] flex-grow">
-                        {!queryUrl && !isGeneratingProof && !proof && (
+                        {!queryUrl && !isGeneratingProof && !proof && !isRequestReceived && (
                            <button 
                              onClick={generateProof}
                              className="group relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed rounded-xl transition-all duration-200 border-indigo-300 bg-indigo-50/30 hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer"
@@ -356,19 +361,32 @@ export default function VerificationPage() {
                            </button>
                         )}
 
-                        {isGeneratingProof && !queryUrl && (
-                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-white border border-slate-200 rounded-xl shadow-sm">
-                                <TwoSeventyRingWithBg className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-                                <span className="text-sm font-medium text-slate-600">Generating QR Code...</span>
-                            </div>
-                        )}
-
-                        {queryUrl && !proof && (
+                        {queryUrl && !proof && !isRequestReceived && !isGeneratingProof && (
                             <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] p-6 bg-white rounded-xl">
                                 <QRCode value={queryUrl} size={300} />
                                 <div className="mt-4 flex items-center gap-2">
                                   <p className="text-slate-600 text-sm font-medium">Scan with ZKPassport App</p>
                                 </div>
+                            </div>
+                        )}
+
+                        {isRequestReceived && !isGeneratingProof && !proof && (
+                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm text-center p-6 animate-in fade-in zoom-in duration-300">
+                                <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+                                   <TwoSeventyRingWithBg className="w-8 h-8 text-yellow-600 animate-spin" />
+                                </div>
+                                <h4 className="text-lg font-semibold text-yellow-900 mb-1">Request Received</h4>
+                                <p className="text-sm text-yellow-700">Please follow instructions on your device...</p>
+                            </div>
+                        )}
+
+                        {isGeneratingProof && !proof && (
+                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm text-center p-6 animate-in fade-in zoom-in duration-300">
+                                <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+                                   <TwoSeventyRingWithBg className="w-8 h-8 text-yellow-600 animate-spin" />
+                                </div>
+                                <h4 className="text-lg font-semibold text-yellow-900 mb-1">Generating Proof</h4>
+                                <p className="text-sm text-yellow-700">This may take a few moments...</p>
                             </div>
                         )}
 
@@ -402,14 +420,14 @@ export default function VerificationPage() {
                     )}
 
                     {isPending && (
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
+                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center gap-2">
                             <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
                             <span className="text-yellow-800">Please confirm the transaction in your wallet...</span>
                         </div>
                     )}
 
                     {isConfirming && (
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center">
+                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center gap-2">
                             <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
                             <span className="text-yellow-800">Your zero-knowledge proof is being submitted...</span>
                         </div>
