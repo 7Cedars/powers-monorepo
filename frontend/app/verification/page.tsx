@@ -120,7 +120,7 @@ export default function VerificationPage() {
           const field = AVAILABLE_FIELDS.find(f => f.id === fieldId);
           if (field) {
               if (field.id === "facematch") {
-                  builder = builder.enableFaceMatch();
+                  builder = builder.facematch();
               } else {
                   field.fields.forEach(fieldName => {
                       builder = builder.disclose(fieldName);
