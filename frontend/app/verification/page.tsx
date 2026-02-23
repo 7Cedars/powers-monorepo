@@ -34,6 +34,7 @@ const AVAILABLE_FIELDS = [
   { id: "gender", label: "Gender", fields: ["gender"] },
   { id: "birth_date", label: "Birth Date", fields: ["birth_date"] },
   { id: "expiration_date", label: "Expiry Date", fields: ["expiration_date"] },
+  { id: "facematch", label: "FaceMatch", fields: [] },
 ];
 
 export default function VerificationPage() {
@@ -113,14 +114,18 @@ export default function VerificationPage() {
       let builder: any = queryBuilder;
       
       // Always disclose document_type for contract verification
-      builder = builder.disclose("document_type");
+      // builder = builder.disclose("document_type");
 
       selectedFields.forEach(fieldId => {
           const field = AVAILABLE_FIELDS.find(f => f.id === fieldId);
           if (field) {
-              field.fields.forEach(fieldName => {
-                  builder = builder.disclose(fieldName);
-              });
+              if (field.id === "facematch") {
+                  builder = builder.enableFaceMatch();
+              } else {
+                  field.fields.forEach(fieldName => {
+                      builder = builder.disclose(fieldName);
+                  });
+              }
           }
       });
 
@@ -159,8 +164,8 @@ export default function VerificationPage() {
       onResult(async ({ result, uniqueIdentifier, verified, queryResultErrors }: any) => {
           console.log("Result of the query", result);
           if (generatedProof && verified) {
-              const isIDCard = result.document_type?.disclose?.result !== "passport";
-              verifyOnChain(generatedProof, isIDCard);
+              // const isIDCard = result.document_type?.disclose?.result !== "passport";
+              verifyOnChain(generatedProof);
           }
       });
 
@@ -177,7 +182,7 @@ export default function VerificationPage() {
     }
   };
 
-  const verifyOnChain = (proofResult: ProofResult, isIDCard: boolean) => {
+  const verifyOnChain = (proofResult: ProofResult) => {
     if (!zkPassportRef.current) return;
 
     let registryAddress: `0x${string}`;
@@ -292,7 +297,7 @@ export default function VerificationPage() {
                             className="p-3 rounded-md border text-sm font-medium transition-colors text-left flex items-center justify-between bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-default"
                             title="This field is required for verification"
                           >
-                            Proof of Uniqueness (type of ID)
+                            Proof of Uniqueness
                             <CheckCircleIcon className="w-5 h-5 text-white ml-2" />
                           </button>
 
@@ -458,7 +463,7 @@ export default function VerificationPage() {
             <div className="space-y-1">
               <h4 className="text-sm font-semibold text-red-900">Privacy Warning</h4>
               <p className="text-sm text-red-700">
-                Any data you choose to disclose will be publicly available on-chain and linked to your account address as long as Ethereum remains active. 
+                Any data you choose to disclose will be publicly available on-chain and linked to your wallet address as long as Ethereum Sepolia remains active. 
                 Be selective in what you choose to disclose.
               </p>
             </div>

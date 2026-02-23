@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { DisclosedData, ProofVerificationParams, BoundData } from "@zkpassport/circuits/src/Types.sol";
-import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassport.sol";
+import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "@src/interfaces/IZKPassport.sol";
 
 /// @title ZKPassport Powers Registry
 /// @notice Helper contract to verify and register ZKPassport identities for the Powers protocol.
@@ -169,9 +169,12 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
         // Note that the verifier will return an error if no relevant (age, country, etc) proof has been provided. 
         // We use staticcall here because verifyProof is view and we don't want state changes
         (mem.success, mem.returnData) = address(zkPassportHelper).staticcall(
-            abi.encodeWithSelector(functionSelector, 
-            abi.encode(input, params.committedInputs))
-            );
+            abi.encodePacked(
+                functionSelector,
+                input, // input should be encoded arguments
+                abi.encode(params.committedInputs) // committedInputs is bytes calldata, so it needs to be encoded as bytes
+            )
+        );
         // £todo here error message needs to be bubbled up.  
         require (mem.success, "Proof verification call failed");
 
