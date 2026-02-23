@@ -384,7 +384,7 @@ contract InitialisePowers is Script {
             helperConfig.getZkPassportVerifier(block.chainid),
             helperConfig.getZkPassportHelper(block.chainid),
             "powers-git-develop-7cedars-projects.vercel.app",
-            "Powers"
+            "powers"
         ));
  
         //////////////////////////////////////////////////////////////////////////
