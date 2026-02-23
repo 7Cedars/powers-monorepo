@@ -383,8 +383,8 @@ contract InitialisePowers is Script {
         constructorArgs.push(abi.encode(
             helperConfig.getZkPassportVerifier(block.chainid),
             helperConfig.getZkPassportHelper(block.chainid),
-            "https://powers-protocol.vercel.app/verifier",
-            "PowersProtocol"
+            "powers-git-develop-7cedars-projects.vercel.app",
+            "Powers"
         ));
  
         //////////////////////////////////////////////////////////////////////////

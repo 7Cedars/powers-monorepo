@@ -8,12 +8,12 @@ import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassp
 /// @notice Helper contract to verify and register ZKPassport identities for the Powers protocol.
 /// @author 7Cedars
 interface IZKPassport_PowersRegistry {
-    function register(ProofVerificationParams calldata params, bool isIDCard) external returns (bytes32 identifier);
+    function register(ProofVerificationParams calldata params) external returns (bytes32 identifier);
     function deleteRegistration() external;
     function verifyProof(address account, uint256 staleAfterSeconds, bytes4 functionSelector, bytes calldata input) external view returns (bool);
 }
 
-contract ZKPassport_PowersRegistry {
+contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
 
     struct Mem {
         bool verified;
