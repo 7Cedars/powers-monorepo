@@ -124,6 +124,7 @@ export default function VerificationPage() {
           }
       });
 
+      builder.bind("user_address", address);
       builder.bind("chain", "ethereum_sepolia");
       builder.bind("custom_data", "");
       
