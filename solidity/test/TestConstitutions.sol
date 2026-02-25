@@ -9,7 +9,7 @@ import { Configurations } from "@script/Configurations.s.sol";
 import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
 import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
-import { ISoulbound1155 } from "@src/helpers/Soulbound1155.sol";
+import { IGoverned1155 } from "@src/helpers/Governed1155.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -679,7 +679,7 @@ contract TestConstitutions is Test {
         address daoMock,
         address simpleGovernor,
         address powersFactory,
-        address soulbound1155,
+        address governed1155,
         address electionList, 
         address erc20Taxed
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
@@ -819,14 +819,14 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // Soulbound1155 integration //
+        // Governed1155 integration //
         // minting mandate //
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Mint soulbound token: mint a soulbound ERC1155 token and send it to an address of choice.",
-                targetMandate: getInitialisedAddress("Soulbound1155_MintEncodedToken"),
-                config: abi.encode(soulbound1155),
+                targetMandate: getInitialisedAddress("GovernedToken_MintEncodedToken"),
+                config: abi.encode(governed1155),
                 conditions: conditions
             })
         );
@@ -836,10 +836,10 @@ contract TestConstitutions is Test {
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Soulbound1155 Access: Get roleId through soulbound ERC1155 token.",
-                targetMandate: getInitialisedAddress("Soulbound1155_GatedAccess"),
+                nameDescription: "Governed1155 Access: Get roleId through soulbound ERC1155 token.",
+                targetMandate: getInitialisedAddress("GovernedToken_GatedAccess"),
                 config: abi.encode(
-                    soulbound1155,
+                    governed1155,
                     9, // roleId to be assigned upon holding the soulbound token.
                     42, // roleId to be checked for in encoded address. Alice mints the token and has been given role 42.
                     100, // epoch of blocks within which the tokens must have been held.

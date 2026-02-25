@@ -21,7 +21,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
-import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
+import { Governed1155 } from "@src/helpers/Governed1155.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { RwaMock, ComplianceRegistryMock } from "@mocks/RwaMock.sol";
@@ -45,7 +45,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
     PowersFactory ideasDaoFactory;
     PowersFactory physicalDaoFactory;
-    Soulbound1155 soulbound1155;
+    Governed1155 governed1155;
     ElectionList electionList;
 
     // NB: FOR TESTING PURPOSES ONLY: REMOVE BEFORE ACTUAL DEPLOYMENT!
@@ -68,7 +68,7 @@ contract CulturalStewardsDAO is DeploySetup {
     uint16 requestAllowanceDigitalDAOId; // mandate id for request allowance on digital subDAO.
     uint16 requestAllowancePhysicalDAOId; // mandate id for request allowance on ideas subDAO.
     uint16 requestMembershipPrimaryDaoId; // mandate id for requesting membership in the primary DAO (i.e. getting the Members role).
-    uint16 mintPoapTokenId; // mandate id for minting POAP tokens on soulbound1155.
+    uint16 mintPoapTokenId; // mandate id for minting POAP tokens on governed1155.
     uint16 mintActivityTokenId; 
     uint16 requestNewPhysicalDaoId; 
 
@@ -99,13 +99,13 @@ contract CulturalStewardsDAO is DeploySetup {
         );
 
         console2.log("Deploying Organisation's Helper contracts...");
-        soulbound1155 = new Soulbound1155(
+        governed1155 = new Governed1155(
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreighx6axdemwbjara3xhhfn5yaiktidgljykzx3vsrqtymicxxtgvi"
         );
         vm.stopBroadcast();
         console2.log("Primary DAO deployed at:", address(primaryDAO));
         console2.log("Digital sub-DAO deployed at:", address(digitalSubDAO));
-        console2.log("Soulbound1155 deployed at:", address(soulbound1155));
+        console2.log("Governed1155 deployed at:", address(governed1155));
 
         // setup Safe treasury.
         address[] memory owners = new address[](1);
@@ -249,7 +249,7 @@ contract CulturalStewardsDAO is DeploySetup {
         // step 5: transfer ownership of factories to primary DAO.
         vm.startBroadcast();
         console2.log("Transferring ownership of DAO factories to Primary DAO...");
-        soulbound1155.transferOwnership(address(primaryDAO));
+        governed1155.transferOwnership(address(primaryDAO));
         ideasDaoFactory.transferOwnership(address(primaryDAO));
         physicalDaoFactory.transferOwnership(address(primaryDAO));
         vm.stopBroadcast();
@@ -757,8 +757,8 @@ contract CulturalStewardsDAO is DeploySetup {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Mint token Physical sub-DAO: Any Physical sub-DAO can mint new NFTs",
-                targetMandate: initialisePowers.getInitialisedAddress("Soulbound1155_MintEncodedToken"),
-                config: abi.encode(address(soulbound1155)),
+                targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_MintEncodedToken"),
+                config: abi.encode(address(governed1155)),
                 conditions: conditions
             })
         );
@@ -809,9 +809,9 @@ contract CulturalStewardsDAO is DeploySetup {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Membership Step 2: 2 POAPS from physical DAO are needed that are not older than 6 months.",
-                targetMandate: initialisePowers.getInitialisedAddress("Soulbound1155_GatedAccess"),
+                targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_GatedAccess"),
                 config: abi.encode(
-                    address(soulbound1155), // soulbound token contract
+                    address(governed1155), // soulbound token contract
                     1, // member role Id
                     5, // checks if token is from address that is an Ideas sub-DAO
                     daysToBlocks(180, helperConfig.getBlocksPerHour(block.chainid)), // look back period in blocks = 30 days.
@@ -1095,10 +1095,6 @@ contract CulturalStewardsDAO is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 2; // Executives
         // Note: voting time is longer than the voting time for the 
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); 
-        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // timelock after voting before execution to give organisations the time to veto.
-        conditions.succeedAt = 66;
-        conditions.quorum = 80;
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate mandate adoption: Any executive can propose adopting new mandates into the organization.",
@@ -1236,6 +1232,10 @@ contract CulturalStewardsDAO is DeploySetup {
         // Executives: Adopt Mandates (Final Step)
         mandateCount++;
         conditions.allowedRole = 2; // Executives
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); 
+        conditions.timelock = minutesToBlocks(10, helperConfig.getBlocksPerHour(block.chainid)); // timelock after voting before execution to give organisations the time to veto.
+        conditions.succeedAt = 66;
+        conditions.quorum = 80;
         conditions.needFulfilled = checkpoint3Id;
         conditions.needNotFulfilled = vetoPhysicalId;
         primaryConstitution.push(
@@ -2539,7 +2539,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         // UPDATE URI //
         inputParams = new string[](1);
-        inputParams[0] = "string newUri";
+        inputParams[0] = "string newUri"; 
 
         // Conveners: Update URI
         mandateCount++;
@@ -2566,9 +2566,9 @@ contract CulturalStewardsDAO is DeploySetup {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Transfer tokens to treasury: Any tokens accidently sent to the DAO can be recovered by sending them to the treasury",
-                targetMandate: initialisePowers.getInitialisedAddress("Safe_RecoverTokens"),
+                targetMandate: initialisePowers.getInitialisedAddress("Safe_RecoverTokens"), // maybe functionality has to change slightly: have token to be transferred as input param. 
                 config: abi.encode(
-                    treasury, // this should be the safe treasury!
+                    treasury, // £todo this should be the safe treasury of the subDAO!! 
                     helperConfig.getSafeAllowanceModule(block.chainid) // allowance module address
                 ),
                 conditions: conditions
@@ -2585,9 +2585,9 @@ contract CulturalStewardsDAO is DeploySetup {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Membership: Anyone can become a member if they have sufficient activity token from the DAO 1 tokens during the last 15 days.",
-                targetMandate: initialisePowers.getInitialisedAddress("Soulbound1155_GatedAccess"),
+                targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_GatedAccess"),
                 config: abi.encode(
-                    address(soulbound1155), // soulbound token contract
+                    address(governed1155), // soulbound token contract
                     1, // member role Id
                     0, // checks if token is from address that holds role Id 0 (meaning the admin, which is the DAO itself).
                     1, // number of tokens required. Only one POAP needed for membership.

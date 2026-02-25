@@ -38,7 +38,7 @@ import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
 import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
+import { Governed1155 } from "@src/helpers/Governed1155.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
@@ -68,7 +68,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     SimpleGovernor simpleGovernor;
     AllowedTokens allowedTokens;
     PowersFactory powersFactory;
-    Soulbound1155 soulbound1155;
+    Governed1155 governed1155;
     ElectionList electionList;
 
     uint256 sepoliaFork;
@@ -571,7 +571,7 @@ abstract contract TestSetupIntegrations is BaseSetup {
         simpleErc20Votes = new SimpleErc20Votes();
         simpleGovernor = new SimpleGovernor(address(simpleErc20Votes));
         allowedTokens = new AllowedTokens();
-        soulbound1155 = new Soulbound1155("this is a test uri");
+        governed1155 = new Governed1155("this is a test uri");
         electionList = new ElectionList();
         powersFactory = new PowersFactory(
             "Powers Factory", // name
@@ -589,7 +589,7 @@ abstract contract TestSetupIntegrations is BaseSetup {
             address(daoMock),
             address(simpleGovernor),
             address(powersFactory),
-            address(soulbound1155),
+            address(governed1155),
             address(electionList),
             address(erc20Taxed)
         );

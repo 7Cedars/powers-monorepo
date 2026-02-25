@@ -1,10 +1,10 @@
-# Soulbound1155_GatedAccess
+# GovernedToken_GatedAccess
 
-Soulbound1155_GatedAccess is an access control mandate that automatically assigns a role to users who can prove ownership of specific Soulbound tokens minted by authorized issuers.
+GovernedToken_GatedAccess is an access control mandate that automatically assigns a role to users who can prove ownership of specific Soulbound tokens minted by authorized issuers.
 
 ## Overview
 
-This mandate integrates with the `Soulbound1155` standard to create a flexible, decentralized access system. It allows an organization to grant a specific role (`assignRoleId`) to any user who holds a sufficient number of valid tokens.
+This mandate integrates with the `Governed1155` standard to create a flexible, decentralized access system. It allows an organization to grant a specific role (`assignRoleId`) to any user who holds a sufficient number of valid tokens.
 
 A token is considered "valid" if:
 1.  The user owns it.
@@ -15,9 +15,9 @@ This is useful for reputation systems, ticketing, or proof-of-participation mech
 
 ## Configuration
 
-When adopting a Soulbound1155_GatedAccess instance, the following parameters are required:
+When adopting a GovernedToken_GatedAccess instance, the following parameters are required:
 
-1.  `soulbound1155` (address): The address of the Soulbound1155 contract.
+1.  `governed1155` (address): The address of the Governed1155 contract.
 2.  `assignRoleId` (uint256): The Role ID to be assigned to the user upon successful verification.
 3.  `checkRoleId` (uint256): The Role ID that the minter of the token must hold for the token to be valid.
 4.  `blocksThreshold` (uint48): The maximum age (in blocks) of a token for it to be considered valid.

@@ -8,7 +8,7 @@
  |_|     \____/     \/  \/    |______||_|  \_\|_____/ 
                                                       
 */
-/// @title Powers Protocol v.0.4
+/// @title Powers Protocol v.0.5
 /// @notice Institutional governance for on-chain communities. 
 ///
 /// @dev This contract is the core engine of the protocol. It is meant to be used in combination with implementations of {Mandate.sol}. The contract should be used as is, making changes to this contract should be avoided.
@@ -312,6 +312,7 @@ contract Powers is EIP712, IPowers, Context {
         external
         returns (uint256 actionId)
     {
+        // check 0: is constitution closed?
         if (!_constituteClosed) revert Powers__ConstituteOpen();
         
         AdoptedMandate storage mandate = mandates[mandateId];
@@ -334,10 +335,10 @@ contract Powers is EIP712, IPowers, Context {
 
         actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
 
-        // check 1: does target mandate need proposal vote to pass?
+        // check 5: does target mandate need proposal vote to pass?
         if (quorum == 0) revert Powers__NoVoteNeeded();
 
-        // check 2: do we have a proposal with the same targetMandate and mandateCalldata?
+        // check 6: do we have a proposal with the same targetMandate and mandateCalldata?
         Action storage action = _actions[actionId];
         if (action.voteStart != 0) revert Powers__UnexpectedActionState();
 

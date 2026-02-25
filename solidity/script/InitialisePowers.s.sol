@@ -60,9 +60,11 @@ import { SafeAllowance_Transfer } from "@src/mandates/integrations/SafeAllowance
 import { SafeAllowance_Action } from "@src/mandates/integrations/SafeAllowance_Action.sol";
 import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory_AssignRole.sol";
 import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory_AddSafeDelegate.sol";
-import { Soulbound1155_GatedAccess } from "@src/mandates/integrations/Soulbound1155_GatedAccess.sol";
+import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken_GatedAccess.sol";
+import { GovernedToken_MintEncodedToken } from "@src/mandates/integrations/GovernedToken_MintEncodedToken.sol";
+import { GovernedToken_TransferWithPayment } from "@src/mandates/integrations/GovernedToken_TransferWithPayment.sol";
+import { GovernedToken_CollectSplitPayment } from "@src/mandates/integrations/GovernedToken_CollectSplitPayment.sol";
 import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721_GatedAccess.sol";
-import { Soulbound1155_MintEncodedToken } from "@src/mandates/integrations/Soulbound1155_MintEncodedToken.sol";
 import { Safe_ExecTransaction_OnReturnValue } from "@src/mandates/integrations/Safe_ExecTransaction_OnReturnValue.sol";
 import { ElectionList_Nominate } from "@src/mandates/integrations/ElectionList_Nominate.sol";
 import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList_Tally.sol";
@@ -319,17 +321,17 @@ contract InitialisePowers is Script {
         creationCodes.push(type(PowersFactory_AddSafeDelegate).creationCode);
         constructorArgs.push(abi.encode("PowersFactory_AddSafeDelegate"));
 
-        names.push("Soulbound1155_GatedAccess");
-        creationCodes.push(type(Soulbound1155_GatedAccess).creationCode);
-        constructorArgs.push(abi.encode("Soulbound1155_GatedAccess"));
+        names.push("GovernedToken_GatedAccess");
+        creationCodes.push(type(GovernedToken_GatedAccess).creationCode);
+        constructorArgs.push(abi.encode("GovernedToken_GatedAccess"));
 
         names.push("ERC721_GatedAccess");
         creationCodes.push(type(ERC721_GatedAccess).creationCode);
         constructorArgs.push(abi.encode("ERC721_GatedAccess"));
 
-        names.push("Soulbound1155_MintEncodedToken");
-        creationCodes.push(type(Soulbound1155_MintEncodedToken).creationCode);
-        constructorArgs.push(abi.encode("Soulbound1155_MintEncodedToken"));
+        names.push("GovernedToken_MintEncodedToken");
+        creationCodes.push(type(GovernedToken_MintEncodedToken).creationCode);
+        constructorArgs.push(abi.encode("GovernedToken_MintEncodedToken"));
 
         names.push("ElectionList_Vote");
         creationCodes.push(type(ElectionList_Vote).creationCode);
@@ -350,6 +352,14 @@ contract InitialisePowers is Script {
         names.push("ElectionList_CleanUpVoteMandate");
         creationCodes.push(type(ElectionList_CleanUpVoteMandate).creationCode);
         constructorArgs.push(abi.encode("ElectionList_CleanUpVoteMandate"));
+
+        names.push("GovernedToken_TransferWithPayment");
+        creationCodes.push(type(GovernedToken_TransferWithPayment).creationCode);
+        constructorArgs.push(abi.encode("GovernedToken_TransferWithPayment"));
+
+        names.push("GovernedToken_CollectSplitPayment");
+        creationCodes.push(type(GovernedToken_CollectSplitPayment).creationCode);
+        constructorArgs.push(abi.encode("GovernedToken_CollectSplitPayment"));
 
         //////////////////////////////////////////////////////////////////////////
         //                  Singleton Helper Contracts                          //

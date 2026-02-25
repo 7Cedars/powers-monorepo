@@ -268,12 +268,12 @@ export default defineConfig({
               link: '/mandates/integrations/SafeAllowance_Transfer', 
             },
             { 
-              text: 'Soulbound1155_GatedAccess', 
-              link: '/mandates/integrations/Soulbound1155_GatedAccess', 
+              text: 'GovernedToken_GatedAccess', 
+              link: '/mandates/integrations/GovernedToken_GatedAccess', 
             },
             { 
-              text: 'Soulbound1155_MintEncodedToken', 
-              link: '/mandates/integrations/Soulbound1155_MintEncodedToken', 
+              text: 'GovernedToken_MintEncodedToken', 
+              link: '/mandates/integrations/GovernedToken_MintEncodedToken', 
             },
           ], 
         },

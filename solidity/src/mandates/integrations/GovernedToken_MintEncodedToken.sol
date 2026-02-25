@@ -2,31 +2,30 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
-import { IPowers } from "../../interfaces/IPowers.sol";
-import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import { IPowers } from "../../interfaces/IPowers.sol"; 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
-import { ISoulbound1155 } from "../../helpers/Soulbound1155.sol";
+import { MandateUtilities } from "../../libraries/MandateUtilities.sol"; 
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
 /**
- * @title Soulbound1155_EncodedToken
- * @notice Mandate to gate access to a role based on Soulbound1155 tokens.
- * @dev Integrates with Soulbound1155.sol to create flexible gated access to roleId in Powers organisations.
+ * @title governedToken
+ * @notice Mandate to gate access to a role based on governedToken tokens.
+ * @dev Integrates with governedToken.sol to create flexible gated access to roleId in Powers organisations.
  */
-contract Soulbound1155_MintEncodedToken is Mandate {
+contract GovernedToken_MintEncodedToken is Mandate {
     using Strings for uint256;
 
     struct Mem {
-        address soulbound1155;
+        address governedToken;
         address to;
+        address artist;
         uint48 blockNumber;
         uint256 tokenId;
     }
 
     constructor() {
-        bytes memory configParams = abi.encode("address soulbound1155");
+        bytes memory configParams = abi.encode("address governedToken");
         emit Mandate__Deployed(configParams);
     }
 
@@ -36,7 +35,7 @@ contract Soulbound1155_MintEncodedToken is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("address to");
+        inputParams = abi.encode("address To, address Artist");
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
@@ -56,15 +55,15 @@ contract Soulbound1155_MintEncodedToken is Mandate {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 
         // 1. Get config
-        mem.soulbound1155 = abi.decode(getConfig(powers, mandateId), (address));
-        mem.to = abi.decode(mandateCalldata, (address));
+        mem.governedToken = abi.decode(getConfig(powers, mandateId), (address));
+        (mem.to, mem.artist) = abi.decode(mandateCalldata, (address, address));
 
         mem.blockNumber = uint48(block.number);
         mem.tokenId = (uint256(uint160(caller)) << 48) | uint256(mem.blockNumber);
-
+    
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
-        targets[0] = mem.soulbound1155;
-        calldatas[0] = abi.encodeWithSelector(ISoulbound1155.mintTokenId.selector, mem.to, mem.tokenId);
+        targets[0] = mem.governedToken;
+        calldatas[0] = abi.encodeWithSignature("mint(address,uint256,address)", mem.to, mem.tokenId, mem.artist);
 
         return (actionId, targets, values, calldatas);
     }

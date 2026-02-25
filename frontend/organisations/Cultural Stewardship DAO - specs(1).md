@@ -190,7 +190,7 @@ This is a two step process to gain membership to the Primary DAO.
 | Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Ideas Sub-DAO | Request Membership Step 1 | StatementOfIntent.sol | "uint256[] TokenIds" | None | Initiated by Ideas Sub-DAO. |
-| Public | Request Membership Step 2 | Soulbound1155\_GatedAccess.sol | None (configured in mandate) | Checks ownership of 2 POAPS and Assigns Role | Previous step must be executed. Any public address can request. |
+| Public | Request Membership Step 2 | Governed1155\_GatedAccess.sol | None (configured in mandate) | Checks ownership of 2 POAPS and Assigns Role | Previous step must be executed. Any public address can request. |
 
 #### 
 
