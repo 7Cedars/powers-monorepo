@@ -90,7 +90,7 @@ contract OpenActionTest is TestSetupExecutive {
         callData = abi.encodeWithSelector(
             bytes4(keccak256("mint(uint256,address)")),
             mintAmount,
-            alice // mint to alice to see event emitted correctly
+            alice
         );
 
         // 2. Prepare mandate inputs

@@ -1819,11 +1819,11 @@ contract SimpleErc1155Test is TestSetupPowers {
         token = new SimpleErc1155();
     }
 
-    function testMintCoins() public {
+    function testMintCoins1() public {
         uint256 amount = 1000;
 
         vm.prank(alice);
-        token.mint(amount);
+        token.mint(amount, alice);
 
         assertEq(token.balanceOf(alice, COIN_ID), amount);
     }
@@ -1831,7 +1831,7 @@ contract SimpleErc1155Test is TestSetupPowers {
     function testMintCoinsRevertsWithZeroAmount() public {
         vm.prank(alice);
         vm.expectRevert(SimpleErc1155.SimpleErc1155__NoZeroAmount.selector);
-        token.mint(0);
+        token.mint(0, alice);
     }
 
     function testMintCoinsRevertsWithExcessiveAmount() public {
@@ -1850,7 +1850,7 @@ contract SimpleErc1155Test is TestSetupPowers {
         uint256 maxAmount = 100 * 10 ** 18;
 
         vm.prank(alice);
-        token.mint(maxAmount);
+        token.mint(maxAmount, alice);
 
         assertEq(token.balanceOf(alice, COIN_ID), maxAmount);
     }
@@ -1860,10 +1860,10 @@ contract SimpleErc1155Test is TestSetupPowers {
         uint256 amount2 = 2000;
 
         vm.prank(alice);
-        token.mint(amount1);
+        token.mint(amount1, alice);
 
         vm.prank(alice);
-        token.mint(amount2);
+        token.mint(amount2, alice);
 
         assertEq(token.balanceOf(alice, COIN_ID), amount1 + amount2);
     }
@@ -1872,8 +1872,7 @@ contract SimpleErc1155Test is TestSetupPowers {
         uint256 amount = 1000;
 
         vm.prank(alice);
-        token.mint(amount);
-
+        token.mint(amount, alice);
         vm.prank(alice);
         token.safeTransferFrom(alice, bob, COIN_ID, 500, "");
 

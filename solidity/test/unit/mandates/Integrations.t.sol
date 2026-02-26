@@ -317,7 +317,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
         for (uint256 i = 0; i < 4; i++) {
             // Config for mandate 7: params[0] = "address to"
             // So request calldata should be abi.encode(to).
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
 
             // Calculate ID that was minted
             // TokenID = (minter << 48) | blockNumber
@@ -348,7 +348,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
         // Mint 3 tokens (Threshold is 3, check is <= threshold, so 3 fails)
         uint256[] memory tokenIds = new uint256[](3);
         for (uint256 i = 0; i < 3; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(daoMock))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;
@@ -366,7 +366,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
         // Mint 4 tokens
         uint256[] memory tokenIds = new uint256[](4);
         for (uint256 i = 0; i < 4; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;
@@ -387,7 +387,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
 
         uint256[] memory tokenIds = new uint256[](4);
         for (uint256 i = 0; i < 4; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;

@@ -25,7 +25,7 @@ contract Mandates_Prepackaged is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("uint256[] roleIds");
+        inputParams = abi.encode();
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
@@ -46,22 +46,7 @@ contract Mandates_Prepackaged is Mandate {
     {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         PowersTypes.MandateInitData[] memory initData = abi.decode(getConfig(powers, mandateId), (PowersTypes.MandateInitData[])); 
-        uint256 mandateCount = IPowers(powers).getMandateCounter();
-
-        (uint256[] memory roleIds) = abi.decode(mandateCalldata, (uint256[]));
-
-        for (uint256 i = 0; i < initData.length; i++) {
-            // this will give an ugly revert if the roleId index is out of bounds
-            initData[i].conditions.allowedRole = roleIds[initData[i].conditions.allowedRole]; // replaces placeholder with actual roleId
-            // Let's see if this is going to work.. 
-            if (initData[i].conditions.needFulfilled != 0)  {
-                initData[i].conditions.needFulfilled = uint16(initData[i].conditions.needFulfilled + mandateCount); // adjust needFulfilled to current mandate count
-            } 
-            if (initData[i].conditions.needNotFulfilled != 0) {
-                initData[i].conditions.needNotFulfilled = uint16(initData[i].conditions.needNotFulfilled + mandateCount); // adjust needNotFulfilled to current mandate count
-            }
-        }
-
+ 
         // Create arrays for the calls to adoptMandate
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(initData.length);
 

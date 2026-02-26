@@ -368,15 +368,53 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         MAX_FUZZ_CALLDATA_LENGTH = 2000;
 
         // users
-        alice = makeAddr("Alice");
+        // note that when fork testing, addresses are often already taken. Therefore we loop to find addresses without code deployed on them to use as users in our tests.
+        alice = makeAddr("alice");
+        i = 0; 
+        while (alice.code.length > 0) {
+            alice = makeAddr(string.concat("alice", Strings.toString(i)));
+            i++;
+        }
         bob = makeAddr("bob");
+        while (bob.code.length > 0) {
+            bob = makeAddr(string.concat("bob", Strings.toString(i)));
+            i++;
+        }
         charlotte = makeAddr("charlotte");
+        while (charlotte.code.length > 0) {
+            charlotte = makeAddr(string.concat("charlotte", Strings.toString(i)));
+            i++;
+        }
         david = makeAddr("david");
+        while (david.code.length > 0) {
+            david = makeAddr(string.concat("david", Strings.toString(i)));
+            i++;
+        }
         eve = makeAddr("eve");
+        while (eve.code.length > 0) {
+            eve = makeAddr(string.concat("eve", Strings.toString(i)));
+            i++;
+        }
         frank = makeAddr("frank");
+        while (frank.code.length > 0) {
+            frank = makeAddr(string.concat("frank", Strings.toString(i)));
+            i++;
+        }
         gary = makeAddr("gary");
+        while (gary.code.length > 0) {
+            gary = makeAddr(string.concat("gary", Strings.toString(i)));
+            i++;
+        }
         helen = makeAddr("helen");
+        while (helen.code.length > 0) {
+            helen = makeAddr(string.concat("helen", Strings.toString(i)));
+            i++;
+        }
         ian = makeAddr("ian");
+        while (ian.code.length > 0) {
+            ian = makeAddr(string.concat("ian", Strings.toString(i)));
+            i++;
+        }
         jacob = makeAddr("jacob");
         kate = makeAddr("kate");
         lisa = makeAddr("lisa");

@@ -276,7 +276,16 @@ contract CulturalStewardsDAO is DeploySetup {
             uint8(1) // v = 1 This is a type 1 call. See Safe.sol for details.
         );
 
+        targets = new address[](16);
+        values = new uint256[](16);
         calldatas = new bytes[](16);
+
+        for (uint256 i = 0; i < 16; i++) {
+            targets[i] = address(primaryDAO); // all calls have value 0 in this mandate. To transfer Eth, use a different mandate.
+        }
+        targets[13] = treasury; // override target for treasury setup call.
+        targets[14] = treasury; // override target for allowance module setup call.
+
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
@@ -330,8 +339,12 @@ contract CulturalStewardsDAO is DeploySetup {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assigns role labels, sets up the allowance module, the treasury and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_OnOwnPowers"),
-                config: abi.encode(calldatas),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+                config: abi.encode(
+                    targets,
+                    values,
+                    calldatas
+                    ),
                 conditions: conditions
             })
         );
@@ -2448,7 +2461,7 @@ contract CulturalStewardsDAO is DeploySetup {
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 6, address(primaryDAO)); 
         calldatas[8] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
-        // £todo: NEED TO SET UP SAFE WALLET HERE TOO! 
+        // NB: The physical sub-DAO does NOT have a safe of its own.  
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.
@@ -2462,17 +2475,29 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
+        // LEGAL REPS ASSIGN EXECUTIVE MANDATES 
+        // £TODO 
+
+        // LEGAL REPS REVOKE EXECUTIVE MANDATES
+        // £TODO
+
         //////////////////////////////////////////////////////////////////////
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
+        // £NB: Minting and setting the URI no all managed externally from this DAO. 
+        // The artist has to assign the sub-DAO as approved to transfer artworks. 
+  
         // £todo 
-        // SELL NFT BASED ART WORK // - no direct link to physical art yet. 
-        // Public: Buy NFT. -- payment pulled from buyer, calculates splits and send to 1) physcical Sub-DAO safe, Primary DAO safe and artists wallet. // Local activity token is minted and send to caller. // NFT send to buyer.  
-
+        // SELL NFT ART WORK + PAYMENT // - link to physical art set in URI. 
+        // Public: Buy NFT. Calls the safe transferFrom function in governed721. 
+        // Automatically the Artist, owner and intermediary (= Physical sub-DAO) get paid according to splits set in the URI.
+        // The physical sub-DAO can forward funds to the Primary-DAOs safe.   
+          
         // FORCE NFT SALE // 
         // Convener: Sell NFT. -- payment pulled from buyer, calculates splits and send to 1) physcical Sub-DAO safe, Primary DAO safe and artists wallet. // Local activity token is minted and send to caller. // NFT send to buyer.  
+        // £todo: discuss & brainstorm how to implement this.
+        // Maybe use a deposit of sorts at Primary-DAO?  
 
-        
         // PAYMENT OF RECEIPTS //
         inputParams = new string[](3);
         inputParams[0] = "address Token";
@@ -2509,13 +2534,8 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
-        //////////////////////////////////////////////////////////////////////////////////////////////////////
-        // £todo 
-        // REDEMPTION OF LOCAL ACTIVITY TOKENS // - no direct link to physical art yet.
-        // Public: Redeem local activity tokens. -- Local activity tokens are burned, and the caller is whitelisted for redeeming in person at the physical space.
-        //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        // MINT POAPS // 
+        // MINT POAPS FOR ATTENDEES // 
+        // £todo: replace this with a mint in a standard ERC-721 contract called "POAP".  
         inputParams = new string[](1);
         inputParams[0] = "address To";
 
@@ -2536,6 +2556,18 @@ contract CulturalStewardsDAO is DeploySetup {
             })
         );
         delete conditions;
+
+        // MINT & DISTRIBUTE 'MERIT' NFTS TO ATTENDEES THROUGH VOTING ON CONTRIBUTIONS //
+        // £TODO 
+        
+        // MINT & DISTRIBUTE 'MERIT' NFTS TO ARTIST THROUGH VOTING ON ART WORKS //
+        // £TODO 
+
+        // MINT & DISTRIBUTE 'MERIT' NFTS TO CONVENERS //
+        // £TODO 
+
+        // REDEEM MERIT NFTS FOR REWARD  //
+        // £TODO  
 
         // UPDATE URI //
         inputParams = new string[](1);
@@ -2579,7 +2611,9 @@ contract CulturalStewardsDAO is DeploySetup {
         //////////////////////////////////////////////////////////////////////
         //                      ELECTORAL MANDATES                          //
         //////////////////////////////////////////////////////////////////////
-        // ASSIGN MEMBERSHIP // -- on the basis of POAPS.
+        // CLAIM ATTENDEE ROLE // 
+        // £TODO - REWORK BELOW. 
+        // I THINK I CAN USE GATED ACCESS 721. 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public
         physicalConstitution.push(
@@ -2598,7 +2632,7 @@ contract CulturalStewardsDAO is DeploySetup {
         );
         delete conditions;
 
-        // REVOKE MEMBERSHIP //
+        // REVOKE MEMBERSHIP // -- DO I NEED THIS? OR WILL JUST END WITH END OF DAO? 
         inputParams = new string[](1);
         inputParams[0] = "address MemberAddress";
 
@@ -2819,6 +2853,8 @@ contract CulturalStewardsDAO is DeploySetup {
         delete conditions;
 
         // Members: Nominate for election
+        // NB, £TODO SHOULD HAVE ZKP CHECK. NOMINEES SHOULD PROVE THEY ARE RESIDENT IN UK FOR EXAMPLE.
+        // HOW DO I MAKE THIS DYNAMIC? 
         mandateCount++;
         conditions.allowedRole = 1; // = Members 
         physicalConstitution.push(
@@ -2849,6 +2885,10 @@ contract CulturalStewardsDAO is DeploySetup {
             })
         );
         delete conditions;
+
+        // ASSIGN LEGAL REPS 
+        // £TODO 
+        // SHOULD HAVE ZKP CHECK! 
 
         //////////////////////////////////////////////////////////////////////
         //                        REFORM MANDATES                           //

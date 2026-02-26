@@ -62,7 +62,6 @@ import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFacto
 import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory_AddSafeDelegate.sol";
 import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken_GatedAccess.sol";
 import { GovernedToken_MintEncodedToken } from "@src/mandates/integrations/GovernedToken_MintEncodedToken.sol";
-import { GovernedToken_TransferWithPayment } from "@src/mandates/integrations/GovernedToken_TransferWithPayment.sol";
 import { GovernedToken_CollectSplitPayment } from "@src/mandates/integrations/GovernedToken_CollectSplitPayment.sol";
 import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721_GatedAccess.sol";
 import { Safe_ExecTransaction_OnReturnValue } from "@src/mandates/integrations/Safe_ExecTransaction_OnReturnValue.sol";
@@ -352,10 +351,6 @@ contract InitialisePowers is Script {
         names.push("ElectionList_CleanUpVoteMandate");
         creationCodes.push(type(ElectionList_CleanUpVoteMandate).creationCode);
         constructorArgs.push(abi.encode("ElectionList_CleanUpVoteMandate"));
-
-        names.push("GovernedToken_TransferWithPayment");
-        creationCodes.push(type(GovernedToken_TransferWithPayment).creationCode);
-        constructorArgs.push(abi.encode("GovernedToken_TransferWithPayment"));
 
         names.push("GovernedToken_CollectSplitPayment");
         creationCodes.push(type(GovernedToken_CollectSplitPayment).creationCode);
