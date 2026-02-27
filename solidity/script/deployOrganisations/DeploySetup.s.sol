@@ -24,7 +24,10 @@ contract DeploySetup is Script {
         return uint32((quantityMinutes * blocksPerHour) / 60);
     }
 
-    
+    function createPlaceholderAddress(string memory name) public pure returns (address) {
+        // Create a unique placeholder address based on the name
+        return address(uint160(uint256(keccak256(abi.encodePacked(name)))));
+    }    
 
     // this function takes
     // as param a long list of MandateInitData,

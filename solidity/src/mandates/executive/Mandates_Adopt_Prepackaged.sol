@@ -13,7 +13,7 @@ import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
 import { PowersTypes } from "../../interfaces/PowersTypes.sol";
 
-contract Mandates_Prepackaged is Mandate {
+contract Mandates_Adopt_Prepackaged is Mandate {
     constructor() {
         bytes memory configParams = abi.encode("MandateInitData[] MandatesToAdopt");
         emit Mandate__Deployed("");

@@ -22,8 +22,7 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
         BoundData boundData;
         bytes32 identifier; 
 
-        bool success;
-        bytes returnData;
+        bool success; 
     }
 
     //////////////////////////////////////////////////////////////
@@ -168,17 +167,27 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
 
         // Note that the verifier will return an error if no relevant (age, country, etc) proof has been provided. 
         // We use staticcall here because verifyProof is view and we don't want state changes
-        (mem.success, mem.returnData) = address(zkPassportHelper).staticcall(
+        bytes memory returnData;
+        (mem.success, returnData) = address(zkPassportHelper).staticcall(
             abi.encodePacked(
                 functionSelector,
-                input, // input should be encoded arguments
+                input, // input should be abi.encoded arguments
                 abi.encode(params.committedInputs) // committedInputs is bytes calldata, so it needs to be encoded as bytes
             )
         );
-        // £todo here error message needs to be bubbled up.  
-        require (mem.success, "Proof verification call failed");
+        
+        if (!mem.success) {
+            // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
+            if (returnData.length > 0) {
+                assembly {
+                    let returndata_size := mload(returnData)
+                    revert(add(32, returnData), returndata_size)
+                }
+            } else {
+                revert ("Proof verification call failed");
+            }
+        }
 
-        mem.verified = abi.decode(mem.returnData, (bool));
-        return mem.verified;
+        return abi.decode(returnData, (bool));
     }
 }

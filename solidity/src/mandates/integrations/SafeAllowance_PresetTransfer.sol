@@ -19,7 +19,7 @@ interface ISafe {
         returns (bool success);
 }
 
-contract SafeAllowance_Transfer is Mandate {
+contract SafeAllowance_PresetTransfer is Mandate {
     struct Mem {
         bytes32 mandateHash;
         address token;
@@ -33,7 +33,7 @@ contract SafeAllowance_Transfer is Mandate {
     /// @notice Constructor function
     constructor() {
         // Expose expected input parameters for UIs.
-        bytes memory configParams = abi.encode("address allowanceModule", "address safeProxy");
+        bytes memory configParams = abi.encode("address Token", "uint256 Amount", "address allowanceModule", "address safeProxy");
         emit Mandate__Deployed(configParams);
     }
 
@@ -44,7 +44,7 @@ contract SafeAllowance_Transfer is Mandate {
         bytes memory config
     ) public override {
         super.initializeMandate(
-            index, nameDescription, abi.encode("address Token", "uint256 Amount", "address PayableTo"), config
+            index, nameDescription, abi.encode("address PayableTo"), config
         );
     }
 
@@ -69,10 +69,11 @@ contract SafeAllowance_Transfer is Mandate {
         Mem memory mem;
 
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
-        (mem.allowanceModule, mem.safeProxy) = abi.decode(getConfig(powers, mandateId), (address, address));
+        (mem.token, mem.amount, mem.allowanceModule, mem.safeProxy) =
+            abi.decode(getConfig(powers, mandateId), (address, uint256, address, address));
 
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
-        // NB: We call the allowance module directly to make the transfer. The allowance module then calls the Safe proxy.ma
+        // NB: We call the allowance module directly to make the transfer. The allowance module then calls the Safe proxy.
         targets[0] = mem.allowanceModule;
         calldatas[0] = _createCalldata(powers, mandateId, mandateCalldata);
 
@@ -85,8 +86,9 @@ contract SafeAllowance_Transfer is Mandate {
         returns (bytes memory)
     {
         Mem memory mem;
-        (, mem.safeProxy) = abi.decode(getConfig(powers, mandateId), (address, address));
-        (mem.token, mem.amount, mem.payableTo) = abi.decode(mandateCalldata, (address, uint256, address));
+        (mem.token, mem.amount, , mem.safeProxy) =
+            abi.decode(getConfig(powers, mandateId), (address, uint256, address, address));
+        (mem.payableTo) = abi.decode(mandateCalldata, (address));
 
         // Construct the `v=1` signature.
         // r = address of the signer (powers contract)

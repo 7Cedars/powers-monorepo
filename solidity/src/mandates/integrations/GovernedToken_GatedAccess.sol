@@ -12,8 +12,8 @@ import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
 
 /**
  * @title GovernedToken_GatedAccess
- * @notice Mandate to gate access to a role based on Governed1155 or Governed721 tokens.
- * @dev Integrates with Governed1155.sol and Governed721.sol to create flexible gated access to roleId in Powers organisations.
+ * @notice Mandate to gate access to a role based on Soulbound1155 or Governed721 tokens.
+ * @dev Integrates with Soulbound1155.sol and Governed721.sol to create flexible gated access to roleId in Powers organisations.
  */
 contract GovernedToken_GatedAccess is Mandate {
     using Strings for uint256;

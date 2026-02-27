@@ -14,7 +14,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 contract Nominees is Ownable {
     // Nomination storage
     mapping(address nominee => bool nominated) public nominations;
-    address[] public nomineesSorted;
+    address[] public nominees;
     uint256 public nomineesCount;
 
     // Events
@@ -23,11 +23,11 @@ contract Nominees is Ownable {
 
     constructor() Ownable(msg.sender) { }
  
-    function nominate(address nominee, bool shouldNominate) external onlyOwner {
+    function nominate(address nominee, bool shouldNominate) public onlyOwner {
         if (shouldNominate) {
             if (nominations[nominee] == true) revert("already nominated");
             nominations[nominee] = true;
-            nomineesSorted.push(nominee);
+            nominees.push(nominee);
             unchecked {
                 nomineesCount += 1;
             }
@@ -35,12 +35,12 @@ contract Nominees is Ownable {
         } else {
             if (nominations[nominee] == false) revert("not nominated");
             nominations[nominee] = false;
-            // remove from nomineesSorted (swap-and-pop)
-            uint256 len = nomineesSorted.length;
+            // remove from nominees (swap-and-pop)
+            uint256 len = nominees.length;
             for (uint256 i; i < len; i++) {
-                if (nomineesSorted[i] == nominee) {
-                    nomineesSorted[i] = nomineesSorted[len - 1];
-                    nomineesSorted.pop();
+                if (nominees[i] == nominee) {
+                    nominees[i] = nominees[len - 1];
+                    nominees.pop();
                     break;
                 }
             }
@@ -51,10 +51,15 @@ contract Nominees is Ownable {
         }
     }
 
+    // This allows an outside party (e.g. a mandate) to revoke a nomination on behalf of the nominee, without needing to be the nominee themselves.
+    function revokeNomination(address nominee) external onlyOwner {
+        nominate(nominee, false);
+    }
+
     // --- View helpers ---
 
     function getNominees() external view returns (address[] memory) {
-        return nomineesSorted;
+        return nominees;
     }
 
     function isNominee(address account) external view returns (bool) {

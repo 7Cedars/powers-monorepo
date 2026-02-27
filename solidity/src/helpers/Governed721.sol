@@ -29,6 +29,7 @@ interface IGoverned721 is IERC721 {
     enum Role { Admin, Artist, OldOwner, Intermediary, NewOwner }  
     
     function mint(address to, uint256 tokenId, address artist, string memory tokenURI) external; 
+    function burn(uint256 tokenId) external;
     function setPaymentId(uint16 mandateId) external;
     function setSplit(Role role, uint8 percentage) external;  
     function setWhitelist(address token, bool isWhitelisted) external;
@@ -70,6 +71,14 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         whitelist[token] = isWhitelisted;
     }
 
+    function setBlacklist(address account, bool isBlacklisted) external onlyOwner {
+        blacklist[account] = isBlacklisted;
+    }
+
+    function burn(uint256 tokenId) external onlyOwner {
+        _burn(tokenId);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////
     //                                   PUBLIC FUNCTIONS                                 //
     //////////////////////////////////////////////////////////////////////////////////////// 
@@ -78,8 +87,8 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         if (tokenId == 0) revert("Token ID cannot be 0");
         if (artist == address(0)) revert("Artist address cannot be 0");
         if (bytes(tokenURI).length == 0) revert("Token URI cannot be empty");
-        if (_exists(tokenId)) revert("Token ID already exists");
-        
+        if (_ownerOf(tokenId) != address(0)) revert("Token ID already exists");
+
         _safeMint(to, tokenId);
         _artists[tokenId] = artist;
         _setTokenURI(tokenId, tokenURI);
@@ -97,7 +106,6 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
             quantity = 0;
         } else {
             // if data is provided, we assume it's a transfer with payment. The data needs to be encoded as (address paymentToken, uint256 quantity, uint256 nonce). 
-            // this is just an example, in a real implementation you would need to handle this more robustly and securely.
             (paymentToken, quantity, nonce) = abi.decode(data, (address, uint256, uint256));
         }
 
@@ -105,7 +113,7 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         if (paymentToken != address(0) && !whitelist[paymentToken]) revert("Payment token is not whitelisted");
 
         // check 2: are any accounts blacklisted? 
-        if (blacklist[oldOwner] || blacklist[newOwner]) revert("Blacklisted account involved in transfer");
+        if (blacklist[oldOwner] || blacklist[newOwner] || blacklist[msg.sender]) revert("Blacklisted account involved in transfer");
 
         // if checks pass, we proceed with fetching tokens to Powers instance. 
         (bool success) = IERC20(paymentToken).transferFrom(newOwner, owner(), quantity); // transfer payment tokens to this contract. This requires the sender to have approved this contract to spend their tokens.
@@ -161,5 +169,9 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
 
     function isWhitelisted(address token) external view returns (bool) {
         return whitelist[token];
+    }
+
+    function isBlacklisted(address account) external view returns (bool) {
+        return blacklist[account];
     }
 }

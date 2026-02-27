@@ -33,6 +33,7 @@ contract Governed721DAO is DeploySetup {
     Powers powers;
     Governed721 governed721;
 
+    uint256 constant PACKAGE_SIZE = 5; // number of mandates per packaged mandate.
     address treasury;
     uint16 mintMandateId; 
     uint16 paymentMandateId;
@@ -77,8 +78,20 @@ contract Governed721DAO is DeploySetup {
         console2.logUint(constitutionLength);
 
         // step 3: run constitute.
-        // vm.startBroadcast();
-        vm.startBroadcast();
+        for (uint256 i = 0; i < constitution.length; i += PACKAGE_SIZE) {
+            uint256 size = PACKAGE_SIZE;
+            if (i + size > constitution.length) {
+                size = constitution.length - i;
+            }
+            PowersTypes.MandateInitData[] memory batch = new PowersTypes.MandateInitData[](size);
+            for (uint256 j = 0; j < size; j++) {
+                batch[j] = constitution[i + j];
+            }
+            vm.startBroadcast();
+            powers.constitute(batch); // set msg.sender as admin
+            vm.stopBroadcast();
+        }
+        vm.startBroadcast(); 
         powers.constitute(constitution);
         powers.closeConstitute();
         

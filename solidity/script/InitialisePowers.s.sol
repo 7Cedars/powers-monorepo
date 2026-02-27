@@ -15,7 +15,6 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 // async mandates
 import { Github_ClaimRoleWithSig } from "@src/mandates/async/Github_ClaimRoleWithSig.sol";
 import { Github_AssignRoleWithSig } from "@src/mandates/async/Github_AssignRoleWithSig.sol";
-import { ZKPassport_Check } from "@src/mandates/async/ZKPassport_Check.sol";
 
 // Electoral mandates
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
@@ -45,7 +44,8 @@ import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Ad
 import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
 import { PowersAction_Simple } from "@src/mandates/executive/PowersAction_Simple.sol";
 import { PowersAction_Flexible } from "@src/mandates/executive/PowersAction_Flexible.sol";
-import { Mandates_Prepackaged } from "@src/mandates/executive/Mandates_Prepackaged.sol";
+import { Mandates_Adopt_Prepackaged } from "@src/mandates/executive/Mandates_Adopt_Prepackaged.sol";
+import { Mandates_Revoke_Prepackaged } from "@src/mandates/executive/Mandates_Revoke_Prepackaged.sol";
 import { PresetActions_OnOwnPowers } from "@src/mandates/executive/PresetActions_OnOwnPowers.sol";
 import { BespokeAction_OnOwnPowers_Advanced } from "@src/mandates/executive/BespokeAction_OnOwnPowers_Advanced.sol";
 import { BespokeAction_OnOwnPowers_OnReturnValue } from "@src/mandates/executive/BespokeAction_OnOwnPowers_OnReturnValue.sol";
@@ -57,12 +57,14 @@ import { Safe_Setup } from "@src/mandates/integrations/Safe_Setup.sol";
 import { Safe_ExecTransaction } from "@src/mandates/integrations/Safe_ExecTransaction.sol";
 import { Safe_RecoverTokens } from "@src/mandates/integrations/Safe_RecoverTokens.sol";
 import { SafeAllowance_Transfer } from "@src/mandates/integrations/SafeAllowance_Transfer.sol";
+import { SafeAllowance_PresetTransfer } from "@src/mandates/integrations/SafeAllowance_PresetTransfer.sol";
 import { SafeAllowance_Action } from "@src/mandates/integrations/SafeAllowance_Action.sol";
 import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory_AssignRole.sol";
 import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory_AddSafeDelegate.sol";
 import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken_GatedAccess.sol";
 import { GovernedToken_MintEncodedToken } from "@src/mandates/integrations/GovernedToken_MintEncodedToken.sol";
 import { GovernedToken_CollectSplitPayment } from "@src/mandates/integrations/GovernedToken_CollectSplitPayment.sol";
+import { GovernedToken_BurnToAccess } from "@src/mandates/integrations/GovernedToken_BurnToAccess.sol";
 import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721_GatedAccess.sol";
 import { Safe_ExecTransaction_OnReturnValue } from "@src/mandates/integrations/Safe_ExecTransaction_OnReturnValue.sol";
 import { ElectionList_Nominate } from "@src/mandates/integrations/ElectionList_Nominate.sol";
@@ -70,13 +72,17 @@ import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList_Tall
 import { ElectionList_Vote } from "@src/mandates/integrations/ElectionList_Vote.sol";
 import { ElectionList_CreateVoteMandate } from "@src/mandates/integrations/ElectionList_CreateVoteMandate.sol";
 import { ElectionList_CleanUpVoteMandate } from "@src/mandates/integrations/ElectionList_CleanUpVoteMandate.sol";
+import { ZKPassport_Check } from "@src/mandates/integrations/ZKPassport_Check.sol";
 
 // singleton Helper contracts
 import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";  
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";  
 import { OnchainIdRegistryMock, IdentityRegistryMock, ComplianceRegistryMock, RwaMock } from "@mocks/RwaMock.sol";
 import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
+import { Governed721 } from "@src/helpers/Governed721.sol";
+import { Soulbound1155Factory } from "@src/helpers/Soulbound1155.sol";
 
 /// @title InitialisePowers
 /// @notice Deploys all library and mandate contracts deterministically using CREATE2
@@ -149,10 +155,6 @@ contract InitialisePowers is Script {
 
         names.push("Github_AssignRoleWithSig");
         creationCodes.push(type(Github_AssignRoleWithSig).creationCode);
-        constructorArgs.push(abi.encode());
-
-        names.push("ZKPassport_Check");
-        creationCodes.push(type(ZKPassport_Check).creationCode);
         constructorArgs.push(abi.encode());
 
         //////////////////////////////////////////////////////////////////////////
@@ -245,6 +247,14 @@ contract InitialisePowers is Script {
         creationCodes.push(type(Mandates_Revoke).creationCode);
         constructorArgs.push(abi.encode("Mandates_Revoke"));
 
+        names.push("Mandates_Adopt_Prepackaged");
+        creationCodes.push(type(Mandates_Adopt_Prepackaged).creationCode);
+        constructorArgs.push(abi.encode("Mandates_Adopt_Prepackaged"));
+
+        names.push("Mandates_Revoke_Prepackaged");
+        creationCodes.push(type(Mandates_Revoke_Prepackaged).creationCode);
+        constructorArgs.push(abi.encode("Mandates_Revoke_Prepackaged"));
+
         names.push("CheckExternalActionState");
         creationCodes.push(type(CheckExternalActionState).creationCode);
         constructorArgs.push(abi.encode("CheckExternalActionState"));
@@ -260,10 +270,6 @@ contract InitialisePowers is Script {
         names.push("PowersAction_Flexible");
         creationCodes.push(type(PowersAction_Flexible).creationCode);
         constructorArgs.push(abi.encode("PowersAction_Flexible"));
-
-        names.push("Mandates_Prepackaged");
-        creationCodes.push(type(Mandates_Prepackaged).creationCode);
-        constructorArgs.push(abi.encode("Mandates_Prepackaged"));
 
         names.push("PresetActions_OnOwnPowers");
         creationCodes.push(type(PresetActions_OnOwnPowers).creationCode);
@@ -308,6 +314,10 @@ contract InitialisePowers is Script {
         creationCodes.push(type(SafeAllowance_Transfer).creationCode);
         constructorArgs.push(abi.encode("SafeAllowance_Transfer"));
 
+        names.push("SafeAllowance_PresetTransfer");
+        creationCodes.push(type(SafeAllowance_PresetTransfer).creationCode);
+        constructorArgs.push(abi.encode("SafeAllowance_PresetTransfer"));
+
         names.push("SafeAllowance_Action");
         creationCodes.push(type(SafeAllowance_Action).creationCode);
         constructorArgs.push(abi.encode("SafeAllowance_Action"));
@@ -331,6 +341,10 @@ contract InitialisePowers is Script {
         names.push("GovernedToken_MintEncodedToken");
         creationCodes.push(type(GovernedToken_MintEncodedToken).creationCode);
         constructorArgs.push(abi.encode("GovernedToken_MintEncodedToken"));
+
+        names.push("GovernedToken_BurnToAccess");
+        creationCodes.push(type(GovernedToken_BurnToAccess).creationCode);
+        constructorArgs.push(abi.encode("GovernedToken_BurnToAccess"));
 
         names.push("ElectionList_Vote");
         creationCodes.push(type(ElectionList_Vote).creationCode);
@@ -356,12 +370,20 @@ contract InitialisePowers is Script {
         creationCodes.push(type(GovernedToken_CollectSplitPayment).creationCode);
         constructorArgs.push(abi.encode("GovernedToken_CollectSplitPayment"));
 
+        names.push("ZKPassport_Check");
+        creationCodes.push(type(ZKPassport_Check).creationCode);
+        constructorArgs.push(abi.encode());
+
         //////////////////////////////////////////////////////////////////////////
         //                  Singleton Helper Contracts                          //
         //////////////////////////////////////////////////////////////////////////
         names.push("ElectionList");
         creationCodes.push(type(ElectionList).creationCode);
         constructorArgs.push(abi.encode());
+
+        names.push("Nominees");
+        creationCodes.push(type(Nominees).creationCode);
+        constructorArgs.push(abi.encode("Nominees"));
 
         names.push("Erc20Taxed");
         creationCodes.push(type(Erc20Taxed).creationCode);
@@ -377,6 +399,14 @@ contract InitialisePowers is Script {
         
         names.push("RwaMock");
         creationCodes.push(type(RwaMock).creationCode);
+        constructorArgs.push(abi.encode());
+
+        names.push("Governed721"); 
+        creationCodes.push(type(Governed721).creationCode);
+        constructorArgs.push(abi.encode());
+
+        names.push("Soulbound1155Factory");
+        creationCodes.push(type(Soulbound1155Factory).creationCode);
         constructorArgs.push(abi.encode());
 
         names.push("OnchainIdRegistryMock");

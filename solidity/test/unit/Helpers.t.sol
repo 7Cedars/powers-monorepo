@@ -16,7 +16,7 @@ import { EmptyTargetsMandate } from "@mocks/MandateMocks.sol";
 import { MockTargetsMandate } from "@mocks/MandateMocks.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 import { Powers } from "@src/Powers.sol";
-import { Governed1155 } from "@src/helpers/Governed1155.sol";
+import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
@@ -2289,13 +2289,13 @@ contract PowersFactoryTest is TestSetupPowers {
 //////////////////////////////////////////////////////////////
 //             SOULBOUND ERC1155 TESTS                      //
 //////////////////////////////////////////////////////////////
-contract Governed1155Test is TestSetupPowers {
-    Governed1155 sbToken;
+contract Soulbound1155Test is TestSetupPowers {
+    Soulbound1155 sbToken;
 
     function setUp() public override {
         super.setUp();
         vm.prank(address(daoMock));
-        sbToken = new Governed1155("This is a test uri");
+        sbToken = new Soulbound1155("This is a test uri");
     }
 
     function testConstructor() public view {
@@ -2326,7 +2326,7 @@ contract Governed1155Test is TestSetupPowers {
         uint48 blockNum = uint48(block.number);
         uint256 tokenId = 123_456;
 
-        vm.expectRevert("Governed1155: Transfers are disabled");
+        vm.expectRevert("Soulbound1155: Transfers are disabled");
         vm.prank(alice);
         sbToken.safeTransferFrom(alice, bob, tokenId, 1, "");
     }

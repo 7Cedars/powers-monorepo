@@ -304,7 +304,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
             "Mint soulbound token: mint a soulbound ERC1155 token and send it to an address of choice.", daoMock
         );
         accessMandateId =
-            findMandateIdInOrg("Governed1155 Access: Get roleId through soulbound ERC1155 token.", daoMock);
+            findMandateIdInOrg("Soulbound1155 Access: Get roleId through soulbound ERC1155 token.", daoMock);
         targetRoleId = 9;
     }
 
@@ -321,7 +321,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
 
             // Calculate ID that was minted
             // TokenID = (minter << 48) | blockNumber
-            // Minter is daoMock (owner of governed1155)
+            // Minter is daoMock (owner of soulbound1155)
             uint256 tokenId = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
             tokenIds[i] = tokenId;
 
