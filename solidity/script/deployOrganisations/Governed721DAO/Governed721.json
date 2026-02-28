@@ -1,0 +1,23 @@
+{
+  "icon": "",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicrnju4hlv4sxp34cdthbpunngccqhgfvd5zhahumseo4duqxjkvy",
+  "description": 
+    "The Governed721 organization manages the distribution of royalties in a collection of NFTs. Three types of stakeholders - Artists, Owners and Operators - decide on how revenues from resale of artists are distributed. Together, they elect executive that are responsible for enforcement of split payments by blacklisting any account that is deemed non-compliant.",
+  "website": "",
+  "codeOfConduct": "", 
+  "disputeResolution": "", 
+  "communicationChannels": {
+      "discord": "https://discordapp.com/users/1006928106487021638",
+      "telegram": "https://t.me/thd83",
+      "x": "https://x.com/7__Cedars",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo/blob/main/solidity/script/deployOrganisations/Governed721.s.sol",
+      "forum": "",
+      "documentation": ""
+  },
+  "parentContracts": [ ],
+  "childContracts": [ ],
+  "attributes": [ ]
+}

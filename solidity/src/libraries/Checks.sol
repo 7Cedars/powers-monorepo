@@ -76,9 +76,9 @@ library Checks {
 
         // Check execution delay after proposal
         if (conditions.timelock != 0) {
-            (,, uint256 deadline,,,) =
-                Powers(payable(powers)).getActionVoteData(computeActionId(mandateId, mandateCalldata, nonce));
-            if (deadline + conditions.timelock > block.number) {
+            ( , uint48 proposedAt, , , , , ) =
+                Powers(payable(powers)).getActionData(computeActionId(mandateId, mandateCalldata, nonce));
+            if (proposedAt + conditions.timelock > block.number) {
                 revert Checks__DeadlineNotPassed();
             }
         }

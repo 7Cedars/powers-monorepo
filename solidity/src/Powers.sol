@@ -188,6 +188,70 @@ contract Powers is EIP712, IPowers, Context {
     //                  GOVERNANCE LOGIC                        //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
+    function propose(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce, string memory uriAction)
+        external
+        returns (uint256 actionId)
+    {
+        // check 0: is constitution closed?
+        if (!_constituteClosed) revert Powers__ConstituteOpen();
+        
+        AdoptedMandate storage mandate = mandates[mandateId];
+
+        // check 1: is targetMandate is an active mandate?
+        if (!mandate.active) revert Powers__MandateNotActive();
+
+        // check 2: does _msgSender() have access to targetMandate?
+        if (!canCallMandate(_msgSender(), mandateId)) revert Powers__CannotCallMandate();
+
+        // check 3: is caller blacklisted?
+        if (isBlacklisted(_msgSender())) revert Powers__AddressBlacklisted();
+
+        // check 4: is caller too long?
+        if (mandateCalldata.length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
+
+        // if checks pass: propose.
+        uint32 votingPeriod = mandate.conditions.votingPeriod;
+        uint8 quorum = mandate.conditions.quorum;
+
+        actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
+
+        // check 5: does target mandate need proposal vote to pass?
+        if (quorum == 0) revert Powers__NoVoteNeeded();
+
+        // check 6: do we have a proposal with the same targetMandate and mandateCalldata?
+        Action storage action = _actions[actionId];
+        if (action.voteStart != 0) revert Powers__UnexpectedActionState();
+
+        // register actionId at mandate.
+        if (action.mandateId == 0) mandate.actionIds.push(actionId);
+
+        // if checks pass: create proposedAction
+        action.mandateCalldata = mandateCalldata;
+        action.proposedAt = uint48(block.number);
+        action.mandateId = mandateId;
+        action.voteStart = uint48(block.number); // note that the moment proposedAction is made, voting start. Delay functionality has to be implemeted at the mandate level.
+        action.voteDuration = votingPeriod;
+        action.caller = _msgSender();
+        action.uri = uriAction;
+        action.nonce = nonce;
+
+        emit ProposedActionCreated(
+            actionId,
+            _msgSender(),
+            mandateId,
+            "",
+            mandateCalldata,
+            block.number,
+            block.number + votingPeriod,
+            nonce,
+            uriAction
+        );
+
+        return actionId;
+    }
+
+
+    /// @inheritdoc IPowers
     /// @dev The request -> fulfill functions follow a call-and-return mechanism. This allows for async execution of mandates.
     function request(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce, string memory uriAction)
         external
@@ -208,14 +272,21 @@ contract Powers is EIP712, IPowers, Context {
 
         // check 2: does caller have access to mandate being executed?
         if (!canCallMandate(_msgSender(), mandateId)) revert Powers__CannotCallMandate();
-
+ 
         Action storage action = _actions[actionId];
 
-        // check 3: has action already been set as requested?
+        // check 3: has action already been set as requested or fulfilled?
         if (action.requestedAt > 0 || action.fulfilledAt > 0) revert Powers__ActionAlreadyInitiated();
 
         // check 4: is proposedAction cancelled?
         if (action.cancelledAt > 0) revert Powers__ActionCancelled();
+
+        if (action.proposedAt == 0) action.proposedAt = uint48(block.number); // note that we set the action as proposed. 
+        // We need to set a value for proposed so that timelock will work for actions that do not require a vote.   
+        action.mandateId = mandateId;
+        action.mandateCalldata = mandateCalldata;
+        action.uri = uriAction;
+        action.nonce = nonce;
 
         // check 5: do checks pass?
         Checks.check(mandateId, mandateCalldata, address(this), nonce, mandate.latestFulfillment);
@@ -225,11 +296,7 @@ contract Powers is EIP712, IPowers, Context {
 
         // If everything passed, set action as requested.
         action.caller = _msgSender(); // note if caller had been set during proposedAction, it will be overwritten.
-        action.mandateId = mandateId;
         action.requestedAt = uint48(block.number);
-        action.mandateCalldata = mandateCalldata;
-        action.uri = uriAction;
-        action.nonce = nonce;
 
         // execute mandate.
         (bool success) = IMandate(mandate.targetMandate).executeMandate(_msgSender(), mandateId, mandateCalldata, nonce);
@@ -305,69 +372,6 @@ contract Powers is EIP712, IPowers, Context {
 
         // register latestFulfillment at mandate.
         mandate.latestFulfillment = uint48(block.number);
-    }
-
-    /// @inheritdoc IPowers
-    function propose(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce, string memory uriAction)
-        external
-        returns (uint256 actionId)
-    {
-        // check 0: is constitution closed?
-        if (!_constituteClosed) revert Powers__ConstituteOpen();
-        
-        AdoptedMandate storage mandate = mandates[mandateId];
-
-        // check 1: is targetMandate is an active mandate?
-        if (!mandate.active) revert Powers__MandateNotActive();
-
-        // check 2: does _msgSender() have access to targetMandate?
-        if (!canCallMandate(_msgSender(), mandateId)) revert Powers__CannotCallMandate();
-
-        // check 3: is caller blacklisted?
-        if (isBlacklisted(_msgSender())) revert Powers__AddressBlacklisted();
-
-        // check 4: is caller too long?
-        if (mandateCalldata.length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
-
-        // if checks pass: propose.
-        uint32 votingPeriod = mandate.conditions.votingPeriod;
-        uint8 quorum = mandate.conditions.quorum;
-
-        actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
-
-        // check 5: does target mandate need proposal vote to pass?
-        if (quorum == 0) revert Powers__NoVoteNeeded();
-
-        // check 6: do we have a proposal with the same targetMandate and mandateCalldata?
-        Action storage action = _actions[actionId];
-        if (action.voteStart != 0) revert Powers__UnexpectedActionState();
-
-        // register actionId at mandate.
-        if (action.mandateId == 0) mandate.actionIds.push(actionId);
-
-        // if checks pass: create proposedAction
-        action.mandateCalldata = mandateCalldata;
-        action.proposedAt = uint48(block.number);
-        action.mandateId = mandateId;
-        action.voteStart = uint48(block.number); // note that the moment proposedAction is made, voting start. Delay functionality has to be implemeted at the mandate level.
-        action.voteDuration = votingPeriod;
-        action.caller = _msgSender();
-        action.uri = uriAction;
-        action.nonce = nonce;
-
-        emit ProposedActionCreated(
-            actionId,
-            _msgSender(),
-            mandateId,
-            "",
-            mandateCalldata,
-            block.number,
-            block.number + votingPeriod,
-            nonce,
-            uriAction
-        );
-
-        return actionId;
     }
 
     /// @inheritdoc IPowers

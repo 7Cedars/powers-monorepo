@@ -248,13 +248,14 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
       }
 
       case 'delay': {
-        // Calculate delay pass time using proposedAt + votingPeriod + timelock (converted to blocks)
-        if (currentMandateAction && currentMandateAction.proposedAt && currentMandateAction.proposedAt != 0n && mandate.conditions?.votingPeriod && mandate.conditions.timelock != 0n && blockNumber != null) {
+        // Calculate delay pass time using proposedAt + timelock (converted to blocks)
+        // Note: timelock is calculated from proposedAt, not votingPeriod end
+        if (currentMandateAction && currentMandateAction.proposedAt && currentMandateAction.proposedAt != 0n && mandate.conditions?.timelock && mandate.conditions.timelock != 0n && blockNumber != null) {
           const parsedChainId = parseChainId(chainId)
           if (parsedChainId == null) return null
           
           // Calculate future block when delay will pass
-          const delayEndBlock = BigInt(currentMandateAction.proposedAt) + BigInt(mandate.conditions.votingPeriod) + BigInt(mandate.conditions.timelock)
+          const delayEndBlock = BigInt(currentMandateAction.proposedAt) + BigInt(mandate.conditions.timelock)
           
           // Use fromFutureBlockToDateTime to get human-readable format
           return fromFutureBlockToDateTime(delayEndBlock, BigInt(blockNumber), parsedChainId)
@@ -400,24 +401,25 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
       })
 
           
-      // 4. Delay - show only if timelock > 0
-      if (mandate.conditions && mandate.conditions.timelock != null && mandate.conditions?.quorum != null && mandate.conditions.timelock > 0n) {
-        items.push({ 
-          key: 'delay', 
-          label: 'Delay Passed', 
-          // For delay, we use proposedAt as the reference block (the delay is calculated from it: proposedAt + votingPeriod + delay)
-          blockNumber: currentMandateAction?.proposedAt,
-          state: currentMandateAction?.proposedAt ? currentMandateAction?.proposedAt + mandate.conditions.votingPeriod + mandate.conditions.timelock < BigInt(blockNumber || 0) ? "success" : "pending" : "pending",
-          hasHandle: false
-        })
-      }
-      
       items.push({ 
         key: 'requested', 
         label: 'Requested', 
         // Show green if action has been requested (requestedAt > 0)
         blockNumber: currentMandateAction?.requestedAt || 0n,
         state: currentMandateAction?.requestedAt && currentMandateAction.requestedAt > 0n ? "success" : "pending",
+        hasHandle: false
+      })
+    }
+
+    // 4. Delay - show only if timelock > 0. 
+    // Note: this is now independent of quorum (can happen without a vote)
+    if (mandate.conditions && mandate.conditions.timelock != null && mandate.conditions.timelock > 0n) {
+      items.push({ 
+        key: 'delay', 
+        label: 'Delay Passed', 
+        // For delay, we use proposedAt as the reference block (the delay is calculated from it: proposedAt + timelock)
+        blockNumber: currentMandateAction?.proposedAt,
+        state: currentMandateAction?.proposedAt ? currentMandateAction?.proposedAt + mandate.conditions.timelock < BigInt(blockNumber || 0) ? "success" : "pending" : "pending",
         hasHandle: false
       })
     }

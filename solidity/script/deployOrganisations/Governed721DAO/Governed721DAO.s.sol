@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeploySetup } from "./DeploySetup.s.sol";
+import { DeploySetup } from "../DeploySetup.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -30,10 +30,10 @@ contract Governed721DAO is DeploySetup {
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
-    Powers powers;
-    Governed721 governed721;
+    Powers public powers;
+    Governed721 public governed721;
 
-    uint256 constant PACKAGE_SIZE = 5; // number of mandates per packaged mandate.
+    uint256 constant PACKAGE_SIZE = 10; // number of mandates per packaged mandate.
     address treasury;
     uint16 mintMandateId; 
     uint16 paymentMandateId;
@@ -62,7 +62,7 @@ contract Governed721DAO is DeploySetup {
         vm.startBroadcast();
         powers = new Powers(
             "Governed721", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreidlcgxe2mnwghrk4o5xenybljieurrxhtio6gq5fq5u6lxduyyl6e", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiflxq7yu37vkd4bzqk43wymsclquoqisxzszxuwixle34b6dctl5e", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -92,7 +92,6 @@ contract Governed721DAO is DeploySetup {
             vm.stopBroadcast();
         }
         vm.startBroadcast(); 
-        powers.constitute(constitution);
         powers.closeConstitute();
         
         // Transfer ownership of Governed721 to Powers (important for minting/updating)
@@ -114,11 +113,11 @@ contract Governed721DAO is DeploySetup {
         calldatas = new bytes[](11);
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Intermediary", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreih7dlv7qlbei3tbxazdkx4bzbjf2mpf656tr5v5uhmy5k4vtdcnqm"); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Owner", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigtyqevb7k36goevp6qzc6we4svp2lgrat766yuek4c4uqwkkbzj4"); 
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigwx7isovolegdy3m74bsyaziwitbm3ooo7y5dghatq5ek64r3qsq"); 
-        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifke7bfkxxs45unssm6hdr6s6464yrkwds3nw3jkn74cblf5oziea");
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeieyjtuznxx3gyvdqmnlfnfgc44gmuvwegtbqyu345ylbcx26unjty/Artist.json");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Operator", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeieyjtuznxx3gyvdqmnlfnfgc44gmuvwegtbqyu345ylbcx26unjty/Operator.json"); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Owner", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeieyjtuznxx3gyvdqmnlfnfgc44gmuvwegtbqyu345ylbcx26unjty/Owner.json"); 
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeieyjtuznxx3gyvdqmnlfnfgc44gmuvwegtbqyu345ylbcx26unjty/Voter.json"); 
+        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeieyjtuznxx3gyvdqmnlfnfgc44gmuvwegtbqyu345ylbcx26unjty/Executive.json");
         // Assign roles to msg.sender for initial setup (will be revoked later or kept for testing)
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, msg.sender);
         calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, msg.sender);
@@ -183,6 +182,7 @@ contract Governed721DAO is DeploySetup {
         conditions.needFulfilled = proposeSplitId;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
+        conditions.quorum = 30; //
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Split (Minter): Minter can veto split change.",
@@ -200,6 +200,7 @@ contract Governed721DAO is DeploySetup {
         conditions.needFulfilled = proposeSplitId;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
+        conditions.quorum = 30; // 
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Split (Owner): Owner can veto split change.",
@@ -217,6 +218,7 @@ contract Governed721DAO is DeploySetup {
         conditions.needFulfilled = proposeSplitId;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
+        conditions.quorum = 30; //
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Split (Intermediary): Intermediary can veto split change.",
@@ -231,15 +233,15 @@ contract Governed721DAO is DeploySetup {
         // executives: vote + time lock. Execute & implement new split.        
         // Checkpoint 1: Check Minter Veto
         mandateCount++;
-        conditions.allowedRole = 5;
+        conditions.allowedRole = 5; // any executive can execute, but it will only execute if the minter has not vetoed.
         conditions.needFulfilled = proposeSplitId;
         conditions.needNotFulfilled = vetoMinterId;
-        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // Wait for vetos
+        conditions.timelock = minutesToBlocks(10, helperConfig.getBlocksPerHour(block.chainid)); // Wait for vetos
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Split Checkpoint 1: Confirm no Minter veto.",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(new string[](0)),
+                config: abi.encode(inputParams),
                 conditions: conditions
             })
         );
@@ -248,40 +250,25 @@ contract Governed721DAO is DeploySetup {
 
         // Checkpoint 2: Check Owner Veto
         mandateCount++;
-        conditions.allowedRole = 5;
+        conditions.allowedRole = 5; // any executive can execute, but it will only execute if the owner has not vetoed.
         conditions.needFulfilled = splitCheckpoint1;
         conditions.needNotFulfilled = vetoOwnerId;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Split Checkpoint 2: Confirm no Owner veto.",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(new string[](0)),
+                config: abi.encode(inputParams),
                 conditions: conditions
             })
         );
         delete conditions;
         splitCheckpoint2 = mandateCount;
 
-        // Checkpoint 3: Check Intermediary Veto
+        // Checkpoint 3: Check Intermediary Veto & execute Split if no vetoes.
         mandateCount++;
-        conditions.allowedRole = 5;
+        conditions.allowedRole = 5; // any executive can execute, but it will only execute if the intermediary has not vetoed.
         conditions.needFulfilled = splitCheckpoint2;
         conditions.needNotFulfilled = vetoIntermediaryId;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Split Checkpoint 3: Confirm no Intermediary veto.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(new string[](0)),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-        splitCheckpoint3 = mandateCount;
-
-        // Execute Split
-        mandateCount++;
-        conditions.allowedRole = 5;
-        conditions.needFulfilled = splitCheckpoint3;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Split Payment: Set new split payment.",
@@ -295,6 +282,7 @@ contract Governed721DAO is DeploySetup {
             })
         );
         delete conditions;
+        splitCheckpoint3 = mandateCount;
  
         // ADD / REMOVE ALLOWED TOKENS MANDATE 
         // executives: add allowed tokens. Vote. Execute. 

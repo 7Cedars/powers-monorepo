@@ -37,7 +37,7 @@ interface IGoverned721 is IERC721 {
     function isWhitelisted(address token) external view returns (bool);
     function getArtist(uint256 tokenId) external view returns (address artist); 
     function getSplit(Role role) external view returns (uint8 percentage);
-    function getTransfer(uint256 actionId) external view returns (TransferData memory);
+    function getTransferData(uint256 actionId) external view returns (TransferData memory);
 }
 
 contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
@@ -51,6 +51,8 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
     
     uint8 totalSplitPayment; // total percentage of the payment that will be split among the roles.  
     uint16 public paymentMandateId; // the mandate ID that will be required to collect payments. 
+
+    event TransferId(uint256 indexed transferId);
 
     constructor() ERC721("Governed721", "G721") Ownable(msg.sender) {} 
 
@@ -120,6 +122,7 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
 
         if (!success) revert("Payment transfer failed");
 
+        // if payment succeeded, we proceed with the transfer. First we log the transfer 
         uint256 transferId = uint256(keccak256(abi.encode(oldOwner, newOwner, tokenId, paymentToken, quantity, nonce)));
         _transfers[transferId] = TransferData(
             oldOwner, // oldOwner 
@@ -131,8 +134,11 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
             quantity,
             nonce
             );
+
+        // We emit an event that links tokenId and TransferId (note that a Transfer event will also be emited after the NFT transfer concludes.)
+        emit TransferId(transferId);
         
-        // if payment succeeded, we proceed with the transfer. Following the existing function. 
+        // Followed by the existing function.
         super.safeTransferFrom(oldOwner, newOwner, tokenId, data);
     }
 
@@ -163,7 +169,7 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         return _artists[tokenId];
     }
 
-    function getTransfer(uint256 actionId) public view returns (TransferData memory) {
+    function getTransferData(uint256 actionId) public view returns (TransferData memory) {
         return _transfers[actionId];
     }
 
