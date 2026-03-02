@@ -5,7 +5,7 @@
 /// @dev Provides common functionality for Powers implementation and validation
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Powers } from "../Powers.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
@@ -21,6 +21,7 @@ library Checks {
     error Checks__ExecutionGapTooSmall();
     error Checks__ProposalNotSucceeded();
     error Checks__DeadlineNotPassed();
+    error Checks__ProposalRequired();
 
     /////////////////////////////////////////////////////////////
     //                  CHECKS                                 //
@@ -33,7 +34,7 @@ library Checks {
     /// @param latestFulfillment The latest fulfillment of the mandate
     function check(
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         address powers,
         uint256 nonce,
         uint48 latestFulfillment
@@ -76,9 +77,14 @@ library Checks {
 
         // Check execution delay after proposal
         if (conditions.timelock != 0) {
-            (,, uint256 deadline,,,) =
-                Powers(payable(powers)).getActionVoteData(computeActionId(mandateId, mandateCalldata, nonce));
-            if (deadline + conditions.timelock > block.number) {
+            ( , uint48 proposedAt, , , , , ) =
+                Powers(payable(powers)).getActionData(computeActionId(mandateId, mandateCalldata, nonce));
+            
+            if (proposedAt == 0) {
+                revert Checks__ProposalRequired();
+            }
+
+            if (proposedAt + conditions.timelock > block.number) {
                 revert Checks__DeadlineNotPassed();
             }
         }
@@ -97,7 +103,7 @@ library Checks {
     /// @param mandateCalldata Encoded function call data
     /// @param nonce The nonce for the action
     /// @return actionId Unique identifier for the action
-    function computeActionId(uint16 mandateId, bytes memory mandateCalldata, uint256 nonce)
+    function computeActionId(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
         public
         pure
         returns (uint256 actionId)

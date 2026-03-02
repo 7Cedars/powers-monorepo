@@ -5,7 +5,7 @@
 /// @dev Provides common functionality for Mandate implementation and validation
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { ERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import { Powers } from "../Powers.sol";
@@ -16,7 +16,7 @@ library MandateUtilities {
     /////////////////////////////////////////////////////////////
     //                  CHECKS                                 //
     /////////////////////////////////////////////////////////////
-    function checkStringLength(string memory name_, uint256 minLength, uint256 maxLength) external pure {
+    function checkStringLength(string memory name_, uint256 minLength, uint256 maxLength) internal pure {
         if (bytes(name_).length < minLength) {
             revert("String too short");
         }
@@ -25,31 +25,6 @@ library MandateUtilities {
         }
     }
 
-    /// @notice Verifies if an address has all specified roles
-    /// @dev Checks each role against the Powers contract's role system
-    /// @param caller Address to check roles for
-    /// @param roles Array of role IDs to check
-    function hasRoleCheck(address caller, uint256[] memory roles, address powers) external view {
-        for (uint32 i = 0; i < roles.length; i++) {
-            uint48 since = Powers(payable(powers)).hasRoleSince(caller, roles[i]);
-            if (since == 0) {
-                revert("Does not have role.");
-            }
-        }
-    }
-
-    /// @notice Verifies if an address does not have any of the specified roles
-    /// @dev Checks each role against the Powers contract's role system
-    /// @param caller Address to check roles for
-    /// @param roles Array of role IDs to check
-    function hasNotRoleCheck(address caller, uint256[] memory roles, address powers) external view {
-        for (uint32 i = 0; i < roles.length; i++) {
-            uint48 since = Powers(payable(powers)).hasRoleSince(caller, roles[i]);
-            if (since != 0) {
-                revert("Has role.");
-            }
-        }
-    }
 
     //////////////////////////////////////////////////////////////
     //                      HELPER FUNCTIONS                    //
@@ -61,7 +36,7 @@ library MandateUtilities {
     /// @param nonce The nonce for the action
     /// @return actionId Unique identifier for the action
     function computeActionId(uint16 mandateId, bytes memory mandateCalldata, uint256 nonce)
-        public
+        internal
         pure
         returns (uint256 actionId)
     {
@@ -73,7 +48,7 @@ library MandateUtilities {
     /// @param powers Address of the Powers contract
     /// @param index Index of the mandate
     /// @return mandateHash Unique identifier for the mandate
-    function hashMandate(address powers, uint16 index) public pure returns (bytes32 mandateHash) {
+    function hashMandate(address powers, uint16 index) internal pure returns (bytes32 mandateHash) {
         mandateHash = keccak256(abi.encode(powers, index));
     }
 
@@ -84,7 +59,7 @@ library MandateUtilities {
     /// @return values Array of ETH values
     /// @return calldatas Array of encoded function calls
     function createEmptyArrays(uint256 length)
-        public
+        internal
         pure
         returns (address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
@@ -98,7 +73,7 @@ library MandateUtilities {
     /// @param numBools The number of booleans to decode
     /// @return boolArray The decoded boolean array
     /// Note: written by Cursor AI.
-    function arrayifyBools(uint256 numBools) public pure returns (bool[] memory boolArray) {
+    function arrayifyBools(uint256 numBools) internal pure returns (bool[] memory boolArray) {
         if (numBools == 0) return new bool[](0);
         if (numBools > 1000) revert("Num bools too large");
 

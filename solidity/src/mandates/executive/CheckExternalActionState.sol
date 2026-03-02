@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
@@ -41,7 +41,7 @@ contract CheckExternalActionState is Mandate {
         address, /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

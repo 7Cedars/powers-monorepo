@@ -20,7 +20,7 @@
 /// - can be extended to include more complex tax-based role assignment mechanisms
 
 /// @author 7Cedars
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol"; 
 import { IPowers } from "../../interfaces/IPowers.sol";
@@ -81,7 +81,7 @@ contract TaxSelect is Mandate {
         /* caller */
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

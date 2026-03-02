@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
@@ -39,6 +39,20 @@ contract RevokeInactiveAccounts is Mandate {
         
         uint256 revokeCount;
         address[] toRevoke;
+        
+        // Stack too deep mitigation: Loop variables and temps
+        uint256 i;
+        uint256 k;
+        uint256 h;
+        uint16 mId;
+        uint256 count;
+        uint16[] tempMandates;
+        uint256 actualCheckCount;
+        uint256 available;
+        uint256 toCheckForMandate;
+        uint256 aId;
+        address actionCaller;
+        address holder;
     }
 
     /// @notice Constructor
@@ -70,7 +84,7 @@ contract RevokeInactiveAccounts is Mandate {
         address, /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public
@@ -94,22 +108,24 @@ contract RevokeInactiveAccounts is Mandate {
         }
         
         mem.roleHolders = new address[](mem.amountRoleHolders);
-        for (uint256 i = 0; i < mem.amountRoleHolders; i++) {
-            mem.roleHolders[i] = IPowers(payable(powers)).getRoleHolderAtIndex(mem.roleId, i);
+        for (mem.i = 0; mem.i < mem.amountRoleHolders; mem.i++) {
+            mem.roleHolders[mem.i] = IPowers(payable(powers)).getRoleHolderAtIndex(mem.roleId, mem.i);
         }
 
         // 2. Find relevant mandates
         mem.mandateCounter = IPowers(payable(powers)).getMandateCounter();
         
         // Oversize array to max possible mandates, then track actual count
-        uint16[] memory tempMandates = new uint16[](mem.mandateCounter);
+        mem.tempMandates = new uint16[](mem.mandateCounter);
         mem.relevantMandatesCount = 0;
         
         // Loop through all mandates to find those with the matching role
-        for (uint16 i = 1; i < mem.mandateCounter; i++) {
-            PowersTypes.Conditions memory conditions = IPowers(payable(powers)).getConditions(i);
+        // Note: mem.i reused here, assuming safe because type matches (uint16 cast to uint256 fine, wait i is uint256 in struct)
+        // Mandate index is uint16. We can loop with uint16 but store in uint256 mem.i? Or just use mem.i
+        for (uint16 mIdx = 1; mIdx < mem.mandateCounter; mIdx++) {
+            PowersTypes.Conditions memory conditions = IPowers(payable(powers)).getConditions(mIdx);
             if (conditions.allowedRole == mem.roleId) {
-                tempMandates[mem.relevantMandatesCount] = i;
+                mem.tempMandates[mem.relevantMandatesCount] = mIdx;
                 mem.relevantMandatesCount++;
             }
         }
@@ -118,36 +134,36 @@ contract RevokeInactiveAccounts is Mandate {
         mem.totalAvailableActions = 0;
         mem.mandateActionCounts = new uint256[](mem.relevantMandatesCount);
         
-        for (uint256 i = 0; i < mem.relevantMandatesCount; i++) {
-            uint16 mId = tempMandates[i];
-            uint256 count = IPowers(payable(powers)).getQuantityMandateActions(mId);
-            mem.mandateActionCounts[i] = count;
-            mem.totalAvailableActions += count;
+        for (mem.i = 0; mem.i < mem.relevantMandatesCount; mem.i++) {
+            mem.mId = mem.tempMandates[mem.i];
+            mem.count = IPowers(payable(powers)).getQuantityMandateActions(mem.mId);
+            mem.mandateActionCounts[mem.i] = mem.count;
+            mem.totalAvailableActions += mem.count;
         }
 
         // 5. Make list of actionIds to check
-        uint256 actualCheckCount = mem.numberActionsToCheck;
-        if (actualCheckCount > mem.totalAvailableActions) {
-            actualCheckCount = mem.totalAvailableActions;
+        mem.actualCheckCount = mem.numberActionsToCheck;
+        if (mem.actualCheckCount > mem.totalAvailableActions) {
+            mem.actualCheckCount = mem.totalAvailableActions;
         }
         
-        mem.actionIdsToCheck = new uint256[](actualCheckCount); 
+        mem.actionIdsToCheck = new uint256[](mem.actualCheckCount); 
         mem.actionIdsToCheckCount = 0;
 
         if (mem.totalAvailableActions > 0) {
-             for (uint256 i = 0; i < mem.relevantMandatesCount; i++) {
-                uint16 mId = tempMandates[i];
-                uint256 available = mem.mandateActionCounts[i];
-                if (available == 0) continue;
+             for (mem.i = 0; mem.i < mem.relevantMandatesCount; mem.i++) {
+                mem.mId = mem.tempMandates[mem.i];
+                mem.available = mem.mandateActionCounts[mem.i];
+                if (mem.available == 0) continue;
 
                 // Calculate relative number of actions to check from this mandate
-                uint256 toCheckForMandate = (available * actualCheckCount) / mem.totalAvailableActions;
-                if (toCheckForMandate > available) toCheckForMandate = available;
+                mem.toCheckForMandate = (mem.available * mem.actualCheckCount) / mem.totalAvailableActions;
+                if (mem.toCheckForMandate > mem.available) mem.toCheckForMandate = mem.available;
 
                 // Retrieve the latest action IDs
-                for (uint256 k = 0; k < toCheckForMandate; k++) {
-                    if (mem.actionIdsToCheckCount < actualCheckCount) {
-                        mem.actionIdsToCheck[mem.actionIdsToCheckCount] = IPowers(payable(powers)).getMandateActionAtIndex(mId, available - 1 - k);
+                for (mem.k = 0; mem.k < mem.toCheckForMandate; mem.k++) {
+                    if (mem.actionIdsToCheckCount < mem.actualCheckCount) {
+                        mem.actionIdsToCheck[mem.actionIdsToCheckCount] = IPowers(payable(powers)).getMandateActionAtIndex(mem.mId, mem.available - 1 - mem.k);
                         mem.actionIdsToCheckCount++;
                     }
                 }
@@ -157,21 +173,21 @@ contract RevokeInactiveAccounts is Mandate {
         // 6. Check actions
         mem.observedActions = new uint256[](mem.amountRoleHolders);
         
-        for (uint256 i = 0; i < mem.actionIdsToCheckCount; i++) {
-            uint256 aId = mem.actionIdsToCheck[i];
-            (,,,,, address actionCaller,) = IPowers(payable(powers)).getActionData(aId);
+        for (mem.i = 0; mem.i < mem.actionIdsToCheckCount; mem.i++) {
+            mem.aId = mem.actionIdsToCheck[mem.i];
+            (,,,,, mem.actionCaller,) = IPowers(payable(powers)).getActionData(mem.aId);
             
-            for (uint256 h = 0; h < mem.amountRoleHolders; h++) {
-                address holder = mem.roleHolders[h];
+            for (mem.h = 0; mem.h < mem.amountRoleHolders; mem.h++) {
+                mem.holder = mem.roleHolders[mem.h];
                 
                 // 6b: Check if address was caller
-                if (holder == actionCaller) {
-                    mem.observedActions[h]++;
+                if (mem.holder == mem.actionCaller) {
+                    mem.observedActions[mem.h]++;
                 }
                 
                 // 6c: Check if address voted
-                if (IPowers(payable(powers)).hasVoted(aId, holder)) {
-                    mem.observedActions[h]++;
+                if (IPowers(payable(powers)).hasVoted(mem.aId, mem.holder)) {
+                    mem.observedActions[mem.h]++;
                 }
             }
         }
@@ -180,9 +196,9 @@ contract RevokeInactiveAccounts is Mandate {
         mem.toRevoke = new address[](mem.amountRoleHolders);
         mem.revokeCount = 0;
         
-        for (uint256 h = 0; h < mem.amountRoleHolders; h++) {
-            if (mem.observedActions[h] < mem.minimumActionsNeeded) {
-                mem.toRevoke[mem.revokeCount] = mem.roleHolders[h];
+        for (mem.h = 0; mem.h < mem.amountRoleHolders; mem.h++) {
+            if (mem.observedActions[mem.h] < mem.minimumActionsNeeded) {
+                mem.toRevoke[mem.revokeCount] = mem.roleHolders[mem.h];
                 mem.revokeCount++;
             }
         }
@@ -194,9 +210,9 @@ contract RevokeInactiveAccounts is Mandate {
 
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(mem.revokeCount);
         
-        for (uint256 i = 0; i < mem.revokeCount; i++) {
-            targets[i] = powers;
-            calldatas[i] = abi.encodeWithSelector(IPowers.revokeRole.selector, mem.roleId, mem.toRevoke[i]);
+        for (mem.i = 0; mem.i < mem.revokeCount; mem.i++) {
+            targets[mem.i] = powers;
+            calldatas[mem.i] = abi.encodeWithSelector(IPowers.revokeRole.selector, mem.roleId, mem.toRevoke[mem.i]);
         }
 
         return (actionId, targets, values, calldatas);

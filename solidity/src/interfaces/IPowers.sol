@@ -4,7 +4,7 @@
 /// @notice Interface for Powers, a protocol implementing Institutional Governance.
 /// @dev Derived from OpenZeppelin's Governor.sol contract and Haberdasher Labs Hats protocol.
 /// @author 7Cedars
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { PowersErrors } from "./PowersErrors.sol";
 import { PowersEvents } from "./PowersEvents.sol";

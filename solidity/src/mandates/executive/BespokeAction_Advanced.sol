@@ -3,7 +3,7 @@
 /// @notice A base contract that executes a bespoke action with a single function call.
 /// @author 7Cedars,
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
@@ -16,9 +16,7 @@ contract BespokeAction_Advanced is Mandate {
         bytes4 targetFunction;
         bytes staticParamsBefore;
         string[] dynamicParams;
-        bytes staticParamsAfter;
-        uint256 staticLen;
-        bytes packedParams;
+        bytes staticParamsAfter; 
     }
 
     /// @notice Constructor of the BespokeAction_Advanced mandate
@@ -51,7 +49,7 @@ contract BespokeAction_Advanced is Mandate {
         /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

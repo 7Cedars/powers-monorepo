@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // import { TestSetupPowers } from "../../TestSetup.t.sol";
 // // import { console2 } from "forge-std/console2.sol";

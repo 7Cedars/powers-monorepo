@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import { Nominees } from "../../src/helpers/Nominees.sol";
@@ -25,35 +25,35 @@ contract Erc20DelegateElection is Nominees {
     }
 
     // --- Erc20DelegateElection specific ranking ---
-    function getNomineeRanking() external view returns (address[] memory nominees, uint256[] memory votes) {
-        uint256 numNominees = nomineesSorted.length;
+    function getNomineeRanking() external view returns (address[] memory nomineesArray, uint256[] memory votes) {
+        uint256 numNominees = nomineesArray.length;
         if (numNominees == 0) return (new address[](0), new uint256[](0));
 
-        nominees = new address[](numNominees);
-        votes = new uint256[](numNominees);
+        address[] memory nomineesTemp = new address[](numNominees);
+        uint256[] memory votesTemp = new uint256[](numNominees);
 
         // Copy nominees and their votes
         for (uint256 i; i < numNominees; i++) {
-            nominees[i] = nomineesSorted[i];
-            votes[i] = config.token.getVotes(nomineesSorted[i]);
+            nomineesTemp[i] = nomineesArray[i];
+            votesTemp[i] = config.token.getVotes(nomineesArray[i]);
         }
 
         // Simple bubble sort by vote count (descending)
         for (uint256 i; i < numNominees - 1; i++) {
             for (uint256 j; j < numNominees - i - 1; j++) {
-                if (votes[j] < votes[j + 1]) {
+                if (votesTemp[j] < votesTemp[j + 1]) {
                     // Swap votes
-                    uint256 tempVotes = votes[j];
-                    votes[j] = votes[j + 1];
-                    votes[j + 1] = tempVotes;
+                    uint256 tempVotes = votesTemp[j];
+                    votesTemp[j] = votesTemp[j + 1];
+                    votesTemp[j + 1] = tempVotes;
                     // Swap nominees
-                    address tempNominee = nominees[j];
-                    nominees[j] = nominees[j + 1];
-                    nominees[j + 1] = tempNominee;
+                    address tempNominee = nomineesTemp[j];
+                    nomineesTemp[j] = nomineesTemp[j + 1];
+                    nomineesTemp[j + 1] = tempNominee;
                 }
             }
         }
 
-        return (nominees, votes);
+        return (nomineesTemp, votesTemp);
     }
 }

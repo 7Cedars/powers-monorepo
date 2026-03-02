@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // import { Mandate } from "../../Mandate.sol";
 // import { IPowers } from "../../interfaces/IPowers.sol";
@@ -126,7 +126,7 @@ pragma solidity 0.8.26;
 //         /* caller */
 //         address powers,
 //         uint16 mandateId,
-//         bytes memory mandateCalldata, // Contains createPoolActionId
+//         bytes calldata mandateCalldata, // Contains createPoolActionId
 //         uint256 nonce
 //     )
 //         public

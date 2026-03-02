@@ -278,16 +278,16 @@ info:
 
 update-builds:
 	@echo "Updating builds..."
-	for contract in ERC20 Erc20Taxed SimpleErc20Votes Erc20DelegateElection Mandate Nominees Ownable Powers; do cp out/$${contract}.sol/$${contract}.json ../frontend/context/builds/$${contract}.json; done
+	for contract in ERC20 Erc20Taxed SimpleErc20Votes Erc20DelegateElection Mandate Nominees Ownable Powers ZKPassport_Check ZKPassport_PowersRegistry; do cp out/$${contract}.sol/$${contract}.json ../frontend/context/builds/$${contract}.json; done
 	
 ###############################
 # 		Deploy Commands  	  # 
 ###############################
 
 # Deployment arguments for different networks
-
-# NB! turned of verify for today as I reached the max of 250 a day o: 
+ 
 ANVIL_DEPLOY_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) --broadcast --ffi -vv
+# NB: turned off verify
 SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 11155111 --ffi -vv
 ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 421614 --verify --ffi -vv 
 OPT_SEPOLIA_DEPLOY_ARGS := --rpc-url $(OPT_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --ffi -vv
@@ -303,11 +303,15 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 deploy-organisation : 
 	@echo "Deploying organisation..."
-	forge script script/deployOrganisations/NestedGovernance.s.sol:NestedGovernance $(OPT_SEPOLIA_DEPLOY_ARGS)  
+	forge script script/deployOrganisations/Governed721DAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)  
 
 initialise-powers :
 	@echo "Initialising Powers contract..."
 	forge script script/InitialisePowers.s.sol:InitialisePowers $(SEPOLIA_DEPLOY_ARGS)
+
+# deploy-zkregistry : 
+# 	@echo "Deploying ZKPassport Registry..."
+# 	forge script script/DeployZKPassportRegistry.s.sol:DeployZKPassportRegistry $(SEPOLIA_DEPLOY_ARGS)
 
 # deploy allowance module to Sepolia. Only needs to be done once.
 deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:DeployAllowanceModule $(OPT_SEPOLIA_DEPLOY_ARGS) 

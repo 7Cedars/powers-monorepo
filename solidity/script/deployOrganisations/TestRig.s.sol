@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // scripts
 import { Script } from "forge-std/Script.sol";
@@ -18,8 +18,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 
 /// @title TestRig Deployment Script
 contract TestRig is DeploySetup {
-    Configurations helperConfig;
-    Configurations.NetworkConfig public config;
+    Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -35,17 +34,16 @@ contract TestRig is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // step 1: deploy TestRig Powers
         vm.startBroadcast();
         powers = new Powers(
             "TestRig", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreidlcgxe2mnwghrk4o5xenybljieurrxhtio6gq5fq5u6lxduyyl6e", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // scripts
 import { Script } from "forge-std/Script.sol";
@@ -21,8 +21,7 @@ import { ElectionList } from "@src/helpers/ElectionList.sol";
 
 /// @title Open Elections Deployment Script
 contract ElectionListsDAO is DeploySetup {
-    Configurations helperConfig;
-    Configurations.NetworkConfig public config;
+    Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -39,18 +38,17 @@ contract ElectionListsDAO is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // step 1: deploy Open Elections Powers
         vm.startBroadcast();
         openElection = new ElectionList();
         powers = new Powers(
-            "Open Elections", // name
+            "Open Election", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiaaprfqxtgyxa5v2dnf7edfbc3mxewdh4axf4qtkurpz66jh2f2ve", // uri
-            config.maxCallDataLength, // max call data length
-            config.maxReturnDataLength, // max return data length
-            config.maxExecutionsLength // max executions length
+            helperConfig.getMaxCallDataLength(block.chainid), // max call data length
+            helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -106,7 +104,7 @@ contract ElectionListsDAO is DeploySetup {
         // Members: create election
         mandateCount++;
         conditions.allowedRole = 1; // = Voters
-        conditions.throttleExecution = minutesToBlocks(120, config.BLOCKS_PER_HOUR); // = once every 2 hours
+        conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create an election: an election can be initiated be any voter.",

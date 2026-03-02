@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
@@ -58,7 +58,7 @@ contract SafeAllowance_Transfer is Mandate {
         address, /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public
@@ -72,14 +72,14 @@ contract SafeAllowance_Transfer is Mandate {
         (mem.allowanceModule, mem.safeProxy) = abi.decode(getConfig(powers, mandateId), (address, address));
 
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
-        // NB: We call the allowance module directly to make the transfer. The allowance module then calls the Safe proxy.
+        // NB: We call the allowance module directly to make the transfer. The allowance module then calls the Safe proxy.ma
         targets[0] = mem.allowanceModule;
         calldatas[0] = _createCalldata(powers, mandateId, mandateCalldata);
 
         return (actionId, targets, values, calldatas);
     }
 
-    function _createCalldata(address powers, uint16 mandateId, bytes memory mandateCalldata)
+    function _createCalldata(address powers, uint16 mandateId, bytes calldata mandateCalldata)
         internal
         view
         returns (bytes memory)

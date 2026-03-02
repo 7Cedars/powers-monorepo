@@ -4,7 +4,7 @@
 ///      is an owner, thus providing its own approval by making the call.
 /// @author 7Cedars
 // £todo: this mandate should be split in two: 1 setup safe 2: setup config in powers (using return data from first mandate). This will allow each call to be made directly.
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
@@ -46,7 +46,7 @@ contract Safe_Setup is Mandate {
         address, /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

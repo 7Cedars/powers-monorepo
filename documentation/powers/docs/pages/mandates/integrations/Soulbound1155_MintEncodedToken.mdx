@@ -1,18 +1,18 @@
-# Soulbound1155_MintEncodedToken
+# GovernedToken_MintEncodedToken
 
-Soulbound1155_MintEncodedToken is an issuance mandate that mints a unique Soulbound token to a specified recipient. The token ID encodes the identity of the minter (the mandate executor) and the block number of issuance.
+GovernedToken_MintEncodedToken is an issuance mandate that mints a unique Soulbound token to a specified recipient. The token ID encodes the identity of the minter (the mandate executor) and the block number of issuance.
 
 ## Overview
 
-This mandate works in tandem with the `Soulbound1155` token standard to issue verifiable credentials. By encoding the caller's address into the Token ID, it creates a permanent on-chain record that "User X minted this token at Block Y".
+This mandate works in tandem with the `Governed1155` token standard to issue verifiable credentials. By encoding the caller's address into the Token ID, it creates a permanent on-chain record that "User X minted this token at Block Y".
 
-This is the issuance counterpart to `Soulbound1155_GatedAccess`, providing the tokens that can later be used for access control or reputation.
+This is the issuance counterpart to `GovernedToken_GatedAccess`, providing the tokens that can later be used for access control or reputation.
 
 ## Configuration
 
-When adopting a Soulbound1155_MintEncodedToken instance, the following parameters are required:
+When adopting a GovernedToken_MintEncodedToken instance, the following parameters are required:
 
-1.  `soulbound1155` (address): The address of the Soulbound1155 contract where tokens will be minted.
+1.  `governed1155` (address): The address of the Governed1155 contract where tokens will be minted.
 
 ## Usage
 
@@ -31,7 +31,7 @@ When calling the mandate, the user must specify the recipient of the token:
     *   This ensures the token ID is unique to this specific interaction.
 
 2.  **Minting**
-    *   Generates a call to `ISoulbound1155.mintTokenId`.
+    *   Generates a call to `IGoverned1155.mintTokenId`.
     *   Mints the generated `tokenId` to the `to` address.
 
 ## Technical Specifications

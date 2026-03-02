@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 /// @notice A mandate that retrieves return data of a previous mandate call, and uses the return value for its own call.
 /// parameters set before and after the return data can be specified.
@@ -39,7 +39,7 @@ contract BespokeAction_OnOwnPowers_OnReturnValue is Mandate {
         /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

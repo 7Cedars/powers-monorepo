@@ -52,8 +52,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     InitialisePowers initialisePowers;
     string[] mandateNames;
     address[] mandateAddresses;
-    TestConstitutions testConstitutions;
-    Configurations.NetworkConfig config;
+    TestConstitutions testConstitutions; 
     PowersTypes.Conditions conditions;
     address powersAddress;
     address[] mandates;
@@ -369,15 +368,53 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         MAX_FUZZ_CALLDATA_LENGTH = 2000;
 
         // users
+        // note that when fork testing, addresses are often already taken. Therefore we loop to find addresses without code deployed on them to use as users in our tests.
         alice = makeAddr("alice");
+        i = 0; 
+        while (alice.code.length > 0) {
+            alice = makeAddr(string.concat("alice", Strings.toString(i)));
+            i++;
+        }
         bob = makeAddr("bob");
+        while (bob.code.length > 0) {
+            bob = makeAddr(string.concat("bob", Strings.toString(i)));
+            i++;
+        }
         charlotte = makeAddr("charlotte");
+        while (charlotte.code.length > 0) {
+            charlotte = makeAddr(string.concat("charlotte", Strings.toString(i)));
+            i++;
+        }
         david = makeAddr("david");
+        while (david.code.length > 0) {
+            david = makeAddr(string.concat("david", Strings.toString(i)));
+            i++;
+        }
         eve = makeAddr("eve");
+        while (eve.code.length > 0) {
+            eve = makeAddr(string.concat("eve", Strings.toString(i)));
+            i++;
+        }
         frank = makeAddr("frank");
+        while (frank.code.length > 0) {
+            frank = makeAddr(string.concat("frank", Strings.toString(i)));
+            i++;
+        }
         gary = makeAddr("gary");
+        while (gary.code.length > 0) {
+            gary = makeAddr(string.concat("gary", Strings.toString(i)));
+            i++;
+        }
         helen = makeAddr("helen");
+        while (helen.code.length > 0) {
+            helen = makeAddr(string.concat("helen", Strings.toString(i)));
+            i++;
+        }
         ian = makeAddr("ian");
+        while (ian.code.length > 0) {
+            ian = makeAddr(string.concat("ian", Strings.toString(i)));
+            i++;
+        }
         jacob = makeAddr("jacob");
         kate = makeAddr("kate");
         lisa = makeAddr("lisa");
@@ -408,8 +445,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         // deploy external contracts
         initialisePowers = new InitialisePowers();
         (mandateNames, mandateAddresses) = initialisePowers.getDeployed();
-        Configurations helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // deploy constitutions mock
         vm.startPrank(address(daoMock));
@@ -424,12 +460,17 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
 
 abstract contract TestSetupPowers is BaseSetup {
     function setUpVariables() public override {
+        vm.selectFork(sepoliaFork);
+
         super.setUpVariables();
 
         // initiate constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
             testConstitutions.powersTestConstitution(address(daoMock));
 
+            
+        console2.log("Chain Id:");
+        console2.logUint(block.chainid);
         console2.log("Mandate Init Data Length:");
         console2.logUint(mandateInitData_.length);
 
@@ -573,9 +614,9 @@ abstract contract TestSetupIntegrations is BaseSetup {
         powersFactory = new PowersFactory(
             "Powers Factory", // name
             "https://testURI", // uri
-            config.maxCallDataLength,
-            config.maxReturnDataLength,
-            config.maxExecutionsLength
+            helperConfig.getMaxCallDataLength(block.chainid),
+            helperConfig.getMaxReturnDataLength(block.chainid),
+            helperConfig.getMaxExecutionsLength(block.chainid) 
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();
@@ -810,7 +851,9 @@ abstract contract TestSetupSafeProtocolFlow is BaseSetup {
 
         // initiate multi constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
-            testConstitutions.safeProtocol_Parent_IntegrationTestConstitution(config.safeAllowanceModule);
+            testConstitutions.safeProtocol_Parent_IntegrationTestConstitution(
+                helperConfig.getSafeAllowanceModule(block.chainid)
+            );
 
         // constitute daoMock.
         daoMock.constitute(mandateInitData_);

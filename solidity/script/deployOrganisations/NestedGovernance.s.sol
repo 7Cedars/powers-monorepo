@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // scripts
 import { Script } from "forge-std/Script.sol";
@@ -25,8 +25,7 @@ import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 /// @title Nested Governance Deployment Script
 contract NestedGovernance is DeploySetup {
     InitialisePowers initialisePowers;
-    Configurations helperConfig;
-    Configurations.NetworkConfig public config;
+    Configurations helperConfig; 
 
     PowersTypes.Conditions conditions;
     PowersTypes.MandateInitData[] parentConstitution;
@@ -47,17 +46,16 @@ contract NestedGovernance is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations();
-        config = helperConfig.getConfig();
+        helperConfig = new Configurations(); 
 
         // step 1: deploy Parent Powers
         vm.startBroadcast();
         powersParent = new Powers(
             "Nested Governance Parent", 
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreian4g4wbuollclyml5xyao3hvnbxxduuoyjdiucdmau3t62rj46am", 
-            config.maxCallDataLength,
-            config.maxReturnDataLength,
-            config.maxExecutionsLength
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreian4g4wbuollclyml5xyao3hvnbxxduuoyjdiucdmau3t62rj46am",
+            helperConfig.getMaxCallDataLength(block.chainid),
+            helperConfig.getMaxReturnDataLength(block.chainid),
+            helperConfig.getMaxExecutionsLength(block.chainid) 
         );
         vm.stopBroadcast();
         console2.log("Powers Parent deployed at:", address(powersParent));
@@ -68,9 +66,9 @@ contract NestedGovernance is DeploySetup {
         powersChildFactory = new PowersFactory(
             "Nested Governance Child",
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreig4aaje57wiv3rfboadft5pp2kgwzfurwgbjwleugc3ddbnjlc6um", 
-            config.maxCallDataLength,
-            config.maxReturnDataLength,
-            config.maxExecutionsLength
+            helperConfig.getMaxCallDataLength(block.chainid),
+            helperConfig.getMaxReturnDataLength(block.chainid),
+            helperConfig.getMaxExecutionsLength(block.chainid) 
         );
         vm.stopBroadcast();
         console2.log("Powers Child Factory deployed at:", address(powersChildFactory));
@@ -81,9 +79,9 @@ contract NestedGovernance is DeploySetup {
 
         vm.startBroadcast();
         treasury = address(
-            SafeProxyFactory(config.safeProxyFactory)
+            SafeProxyFactory(helperConfig.getSafeProxyFactory(block.chainid))
                 .createProxyWithNonce(
-                    config.safeL2Canonical,
+                    helperConfig.getSafeL2Canonical(block.chainid),
                     abi.encodeWithSelector(
                         Safe.setup.selector,
                         owners,
@@ -156,7 +154,7 @@ contract NestedGovernance is DeploySetup {
             0, 
             abi.encodeWithSelector( 
                 ModuleManager.enableModule.selector,
-                config.safeAllowanceModule
+                helperConfig.getSafeAllowanceModule(block.chainid) 
             ),
             0, // operation = Call
             0, // safeTxGas
@@ -207,8 +205,8 @@ contract NestedGovernance is DeploySetup {
         conditions.allowedRole = 1; // Executive
         conditions.needFulfilled = mandateCount - 1; // Need request
         conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
-            conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
-            conditions.succeedAt = 51; // >50% to pass
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.succeedAt = 51; // >50% to pass
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Set Allowance: Executive can set allowance for Child DAO.",
@@ -216,7 +214,7 @@ contract NestedGovernance is DeploySetup {
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector 
-                    config.safeAllowanceModule
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions
             })
@@ -229,10 +227,6 @@ contract NestedGovernance is DeploySetup {
 
         // Mandate: Create Child DAO
         mandateCount++;
-        conditions.allowedRole = 1; // Executive 
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
-        conditions.succeedAt = 51; // >50% to pass
-        conditions.quorum = 20; // 20% quorum for voting on Parent to create child
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create Child DAO: Executive can execute creation of Child DAO.",
@@ -277,7 +271,7 @@ contract NestedGovernance is DeploySetup {
                 nameDescription: "Add Delegate: Add new Child DAO as delegate to Allowance Module.",
                 targetMandate: initialisePowers.getInitialisedAddress("Safe_ExecTransaction_OnReturnValue"),
                 config: abi.encode(
-                    config.safeAllowanceModule, 
+                    helperConfig.getSafeAllowanceModule(block.chainid), 
                     bytes4(0xe71bdf41), // == AllowanceModule.addDelegate.selector
                     abi.encode(), 
                     inputParams, 
@@ -298,7 +292,7 @@ contract NestedGovernance is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 1; // Members
         conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51; // >50% to pass
         parentConstitution.push(
             PowersTypes.MandateInitData({
@@ -404,15 +398,18 @@ contract NestedGovernance is DeploySetup {
         // Mandate 6: Members Execute Transfer
         mandateCount++;
         conditions.allowedRole = 1; // Members
+        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.succeedAt = 51; // >50% to pass
         conditions.needFulfilled = mandateCount - 2; // Need request (4)
         conditions.needNotFulfilled = mandateCount - 1; // Need NO veto (5)
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Transfer: Members vote to execute transfer from Parent Treasury.",
                 targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Transfer"),
-                config: abi.encode(config.safeAllowanceModule, treasury), // Treasury is Parent's treasury
+                config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury), // Treasury is Parent's treasury
                 conditions: conditions
             })
         );
@@ -428,9 +425,6 @@ contract NestedGovernance is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
-        conditions.votingPeriod = minutesToBlocks(5, config.BLOCKS_PER_HOUR);
-        conditions.succeedAt = 51; // >50% to pass
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Additional Allowance: Members can request additional allowance from Parent.",

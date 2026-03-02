@@ -5,7 +5,7 @@
 /// the caller holds the role and that it is eligible for renouncement, then emits a revoke call.
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
@@ -39,7 +39,7 @@ contract RenounceRole is Mandate {
         address caller,
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

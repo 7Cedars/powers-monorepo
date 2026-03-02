@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Powers } from "../Powers.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { MandateUtilities } from "../libraries/MandateUtilities.sol";
 
 /// @title Powers Factory
@@ -19,13 +20,31 @@ interface IPowersFactory is PowersTypes {
 }
 
 contract PowersFactory is IPowersFactory, Ownable {
+    using Strings for uint256;
+
+    struct Mem { 
+        uint256 length;
+        uint256 i;
+        uint256 j;
+        uint256 k; 
+        PowersTypes.MandateInitData[] mandateInitDatas;
+        address dependency;
+        address placeholder;
+        bytes32 placeholderWord;
+        bytes32 dependencyWord;
+        bytes config;
+        bytes32 word;
+    }
+
     string public name;
     string public uri;
     MandateInitData[] public mandateInitData;
     uint256 public immutable maxCallDataLength;
     uint256 public immutable maxReturnDataLength;
     uint256 public immutable maxExecutionsLength;
-    address public latestDeployment;
+    address public latestDeployment; 
+    address[] public dependencies; 
+    
 
     /// @notice Initializes the factory with maximum limits for Powers contracts.
     /// @param _maxCallDataLength The maximum length of call data allowed in the Powers contract.
@@ -71,13 +90,37 @@ contract PowersFactory is IPowersFactory, Ownable {
         return mandateInitData[index];
     } 
 
+    /// @notice Adds a list of dependencies (other contracts) that the deployed Powers instances will rely on.
+    /// @dev Can only be called by the owner. This is useful for keeping track of external contracts that the Powers instances will interact with, such as token contracts, oracles, etc.
+    /// @param _dependency An array of addresses representing the dependencies.
+    /// @dev Note: The Factory works with a simple search-and-replace mechanism on bytes config. It searches for address(uint160(uint256(keccak256("Dependency0")))), address(uint160(uint256(keccak256("Dependency1")))), etc. in the config and replaces them with the addresses provided here. So the order of dependencies matters and needs to be consistent with how they are referenced in the mandate configurations.
+    function addDependency(address _dependency) external onlyOwner {
+        dependencies.push(_dependency);
+    }
+    
+    /// @notice Replaces a dependency at a specific index.
+    /// @dev Can only be called by the owner. This allows for updating the address of a dependency if needed (e.g., if an external contract is upgraded).
+    /// @param index The index of the dependency to replace.
+    /// @param _dependency The new address of the dependency.
+    function replaceDependency(uint256 index, address _dependency) external onlyOwner {
+        dependencies[index] = _dependency;
+    }
+
+    /// @notice Retrieves a dependency at a specific index.
+    /// @param index The index of the dependency to retrieve.
+    /// @return The address of the dependency at the specified index.
+    function getDependency(uint256 index) external view returns (address) {
+        return dependencies[index];
+    }
+
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
     function createPowers() external onlyOwner returns (address) {
         Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
 
-        powers.constitute(mandateInitData); // set the Powers address as the initial deployer and set as the admin!
+        MandateInitData[] memory configuredMandates = _configureMandates();
+        powers.constitute(configuredMandates); // set the Powers address as the initial deployer and set as the admin!
         powers.closeConstitute(address(powers)); // admin set to the address that called the factory.
         latestDeployment = address(powers);
 
@@ -90,11 +133,67 @@ contract PowersFactory is IPowersFactory, Ownable {
     function createPowers(address admin) external onlyOwner returns (address) {
         Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
 
-        powers.constitute(mandateInitData); // set the Powers address as the initial deployer and set as the admin!
+        MandateInitData[] memory configuredMandates = _configureMandates();
+        powers.constitute(configuredMandates); // set the Powers address as the initial deployer and set as the admin!
         powers.closeConstitute(admin); // admin set to the address that called the factory.
         latestDeployment = address(powers);
 
         return address(powers);
+    }
+
+    /// @notice Configures the mandates by replacing placeholders with actual dependency addresses.
+    /// @return An array of configured MandateInitData.
+    function _configureMandates() internal view returns (MandateInitData[] memory) {
+        Mem memory mem;
+
+        mem.length = mandateInitData.length;
+        MandateInitData[] memory configuredMandates = new MandateInitData[](mem.length);
+
+        // Copy from storage to memory
+        for (mem.i = 0; mem.i < mem.length; mem.i++) {
+            configuredMandates[mem.i] = mandateInitData[mem.i];
+        }
+
+        // Iterate through dependencies and replace placeholders
+        for (mem.j = 0; mem.j < dependencies.length; mem.j++) {
+            mem.dependency = dependencies[mem.j];
+            // Compute placeholder: address(uint160(uint256(keccak256("Dependency" + j))))
+            mem.placeholder = address(uint160(uint256(keccak256(abi.encodePacked("Dependency", mem.j.toString())))));
+            
+            // Convert to 32-byte words for comparison
+            mem.placeholderWord = bytes32(uint256(uint160(mem.placeholder)));
+            mem.dependencyWord = bytes32(uint256(uint160(mem.dependency)));
+
+            // Iterate through each mandate's config
+            for (mem.i = 0; mem.i < mem.length; mem.i++) {
+                mem.config = configuredMandates[mem.i].config;
+                if (mem.config.length == 0) continue;
+
+                // Create local variables for assembly usage to avoid "Stack Too Deep" and struct member access errors in Yul
+                bytes memory config = mem.config;
+                bytes32 dependencyWord = mem.dependencyWord;
+
+                // Scan config in 32-byte chunks
+                // Note: We skip the first 32 bytes which store the length of the bytes array
+                for (uint256 k = 0; k < config.length; k += 32) {
+                    // Ensure we don't read past the end (though config.length should be multiple of 32 for abi.encoded data usually)
+                    if (k + 32 > config.length) break;
+
+                    bytes32 word;
+                    assembly {
+                        word := mload(add(add(config, 32), k))
+                    }
+
+                    if (word == mem.placeholderWord) {
+                        assembly {
+                            mstore(add(add(config, 32), k), dependencyWord)
+                        }
+                    }
+                }
+            }
+        }
+
+        return configuredMandates;
     }
     
     /// @notice Returns the address of the latest deployed Powers contract.

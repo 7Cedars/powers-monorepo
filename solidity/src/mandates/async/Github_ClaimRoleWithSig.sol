@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // Base contracts
 import { IPowers } from "../../interfaces/IPowers.sol";
@@ -160,7 +160,7 @@ contract Github_ClaimRoleWithSig is Mandate, FunctionsClient {
         address caller, // The user requesting the role
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

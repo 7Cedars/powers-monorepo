@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Test, console, console2 } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
@@ -10,7 +10,7 @@ import { CulturalStewardsDAO } from "../../../script/deployOrganisations/Cultura
 import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
 import { SimpleErc20Votes } from "../../mocks/SimpleErc20Votes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol"; 
 
 interface IAllowanceModule {
     function delegates(address safe, uint48 index) external view returns (address delegate, uint48 prev, uint48 next);
@@ -119,9 +119,9 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
     Mem mem;
 
     CulturalStewardsDAO deployScript;
+    Configurations helperConfig;
     Powers primaryDAO;
-    Powers digitalSubDAO;
-    Configurations.NetworkConfig config;
+    Powers digitalSubDAO; 
 
     address treasury;
     address safeAllowanceModule;
@@ -130,6 +130,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
     address cedars = 0x328735d26e5Ada93610F0006c32abE2278c46211;
 
     function setUp() public {
+        helperConfig = new Configurations();
         vm.skip(false); // Remove this line to run the test
         // Create and select fork
         sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
@@ -141,8 +142,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         deployScript.run();
 
         // Get the deployed contracts
-        primaryDAO = deployScript.getPrimaryDAO();  
-        config = deployScript.getConfig();
+        primaryDAO = deployScript.getPrimaryDAO();   
 
         // Execute "Initial Setup"
         vm.prank(cedars);
@@ -197,7 +197,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         assertEq(primaryDAO.getRoleLabel(5), "Digital sub-DAOs", "Role 5 should be Digital sub-DAOs");
 
         // 6. Verify Safe Module
-        mem.isEnabled = Safe(payable(treasury)).isModuleEnabled(config.safeAllowanceModule);
+        mem.isEnabled = Safe(payable(treasury)).isModuleEnabled(helperConfig.getSafeAllowanceModule(block.chainid));
         assertTrue(mem.isEnabled, "Allowance Module should be enabled on Safe");
 
         // 7. Verify Mandate 1 is Revoked
@@ -207,7 +207,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         // 9. Verify Digital sub-DAO is Delegate
         mem.delegateIndex = uint48(uint160(address(digitalSubDAO)));
 
-        (mem.delegateAddr,,) = IAllowanceModule(config.safeAllowanceModule).delegates(treasury, mem.delegateIndex);
+        (mem.delegateAddr,,) = IAllowanceModule(helperConfig.getSafeAllowanceModule(block.chainid)).delegates(treasury, mem.delegateIndex);
         assertEq(mem.delegateAddr, address(digitalSubDAO), "Digital sub-DAO should be a delegate on Allowance Module");
     }
 
@@ -347,7 +347,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
 
         // Verify Status (Delegate)
         mem.delegateIndex = uint48(uint160(address(mem.physicalSubDAOAddress)));
-        (mem.delegateAddr,,) = IAllowanceModule(config.safeAllowanceModule).delegates(treasury, mem.delegateIndex);
+        (mem.delegateAddr,,) = IAllowanceModule(helperConfig.getSafeAllowanceModule(block.chainid)).delegates(treasury, mem.delegateIndex);
         assertEq(
             mem.delegateAddr, mem.physicalSubDAOAddress, "Digital sub-DAO should be a delegate on Allowance Module"
         );
@@ -376,7 +376,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
 
         // Verify Allowance Revoked
         mem.delegateIndex = uint48(uint160(address(mem.physicalSubDAOAddress)));
-        (mem.delegateAddr,,) = IAllowanceModule(config.safeAllowanceModule).delegates(treasury, mem.delegateIndex);
+        (mem.delegateAddr,,) = IAllowanceModule(helperConfig.getSafeAllowanceModule(block.chainid)).delegates(treasury, mem.delegateIndex);
         assertEq(mem.delegateAddr, address(0), "Digital sub-DAO should NOT be a delegate on Allowance Module anymore");
 
         vm.stopPrank();
@@ -451,7 +451,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.stopPrank();
 
         // Verify Allowance
-        mem.allowanceInfo = IAllowanceModule(config.safeAllowanceModule).getTokenAllowance(treasury, mem.physicalSubDAOAddress, mem.token);
+        mem.allowanceInfo = IAllowanceModule(helperConfig.getSafeAllowanceModule(block.chainid)).getTokenAllowance(treasury, mem.physicalSubDAOAddress, mem.token);
         assertEq(uint96(mem.allowanceInfo[0]), mem.amount, "Physical sub-DAO allowance should be set");
 
         // --- TEST 2: Digital sub-DAO Allowance Flow ---
@@ -485,7 +485,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.stopPrank();
 
         // Verify Allowance
-        mem.allowanceInfo = IAllowanceModule(config.safeAllowanceModule).getTokenAllowance(treasury, mem.digitalSubDAOAddr, mem.token);
+        mem.allowanceInfo = IAllowanceModule(helperConfig.getSafeAllowanceModule(block.chainid)).getTokenAllowance(treasury, mem.digitalSubDAOAddr, mem.token);
         assertEq(uint96(mem.allowanceInfo[0]), mem.amount, "Digital sub-DAO allowance should be set");
     }
 
@@ -522,7 +522,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.stopPrank();
 
         // Verify Allowance
-        mem.allowanceInfo = IAllowanceModule(config.safeAllowanceModule).getTokenAllowance(treasury, mem.digitalSubDAOAddr, mem.token);
+        mem.allowanceInfo = IAllowanceModule(helperConfig.getSafeAllowanceModule(block.chainid)).getTokenAllowance(treasury, mem.digitalSubDAOAddr, mem.token);
         assertEq(uint96(mem.allowanceInfo[0]), mem.amount, "Digital sub-DAO allowance should be set");
 
         // Fund Treasury
@@ -586,7 +586,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         assertEq(mem.recipient.balance, mem.paymentAmount, "Recipient should have received payment");
 
         // Verify Allowance Spent
-        mem.allowanceInfo = IAllowanceModule(config.safeAllowanceModule).getTokenAllowance(treasury, mem.digitalSubDAOAddr, mem.token);
+        mem.allowanceInfo = IAllowanceModule(helperConfig.getSafeAllowanceModule(block.chainid)).getTokenAllowance(treasury, mem.digitalSubDAOAddr, mem.token);
         assertEq(uint96(mem.allowanceInfo[1]), mem.paymentAmount, "Allowance spent should match payment");
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { TestSetupSafeProtocolFlow } from "../../TestSetup.t.sol";
 import { PowersTypes } from "../../../src/interfaces/PowersTypes.sol";
@@ -12,8 +12,8 @@ contract SafeProtocolFlowTest is TestSetupSafeProtocolFlow {
     function testSafeProtocolFlow() public {
         // Check skip condition from setup (Safe Allowance Module must be configured)
         console2.log("Chain Id: ", block.chainid);
-        console2.log("Safe Allowance @", config.safeAllowanceModule);
-        console2.log("Safe Allowance code length: ", address(config.safeAllowanceModule).code.length);
+        console2.log("Safe Allowance @", helperConfig.getSafeAllowanceModule(block.chainid));
+        console2.log("Safe Allowance code length: ", address(helperConfig.getSafeAllowanceModule(block.chainid)).code.length);
 
         vm.startPrank(alice);
 
@@ -39,7 +39,7 @@ contract SafeProtocolFlowTest is TestSetupSafeProtocolFlow {
         console2.log("Constituting Child Powers...");
         // Constitute Child DAO with Safe as Treasury
         (PowersTypes.MandateInitData[] memory mandateInitData1_) =
-            testConstitutions.safeProtocol_Child_IntegrationTestConstitution(safeTreasury, config.safeAllowanceModule);
+            testConstitutions.safeProtocol_Child_IntegrationTestConstitution(safeTreasury, helperConfig.getSafeAllowanceModule(block.chainid));
         daoMockChild1.constitute(mandateInitData1_);
         daoMockChild1.closeConstitute();
 

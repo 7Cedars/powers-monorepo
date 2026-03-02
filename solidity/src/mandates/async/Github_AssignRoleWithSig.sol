@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 // Base contracts
 import { Mandate } from "../../Mandate.sol";
@@ -70,7 +70,7 @@ contract Github_AssignRoleWithSig is Mandate {
         address caller, // The user requesting the role
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

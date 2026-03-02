@@ -5,7 +5,7 @@
 /// @dev Provides comprehensive coverage of all Checks functions
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Checks } from "../../src/libraries/Checks.sol";
 import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";

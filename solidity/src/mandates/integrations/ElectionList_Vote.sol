@@ -10,7 +10,7 @@
 ///
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
@@ -73,7 +73,7 @@ contract ElectionList_Vote is Mandate {
         address caller,
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public
@@ -103,7 +103,7 @@ contract ElectionList_Vote is Mandate {
         for (uint256 i = 0; i < mem.nominees.length; i++) {
             bool val;
             assembly {
-                val := mload(add(add(mandateCalldata, 32), mul(i, 32)))
+                val := calldataload(add(mandateCalldata.offset, mul(i, 32)))
             }
             mem.vote[i] = val;
         }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { console2 } from "forge-std/console2.sol";
 import { TestSetupIntegrations, TestSetupExecutive } from "../../TestSetup.t.sol";
@@ -9,7 +9,7 @@ import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor_Ex
 
 import { SafeAllowance_Transfer } from "@src/mandates/integrations/SafeAllowance_Transfer.sol";
 import { Safe_ExecTransaction } from "@src/mandates/integrations/Safe_ExecTransaction.sol"; 
-import { Soulbound1155_GatedAccess } from "@src/mandates/integrations/Soulbound1155_GatedAccess.sol";
+import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken_GatedAccess.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
@@ -206,7 +206,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
         super.setUp();
 
         // skip these tests if allowance module is not set
-        if (config.safeAllowanceModule == address(0)) {
+        if (helperConfig.getSafeAllowanceModule(block.chainid) == address(0)) {
             console2.log("Safe Allowance Module not set in config, skipping tests.");
             vm.skip(true);
         }
@@ -245,7 +245,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
     // we will try to add a delegate.
     function test_Safe_ExecTransaction_Success() public { 
         // We are trying to add a delegate (address(0x456)) to the Safe via execTransaction mandate
-        address functionTarget = config.safeAllowanceModule;
+        address functionTarget = helperConfig.getSafeAllowanceModule(block.chainid);
         bytes4 functionSelector = bytes4(0xe71bdf41); // addDelegate(address)
         bytes memory functionCalldata = abi.encode(address(0x456));
 
@@ -262,7 +262,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
 
     function test_SafeAllowance_Transfer_Success() public {
         // 1. Assign Delegate Status to Child DAO
-        address functionTarget = config.safeAllowanceModule;
+        address functionTarget = helperConfig.getSafeAllowanceModule(block.chainid);
         bytes4 functionSelector = bytes4(0xe71bdf41); // addDelegate(address)
 
         // Execute via DAO
@@ -292,7 +292,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
 }
  
 
-contract Soulbound1155_GatedAccessTest is TestSetupIntegrations {
+contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
     uint16 public mintMandateId;
     uint16 public accessMandateId;
     uint256 public targetRoleId;
@@ -308,7 +308,7 @@ contract Soulbound1155_GatedAccessTest is TestSetupIntegrations {
         targetRoleId = 9;
     }
 
-    function test_Soulbound1155_GatedAccess_Success() public {
+    function test_GovernedToken_GatedAccess_Success() public {
         vm.startPrank(alice);
 
         // 1. Mint 4 tokens (Threshold is 3, need > 3 tokens. i.e. 4)
@@ -317,7 +317,7 @@ contract Soulbound1155_GatedAccessTest is TestSetupIntegrations {
         for (uint256 i = 0; i < 4; i++) {
             // Config for mandate 7: params[0] = "address to"
             // So request calldata should be abi.encode(to).
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
 
             // Calculate ID that was minted
             // TokenID = (minter << 48) | blockNumber
@@ -342,13 +342,13 @@ contract Soulbound1155_GatedAccessTest is TestSetupIntegrations {
         assertTrue(daoMock.hasRoleSince(alice, targetRoleId) > 0);
     }
 
-    function test_Soulbound1155_GatedAccess_Revert_InsufficientTokens() public {
+    function test_GovernedToken_GatedAccess_Revert_InsufficientTokens() public {
         vm.startPrank(alice); // NB: alice mints the tokens. It is her address that is encoded in their Ids!
 
         // Mint 3 tokens (Threshold is 3, check is <= threshold, so 3 fails)
         uint256[] memory tokenIds = new uint256[](3);
         for (uint256 i = 0; i < 3; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(daoMock))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;
@@ -360,13 +360,13 @@ contract Soulbound1155_GatedAccessTest is TestSetupIntegrations {
         vm.stopPrank();
     }
 
-    function test_Soulbound1155_GatedAccess_Revert_NotOwnerOfToken() public {
+    function test_GovernedToken_GatedAccess_Revert_NotOwnerOfToken() public {
         vm.startPrank(alice);
 
         // Mint 4 tokens
         uint256[] memory tokenIds = new uint256[](4);
         for (uint256 i = 0; i < 4; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;
@@ -382,12 +382,12 @@ contract Soulbound1155_GatedAccessTest is TestSetupIntegrations {
         vm.stopPrank();
     }
 
-    function test_Soulbound1155_GatedAccess_Revert_TokenExpired() public {
+    function test_GovernedToken_GatedAccess_Revert_TokenExpired() public {
         vm.startPrank(alice);
 
         uint256[] memory tokenIds = new uint256[](4);
         for (uint256 i = 0; i < 4; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;

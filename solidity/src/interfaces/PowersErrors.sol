@@ -2,7 +2,7 @@
 
 /// @notice Errors used in the Powers protocol.
 /// @author 7Cedars
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 interface PowersErrors {
     /// @notice Emitted when an action has already been initiated.

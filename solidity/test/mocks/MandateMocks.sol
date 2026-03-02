@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../../src/Mandate.sol";
 
 /// @notice Mock mandate contract that returns empty targets for testing
 contract EmptyTargetsMandate is Mandate {
-    function handleRequest(address, address, uint16, bytes memory, uint256)
+    function handleRequest(address, address, uint16, bytes calldata, uint256)
         public
         pure
         override
@@ -21,7 +21,7 @@ contract EmptyTargetsMandate is Mandate {
 
 /// @notice Mock mandate contract that returns specific targets for testing
 contract MockTargetsMandate is Mandate {
-    function handleRequest(address, address, uint16, bytes memory, uint256)
+    function handleRequest(address, address, uint16, bytes calldata, uint256)
         public
         pure
         override

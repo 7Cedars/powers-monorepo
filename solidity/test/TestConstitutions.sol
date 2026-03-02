@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
@@ -44,8 +44,7 @@ contract TestConstitutions is Test {
     string[] descriptions;
     string[] params;
 
-    Configurations helperConfig = new Configurations();
-    Configurations.NetworkConfig config = helperConfig.getConfig();
+    Configurations helperConfig = new Configurations(); 
 
     constructor(string[] memory _mandateNames, address[] memory _mandateAddresses) {
         mandateNames = _mandateNames;
@@ -718,7 +717,11 @@ contract TestConstitutions is Test {
             PowersTypes.MandateInitData({
                 nameDescription: "Setup Safe: Create a SafeProxy and register it as treasury.",
                 targetMandate: getInitialisedAddress("Safe_Setup"),
-                config: abi.encode(config.safeProxyFactory, config.safeL2Canonical, config.safeAllowanceModule),
+                config: abi.encode(
+                    helperConfig.getSafeProxyFactory(block.chainid),
+                    helperConfig.getSafeL2Canonical(block.chainid), 
+                    helperConfig.getSafeAllowanceModule(block.chainid)
+                    ),
                 conditions: conditions
             })
         );
@@ -736,7 +739,7 @@ contract TestConstitutions is Test {
                 config: abi.encode( 
                     inputParams,
                     bytes4(0xe71bdf41), // addDelegate(address)   
-                    config.safeAllowanceModule
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions
             })
@@ -758,7 +761,7 @@ contract TestConstitutions is Test {
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
-                    config.safeAllowanceModule
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions // everythign zero == Only admin can call directly
             })
@@ -822,7 +825,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Mint soulbound token: mint a soulbound ERC1155 token and send it to an address of choice.",
-                targetMandate: getInitialisedAddress("Soulbound1155_MintEncodedToken"),
+                targetMandate: getInitialisedAddress("GovernedToken_MintEncodedToken"),
                 config: abi.encode(soulbound1155),
                 conditions: conditions
             })
@@ -834,7 +837,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Soulbound1155 Access: Get roleId through soulbound ERC1155 token.",
-                targetMandate: getInitialisedAddress("Soulbound1155_GatedAccess"),
+                targetMandate: getInitialisedAddress("GovernedToken_GatedAccess"),
                 config: abi.encode(
                     soulbound1155,
                     9, // roleId to be assigned upon holding the soulbound token.
@@ -981,7 +984,7 @@ contract TestConstitutions is Test {
                 nameDescription: "Execute Allowance Transaction: Execute a transaction from the Safe Treasury within the allowance set.",
                 targetMandate: getInitialisedAddress("SafeAllowance_Transfer"),
                 config: abi.encode(
-                    config.safeAllowanceModule,
+                    helperConfig.getSafeAllowanceModule(block.chainid), 
                     IPowers(daoMock).getTreasury() // This is the SafeProxyTreasury!
                 ),
                 conditions: conditions
@@ -1336,7 +1339,11 @@ contract TestConstitutions is Test {
             PowersTypes.MandateInitData({
                 nameDescription: "Setup Safe: Create a SafeProxy and register it as treasury.",
                 targetMandate: getInitialisedAddress("Safe_Setup"),
-                config: abi.encode(config.safeProxyFactory, config.safeL2Canonical, allowanceModule),
+                config: abi.encode(
+                    helperConfig.getSafeProxyFactory(block.chainid),
+                    helperConfig.getSafeL2Canonical(block.chainid), 
+                    allowanceModule
+                ), 
                 conditions: conditions
             })
         );

@@ -4,7 +4,7 @@
 /// mandateInitData for the new mandates is defined at cons
 /// @author 7Cedars
 
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 import { Mandate } from "../Mandate.sol";
 import { MandateUtilities } from "../libraries/MandateUtilities.sol";
@@ -30,7 +30,7 @@ contract ReformMandate_Static is Mandate {
         /*caller*/
         address powers,
         uint16 mandateId,
-        bytes memory mandateCalldata,
+        bytes calldata mandateCalldata,
         uint256 nonce
     )
         public

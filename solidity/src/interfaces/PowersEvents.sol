@@ -2,7 +2,7 @@
 
 /// @notice Events used in the Powers protocol.
 /// @author 7Cedars
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
 interface PowersEvents {
     /// @notice Emitted when protocol is initialized.

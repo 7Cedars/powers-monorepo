@@ -1,9 +1,0 @@
-- [x] Analyze changes in `CulturalStewardsDAO.s.sol` (Ideas DAO membership flow changed from minting tokens to Apply/Assess).
-- [x] Analyze `CulturalStewardsDAO.t.sol` and `test_JoinPrimeDAO`.
-- [ ] Modify `test_JoinPrimeDAO` in `solidity/test/integration/organisations/CulturalStewardsDAO.t.sol` to use the new membership flow.
-    - [ ] Create Ideas sub-DAO.
-    - [ ] Assign a Moderator in Ideas sub-DAO.
-    - [ ] User applies for membership.
-    - [ ] Moderator assigns membership (which targets Primary DAO).
-    - [ ] Verify Primary DAO membership.
-- [ ] Run tests to verify the fix (if feasible).
