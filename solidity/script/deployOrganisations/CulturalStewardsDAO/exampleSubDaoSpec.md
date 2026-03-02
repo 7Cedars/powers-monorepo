@@ -16,7 +16,7 @@
 * **NB: see notion site for**   
 * **Split Ratio:** A governance-defined percentage (e.g., 20/20/60) determining the division of funds between the Artist, Local Safe and the Primary DAO Treasury.
 
-### **2\. Assets**  
+### **2\. Assets and Tokens**  
 
 * **Payment Token:** The stablecoin accepted for payment (e.g., USDC).  
 * **Art NFTs:** the NFTs that are sold (optionally together with physical artwork). Uses the encodable ERC-1155 protocol.    

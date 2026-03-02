@@ -99,7 +99,6 @@ contract Deploy is DeploySetup {
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
-
         digitalSubDAO = new Powers(
             "Digital sub-DAO", // name
             string.concat(baseURI, "digitalSubDao.json"),
@@ -107,7 +106,9 @@ contract Deploy is DeploySetup {
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
+        vm.stopBroadcast();
 
+        vm.startBroadcast();
         console2.log("Deploying Organisation's Helper contracts...");
         actvityToken = new Soulbound1155(
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreighx6axdemwbjara3xhhfn5yaiktidgljykzx3vsrqtymicxxtgvi"
@@ -116,6 +117,7 @@ contract Deploy is DeploySetup {
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreighx6axdemwbjara3xhhfn5yaiktidgljykzx3vsrqtymicxxtgvi"
         );
         vm.stopBroadcast();
+
         console2.log("Primary DAO deployed at:", address(primaryDAO));
         console2.log("Digital sub-DAO deployed at:", address(digitalSubDAO));
         console2.log("Activity Token deployed at:", address(actvityToken));
