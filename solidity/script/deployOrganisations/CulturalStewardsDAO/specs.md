@@ -1,5 +1,7 @@
 # **The Cultural Stewardship DAO \- Specification**
 
+This is a test change. 
+
 | WARNING: Cultural Stewardship DAO is under development. The organisational specs and deployment addresses are subject to change. This document serves as an initial specification based on the ecosystem architecture. |
 | :---- |
 
@@ -11,7 +13,7 @@ The Cultural Stewardship DAO is a multi-layered ecosystem designed to foster an 
 
 It aims to teach digital literacy skills and openly **facilitate a continuous conversation around blockchain governance experiments in the cultural realm.** It exists to make DAO tools more accessible, translating complex technological processes into understandable concepts; and hopes to foster meaningful contributions by creating a circular community ecosystem that brings tangible assets to Participants.
 
-* **ONBOARDING:** To bring Participants into the ecosystem.  
+* **ONBOARDING:** To bring Participants into the ecosystem. 
 * **LEARNING:** To teach Participants about the ecosystem and how it functions.  
 * **DISCOVERING:** To allow Participants to jump across various different clusters in the ecosystem, transparently seeing what others have built within the ecosystem (as sub-DAOs).  
 * **VOTING:** To give Participants the decision inside the ecosystem, whether they vote on large-scale DAO-wide effects or small-scale local sub-DAO effects.  
