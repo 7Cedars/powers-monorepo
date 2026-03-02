@@ -23,7 +23,7 @@ import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 // organisations
 import { Powers101 } from "../script/deployOrganisations/Powers101.s.sol";
 import { ElectionListsDAO } from "../script/deployOrganisations/ElectionListsDAO.s.sol";
-import { CulturalStewardsDAO } from "../script/deployOrganisations/CulturalStewardsDAO.s.sol";
+// import { Deploy } from "../script/deployOrganisations/CulturalStewardsDAO/Deploy.s.sol";
 
 // helpers
 import { Nominees } from "@src/helpers/Nominees.sol";
@@ -616,7 +616,8 @@ abstract contract TestSetupIntegrations is BaseSetup {
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid) 
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(0) // admin
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();

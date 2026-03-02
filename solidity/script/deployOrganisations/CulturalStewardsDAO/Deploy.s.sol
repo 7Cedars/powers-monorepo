@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeploySetup } from "./DeploySetup.s.sol";
+import { DeploySetup } from "../DeploySetup.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -24,6 +24,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
 import { Soulbound1155, Soulbound1155Factory } from "@src/helpers/Soulbound1155.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { Governed721 } from "@src/helpers/Governed721.sol";
 import { Nominees } from "@src/helpers/Nominees.sol";
@@ -31,7 +32,7 @@ import { RwaMock, ComplianceRegistryMock } from "@mocks/RwaMock.sol";
 
 /// @title Cultural Stewards DAO - Deployment Script
 /// Note: all days are turned into minutes for testing purposes. These should be changed before production deployment: ctrl-f minutesToBlocks -> daysToBlocks.
-contract CulturalStewardsDAO is DeploySetup {
+contract Deploy is DeploySetup {
     InitialisePowers initialisePowers;
     Configurations helperConfig;
     PowersTypes.Conditions conditions;
@@ -46,6 +47,7 @@ contract CulturalStewardsDAO is DeploySetup {
     Powers ideasSubDAO;
     Powers physicalSubDAO;
 
+    PowersDeployer powersDeployer;
     PowersFactory ideasDaoFactory;
     PowersFactory physicalDaoFactory;
     Soulbound1155 actvityToken;
@@ -59,7 +61,7 @@ contract CulturalStewardsDAO is DeploySetup {
     address testAccount3 = 0x49fCf1DD685F6b5F88d9b0a972Dbf80Ee8846234;
     // NB: FOR TESTING PURPOSES ONLY: REMOVE BEFORE ACTUAL DEPLOYMENT!
 
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeic3vskd6i2j6z6ae32ehwnyovnov5ufyviduru33yis75x7aq723q/";
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibm2supg65xbiq3yqxelwt66qaqua4j3a6s7ukyqbpgqyhnxuuf6y/";
 
     uint256 constitutionLength;
     address[] targets;
@@ -119,6 +121,13 @@ contract CulturalStewardsDAO is DeploySetup {
         console2.log("Activity Token deployed at:", address(actvityToken));
         console2.log("Merit Badges deployed at:", address(meritBadges));
 
+        // Deploy PowersDeployer
+        vm.startBroadcast();
+        console2.log("Deploying PowersDeployer...");
+        powersDeployer = new PowersDeployer();
+        vm.stopBroadcast();
+        console2.log("PowersDeployer deployed at:", address(powersDeployer));
+
         // setup Safe treasury.
         address[] memory owners = new address[](1);
         owners[0] = address(primaryDAO);
@@ -154,7 +163,8 @@ contract CulturalStewardsDAO is DeploySetup {
             string.concat(baseURI, "physicalSubDao.json"), // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(powersDeployer) // deployer
         );
         vm.stopBroadcast();
         console2.log("Physical sub-DAO factory deployed at:", address(physicalDaoFactory));
@@ -166,7 +176,8 @@ contract CulturalStewardsDAO is DeploySetup {
             string.concat(baseURI, "ideasSubDao.json"),
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(powersDeployer) // deployer
         );
         vm.stopBroadcast();
         console2.log("Ideas sub-DAO factory deployed at:", address(ideasDaoFactory));
@@ -660,7 +671,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         // executives: assign legal rep role at physical sub-DAO. 
         inputParams = new string[](1);
-        inputParams[2] = "address ProposedLegalRep"; // the address proposed as legal
+        inputParams[0] = "address ProposedLegalRep"; // the address proposed as legal
 
         mandateCount++;
         conditions.allowedRole = 2; // = Executives. Any executive can assign the legal representative role for the Physical sub-DAO.

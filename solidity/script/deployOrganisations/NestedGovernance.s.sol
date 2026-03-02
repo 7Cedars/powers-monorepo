@@ -68,7 +68,8 @@ contract NestedGovernance is DeploySetup {
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreig4aaje57wiv3rfboadft5pp2kgwzfurwgbjwleugc3ddbnjlc6um", 
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid) 
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(0)  
         );
         vm.stopBroadcast();
         console2.log("Powers Child Factory deployed at:", address(powersChildFactory));
