@@ -45,7 +45,6 @@ contract PowersFactory is IPowersFactory, Ownable {
     address public latestDeployment; 
     address[] public dependencies; 
     
-
     /// @notice Initializes the factory with maximum limits for Powers contracts.
     /// @param _maxCallDataLength The maximum length of call data allowed in the Powers contract.
     /// @param _maxReturnDataLength The maximum length of return data allowed in the Powers contract.

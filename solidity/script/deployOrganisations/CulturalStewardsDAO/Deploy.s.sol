@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeploySetup } from "./DeploySetup.s.sol";
+import { DeploySetup } from "../DeploySetup.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -31,7 +31,7 @@ import { RwaMock, ComplianceRegistryMock } from "@mocks/RwaMock.sol";
 
 /// @title Cultural Stewards DAO - Deployment Script
 /// Note: all days are turned into minutes for testing purposes. These should be changed before production deployment: ctrl-f minutesToBlocks -> daysToBlocks.
-contract CulturalStewardsDAO is DeploySetup {
+contract Deploy is DeploySetup {
     InitialisePowers initialisePowers;
     Configurations helperConfig;
     PowersTypes.Conditions conditions;
@@ -660,7 +660,7 @@ contract CulturalStewardsDAO is DeploySetup {
 
         // executives: assign legal rep role at physical sub-DAO. 
         inputParams = new string[](1);
-        inputParams[2] = "address ProposedLegalRep"; // the address proposed as legal
+        inputParams[0] = "address ProposedLegalRep"; // the address proposed as legal
 
         mandateCount++;
         conditions.allowedRole = 2; // = Executives. Any executive can assign the legal representative role for the Physical sub-DAO.

@@ -6,7 +6,7 @@ import { Powers } from "@src/Powers.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { CulturalStewardsDAO } from "../../../script/deployOrganisations/CulturalStewardsDAO.s.sol";
+import { Deploy } from "../../../script/deployOrganisations/CulturalStewardsDAO/Deploy.s.sol";
 import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
 import { SimpleErc20Votes } from "../../mocks/SimpleErc20Votes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
@@ -118,7 +118,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
     }
     Mem mem;
 
-    CulturalStewardsDAO deployScript;
+    Deploy deployScript;
     Configurations helperConfig;
     Powers primaryDAO;
     Powers digitalSubDAO; 
@@ -138,7 +138,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.selectFork(optSepoliaFork);
 
         // Deploy the script
-        deployScript = new CulturalStewardsDAO();
+        deployScript = new Deploy();
         deployScript.run();
 
         // Get the deployed contracts
