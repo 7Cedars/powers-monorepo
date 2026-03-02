@@ -2206,7 +2206,8 @@ contract PowersFactoryTest is TestSetupPowers {
             "https://factory.dao", // uri
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
-            MAX_EXECUTIONS
+            MAX_EXECUTIONS, 
+            address(0)
             );
         factory.addMandates(mandateInitDataArray);
         vm.stopPrank();
@@ -2269,7 +2270,8 @@ contract PowersFactoryTest is TestSetupPowers {
             "ipfs://QmHash", // uri
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
-            MAX_EXECUTIONS
+            MAX_EXECUTIONS,
+            address(0)
             );
         factory.addMandates(mandateInitDataArray);
         address deployedAddress = factory.createPowers();

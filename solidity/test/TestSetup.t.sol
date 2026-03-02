@@ -616,7 +616,8 @@ abstract contract TestSetupIntegrations is BaseSetup {
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid) 
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(0) // admin
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();

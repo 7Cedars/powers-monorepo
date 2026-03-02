@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Powers } from "../Powers.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { MandateUtilities } from "../libraries/MandateUtilities.sol";
+import { PowersDeployer } from "./PowersDeployer.sol";
 
 /// @title Powers Factory
 /// @notice Factory contract to deploy configured Powers instances.
@@ -44,17 +43,22 @@ contract PowersFactory is IPowersFactory, Ownable {
     uint256 public immutable maxExecutionsLength;
     address public latestDeployment; 
     address[] public dependencies; 
+    PowersDeployer public immutable deployer;
     
     /// @notice Initializes the factory with maximum limits for Powers contracts.
+    /// @param _name The name of the DAO.
+    /// @param _uri The URI of the DAO.
     /// @param _maxCallDataLength The maximum length of call data allowed in the Powers contract.
     /// @param _maxReturnDataLength The maximum length of return data allowed in the Powers contract.
     /// @param _maxExecutionsLength The maximum number of executions allowed in a single proposal.
+    /// @param _deployer The address of the PowersDeployer contract.
     constructor(
         string memory _name,
         string memory _uri, 
         uint256 _maxCallDataLength,
         uint256 _maxReturnDataLength,
-        uint256 _maxExecutionsLength
+        uint256 _maxExecutionsLength,
+        address _deployer
     ) Ownable(msg.sender) {
         // set immutable variables. note for now data not validated. 
         name = _name;
@@ -63,6 +67,7 @@ contract PowersFactory is IPowersFactory, Ownable {
         maxCallDataLength = _maxCallDataLength;
         maxReturnDataLength = _maxReturnDataLength;
         maxExecutionsLength = _maxExecutionsLength;
+        deployer = PowersDeployer(_deployer);
     }
 
     /// @notice Adds a list of mandates to the factory's storage.
@@ -116,28 +121,40 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
     function createPowers() external onlyOwner returns (address) {
-        Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
-
         MandateInitData[] memory configuredMandates = _configureMandates();
-        powers.constitute(configuredMandates); // set the Powers address as the initial deployer and set as the admin!
-        powers.closeConstitute(address(powers)); // admin set to the address that called the factory.
-        latestDeployment = address(powers);
+        
+        address powers = deployer.deployAndConstitute(
+            name,
+            uri,
+            maxCallDataLength,
+            maxReturnDataLength,
+            maxExecutionsLength,
+            configuredMandates,
+            address(0) // Logic in deployer: address(0) -> admin = address(powers)
+        );
 
-        return address(powers);
+        latestDeployment = powers;
+        return powers;
     }
 
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
     function createPowers(address admin) external onlyOwner returns (address) {
-        Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
-
         MandateInitData[] memory configuredMandates = _configureMandates();
-        powers.constitute(configuredMandates); // set the Powers address as the initial deployer and set as the admin!
-        powers.closeConstitute(admin); // admin set to the address that called the factory.
-        latestDeployment = address(powers);
 
-        return address(powers);
+        address powers = deployer.deployAndConstitute(
+            name,
+            uri,
+            maxCallDataLength,
+            maxReturnDataLength,
+            maxExecutionsLength,
+            configuredMandates,
+            admin
+        );
+
+        latestDeployment = powers;
+        return powers;
     }
 
     /// @notice Configures the mandates by replacing placeholders with actual dependency addresses.
