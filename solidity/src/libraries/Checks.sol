@@ -21,6 +21,7 @@ library Checks {
     error Checks__ExecutionGapTooSmall();
     error Checks__ProposalNotSucceeded();
     error Checks__DeadlineNotPassed();
+    error Checks__ProposalRequired();
 
     /////////////////////////////////////////////////////////////
     //                  CHECKS                                 //
@@ -78,6 +79,11 @@ library Checks {
         if (conditions.timelock != 0) {
             ( , uint48 proposedAt, , , , , ) =
                 Powers(payable(powers)).getActionData(computeActionId(mandateId, mandateCalldata, nonce));
+            
+            if (proposedAt == 0) {
+                revert Checks__ProposalRequired();
+            }
+
             if (proposedAt + conditions.timelock > block.number) {
                 revert Checks__DeadlineNotPassed();
             }

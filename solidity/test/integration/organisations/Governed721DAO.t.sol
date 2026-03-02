@@ -4,16 +4,16 @@ pragma solidity ^0.8.26;
 import { Test, console } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
 import { Governed721 } from "@src/helpers/Governed721.sol";
-import { Governed721DAO } from "@script/deployOrganisations/Governed721DAO/Governed721DAO.s.sol";
+import { Deploy } from "@script/deployOrganisations/Governed721DAO/Deploy.s.sol";
 
 contract Governed721DAO_IntegrationTest is Test {
-    Governed721DAO deployScript;
+    Deploy deployScript;
     Powers powers;
     Governed721 governed721;
 
     function setUp() public {
         // Deploy the script
-        deployScript = new Governed721DAO();
+        deployScript = new Deploy();
         deployScript.run();
 
         // Get the deployed contracts

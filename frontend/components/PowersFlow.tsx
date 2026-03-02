@@ -369,8 +369,11 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
       })
     }
     
+    const hasVote = mandate.conditions && mandate.conditions.quorum != null && mandate.conditions.quorum > 0n;
+    const hasTimelock = mandate.conditions && mandate.conditions.timelock != null && mandate.conditions.timelock > 0n;
+
     // 3. Vote flow - show only when quorum > 0
-    if (mandate.conditions && mandate.conditions.quorum != null && mandate.conditions.quorum > 0n) {
+    if (hasVote) {
       items.push({ 
         key: 'proposalCreated', 
         label: 'Proposal Created', 
@@ -399,30 +402,39 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
           "pending",
         hasHandle: false
       })
-
-          
+    } else if (hasTimelock) {
+      // If there's a timelock but no vote, we still need a proposal
       items.push({ 
-        key: 'requested', 
-        label: 'Requested', 
-        // Show green if action has been requested (requestedAt > 0)
-        blockNumber: currentMandateAction?.requestedAt || 0n,
-        state: currentMandateAction?.requestedAt && currentMandateAction.requestedAt > 0n ? "success" : "pending",
+        key: 'proposalCreated', 
+        label: 'Proposal Created', 
+        blockNumber: currentMandateAction?.proposedAt,
+        state: currentMandateAction?.proposedAt && currentMandateAction.proposedAt > 0n ? "success" : "pending",
         hasHandle: false
       })
     }
 
     // 4. Delay - show only if timelock > 0. 
     // Note: this is now independent of quorum (can happen without a vote)
-    if (mandate.conditions && mandate.conditions.timelock != null && mandate.conditions.timelock > 0n) {
+    if (hasTimelock) {
       items.push({ 
         key: 'delay', 
         label: 'Delay Passed', 
         // For delay, we use proposedAt as the reference block (the delay is calculated from it: proposedAt + timelock)
         blockNumber: currentMandateAction?.proposedAt,
-        state: currentMandateAction?.proposedAt ? currentMandateAction?.proposedAt + mandate.conditions.timelock < BigInt(blockNumber || 0) ? "success" : "pending" : "pending",
+        state: currentMandateAction?.proposedAt && mandate.conditions?.timelock ? currentMandateAction?.proposedAt + mandate.conditions.timelock < BigInt(blockNumber || 0) ? "success" : "pending" : "pending",
         hasHandle: false
       })
     }
+
+    // 5. Requested - always show
+    items.push({ 
+      key: 'requested', 
+      label: 'Requested', 
+      // Show green if action has been requested (requestedAt > 0)
+      blockNumber: currentMandateAction?.requestedAt || 0n,
+      state: currentMandateAction?.requestedAt && currentMandateAction.requestedAt > 0n ? "success" : "pending",
+      hasHandle: false
+    })
 
     // 5. Fulfilled - always show
     items.push({ 

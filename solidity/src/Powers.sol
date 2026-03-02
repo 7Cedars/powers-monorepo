@@ -215,10 +215,7 @@ contract Powers is EIP712, IPowers, Context {
 
         actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
 
-        // check 5: does target mandate need proposal vote to pass?
-        if (quorum == 0) revert Powers__NoVoteNeeded();
-
-        // check 6: do we have a proposal with the same targetMandate and mandateCalldata?
+        // check 5: do we have an action with the same targetMandate and mandateCalldata?
         Action storage action = _actions[actionId];
         if (action.voteStart != 0) revert Powers__UnexpectedActionState();
 
@@ -229,7 +226,7 @@ contract Powers is EIP712, IPowers, Context {
         action.mandateCalldata = mandateCalldata;
         action.proposedAt = uint48(block.number);
         action.mandateId = mandateId;
-        action.voteStart = uint48(block.number); // note that the moment proposedAction is made, voting start. Delay functionality has to be implemeted at the mandate level.
+        action.voteStart = quorum > 0 ? uint48(block.number) : 0; // note that the moment proposedAction is made, voting start. Delay functionality has to be implemeted at the mandate level.
         action.voteDuration = votingPeriod;
         action.caller = _msgSender();
         action.uri = uriAction;
@@ -279,14 +276,7 @@ contract Powers is EIP712, IPowers, Context {
         if (action.requestedAt > 0 || action.fulfilledAt > 0) revert Powers__ActionAlreadyInitiated();
 
         // check 4: is proposedAction cancelled?
-        if (action.cancelledAt > 0) revert Powers__ActionCancelled();
-
-        if (action.proposedAt == 0) action.proposedAt = uint48(block.number); // note that we set the action as proposed. 
-        // We need to set a value for proposed so that timelock will work for actions that do not require a vote.   
-        action.mandateId = mandateId;
-        action.mandateCalldata = mandateCalldata;
-        action.uri = uriAction;
-        action.nonce = nonce;
+        if (action.cancelledAt > 0) revert Powers__ActionCancelled();  
 
         // check 5: do checks pass?
         Checks.check(mandateId, mandateCalldata, address(this), nonce, mandate.latestFulfillment);
@@ -297,6 +287,10 @@ contract Powers is EIP712, IPowers, Context {
         // If everything passed, set action as requested.
         action.caller = _msgSender(); // note if caller had been set during proposedAction, it will be overwritten.
         action.requestedAt = uint48(block.number);
+        action.mandateId = mandateId;
+        action.mandateCalldata = mandateCalldata;
+        action.uri = uriAction;
+        action.nonce = nonce;
 
         // execute mandate.
         (bool success) = IMandate(mandate.targetMandate).executeMandate(_msgSender(), mandateId, mandateCalldata, nonce);
