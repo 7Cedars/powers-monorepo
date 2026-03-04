@@ -12,7 +12,7 @@
       "paragraph": "",
       "youtube": "",
       "facebook": "",
-      "github": "https://github.com/7Cedars/powers/blob/develop/solidity/script/deployOrganisations/ERC721CRegistryGovernance.s.sol",
+      "github": "https://github.com/7Cedars/powers/blob/develop/solidity/script/organisations/ERC721CRegistryGovernance.s.sol",
       "forum": "",
       "documentation": "https://powers-docs.vercel.app/organisations//organisations/ERC721CRegistryGovernance"
   },

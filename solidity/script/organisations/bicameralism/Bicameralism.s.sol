@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeploySetup } from "./DeploySetup.s.sol";
+import { DeploySetup } from "../DeploySetup.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -16,9 +16,9 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
-/// @title Optimistic Execution Deployment Script
-contract OptimisticExecution is DeploySetup {
-    Configurations helperConfig; 
+/// @title Bicameralism Deployment Script
+contract Bicameralism is DeploySetup {
+    Configurations helperConfig;
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
@@ -34,17 +34,16 @@ contract OptimisticExecution is DeploySetup {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
-        helperConfig = new Configurations(); 
+        helperConfig = new Configurations();
 
-        // step 1: deploy Optimistic Execution Powers
-
+        // step 1: deploy Bicameralism Powers
         vm.startBroadcast();
         powers = new Powers(
-            "Optimistic Execution", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibzf5td4orxnfknmrz5giiifw4ltsbzciaam7izm6dok5pkm6aqqa", // uri
+            "Bicameralism", // name
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreidlcgxe2mnwghrk4o5xenybljieurrxhtio6gq5fq5u6lxduyyl6e", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -73,15 +72,15 @@ contract OptimisticExecution is DeploySetup {
         }
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifke7bfkxxs45unssm6hdr6s6464yrkwds3nw3jkn74cblf5oziea");
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegates", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjqthpltw7crvqm3omqplelatqt6yd52qgwlret7nl4jptlfjhq");  
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Funders", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiflc53da4vs2oaevcr6thdio5tlj4bqvstoubofonnz4owqbnlcde"); 
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
         conditions.allowedRole = 0; // = admin.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Initial Setup: Assign role labels (Members, Executives) and revokes itself after execution",
+                nameDescription: "Initial Setup: Assign role labels (Delegates, Funders) and revokes itself after execution",
                 targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
@@ -89,20 +88,20 @@ contract OptimisticExecution is DeploySetup {
         );
         delete conditions;
 
-        // Mandate 2: Veto Actions (StatementOfIntent)
+        // Mandate 2: Initiate action (StatementOfIntent)
         inputParams = new string[](3);
         inputParams[0] = "address[] targets";
         inputParams[1] = "uint256[] values";
         inputParams[2] = "bytes[] calldatas";
 
         mandateCount++;
-        conditions.allowedRole = 1; // = Members
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes approx
-        conditions.succeedAt = 66; // = 66% majority (high threshold)
-        conditions.quorum = 66; // = 66% quorum (high quorum)
+        conditions.allowedRole = 1; // = Delegates
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes approx (depends on block time, 300 is ~5 mins on 1s chain, 1h on 12s)
+        conditions.succeedAt = 51; // = 51% majority
+        conditions.quorum = 51; // = 33% quorum
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Veto Actions: Funders can veto actions",
+                nameDescription: "Initiate action: Delegates can initiate an action",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
@@ -110,16 +109,16 @@ contract OptimisticExecution is DeploySetup {
         );
         delete conditions;
 
-        // Mandate 3: Execute an action (OpenAction)
+        // Mandate 3: Execute action (OpenAction)
         mandateCount++;
-        conditions.allowedRole = 2; // = Executives
+        conditions.allowedRole = 2; // = Funders
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
-        conditions.needNotFulfilled = mandateCount - 1; // = Mandate 2 (Veto Actions)
+        conditions.needFulfilled = mandateCount - 1; // = Mandate 2 (Initiate action)
         conditions.quorum = 33;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Execute an action: Members propose adopting new mandates",
+                nameDescription: "Execute an action: Funders can execute an action.",
                 targetMandate: initialisePowers.getInitialisedAddress("OpenAction"),
                 config: abi.encode(), // empty config
                 conditions: conditions
@@ -145,8 +144,10 @@ contract OptimisticExecution is DeploySetup {
         delete conditions;
 
         // Mandate 5: Delegate revoke role (BespokeAction_Simple)
+        // Note: TS file says "A delegate can revoke..." but allowedRole is 2 (Funders).
+        // Transposing the value allowedRole = 2.
         mandateCount++;
-        conditions.allowedRole = 2; // = Executives
+        conditions.allowedRole = 1; // = Delegates
         conditions.needFulfilled = mandateCount - 1; // = Mandate 4 (Admin assign role)
         constitution.push(
             PowersTypes.MandateInitData({

@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeploySetup } from "./DeploySetup.s.sol";
+import { DeploySetup } from "../DeploySetup.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -16,23 +16,18 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
-// helpers
-import { Nominees } from "@src/helpers/Nominees.sol";
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
-
-/// @title Token Delegates Deployment Script
-contract TokenDelegates is DeploySetup {
+/// @title Optimistic Execution Deployment Script
+contract OptimisticExecution is DeploySetup {
     Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
     Powers powers;
-    Nominees nominees;
-    SimpleErc20Votes simpleErc20Votes;
 
     address[] targets;
     uint256[] values;
     bytes[] calldatas;
+    string[] inputParams;
     string[] dynamicParams;
 
     function run() external {
@@ -41,16 +36,15 @@ contract TokenDelegates is DeploySetup {
         initialisePowers.run();
         helperConfig = new Configurations(); 
 
-        // step 1: deploy Token Delegates Powers
+        // step 1: deploy Optimistic Execution Powers
+
         vm.startBroadcast();
-        nominees = new Nominees();
-        simpleErc20Votes = new SimpleErc20Votes();
         powers = new Powers(
-            "Token Delegates", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicpqpipzetgtcbqdeehcg33ibipvrb3pnikes6oqixa7ntzaniinm", // uri
+            "Optimistic Execution", // name
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibzf5td4orxnfknmrz5giiifw4ltsbzciaam7izm6dok5pkm6aqqa", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -60,7 +54,7 @@ contract TokenDelegates is DeploySetup {
         console2.log("Constitution created with length:");
         console2.logUint(constitutionLength);
 
-        // step 3: transfer ownership and run constitute.
+        // step 3: run constitute.
         vm.startBroadcast();
         powers.constitute(constitution);
         powers.closeConstitute();
@@ -79,15 +73,15 @@ contract TokenDelegates is DeploySetup {
         }
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Voters", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreias53gijbmn3cwu7kab6hfim7vopbr3vnx7gswhemeg7c55y3ylnq"); 
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegates", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjqthpltw7crvqm3omqplelatqt6yd52qgwlret7nl4jptlfjhq"); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifke7bfkxxs45unssm6hdr6s6464yrkwds3nw3jkn74cblf5oziea");
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
         conditions.allowedRole = 0; // = admin.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Initial Setup: Assign role labels (Delegates, Funders) and revokes itself after execution",
+                nameDescription: "Initial Setup: Assign role labels (Members, Executives) and revokes itself after execution",
                 targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
@@ -95,39 +89,45 @@ contract TokenDelegates is DeploySetup {
         );
         delete conditions;
 
-        // Mandate 2: Nominate for Delegates
+        // Mandate 2: Veto Actions (StatementOfIntent)
+        inputParams = new string[](3);
+        inputParams[0] = "address[] targets";
+        inputParams[1] = "uint256[] values";
+        inputParams[2] = "bytes[] calldatas";
+
         mandateCount++;
-        conditions.allowedRole = 1; // = Voters
+        conditions.allowedRole = 1; // = Members
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes approx
+        conditions.succeedAt = 66; // = 66% majority (high threshold)
+        conditions.quorum = 66; // = 66% quorum (high quorum)
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Nominate for Delegates: Members can nominate themselves for the Token Delegate role.",
-                targetMandate: initialisePowers.getInitialisedAddress("Nominate"),
-                config: abi.encode(address(nominees)),
+                nameDescription: "Veto Actions: Funders can veto actions",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(inputParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 3: Elect Delegates
+        // Mandate 3: Execute an action (OpenAction)
         mandateCount++;
-        conditions.allowedRole = type(uint256).max; // = Public Role
-        conditions.throttleExecution = minutesToBlocks(10, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes approx
+        conditions.allowedRole = 2; // = Executives
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.succeedAt = 51;
+        conditions.needNotFulfilled = mandateCount - 1; // = Mandate 2 (Veto Actions)
+        conditions.quorum = 33;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Elect Delegates: Run the election for delegates. In this demo, the top 3 nominees by token delegation of token VOTES_TOKEN become Delegates.",
-                targetMandate: initialisePowers.getInitialisedAddress("DelegateTokenSelect"),
-                config: abi.encode(
-                    address(simpleErc20Votes),
-                    address(nominees),
-                    2, // RoleId
-                    3 // MaxRoleHolders
-                ),
+                nameDescription: "Execute an action: Members propose adopting new mandates",
+                targetMandate: initialisePowers.getInitialisedAddress("OpenAction"),
+                config: abi.encode(), // empty config
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 4: Admin assign role
+        // Mandate 4: Admin assign role (BespokeAction_Simple)
         dynamicParams = new string[](2);
         dynamicParams[0] = "uint256 roleId";
         dynamicParams[1] = "address account";
@@ -144,9 +144,9 @@ contract TokenDelegates is DeploySetup {
         );
         delete conditions;
 
-        // Mandate 5: Delegate revoke role
+        // Mandate 5: Delegate revoke role (BespokeAction_Simple)
         mandateCount++;
-        conditions.allowedRole = 2; // = Delegates
+        conditions.allowedRole = 2; // = Executives
         conditions.needFulfilled = mandateCount - 1; // = Mandate 4 (Admin assign role)
         constitution.push(
             PowersTypes.MandateInitData({

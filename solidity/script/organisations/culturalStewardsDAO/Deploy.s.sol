@@ -2907,7 +2907,7 @@ contract Deploy is DeploySetup {
         delete conditions;
 
         // Legal Representatives: adopt peer select mandate to select conveners from the pool of nominees. 
-        initData = new PowersTypes.MandateInitData[](1);
+        PowersTypes.MandateInitData[] memory initData = new PowersTypes.MandateInitData[](1);
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 51; // = simple majority
         conditions.quorum = 80; // = 80% quorum
@@ -3031,7 +3031,7 @@ contract Deploy is DeploySetup {
         */ 
 
 
-        PowersTypes.MandateInitData[] memory initData = new PowersTypes.MandateInitData[](1);
+        initData = new PowersTypes.MandateInitData[](1);
         initData[0] = PowersTypes.MandateInitData({ 
             nameDescription: "Deploy actvityToken Merit token: This mandate sets up a sub-DAO specific actvityToken token to be used for merit badges and other internal uses. The mandate self-destructs after execution.",
             targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),

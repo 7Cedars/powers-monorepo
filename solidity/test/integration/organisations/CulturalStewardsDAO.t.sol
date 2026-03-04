@@ -6,9 +6,9 @@ import { Powers } from "@src/Powers.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { Deploy } from "../../../script/deployOrganisations/CulturalStewardsDAO/Deploy.s.sol";
+import { Deploy } from "@script/organisations/culturalStewardsDAO/Deploy.s.sol";
 import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
-import { SimpleErc20Votes } from "../../mocks/SimpleErc20Votes.sol";
+import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol"; 
 

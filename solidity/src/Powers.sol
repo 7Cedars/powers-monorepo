@@ -22,7 +22,7 @@
 /// 4 - The core protocol uses a non-weighted voting mechanism: one account has one vote. Accounts vote with their roles, not with their tokens.
 /// 5 - The core protocol is intentionally minimalistic. Any complexities (multi-chain governance, oracle based governance, timelocks, delayed execution, guardian roles, weighted votes, staking, etc.) has to be integrated through mandates.
 ///
-/// For example organisational implementations, see the script/deployOrganisations folder.
+/// For example organisational implementations, see the script/organisations folder.
 ///
 /// Note This protocol is a work in progress. A number of features are planned to be added in the future.
 /// - Gas efficiency improvements.
