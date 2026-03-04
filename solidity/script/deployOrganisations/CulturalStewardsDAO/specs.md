@@ -1,7 +1,5 @@
 # **The Cultural Stewardship DAO \- Specification**
 
-This is a test change. 
-
 | WARNING: Cultural Stewardship DAO is under development. The organisational specs and deployment addresses are subject to change. This document serves as an initial specification based on the ecosystem architecture. |
 | :---- |
 
@@ -42,6 +40,7 @@ The UX/UI includes interactive elements taken from **game theory**, such as earn
 * **Executives**: Elected leaders of the Primary DAO who execute high-level decisions and manage the treasury.
 * **Conveners**: Elected operational leaders within Sub-DAOs (Digital, Ideas, Physical) who manage day-to-day activities.
 * **Moderators**: Appointed roles within Ideas Sub-DAOs responsible for managing membership and community standards.
+* **Repository Admins**: Elected as admins of the DAO repository, managedin the Digital sub-DAO. 
 * **Legal Representatives**: Individuals assigned to Physical Sub-DAOs to handle off-chain legal responsibilities and act as a bridge between the DAO and real-world legal frameworks.
 * **Members/Attendees**: Participants with voting rights in their respective DAOs.
 
