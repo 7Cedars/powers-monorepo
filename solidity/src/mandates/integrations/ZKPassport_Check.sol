@@ -15,24 +15,24 @@ contract ZKPassport_Check is Mandate {
     //////////////////////////////////////////////////////////////
     //                       STRUCTS                            //
     //////////////////////////////////////////////////////////////
-    struct ConfigParams {
+    struct Mem {
+        bool verified;
         string[] inputParams;
         address registry;
         uint256 staleAfterSeconds;
         bytes4 functionSelector;
         bytes input;
-          
-    }
-
-    struct Mem {
-        bool verified;
-        ConfigParams config;
         address accountToCheck;
     }
          
     //////////////////////////////////////////////////////////////
     //                   MANDATE EXECUTION                      //
     //////////////////////////////////////////////////////////////
+    constructor() {
+        bytes memory configParams =
+            abi.encode("string[] inputParams", "address registry", "uint256 staleAfterSeconds", "bytes4 functionSelector", "bytes input");
+        emit Mandate__Deployed(configParams);
+    }
 
     function initializeMandate(
         uint16 index,
@@ -42,8 +42,13 @@ contract ZKPassport_Check is Mandate {
     ) public override {
         (string[] memory params_ , , , , ) = abi.decode(config, (string[], address, uint256, bytes4, bytes));
         
-        bytes memory newParams_ = abi.encode(params_, "address AccountToCheck"); 
-        super.initializeMandate(index, nameDescription, newParams_, config);
+        // bytes memory newParams_ = abi.encode(params_, "address AccountToCheck"); 
+        string[] memory newParams_ = new string[](params_.length + 1);
+        for (uint256 i; i < params_.length; i++) {
+            newParams_[i] = params_[i];
+        }
+        newParams_[params_.length] = "address AccountToCheck"; 
+        super.initializeMandate(index, nameDescription, abi.encode(newParams_), config);
     }
     
     /// @inheritdoc Mandate
@@ -61,20 +66,21 @@ contract ZKPassport_Check is Mandate {
     {
         // Decode config
         Mem memory mem;
-        (mem.config, mem.accountToCheck) = abi.decode(getConfig(powers, mandateId), (ConfigParams, address)); 
-        if (mem.config.registry == address(0)) revert ("ZKPassport: Invalid registry address");
+        ( , mem.registry, mem.staleAfterSeconds, mem.functionSelector, mem.input) = abi.decode(getConfig(powers, mandateId), (string[], address, uint256, bytes4, bytes));
+        mem.accountToCheck = abi.decode(mandateCalldata, (address)); 
+        if (mem.registry == address(0)) revert ("ZKPassport: Invalid registry address");
         if (mem.accountToCheck == address(0)) revert ("ZKPassport: Invalid zero address for account to check");
         if (mem.accountToCheck != caller) revert ("ZKPassport: Caller is not the account to check");
 
-        ZKPassport_PowersRegistry registry = ZKPassport_PowersRegistry(mem.config.registry);
+        ZKPassport_PowersRegistry registry = ZKPassport_PowersRegistry(mem.registry);
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);  
 
         // Verify proof using the registry
         mem.verified = registry.verifyProof(
             caller,
-            mem.config.staleAfterSeconds,
-            mem.config.functionSelector,
-            mem.config.input
+            mem.staleAfterSeconds,
+            mem.functionSelector,
+            mem.input
         );
 
         if (!mem.verified) {
@@ -83,14 +89,6 @@ contract ZKPassport_Check is Mandate {
         
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);       
         return (actionId, targets, values, calldatas);
-    }
-
-    /// @notice Returns the input parameters for the mandate.
-    /// @dev This function is used by the frontend to display the input parameters.
-    function getInputParams(address powers, uint16 mandateId) public view override returns (bytes memory inputParams) {
-        Mem memory mem;
-        mem.config = abi.decode(getConfig(powers, mandateId), (ConfigParams));
-        return abi.encode(mem.config.inputParams);
     }
 }
 

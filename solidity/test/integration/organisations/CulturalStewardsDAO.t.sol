@@ -426,17 +426,17 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         mem.nonce++;
 
         // 1. Physical sub-DAO requests allowance
-        // Must be called by Role 3 (Physical sub-DAOs). Since physicalSubDAOAddress holds Role 3 (via assignRole above):
         vm.startPrank(mem.physicalSubDAOAddress);
         console.log("Physical sub-DAO requesting allowance...");
-
-        // Note: StatementOfIntent mandates often don't have voting periods/quorum set in script (defaults to 0),
-        // effectively making them executable immediately by the proposer if allowed role matches.
         primaryDAO.request(mem.requestPhysicalAllowanceId, mem.allowanceParams, mem.nonce, "");
         vm.stopPrank();
 
-        // 2. Executives grant allowance
-        vm.startPrank(cedars); // correct role Id?
+        // 2. Veto by Physical sub-DAOs check (we will just wait out the timelock/voting period of the grant without vetoing)
+        // Note: The grant mandate requires the veto NOT to be fulfilled.
+
+        // 3. Executives grant allowance
+        // Role 2 (Executives) is held by cedars.
+        vm.startPrank(cedars);
         console.log("Executives granting allowance to Physical sub-DAO...");
 
         mem.actionId = primaryDAO.propose(mem.grantPhysicalAllowanceId, mem.allowanceParams, mem.nonce, "");
@@ -457,21 +457,20 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         // --- TEST 2: Digital sub-DAO Allowance Flow ---
 
         // Verify Digital sub-DAO has delegate status (Checked in InitialSetup)
-        mem.digitalSubDAOAddr = address(digitalSubDAO); // Usually this should be the address
+        mem.digitalSubDAOAddr = address(digitalSubDAO);
 
         // Params for allowance
         mem.allowanceParams = abi.encode(mem.digitalSubDAOAddr, mem.token, mem.amount, mem.resetTime, mem.resetBase);
         mem.nonce++;
 
         // 1. Digital sub-DAO requests allowance
-        // Role 5 is required. In script, Role 5 is assigned to 'Cedars' address
         vm.startPrank(mem.digitalSubDAOAddr);
         console.log("Digital sub-DAO requesting allowance...");
         primaryDAO.request(mem.requestDigitalAllowanceId, mem.allowanceParams, mem.nonce, "");
         vm.stopPrank();
 
         // 2. Executives grant allowance
-        vm.startPrank(mem.admin);
+        vm.startPrank(cedars); // cedars has role 2
         console.log("Executives granting allowance to Digital sub-DAO...");
 
         mem.actionId = primaryDAO.propose(mem.grantDigitalAllowanceId, mem.allowanceParams, mem.nonce, "");

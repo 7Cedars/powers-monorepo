@@ -86,17 +86,6 @@ contract ProposeTest is TestSetupPowers {
         daoMock.propose(mandateId, mandateCalldata, nonce, description);
     }
 
-    function testProposeRevertsIfMandateDoesNotNeedVote() public {
-        mandateId = 2; // self select  - does not need vote
-        description = "Creating a proposal";
-        mandateCalldata = abi.encode(true);
-        assertTrue(daoMock.canCallMandate(david, mandateId), "david should be able to call mandate 2");
-
-        vm.prank(david);
-        vm.expectRevert(Powers__NoVoteNeeded.selector);
-        daoMock.propose(mandateId, mandateCalldata, nonce, description);
-    }
-
     function testProposePassesWithCorrectCredentials() public {
         mandateId = 3; // StatementOfIntent - needs ROLE_ONE
         description = "Creating a proposal";

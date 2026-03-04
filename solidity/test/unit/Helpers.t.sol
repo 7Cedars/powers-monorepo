@@ -2207,7 +2207,7 @@ contract PowersFactoryTest is TestSetupPowers {
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
             MAX_EXECUTIONS, 
-            address(0)
+            address(powersDeployer)
             );
         factory.addMandates(mandateInitDataArray);
         vm.stopPrank();
@@ -2271,8 +2271,7 @@ contract PowersFactoryTest is TestSetupPowers {
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
             MAX_EXECUTIONS,
-            address(0)
-            );
+            address(powersDeployer));
         factory.addMandates(mandateInitDataArray);
         address deployedAddress = factory.createPowers();
         vm.stopPrank();

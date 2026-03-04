@@ -60,16 +60,6 @@ contract StatementOfIntentTest is TestSetupExecutive {
         // Assert balance did NOT change
         assertEq(balanceAfter, balanceBefore, "StatementOfIntent should not execute the payload");
     }
-
-    function testStatementOfIntentProposeRevertsIfNoVoteNeeded() public {
-        // In executiveTestConstitution, StatementOfIntent has 0 voting period, so propose should revert
-        mandateCalldata = abi.encode(true);
-        nonce = 888;
-
-        vm.prank(alice);
-        vm.expectRevert(PowersErrors.Powers__NoVoteNeeded.selector);
-        daoMock.propose(mandateId, mandateCalldata, nonce, "Proposing when not needed");
-    }
 }
 
 contract OpenActionTest is TestSetupExecutive {

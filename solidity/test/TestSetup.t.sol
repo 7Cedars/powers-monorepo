@@ -40,6 +40,7 @@ import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // protocol and mocks
@@ -50,6 +51,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     PowersMock daoMockChild2;
     ElectionListsDAO openElections;
     InitialisePowers initialisePowers;
+    PowersDeployer powersDeployer;
     string[] mandateNames;
     address[] mandateAddresses;
     TestConstitutions testConstitutions; 
@@ -441,6 +443,8 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         daoMock = new PowersMock();
         daoMockChild1 = new PowersMock();
         daoMockChild2 = new PowersMock();
+        powersDeployer = new PowersDeployer();
+        powersDeployer.transferOwnership(address(daoMock));  
 
         // deploy external contracts
         initialisePowers = new InitialisePowers();
@@ -467,8 +471,7 @@ abstract contract TestSetupPowers is BaseSetup {
         // initiate constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
             testConstitutions.powersTestConstitution(address(daoMock));
-
-            
+ 
         console2.log("Chain Id:");
         console2.logUint(block.chainid);
         console2.log("Mandate Init Data Length:");

@@ -3,6 +3,8 @@
 | WARNING: Cultural Stewardship DAO is under development. The organisational specs and deployment addresses are subject to change. This document serves as an initial specification based on the ecosystem architecture. |
 | :---- |
 
+[comment]: <> (Important: This is how you leave a comment, it will not be included in the rendered text.) 
+
 ## **Context**
 
 ### ***The Vision & Mission:***
@@ -22,8 +24,10 @@ It aims to teach digital literacy skills and openly **facilitate a continuous co
 ***What this could look like, in a practical sense:***   
 **www.enterhere.io is a website / dApp** for individuals, organisations, or brands with distinct communities (interested in cultural topics such as arts, intangible heritage, media, music, visuals, books, magazines, publications, and exhibitions) who are open to involve their communities in the decentralised decision making process. It is a home base, a platform and a portal; it is the layered over front-end control panel for the back-end blockchain-integrated layers beneath. It is the main point of contact to begin exploring the ecosystem of The Cultural Stewardship DAO. 
 
+[comment]: <> (Did not implement these elements. Checkpoints and user portals are easy to implement, but assessment on when to pass through is a tricky thing) 
 The UX/UI includes interactive elements taken from **game theory**, such as earning internal currency, progressing by going to checkpoints (digital and physical), working in teams, exploring other user-created portals built on its open-source infrastructure. Other elements are taken from **social media**; making it a platform to have your own customisable profile, discuss in forums and threads, vote on polls, and visually view alignment metrics such as ‘upvotes’ ‘likes’ ‘reposts’ \-- even having a ‘timeline’ to scroll through to get a birds eye view of events happening within the ecosystem. This is all to foster active participation; Participants who are active by minting participation tokens as they interact within the ecosystem, and those who vote on mandates are the ones who become the cultural stewards.
 
+[comment]: <> (This has been implemented :) 
 **Through the digital component, which is remotely accessible, the physical components are manifested.** The ecosystem has the functionality for physical spaces to spawn from ideas. This functionality is central to the DAO, and acts as a very important tangible concept space; it has blank walls that can be morphed to fit the current circumstances, where Participants can walk into and interact with the digital layers via the physical components in the space (such as a QR code where you scan and are airdropped a POAP token from the ecosystem,which may grant special access or permissions to participate further in the project). It is symbolic of the work that is being done in the digital cultural realm which has real-world impact. It’s an optional **IRL ‘checkpoint’** that works in tandem with the digital checkpoints.
 
 ## **Definitions**
@@ -48,7 +52,8 @@ The ecosystem utilises a combination of standard and soulbound tokens to manage 
     * **Minting**: Controlled by the Primary DAO, but minting rights can be mandated to Sub-DAOs (e.g., Physical Sub-DAOs minting POAPs).
     * **Utility**: Used for gating access to roles (e.g., becoming a Member or Attendee).
 * **Merit Badges (`Soulbound1155`)**: Specific tokens used within Physical Sub-DAOs to recognise and reward contributions.
-
+* **Real World Assets (Cultural Artifcatcs - Art works) (`Governed721`)**: An externally governed token that can be used to link an NFT through its metadata to an real world art work, and manages distribution of income at the point of Sale. It does not use the ERC-3643 RWA Tokenization standard at the moment, but this can be integrated at a later date. 
+ 
 ## **Structure**
 
 ***The Architecture of Primary & Sub-DAOs:***  
@@ -132,7 +137,7 @@ The Primary DAO can take the following actions:
 
 Members have the right to initiate new Ideas Sub-DAOs, while each idea has to be ok-ed by elected executives.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Initiate Ideas Sub-DAO creation | StatementOfIntent.sol | "string name, string uri" | none | Initiates creation proposal. Vote, normal threshold. |
 | Executives | Execute Ideas Sub-DAO creation | BespokeActionSimple.sol | (same as above) | Creates Ideas Sub-DAO | Vote \+ proposal exists (No allowance assigned) |
@@ -144,7 +149,7 @@ Members have the right to initiate new Ideas Sub-DAOs, while each idea has to be
 
 Ideas-DAOs can initiate the creation of a Physical-DAO. The Primary DAO will be assigned as admin of the new Physical DAO and hold veto power of adopting of new mandates. 
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Ideas Sub-DAO | Initiate Physical Sub-DAO Creation | StatementOfIntent.sol | "string name, string uri" | none | Any Ideas Sub-DAO can propose. |
 | Executives | Deploy Merit Badge Contract | BespokeAction_Advanced.sol | (same as above) | Deploys Soulbound1155 | Any executive can execute. |
@@ -160,7 +165,7 @@ Ideas-DAOs can initiate the creation of a Physical-DAO. The Primary DAO will be 
 
 Process for vetting and assigning legal representatives to Physical Sub-DAOs.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Public | ZKP Check Age | ZKPassport_Check.sol | "address PhysicalSubDAO, uint16 assignRepMandateId" | Verifies age > 18 | Anyone can execute. |
 | Public | ZKP Check Country | ZKPassport_Check.sol | (same as above) | Verifies country is GBR | Must have passed age check. |
@@ -171,7 +176,7 @@ Process for vetting and assigning legal representatives to Physical Sub-DAOs.
 
 Physical and Digital sub-DAOs can request allowances for their address in the Safe treasury. Physical Sub-DAOs can veto allowances for both.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Physical Sub-DAO | Veto allowance | StatementOfIntent.sol | "address Sub-DAO, address Token, uint96 allowanceAmount, uint16 resetTimeMin, uint32 resetBaseMin" | none | Vote, high threshold. |
 | Physical Sub-DAO | Request additional allowance | StatementOfIntent.sol | (same as above) | none | Initiates allowance proposal. |
@@ -183,7 +188,7 @@ Physical and Digital sub-DAOs can request allowances for their address in the Sa
 
 The Primary DAO can block mandate reforms at Digital and Physical DAOs. It does this by calling the mandateId of the veto law at the target Powers implementation.  
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Executives | Veto Call to sub-Dao | PowersAction_Flexible.sol | "Address PowersTarget, uint16 MandateIdTarget,  uint16[] MandateId, uint256[] roleIds" | Calls to sub-DAOs | Executioners can veto calls to Powers instances in other sub-DAOs. |
 
@@ -191,7 +196,7 @@ The Primary DAO can block mandate reforms at Digital and Physical DAOs. It does 
 
 The URI contains all the metadata of the organisation, including designations of sub- and primary-DAOs needed in the front end. In other words, to show new sub-DAOs in the frontend, the URI needs to be updated separately.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto update URI | StatementOfIntent.sol | "string new URI" | none | Vote. |
 | Executives | Update URI | BespokeAction_Simple.sol | (same as above) | setUri call | Ideas Sub-DAOs did not veto, timelock. |
@@ -200,7 +205,7 @@ The URI contains all the metadata of the organisation, including designations of
 
 Physical Sub-DAOs can mint NFTs (POAPs) via the Primary DAO.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Physical Sub-DAO | Mint token Physical sub-DAO | GovernedToken_MintEncodedToken.sol | "address to" | Mint function ERC 1155 | None. |
 
@@ -208,7 +213,7 @@ Physical Sub-DAOs can mint NFTs (POAPs) via the Primary DAO.
 
 It is very likely that someone will, by accident, transfer tokens to the address of the DAO instead of its treasury. This is a major issue, because the DAO has no way of transferring this tokens out. As a backup, there is a mandate that lets DAOs transfer tokens (of which they have an allowance) back to the treasury. 
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Executive | Transfer tokens to treasury | Safe_RecoverTokens.sol | "address treasury, address allowanceModule" | Goes through tokens of which the DAO has an allowance, and if the DAO has any, transfers them to the treasury | None, absolutely anyone can call this mandate and pay for the check & transfer. |
 
@@ -220,7 +225,7 @@ It is very likely that someone will, by accident, transfer tokens to the address
 
 This is a two step process to gain membership to the Primary DAO. First an Ideas Sub-DAO forwards a request, then the public user claims membership by proving ownership of required tokens (POAPs/Activity Tokens).
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Ideas Sub-DAO | Request Membership Step 1 | StatementOfIntent.sol | "uint256[] TokenIds" | Forwards request | Ideas Sub-DAO vote. |
 | Public | Request Membership Step 2 | GovernedToken_GatedAccess.sol | (same as above) | Checks ownership of tokens and Assigns Role | Previous step must be executed. Any public address can request. |
@@ -229,7 +234,7 @@ This is a two step process to gain membership to the Primary DAO. First an Ideas
 
 Members can veto revocation, Executives can execute revocation.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto Revoke Membership | StatementOfIntent.sol | "address MemberAddress" | None | Vote. |
 | Executives | Revoke Membership | BespokeAction_Advanced.sol | (same as above) | Revokes role | Vote. Timelock. No veto. |
@@ -238,7 +243,7 @@ Members can veto revocation, Executives can execute revocation.
 
 This is an electoral flow for assigning executives. First an election is created, it includes a start and end block of the election. Before the election starts, members can nominate themselves. After the start block passes, the electoral vote can be called: it creates a bespoke mandate that contains a list of candidates on which accounts can vote. After the end block passes a tally is taken, old executive roles revoked and new ones assigned. Through a final mandate the electoral vote mandate can be cleaned up.   
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Member | Create election | BespokeActionSimple.sol | "string Title, uint48 StartBlock, uint48 EndBlock" | Creates election helper | Throttled. |
 | Member | Open voting for Executive election | ElectionList_CreateVoteMandate.sol | (same as above) | Creates vote mandate | Previous executed. |
@@ -256,7 +261,7 @@ This is an electoral flow for assigning executives. First an election is created
 
 This process allows the Primary DAO to upgrade its governance by adopting new mandates. It initiates a proposal that must pass a member veto and receive approval from Sub-DAOs before being executed by Executives.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Executives | Initiate mandate adoption | StatementOfIntent.sol | "address[] mandates, uint256[] roleids" | None | None. Any Executive can initiate call for mandate reform. |
 | Members | Veto Adoption | StatementOfIntent.sol | (same as above) | None | Vote, high threshold + quorum |
@@ -280,8 +285,8 @@ Manages code repositories, commits, and digital representation of the organisati
 
 The Digital Sub-DAO owns the github repository that includes: 
 
-* The code base for online UI interfaces for all (Sub-)DAOs that make up the organisation.   
-* The code base for physical UI digital experiences used by physical Sub-DAOs. 
+* The code base for online UI interfaces for all (Sub-)DAOs that make up the organisation. These are managed in a single repository.  
+* This includes the code base for physical UI digital experiences used by physical Sub-DAOs. 
 
 ### ***Actions*** 
 
@@ -294,7 +299,7 @@ The Digital sub-DAO can take the following actions:
 * It can update its own URI.   
 * It can transfer tokens accidentally sent to its address to the Safe Treasury.  
 * It can assign a membership role to public accounts if they made successful commits to the repository.    
-* It can elect Conveners from among DAO members.
+* It can elect Repository Admins from among sub-DAO members.
 * It can adopt new mandates (and as a consequence also revoke old ones) \- but only if no veto was cast from the Primary DAO. 
 
 ### ***Roles***
@@ -303,7 +308,7 @@ The Digital sub-DAO can take the following actions:
 | :---- | :---- | :---- |
 | 0 | Admin | Revoked at setup |
 | 1 | Members | Proof of Activity \- role by git commit |
-| 2 | Conveners | Elected every N-months from among Members. |
+| 2 | Repository Admins | Elected every N-months from among Members. |
 | 6 | Primary DAO | Assigned at creation. Can only be single address. |
 | … | Public | Everyone. |
 
@@ -315,20 +320,20 @@ The Digital sub-DAO can take the following actions:
 
 The Digital Sub-DAO can request additional allowances from the Primary DAO Safe Treasury.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto request allowance | StatementOfIntent.sol | "address Sub-DAO, address Token, uint96 allowanceAmount, uint16 resetTimeMin, uint32 resetBaseMin" | none | Vote. |
-| Conveners | Request allowance | PowersAction_Simple.sol | (same as above) | Calls Primary DAO | Vote, high threshold. Proposal must exist, no veto. |
+| Repository Admins | Request allowance | PowersAction_Simple.sol | (same as above) | Calls Primary DAO | Vote, high threshold. Proposal must exist, no veto. |
 
 #### Payment of receipts
 
 Meant for expenses that have already been made. Payment after completion.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Public | Submit receipt | StatementOfIntent.sol | "address Token, uint256 Amount, address PayableTo" | None | None. Anyone (also non-members) can submit a receipt. |
-| Conveners | Ok-receipt | StatementOfIntent.sol | (Same as above) | None | None. Any convener can ok a receipt. |
-| Conveners | Approve Payment of Receipt | SafeAllowance_Transfer.sol | (Same as above) | Call to safe allowance module: transfer | Vote, ok-receipt executed. |
+| Repository Admins | Ok-receipt | StatementOfIntent.sol | (Same as above) | None | None. Any Repository Admin can ok a receipt. |
+| Repository Admins | Approve Payment of Receipt | SafeAllowance_Transfer.sol | (Same as above) | Call to safe allowance module: transfer | Vote, ok-receipt executed. |
 
 #### 
 
@@ -336,20 +341,20 @@ Meant for expenses that have already been made. Payment after completion.
 
 Meant for expenses that will be made in future. Payment before completion.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Submit a project for Funding | StatementOfIntent.sol | (Same as above) | None | Vote. Low threshold and quorum. |
-| Conveners | Approve funding of project | SafeAllowance_Transfer.sol | (Same as above) | Call to safe allowance module: transfer | Vote, project should have been submitted. |
+| Repository Admins | Approve funding of project | SafeAllowance_Transfer.sol | (Same as above) | Call to safe allowance module: transfer | Vote, project should have been submitted. |
 
 #### 
 
 #### Update uri
 
-Allows the Conveners to update the DAO's metadata URI, ensuring that the organization's public profile (links, description) remains current.
+Allows the Repository Admins to update the DAO's metadata URI, ensuring that the organization's public profile (links, description) remains current.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| Conveners | Update URI | BespokeAction_OnOwnPowers.sol | "string new URI" | setUri call | Vote, high threshold and quorum. |
+| Repository Admins | Update URI | BespokeAction_OnOwnPowers.sol | "string new URI" | setUri call | Vote, high threshold and quorum. |
 
 #### 
 
@@ -357,9 +362,9 @@ Allows the Conveners to update the DAO's metadata URI, ensuring that the organiz
 
 A recovery mechanism ensuring that any assets accidentally sent to the Sub-DAO's address (instead of the Treasury) can be recovered and moved to the central Safe Treasury.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| Conveners | Transfer tokens to treasury | Safe\_RecoverTokens.sol | None | Goes through whitelisted tokens, and if DAO has any, transfers them to the treasury | None, any convener can call this mandate and pay for the transfer. |
+| Repository Admins | Transfer tokens to treasury | Safe\_RecoverTokens.sol | None | Goes through whitelisted tokens, and if DAO has any, transfers them to the treasury | None, any Repository Admin can call this mandate and pay for the transfer. |
 
 ### 
 
@@ -369,25 +374,25 @@ A recovery mechanism ensuring that any assets accidentally sent to the Sub-DAO's
 
 Membership in the Digital Sub-DAO is meritocratic, based on verified code contributions. Contributors can claim their role by proving ownership of their GitHub commits.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Public | Apply for member role | Github\_ClaimRoleWithSig.sol | Branch, paths, roleIds, signature | None | None \- anyone can call. |
 | Public | Claim Member role | Github\_AssignRoleWithSig.sol | None | Assigns role. | Previous mandate needs to have passed. |
 
 #### Revoke Membership
 
-Conveners can revoke membership, subject to Member veto.
+Repository Admins can revoke membership, subject to Member veto.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto Revoke Membership | StatementOfIntent.sol | "address MemberAddress" | None | Vote. |
-| Conveners | Revoke Membership | BespokeAction_OnOwnPowers_Advanced.sol | (same as above) | Revokes role | Vote. Timelock. No veto. |
+| Repository Admins | Revoke Membership | BespokeAction_OnOwnPowers_Advanced.sol | (same as above) | Revokes role | Vote. Timelock. No veto. |
 
-#### Elect Conveners
+#### Elect Repository Admins
 
-A democratic process where Members elect leadership (Conveners) to manage the Sub-DAO's operations.
+A democratic process where Members elect leadership (Repository Admins) to manage the Sub-DAO's operations. Repository Admins are automatically assigned admin rights to the Cultural Stewards DAO repo. If an account loses the Repository Admin role, their admin rights will be automatically revoked. 
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Member | Create election | BespokeActionSimple.sol | "string Title, uint48 StartBlock, uint48 EndBlock" | Creates election helper | Throttled. |
 | Member | Nominate | BespokeActionSimple.sol | (bool, nominateMe) | Nomination logged at Nominees.sol helper contract | None, any member can nominate |
@@ -401,9 +406,9 @@ A democratic process where Members elect leadership (Conveners) to manage the Su
 
 #### Vote of No Confidence
 
-A fail-safe mechanism allowing Members to revoke the power of all current Conveners if they fail to perform their duties, immediately triggering a new election.
+A fail-safe mechanism allowing Members to revoke the power of all current Repository Admins if they fail to perform their duties, immediately triggering a new election.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Member | Vote of No Confidence | RevokeAccountsRoleId.sol | "string Title, uint48 StartBlock, uint48 EndBlock" | Revokes all Executive roles | High threshold, high quorum. |
 | Member | Create election | BespokeActionSimple.sol | (same as above) | Creates election helper | Previous mandate executed. |
@@ -420,13 +425,13 @@ A fail-safe mechanism allowing Members to revoke the power of all current Conven
 
 #### Adopt mandate
 
-Members can initiate mandate adoption, Primary DAO can veto, and Conveners execute.
+Members can initiate mandate adoption, Primary DAO can veto, and Repository Admins execute.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Initiate Adopting Mandates | StatementOfIntent.sol | "address[] mandates, uint256[] roleIds" | None | Vote, high threshold \+ quorum |
 | Primary DAO | Veto Adopting Mandates | StatementOfIntent.sol | (same as above) | None | Proposal must exist. |
-| Conveners | Adopt new Mandates | Mandates_Adopt.sol | (same as above) | mandate is adopted. | Vote, high threshold  \+ quorum. No veto |
+| Repository Admins | Adopt new Mandates | Mandates_Adopt.sol | (same as above) | mandate is adopted. | Vote, high threshold  \+ quorum. No veto |
 
 ## 
 
@@ -434,7 +439,7 @@ Members can initiate mandate adoption, Primary DAO can veto, and Conveners execu
 
 ### ***Mission***
 
-Manages concepts, ideas and discussions around ecosystem initiatives.
+Manages concepts, ideas and discussions around ecosystem initiatives. Because role designations define access to the Ideas sub-DAO forum, granting and revoking roles defines who is given a voice in the sub-DAO. It also defines who has the power to initiate the creation of a physical sub-DAO.   
 
 ### ***Assets*** 
 
@@ -448,8 +453,8 @@ Intangible assets in relation to cultural initiatives:
 
 The Ideas sub-DAO can take the following actions:
 
-* Initiate the creation of Physical Sub-DAOs.   
-* Update its own URI.   
+* Initiate the creation of Physical Sub-DAOs.
+* Update its own URI.
 * Transfer tokens accidentally sent to its address to the Safe Treasury.  
 * Moderators can assess and assign membership to applicants.  
 * Moderators can revoke membership.
@@ -463,9 +468,9 @@ The Ideas sub-DAO can take the following actions:
 | Role Id | Role name | Selection criteria |
 | :---- | :---- | :---- |
 | 0 | Admin | Revoked at setup |
-| 1 | Members (NOT assigned at initialisation)  | Assigned by Moderators after application. |
-| 2 | Conveners (NOT assigned at initialisation)  | Elected every N-months from among Members. |
-| 3 | Moderators (NOT assigned at initialisation) | Assigned by Conveners. |
+| 1 | Members | Assigned by Moderators after application. |
+| 2 | Conveners | Elected every N-months from among Members. |
+| 3 | Moderators  | Assigned by Conveners. |
 | 6 | Primary DAO | Assigned at setup. |
 | … | Public | Everyone. |
 
@@ -475,9 +480,9 @@ The Ideas sub-DAO can take the following actions:
 
 #### Request new Physical Sub-DAO
 
-Gives the Ideas Sub-DAO the power to incubate new initiatives. Members can initiate the request, Moderators can veto it, and Conveners can request the creation at the Primary DAO.
+Gives the Ideas Sub-DAO the power to incubate new physical 'pop-up' initiatives. Members can initiate the request, Moderators can veto it, and Conveners can request the creation at the Primary DAO.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Initiate request for new Physical sub-DAO | StatementOfIntent.sol | "address Admin" | None | Vote, simple majority. |
 | Moderators | Veto request for new Physical sub-DAO | StatementOfIntent.sol | (same as above) | None | Vote. |
@@ -487,9 +492,9 @@ Gives the Ideas Sub-DAO the power to incubate new initiatives. Members can initi
 
 #### Update uri
 
-Allows Conveners to update the DAO's metadata.
+Allows Conveners to update the DAO's metadata URI.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Conveners | Update URI | BespokeAction.sol | "string new URI" | setUri call | Vote, high threshold and quorum. |
 
@@ -499,7 +504,7 @@ Allows Conveners to update the DAO's metadata.
 
 Recovers assets sent to the DAO address to the central Treasury.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Conveners | Transfer tokens to treasury | Safe\_RecoverTokens.sol | None | Goes through whitelisted tokens, and if DAO has any, transfers them to the treasury | None, any convener can call this mandate and pay for the transfer. |
 
@@ -511,7 +516,7 @@ Recovers assets sent to the DAO address to the central Treasury.
 
 Membership is assigned by Moderators following an application by a public participant.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Public | Apply for Membership | StatementOfIntent.sol | "address ApplicantAddress, string ApplicationURI" | None | Throttled. |
 | Moderators | Assess and Assign Membership | BespokeAction_OnOwnPowers_Advanced.sol | (same as above) | Assigns role | Proposal must exist. |
@@ -520,7 +525,7 @@ Membership is assigned by Moderators following an application by a public partic
 
 Moderators can revoke membership following bad behaviour, subject to a Member veto.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto Revoke Membership | StatementOfIntent.sol | "address MemberAddress" | None | Vote. |
 | Moderators | Revoke Membership | BespokeAction_OnOwnPowers_Advanced.sol | (same as above) | Revokes role | Vote. Timelock. No veto. |
@@ -529,7 +534,7 @@ Moderators can revoke membership following bad behaviour, subject to a Member ve
 
 Members can apply for membership of the Primary DAO, which Moderators can then forward to the Primary DAO.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Apply for Membership of Primary DAO | StatementOfIntent.sol | "uint256[] TokenIds" | None | None. |
 | Moderators | Request Membership of Primary DAO | PowersAction_Simple.sol | (same as above) | Calls Primary DAO | Vote. Proposal must exist. |
@@ -538,7 +543,7 @@ Members can apply for membership of the Primary DAO, which Moderators can then f
 
 Conveners can assign and revoke Moderator roles, subject to Member veto.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto Assign Moderator Role | StatementOfIntent.sol | "address Account" | None | Vote. |
 | Conveners | Assign Moderator Role | BespokeAction_OnOwnPowers_Advanced.sol | (same as above) | Assigns role | Vote. No veto. |
@@ -547,9 +552,9 @@ Conveners can assign and revoke Moderator roles, subject to Member veto.
 
 #### Elect Conveners
 
-Standard election flow for choosing Sub-DAO leadership.
+Election flow similar to electing Repository Admins at the Digital sub-DAO for electing Conveners.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Member | Create election | BespokeActionSimple.sol | "string Title, uint48 StartBlock, uint48 EndBlock" | Creates election helper | Throttled. |
 | Member | Nominate | BespokeActionSimple.sol | (bool, nominateMe) | Nomination logged at Nominees.sol helper contract | None, any member can nominate |
@@ -563,9 +568,9 @@ Standard election flow for choosing Sub-DAO leadership.
 
 #### Vote of No Confidence
 
-A fail-safe mechanism allowing Members to revoke the power of all current Conveners if they fail to perform their duties, immediately triggering a new election.
+A fail-safe mechanism allowing Members to revoke the power of all current Conveners if they fail to perform their duties, immediately triggering a new election. Same as at the Digital sub-DAO. 
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Member | Vote of No Confidence | RevokeAccountsRoleId.sol | "string Title, uint48 StartBlock, uint48 EndBlock" | Revokes all Executive roles | High threshold, high quorum. |
 | Member | Create election | BespokeActionSimple.sol | (same as above) | Creates election helper | Previous mandate executed. |
@@ -582,7 +587,7 @@ A fail-safe mechanism allowing Members to revoke the power of all current Conven
 
 Note: no veto from outside parties. Ideas Sub-DAOs can create their own mandates and roles. Because they do not control any funds, they can be very freewheeling.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto Adoption | StatementOfIntent.sol | "address[] mandates, uint256[] roleIds" | None | Vote, high threshold \+ quorum |
 | Conveners | Adopt Mandates | Mandates_Adopt.sol | (same as above) | mandate is adopted. | Vote, high threshold \+ quorum. |
@@ -593,14 +598,14 @@ Note: no veto from outside parties. Ideas Sub-DAOs can create their own mandates
 
 ### ***Mission***
 
-Manages physical manifestations (e.g., access to spaces, rent, legal logs). Physical sub-DAOs are initiated by Ideas sub-DAOs but not linked to a specific one.
+Manages physical pop-up events. This involves sale of physical artifacts (such as art works), managing access to physical spaces, compliance to local jurisdictions, etc. Physical sub-DAOs are initiated by Ideas sub-DAOs.
 
 ### ***Assets*** 
 
-The Physical Sub-DAO can own any kind of Real World Asset:  
+The Physical Sub-DAO manages any kind of Real World Asset in relation to the event:  
 
 * (Rented, bought) Physical space.   
-* Keys to this space.   
+* Access to this space.   
 * Any type of physical items to be used in conferences, meetings, exhibitions, etc.   
 * Cars, bicycle, public transport cards, wheelchairs, on-ramps, or any other physical item needed for mobility and accessibility.
 * **Merit Tokens:** A locally deployed Soulbound1155 token contract used for rewarding contributions.
@@ -609,15 +614,20 @@ The Physical Sub-DAO can own any kind of Real World Asset:
 
 The Physical sub-DAO can take the following actions:
 
-* Legal Representatives can adopt/revoke executive mandates (pausing mechanism).
-* Conveners can sell NFT artwork.
-* Conveners can submit and approve payment of receipts.
-* Conveners can mint POAPs (via Primary DAO).
+* Conveners can sell NFT artwork. (Artists can do so as well independently from the Physical sub-DAO). 
+* Conveners can submit and approve payment of receipts. This includes payments for work done by conveners. 
+* Conveners can mint POAPs (via Primary DAO). In actual events this will be replaced with the use of QR codes + external protocol. 
 * Attendees can vote to mint 'Merit' NFTs to other attendees.
+[comment]: <> (Note the following three governance flows. What do you think of this as type of tokenomics?) 
+* Attendees can vote on artists to elect them to a 'winner' role. (TBI)  
+* Attendees can vote on a convener to elect them to a 'winner' role. (TBI)
+* Following the end of the event, accounts that have been elected to a winner role, can claim Merit NFTs (TBI)  
+[comment]: <> (Until here.) 
 * Public can redeem 'Merit' NFTs for rewards.
+* Legal Representatives can adopt/revoke executive mandates (pausing mechanism).
 * Update its own URI.   
 * Transfer tokens accidentally sent to its address to the Safe Treasury.  
-* Select Conveners (Nominate, Revoke, Peer Select).
+* Select Conveners (Through a Peer Select mechanism, assigned by legal reps).
 * Adopt new mandates (and as a consequence also revoke old ones) \- but only if no veto was cast from the Primary DAO. 
 
 ### ***Roles***
@@ -631,18 +641,7 @@ The Physical sub-DAO can take the following actions:
 | 6 | Primary DAO | Assigned at setup. |
 | … | Public | Everyone. |
 
-### 
-
-### ***Initial Setup Mandates***
-
-#### Legal Reps Adopt & Revoke
-
-Legal Representatives have the power to adopt or revoke the set of executive mandates, effectively acting as a pause/unpause mechanism for the DAO's operations.
-
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
-| :---- | :---- | :---- | :---- | :---- | :---- |
-| Legal Rep | Adopt Executive Mandates | Mandates_Adopt_Prepackaged.sol | None | Adopts mandates | Vote. |
-| Legal Rep | Revoke Executive Mandates | Mandates_Revoke_Prepackaged.sol | None | Revokes mandates | Vote. |
+###  
 
 ### ***Executive Mandates***
 
@@ -650,7 +649,7 @@ Legal Representatives have the power to adopt or revoke the set of executive man
 
 Conveners can force sell NFT artworks, distributing payment according to splits set by the Governed721 contract.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Conveners | Sell NFT artwork | BespokeAction_Simple.sol | "address oldOwner, address newOwner, uint256 TokenId, bytes Data" | Transfers NFT | Vote. |
 
@@ -658,7 +657,7 @@ Conveners can force sell NFT artworks, distributing payment according to splits 
 
 Meant for expenses that have already been made. Payment after completion.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Conveners | Submit & Approve payment of receipt | SafeAllowance_Transfer.sol | "address Token, uint256 Amount, address PayableTo" | Call to safe allowance module: transfer | Vote. |
 
@@ -666,15 +665,15 @@ Meant for expenses that have already been made. Payment after completion.
 
 Enables Conveners to issue Proof of Attendance (POAP) tokens via the Primary DAO.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Convener | Mint POAP | PowersAction_Simple.sol | "address To" | Calls Primary DAO to mint | Vote. |
 
-#### Merit NFTs
+#### Merit NFTs for Attendees
 
 System for recognizing contributions. Conveners propose, Attendees vote to mint.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Conveners | Propose minting 'Merit' NFTs | StatementOfIntent.sol | "address Attendee" | None | Vote. |
 | Attendees | Vote on 'Merit' NFT proposals | BespokeAction_Advanced.sol | (same as above) | Mints Merit Token | Vote. |
@@ -683,7 +682,7 @@ System for recognizing contributions. Conveners propose, Attendees vote to mint.
 
 Holders of Merit NFTs can redeem them for rewards.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Public | Redeem 'Merit' NFTs | GovernedToken_BurnToAccess.sol | "address PayableTo" | Burns token | None. |
 | Public | Claim payment | SafeAllowance_PresetTransfer.sol | (same as above) | Transfers reward | Previous executed. |
@@ -692,7 +691,7 @@ Holders of Merit NFTs can redeem them for rewards.
 
 Allows the Conveners to update the DAO's metadata URI.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Conveners | Update URI | BespokeAction_OnOwnPowers.sol | "string new URI" | setUri call | Vote, high threshold and quorum. |
 
@@ -700,7 +699,7 @@ Allows the Conveners to update the DAO's metadata URI.
 
 Recovers assets sent to the DAO address.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Conveners | Transfer tokens to treasury | Safe_RecoverTokens.sol | "address treasury, address allowanceModule" | Goes through whitelisted tokens, and if DAO has any, transfers them to the treasury | None, any convener can call this mandate. |
 
@@ -708,11 +707,11 @@ Recovers assets sent to the DAO address.
 
 ### ***Electoral Mandates***
 
-#### Assign membership (Attendee)
+#### Claim membership (Attendee)
 
 Grants governance rights to individuals who have attended physical events (hold tokens).
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Public | Request Membership | GovernedToken_GatedAccess.sol | None | Assigns role | The caller needs to own 1 token minted by the DAO in last 15 days. |
 
@@ -720,7 +719,7 @@ Grants governance rights to individuals who have attended physical events (hold 
 
 Process for selecting conveners involving ZKP checks and peer selection.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Public | ZKP Check Age | ZKPassport_Check.sol | "bool Nominate" | Verifies age > 18 | Anyone can execute. |
 | Public | Nominate for selection | Nominate.sol | (same as above) | Logs nomination | Previous executed. |
@@ -731,7 +730,7 @@ Process for selecting conveners involving ZKP checks and peer selection.
 
 Primary DAO assigns Legal Representatives.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Primary DAO | Assign Legal Representatives | BespokeAction_OnOwnPowers_Advanced.sol | "address Representative" | Assigns Role | Vote. |
 
@@ -743,11 +742,21 @@ Primary DAO assigns Legal Representatives.
 
 Attendees can initiate, Primary DAO can veto, Conveners adopt.
 
-| Role | Name & Description | Base contract | User Input | Executable Output | Conditions |
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Attendees | Initiate Adopting Mandates | StatementOfIntent.sol | "address[] mandates, uint256[] roleIds" | None | Vote, high threshold \+ quorum |
 | Primary DAO | Veto Adopting Mandates | StatementOfIntent.sol | (same as above) | None | Proposal must exist. |
 | Conveners | Adopt new Mandates | Mandates_Adopt.sol | (same as above) | mandate is adopted. | Vote, high threshold  \+ quorum. No veto |
+
+#### Legal Reps Adopt & Revoke
+
+Legal Representatives have the power to adopt or revoke the set of executive mandates, effectively acting as a pause/unpause mechanism for the DAO's operations.
+
+| Role | Name | Base contract | User Input | Executable Output | Conditions |
+| :---- | :---- | :---- | :---- | :---- | :---- |
+| Legal Rep | Adopt Executive Mandates | Mandates_Adopt_Prepackaged.sol | None | Adopts mandates | Vote. |
+| Legal Rep | Revoke Executive Mandates | Mandates_Revoke_Prepackaged.sol | None | Revokes mandates | Vote. |
+
 
 ## 
 

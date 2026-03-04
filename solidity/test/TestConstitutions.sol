@@ -338,9 +338,8 @@ contract TestConstitutions is Test {
                 nameDescription: "PeerSelect: A mandate to select roles by peer votes from nominees.",
                 targetMandate: getInitialisedAddress("PeerSelect"), // PeerSelect (electoral mandate)
                 config: abi.encode(
-                    2, // max role holders
+                    2, // numberToSelect (seats available)
                     4, // roleId to be assigned
-                    1, // max votes per voter
                     nominees // Nominees contract
                 ),
                 conditions: conditions

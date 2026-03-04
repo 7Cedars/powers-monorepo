@@ -63,7 +63,7 @@ contract Deploy is DeploySetup {
 
     string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibm2supg65xbiq3yqxelwt66qaqua4j3a6s7ukyqbpgqyhnxuuf6y/";
 
-    uint256 constitutionLength;
+    uint256 constitutionLength; 
     address[] targets;
     uint256[] values;
     bytes4[] functionSelectors;
@@ -72,7 +72,7 @@ contract Deploy is DeploySetup {
     string[] dynamicParams;
     uint16 mandateCount;
     address treasury;
-    uint256 constant PACKAGE_SIZE = 15; // number of mandates per packaged mandate.
+    uint256 constant PACKAGE_SIZE = 5; // number of mandates per packaged mandate.
     uint16 requestAllowanceDigitalDAOId; // mandate id for request allowance on digital subDAO.
     uint16 requestAllowancePhysicalDAOId; // mandate id for request allowance on ideas subDAO.
     uint16 requestMembershipPrimaryDaoId; // mandate id for requesting membership in the primary DAO (i.e. getting the Members role).
@@ -1424,7 +1424,7 @@ contract Deploy is DeploySetup {
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", string.concat(baseURI, "admin.json"));  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", string.concat(baseURI, "public.json")); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", string.concat(baseURI, "members.json"));
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Conveners", string.concat(baseURI, "conveners.json")); 
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Repository Admins", string.concat(baseURI, "conveners.json"));  // £todo: update metadata 
         calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 6, "Primary DAO", string.concat(baseURI, "primaryDao_role.json")); 
         calldatas[5] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
@@ -1469,16 +1469,16 @@ contract Deploy is DeploySetup {
         );
         delete conditions;
 
-        // Conveners: Request allowance from Primary DAO
+        // Repository admins: Request allowance from Primary DAO
         mandateCount++;
-        conditions.allowedRole = 2; // Conveners 
+        conditions.allowedRole = 2; // Repository admins 
         conditions.needNotFulfilled = mandateCount - 1;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Request allowance: Conveners can request an allowance from the Primary DAO Safe Treasury.",
+                nameDescription: "Request allowance: Repository admins can request an allowance from the Primary DAO Safe Treasury.",
                 targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
                 config: abi.encode(
                     address(primaryDAO), // target contract
@@ -1510,7 +1510,7 @@ contract Deploy is DeploySetup {
         );
         delete conditions;
 
-        // Conveners: OK Receipt (Avoid Spam)
+        // Repository admins: OK Receipt (Avoid Spam)
         mandateCount++;
         conditions.allowedRole = 2; // Any convener can ok a receipt.
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
@@ -1524,9 +1524,9 @@ contract Deploy is DeploySetup {
         );
         delete conditions;
 
-        // Conveners: Approve Payment of Receipt
+        // Repository admins: Approve Payment of Receipt
         mandateCount++;
-        conditions.allowedRole = 2; // Conveners
+        conditions.allowedRole = 2; // Repository admins
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 67;
         conditions.quorum = 50;
@@ -1563,9 +1563,9 @@ contract Deploy is DeploySetup {
         );
         delete conditions;
 
-        // Conveners: Approve Funding of Project
+        // Repository admins: Approve Funding of Project
         mandateCount++;
-        conditions.allowedRole = 2; // Conveners
+        conditions.allowedRole = 2; // Repository admins
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 67;
         conditions.quorum = 50;
@@ -1584,9 +1584,9 @@ contract Deploy is DeploySetup {
         inputParams = new string[](1);
         inputParams[0] = "string newUri";
 
-        // Conveners: Update URI
+        // Repository admins: Update URI
         mandateCount++;
-        conditions.allowedRole = 2; // = Conveners
+        conditions.allowedRole = 2; // = Repository admins
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
@@ -1605,7 +1605,7 @@ contract Deploy is DeploySetup {
 
         // TRANSFER TOKENS INTO TREASURY //
         mandateCount++;
-        conditions.allowedRole = 2; // = Conveners. Any convener can call this mandate.
+        conditions.allowedRole = 2; // = Repository admins. Any convener can call this mandate.
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Transfer tokens to treasury: Any tokens accidently sent to the DAO can be recovered by sending them to the treasury",
@@ -1714,7 +1714,7 @@ contract Deploy is DeploySetup {
         delete conditions;
 
 
-        // ELECT CONVENERS //
+        // ELECT Repository admins //
         inputParams = new string[](3);
         inputParams[0] = "string Title";
         inputParams[1] = "uint48 StartBlock";
@@ -1767,7 +1767,7 @@ contract Deploy is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
-                    2, // RoleId for Conveners
+                    2, // RoleId for Repository admins
                     3 // Max role holders
                 ),
                 conditions: conditions
@@ -1797,7 +1797,7 @@ contract Deploy is DeploySetup {
         delete conditions;
 
         // VOTE OF NO CONFIDENCE // 
-        // very similar to elect conveners, but no throttle, higher threshold and ALL executives get role revoked the moment the first mandate passes.
+        // very similar to elect Repository admins, but no throttle, higher threshold and ALL executives get role revoked the moment the first mandate passes.
         inputParams = new string[](3);
         inputParams[0] = "string Title";
         inputParams[1] = "uint48 StartBlock";
@@ -1869,7 +1869,7 @@ contract Deploy is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
                 config: abi.encode(
                     initialisePowers.getInitialisedAddress("ElectionList"),
-                    2, // RoleId for Conveners
+                    2, // RoleId for Repository admins
                     5 // Max role holders
                 ),
                 conditions: conditions
@@ -1900,7 +1900,7 @@ contract Deploy is DeploySetup {
 
         // Members: Nominate for Executive election
         mandateCount++;
-        conditions.allowedRole = 1; // = Members (should be Conveners according to MD, but code says Members)
+        conditions.allowedRole = 1; // = Members (should be Repository admins according to MD, but code says Members)
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for election: any member can nominate for an election.",
@@ -1916,7 +1916,7 @@ contract Deploy is DeploySetup {
 
         // Members revoke nomination for Executive election.
         mandateCount++;
-        conditions.allowedRole = 1; // = Members (should be Conveners according to MD, but code says Members) 
+        conditions.allowedRole = 1; // = Members (should be Repository admins according to MD, but code says Members) 
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: any member can revoke their nomination for an election.",
@@ -1970,9 +1970,9 @@ contract Deploy is DeploySetup {
         );
         delete conditions;
 
-        // // Conveners: Adopt Mandates
+        // // Repository admins: Adopt Mandates
         mandateCount++;
-        conditions.allowedRole = 2; // Conveners
+        conditions.allowedRole = 2; // Repository admins
         conditions.needFulfilled = mandateCount - 2;
         conditions.needNotFulfilled = mandateCount - 1;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
@@ -1980,7 +1980,7 @@ contract Deploy is DeploySetup {
         conditions.quorum = 80;
         digitalConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Adopt new Mandates: Conveners can adopt new mandates into the organization",
+                nameDescription: "Adopt new Mandates: Repository admins can adopt new mandates into the organization",
                 targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
                 config: abi.encode(),
                 conditions: conditions
@@ -2622,49 +2622,6 @@ contract Deploy is DeploySetup {
         );
         delete conditions;
 
-        // LEGAL REPS ADOPT & REVOKE EXECUTIVE MANDATES (Effectively giving power to pause functioning of the sub-DAO). 
-        // Mandates to be adopted / revoked: (£todo: for now this is a placeholder, need to decide which Mandates to place here!).  
-        PowersTypes.MandateInitData[] memory initData = new PowersTypes.MandateInitData[](1);
-        initData[0] = PowersTypes.MandateInitData({ 
-            nameDescription: "Deploy actvityToken Merit token: This mandate sets up a sub-DAO specific actvityToken token to be used for merit badges and other internal uses. The mandate self-destructs after execution.",
-            targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
-            config: abi.encode(targets, values, calldatas),
-            conditions: conditions
-        }); 
-
-        // Legal Reps: Adopt Executive Mandates
-        mandateCount++; 
-        conditions.allowedRole = 3; // This is a legal representative mandate. Only legal reps can call it.
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes to vote
-        conditions.succeedAt = 66; // 66% majority needed to pass the mandate
-        conditions.quorum = 80; // 80% quorum needed to pass the mandate
-        physicalConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Adopt Executive Mandates: The Legal Representatives adopt executive mandates, enabling the physical DAO to function.",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt_Prepackaged"),
-                config: abi.encode(initData), // The mandates that will be adopted. 
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // Legal Reps: Revoke Executive Mandates
-        mandateCount++;
-        conditions.allowedRole = 3; // This is a legal representative mandate. Only legal reps
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes to vote
-        conditions.succeedAt = 66; // 66% majority needed to pass the mandate
-        conditions.quorum = 80; // 80% quorum needed to pass the mandate
-        conditions.needFulfilled = mandateCount - 1; // need the previous mandate to have been fulfilled for this revoke mandate to be valid.
-        physicalConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Revoke Executive Mandates: The Legal Representatives can revoke executive mandates, effectively pausing the physical DAO.",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Revoke_Prepackaged"),
-                config: abi.encode(), // The mandates that will be revoked. 
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
         //////////////////////////////////////////////////////////////////////
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
@@ -3057,6 +3014,59 @@ contract Deploy is DeploySetup {
                 nameDescription: "Adopt new Mandates: Conveners can adopt new mandates into the organization",
                 targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
                 config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // LEGAL REPS ADOPT & REVOKE EXECUTIVE MANDATES (Effectively giving power to pause functioning of the sub-DAO). 
+        // Mandates to be adopted / revoked: (£todo: for now this is a placeholder, need to decide which Mandates to place here!).  
+        /** 
+        The following mandates: 
+        - Sell NFT artwork
+        - Submit & approve payment of receipt
+        - Mint POAP for attendees
+        - Vote on 'Merit' NFT proposals 
+        - Update URI
+        */ 
+
+
+        PowersTypes.MandateInitData[] memory initData = new PowersTypes.MandateInitData[](1);
+        initData[0] = PowersTypes.MandateInitData({ 
+            nameDescription: "Deploy actvityToken Merit token: This mandate sets up a sub-DAO specific actvityToken token to be used for merit badges and other internal uses. The mandate self-destructs after execution.",
+            targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+            config: abi.encode(targets, values, calldatas),
+            conditions: conditions
+        }); 
+
+        // Legal Reps: Adopt Executive Mandates
+        mandateCount++; 
+        conditions.allowedRole = 3; // This is a legal representative mandate. Only legal reps can call it.
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes to vote
+        conditions.succeedAt = 66; // 66% majority needed to pass the mandate
+        conditions.quorum = 80; // 80% quorum needed to pass the mandate
+        physicalConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Adopt Executive Mandates: The Legal Representatives adopt executive mandates, enabling the physical DAO to function.",
+                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt_Prepackaged"),
+                config: abi.encode(initData), // The mandates that will be adopted. 
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Legal Reps: Revoke Executive Mandates
+        mandateCount++;
+        conditions.allowedRole = 3; // This is a legal representative mandate. Only legal reps
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes to vote
+        conditions.succeedAt = 66; // 66% majority needed to pass the mandate
+        conditions.quorum = 80; // 80% quorum needed to pass the mandate
+        conditions.needFulfilled = mandateCount - 1; // need the previous mandate to have been fulfilled for this revoke mandate to be valid.
+        physicalConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Revoke Executive Mandates: The Legal Representatives can revoke executive mandates, effectively pausing the physical DAO.",
+                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Revoke_Prepackaged"),
+                config: abi.encode(), // The mandates that will be revoked. 
                 conditions: conditions
             })
         );

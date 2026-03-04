@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { PowersDeployer } from "./PowersDeployer.sol";
+import { IPowersDeployer } from "./PowersDeployer.sol";
 
 /// @title Powers Factory
 /// @notice Factory contract to deploy configured Powers instances.
@@ -43,7 +43,7 @@ contract PowersFactory is IPowersFactory, Ownable {
     uint256 public immutable maxExecutionsLength;
     address public latestDeployment; 
     address[] public dependencies; 
-    PowersDeployer public immutable deployer;
+    IPowersDeployer public immutable deployer;
     
     /// @notice Initializes the factory with maximum limits for Powers contracts.
     /// @param _name The name of the DAO.
@@ -67,7 +67,7 @@ contract PowersFactory is IPowersFactory, Ownable {
         maxCallDataLength = _maxCallDataLength;
         maxReturnDataLength = _maxReturnDataLength;
         maxExecutionsLength = _maxExecutionsLength;
-        deployer = PowersDeployer(_deployer);
+        deployer = IPowersDeployer(_deployer);
     }
 
     /// @notice Adds a list of mandates to the factory's storage.
