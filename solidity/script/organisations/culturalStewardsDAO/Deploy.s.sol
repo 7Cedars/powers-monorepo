@@ -61,7 +61,7 @@ contract Deploy is DeploySetup {
     address testAccount3 = 0x49fCf1DD685F6b5F88d9b0a972Dbf80Ee8846234;
     // NB: FOR TESTING PURPOSES ONLY: REMOVE BEFORE ACTUAL DEPLOYMENT!
 
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibm2supg65xbiq3yqxelwt66qaqua4j3a6s7ukyqbpgqyhnxuuf6y/";
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifpvurtqfawksmflqgm342fdsvmmtme2pjzzlvdr7vippeygfy3au/";
 
     uint256 constitutionLength; 
     address[] targets;
@@ -314,8 +314,8 @@ contract Deploy is DeploySetup {
 
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", string.concat(baseURI, "admin.json"));  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", string.concat(baseURI, "public.json")); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", string.concat(baseURI, "members.json"));
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", string.concat(baseURI, "executives.json"));
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", string.concat(baseURI, "member.json"));
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", string.concat(baseURI, "executive.json"));
         calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Physical sub-DAOs", string.concat(baseURI, "physicalSubDao_role.json"));
         calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Ideas sub-DAOs", string.concat(baseURI, "ideasSubDao_role.json"));
         calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Digital sub-DAOs", string.concat(baseURI, "digitalSubDao_role.json"));
@@ -503,7 +503,6 @@ contract Deploy is DeploySetup {
         );
         delete conditions;
         requestNewPhysicalDaoId = mandateCount; // needed for call from ideas sub-DAO
-
 
         // Executive: deploy a soulbound1155 instance by calling the factory
         // using bespokeAction_advance to be able to keep the admin field as input.  
@@ -2729,7 +2728,7 @@ contract Deploy is DeploySetup {
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode(
                     createPlaceholderAddress("Dependency0"), // the actvityToken contract where 'Merit' NFTs are minted
-                    Soulbound1155.mint.selector, // function selector to call
+                    bytes4(keccak256("mint(address,uint256)")), // Soulbound1155.mint.selector, // function selector to call
                     abi.encode(), // params before (role id 1 = Attendees) // the static params
                     inputParams, // the dynamic params (== address to)
                     abi.encode(block.number, address(0)) // We simply mint the id of the block number of the mint, the address input is that of artist, here not used.  

@@ -23,6 +23,8 @@ import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { IZKPassport_PowersRegistry, ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassport.sol";
 import { DisclosedData, ProofVerificationParams, BoundData, ProofVerificationData, FaceMatchMode, OS, ServiceConfig } from "@zkpassport/circuits/src/Types.sol";
+import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 /// @notice Unit tests for helper contracts
 //////////////////////////////////////////////////////////////
@@ -2230,7 +2232,7 @@ contract PowersFactoryTest is TestSetupPowers {
         assertEq(factory.getLatestDeployment(), deployedAddress);
         assertTrue(deployedAddress != address(0));
 
-        Powers deployedPowers = Powers(deployedAddress);
+        Powers deployedPowers = Powers(payable(deployedAddress));
         assertEq(deployedPowers.name(), nameDescription);
         assertEq(deployedPowers.uri(), uri);
 
@@ -2276,7 +2278,7 @@ contract PowersFactoryTest is TestSetupPowers {
         address deployedAddress = factory.createPowers();
         vm.stopPrank();
 
-        Powers deployedPowers = Powers(deployedAddress);
+        Powers deployedPowers = Powers(payable(deployedAddress));
         assertEq(deployedPowers.name(), nameDescription);
 
         // Another Powers should be admin. Not factory or daoMock.
@@ -2306,7 +2308,7 @@ contract Soulbound1155Test is TestSetupPowers {
 
     function testMint() public {
         vm.prank(address(daoMock));
-        sbToken.mint(alice, 123_456, address(0));
+        sbToken.mint(alice, 123_456);
 
         uint48 blockNum = uint48(block.number);
         uint256 expectedTokenId = 123_456;
@@ -2317,12 +2319,12 @@ contract Soulbound1155Test is TestSetupPowers {
     function testMintRevertsWhenNotOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        sbToken.mint(alice, 123_456, address(0));
+        sbToken.mint(alice, 123_456);
     }
 
     function testTransferReverts() public {
         vm.prank(address(daoMock));
-        sbToken.mint(alice, 123_456, address(0));
+        sbToken.mint(alice, 123_456);
 
         uint48 blockNum = uint48(block.number);
         uint256 tokenId = 123_456;
@@ -2835,4 +2837,248 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
 
     // HEre build function to submit proof to registry -- and see what happens.  
    
+}
+
+//////////////////////////////////////////////////////////////
+//               GOVERNED 721 TESTS                         //
+//////////////////////////////////////////////////////////////
+contract Governed721Test is TestSetupPowers {
+    Governed721 governed721;
+    SimpleErc20Votes paymentToken;
+
+    event TransferId(uint256 indexed transferId);
+
+    function setUp() public override {
+        super.setUp();
+        vm.prank(address(daoMock));
+        governed721 = new Governed721();
+        
+        vm.prank(address(daoMock));
+        paymentToken = new SimpleErc20Votes();
+    }
+
+    function testConstructor() public view {
+        assertEq(governed721.name(), "Governed721");
+        assertEq(governed721.symbol(), "G721");
+        assertEq(governed721.owner(), address(daoMock));
+        assertEq(governed721.DENOMINATOR(), 100);
+    }
+
+    function testSetPaymentId() public {
+        uint16 mandateId = 5;
+        vm.prank(address(daoMock));
+        governed721.setPaymentId(mandateId);
+        assertEq(governed721.paymentMandateId(), mandateId);
+    }
+
+    function testSetPaymentIdRevertsWhenNotOwner() public {
+        vm.expectRevert();
+        vm.prank(alice);
+        governed721.setPaymentId(5);
+    }
+
+    function testSetSplit() public {
+        vm.startPrank(address(daoMock));
+        governed721.setSplit(IGoverned721.Role.Artist, 10);
+        governed721.setSplit(IGoverned721.Role.Intermediary, 5);
+        vm.stopPrank();
+
+        assertEq(governed721.getSplit(IGoverned721.Role.Artist), 10);
+        assertEq(governed721.getSplit(IGoverned721.Role.Intermediary), 5);
+        // OldOwner gets the remainder: 100 - 15 = 85
+        assertEq(governed721.getSplit(IGoverned721.Role.OldOwner), 85);
+    }
+
+    function testSetSplitRevertsInvalidRole() public {
+        vm.prank(address(daoMock));
+        (bool success, ) = address(governed721).call(abi.encodeWithSelector(governed721.setSplit.selector, 5, 10));
+        assertFalse(success);
+    }
+
+    function testSetSplitRevertsOver100() public {
+        vm.startPrank(address(daoMock));
+        governed721.setSplit(IGoverned721.Role.Artist, 60);
+        vm.expectRevert("Total split payment cannot be 100% or more");
+        governed721.setSplit(IGoverned721.Role.Intermediary, 40);
+        vm.stopPrank();
+    }
+
+    function testSetSplitRevertsWhenNotOwner() public {
+        vm.expectRevert();
+        vm.prank(alice);
+        governed721.setSplit(IGoverned721.Role.Artist, 10);
+    }
+
+    function testSetWhitelist() public {
+        vm.prank(address(daoMock));
+        governed721.setWhitelist(address(paymentToken), true);
+        assertTrue(governed721.isWhitelisted(address(paymentToken)));
+
+        vm.prank(address(daoMock));
+        governed721.setWhitelist(address(paymentToken), false);
+        assertFalse(governed721.isWhitelisted(address(paymentToken)));
+    }
+
+    function testSetWhitelistRevertsWhenNotOwner() public {
+        vm.expectRevert();
+        vm.prank(alice);
+        governed721.setWhitelist(address(paymentToken), true);
+    }
+
+    function testSetBlacklist() public {
+        vm.prank(address(daoMock));
+        governed721.setBlacklist(alice, true);
+        assertTrue(governed721.isBlacklisted(alice));
+
+        vm.prank(address(daoMock));
+        governed721.setBlacklist(alice, false);
+        assertFalse(governed721.isBlacklisted(alice));
+    }
+
+    function testSetBlacklistRevertsWhenNotOwner() public {
+        vm.expectRevert();
+        vm.prank(alice);
+        governed721.setBlacklist(alice, true);
+    }
+
+    function testMint() public {
+        uint256 tokenId = 1;
+        string memory uri = "ipfs://test";
+        
+        governed721.mint(alice, tokenId, bob, uri);
+
+        assertEq(governed721.ownerOf(tokenId), alice);
+        assertEq(governed721.getArtist(tokenId), bob);
+        assertEq(governed721.tokenURI(tokenId), uri);
+    }
+
+    function testMintRevertsTokenZero() public {
+        vm.expectRevert("Token ID cannot be 0");
+        governed721.mint(alice, 0, bob, "uri");
+    }
+
+    function testMintRevertsArtistZero() public {
+        vm.expectRevert("Artist address cannot be 0");
+        governed721.mint(alice, 1, address(0), "uri");
+    }
+
+    function testMintRevertsEmptyURI() public {
+        vm.expectRevert("Token URI cannot be empty");
+        governed721.mint(alice, 1, bob, "");
+    }
+
+    function testMintRevertsExistingToken() public {
+        governed721.mint(alice, 1, bob, "uri");
+        vm.expectRevert("Token ID already exists");
+        governed721.mint(bob, 1, charlotte, "uri2");
+    }
+
+    function testBurn() public {
+        governed721.mint(alice, 1, bob, "uri");
+
+        vm.prank(address(daoMock));
+        governed721.burn(1);
+
+        vm.expectRevert();
+        governed721.ownerOf(1);
+    }
+
+    function testBurnRevertsWhenNotOwner() public {
+        governed721.mint(alice, 1, bob, "uri");
+
+        vm.expectRevert();
+        vm.prank(alice);
+        governed721.burn(1);
+    }
+
+    function testSafeTransferFromNoPayment() public {
+        governed721.mint(alice, 1, bob, "uri");
+
+        vm.prank(alice);
+        governed721.safeTransferFrom(alice, charlotte, 1, "");
+
+        assertEq(governed721.ownerOf(1), charlotte);
+    }
+
+    function testSafeTransferFromWithPayment() public {
+        vm.prank(address(daoMock));
+        governed721.setWhitelist(address(paymentToken), true);
+
+        uint256 price = 100 * 10**18;
+        vm.prank(charlotte);
+        paymentToken.mint(price);
+        vm.prank(charlotte);
+        paymentToken.approve(address(governed721), price);
+
+        governed721.mint(alice, 1, bob, "uri");
+
+        uint256 nonce = 123;
+        bytes memory data = abi.encode(address(paymentToken), price, nonce);
+
+        vm.prank(alice);
+        governed721.safeTransferFrom(alice, charlotte, 1, data);
+
+        assertEq(governed721.ownerOf(1), charlotte);
+        assertEq(paymentToken.balanceOf(address(daoMock)), price);
+        assertEq(paymentToken.balanceOf(charlotte), 0);
+
+        uint256 transferId = uint256(keccak256(abi.encode(alice, charlotte, 1, address(paymentToken), price, nonce)));
+        IGoverned721.TransferData memory transferData = governed721.getTransferData(transferId);
+        assertEq(transferData.oldOwner, alice);
+        assertEq(transferData.newOwner, charlotte);
+        assertEq(transferData.artist, bob);
+        assertEq(transferData.tokenId, 1);
+        assertEq(transferData.paymentToken, address(paymentToken));
+        assertEq(transferData.quantity, price);
+        assertEq(transferData.nonce, nonce);
+    }
+
+    function testSafeTransferFromRevertsNotWhitelisted() public {
+        uint256 price = 100 * 10**18;
+        governed721.mint(alice, 1, bob, "uri");
+
+        bytes memory data = abi.encode(address(paymentToken), price, 123);
+
+        vm.expectRevert("Payment token is not whitelisted");
+        vm.prank(alice);
+        governed721.safeTransferFrom(alice, charlotte, 1, data);
+    }
+
+    function testSafeTransferFromRevertsBlacklisted() public {
+        vm.prank(address(daoMock));
+        governed721.setWhitelist(address(paymentToken), true);
+
+        vm.prank(address(daoMock));
+        governed721.setBlacklist(alice, true);
+
+        uint256 price = 100 * 10**18;
+        governed721.mint(alice, 1, bob, "uri");
+
+        bytes memory data = abi.encode(address(paymentToken), price, 123);
+
+        vm.expectRevert("Blacklisted account involved in transfer");
+        vm.prank(alice);
+        governed721.safeTransferFrom(alice, charlotte, 1, data);
+    }
+
+    function testCollectPaymentSuccess() public {
+        uint16 mandateId = 2;
+        vm.prank(address(daoMock));
+        governed721.setPaymentId(mandateId);
+
+        bytes memory data = abi.encode(address(paymentToken), 100, 123);
+        
+        vm.prank(address(daoMock));
+        governed721.collectPayment(IGoverned721.Role.Artist, alice, charlotte, 1, data);
+    }
+
+    function testCollectPaymentRevertsBlacklisted() public {
+        vm.prank(address(daoMock));
+        governed721.setBlacklist(alice, true);
+
+        bytes memory data = abi.encode(address(paymentToken), 100, 123);
+
+        vm.expectRevert("Blacklisted account involved in transfer");
+        governed721.collectPayment(IGoverned721.Role.Artist, alice, charlotte, 1, data);
+    }
 }

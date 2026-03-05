@@ -69,8 +69,8 @@ contract GovernedToken_CollectSplitPayment is Mandate {
         // 1. Get config
         (mem.governed721Address) = abi.decode(getConfig(powers, mandateId), (address));
         
-        mem.treasury = IPowers(powers).getTreasury();
-        if (mem.treasury == address(0)) revert("Treasury not set");
+        // mem.treasury = IPowers(payable(powers)).getTreasury();
+        // if (mem.treasury == address(0)) revert("Treasury not set");
 
         // 2. Decode Input Data
         (mem.transferId) = abi.decode(mandateCalldata, (uint256));
@@ -113,13 +113,19 @@ contract GovernedToken_CollectSplitPayment is Mandate {
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         
         // Since Powers instance is set as its own treasury, it holds the funds.
-        // The instruction for Powers is to call transfer on the ERC20 token contract.
-        targets[0] = mem.paymentToken;
+        // The instruction for Powers is to call transfer on the ERC20 token contract or transfer native currency.
+        // if (mem.transferData.paymentToken != address(0)) {
+        targets[0] = mem.transferData.paymentToken;
         calldatas[0] = abi.encodeWithSelector(
             IERC20.transfer.selector,
             caller, // recipient
             mem.amount
         );
+        // } else {
+        //     targets[0] = mem.transferData.paymentToken;
+        //     values[0] = mem.amount;
+        //     calldatas[0] = "";
+        // }
 
         return (actionId, targets, values, calldatas);
     }

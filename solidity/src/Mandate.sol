@@ -73,7 +73,7 @@ abstract contract Mandate is ERC165, IMandate {
 
         // Simulate and execute the mandate's logic. This might include additional conditional checks.
         (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) =
-            handleRequest(caller, msg.sender, mandateId, mandateCalldata, nonce);
+            handleRequest(caller, payable(msg.sender), mandateId, mandateCalldata, nonce);
 
         _externalCall(mandateId, actionId, targets, values, calldatas);
 

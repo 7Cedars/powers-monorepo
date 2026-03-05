@@ -72,7 +72,7 @@ contract AssignExternalRole is Mandate {
         (mem.externalPowersAddress, mem.roleId) = abi.decode(getConfig(powers, mandateId), (address, uint256));
 
         // A: Check if the account has the role in the Child contract (current Powers contract)
-        mem.hasRoleInChild = IPowers(powers).hasRoleSince(mem.account, mem.roleId);
+        mem.hasRoleInChild = IPowers(payable(powers)).hasRoleSince(mem.account, mem.roleId);
         mem.A = mem.hasRoleInChild > 0;
 
         // B: Check if the account has the role in the Parent contract (external Powers contract)

@@ -46,7 +46,7 @@ contract PeerSelect is Mandate {
         bytes memory config
     ) public override {
         Mem memory mem;
-        (,,mem.nomineesContract) = abi.decode(config, (uint8,  uint256, address));
+        (,,mem.nomineesContract) = abi.decode(config, (uint8, uint256, address));
 
         // Get nominees from the Nominees contract
         mem.nominees = Nominees(mem.nomineesContract).getNominees();

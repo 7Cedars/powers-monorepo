@@ -76,12 +76,12 @@ contract Safe_ExecTransaction_OnReturnValue is Mandate {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         (mem.targetContract, mem.functionSelector, mem.bytesBefore,, mem.parentMandateId, mem.bytesAfter) =
             abi.decode(getConfig(powers, mandateId), (address, bytes4, bytes, string[], uint16, bytes));
-        mem.safeAddress = IPowers(powers).getTreasury();
+        mem.safeAddress = IPowers(payable(powers)).getTreasury();
         if (mem.safeAddress == address(0)) {
             revert("No Safe treasury set");
         }
         mem.parentActionId = MandateUtilities.computeActionId(mem.parentMandateId, mandateCalldata, nonce);
-        mem.returnData = IPowers(powers).getActionReturnData(mem.parentActionId, 0);
+        mem.returnData = IPowers(payable(powers)).getActionReturnData(mem.parentActionId, 0);
 
         // Construct the `v=1` signature.
         // This is not a cryptographic signature but a signal to the Safe contract.

@@ -116,7 +116,8 @@ contract TestConstitutions is Test {
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
         conditions.votingPeriod = 1200; // = number of blocks
         conditions.throttleExecution = 5000;
-        conditions.timelock = 250; // = 250 blocks to wait after proposal success before execution
+        // NOTE: the timelock starts counting after proposal has been made, NOT after vote has passed! 
+        conditions.timelock = 2500; // = 2500 blocks to wait after success before execution
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "StatementOfIntent: Propose any kind of action.",

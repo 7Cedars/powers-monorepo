@@ -113,7 +113,7 @@ contract GovernedToken_GatedAccess is Mandate {
                 continue;
             }
             mem.minter = address(uint160(mem.tokenId >> 48));
-            if (IPowers(powers).hasRoleSince(mem.minter, mem.checkRoleId) != 0) {
+            if (IPowers(payable(powers)).hasRoleSince(mem.minter, mem.checkRoleId) != 0) {
                 validTokenCount++;
             }
         }

@@ -58,12 +58,12 @@ contract PowersFactory_AddSafeDelegate is Mandate {
         mem.parentActionId = MandateUtilities.computeActionId(mem.factoryMandateId, mandateCalldata, nonce);
 
         // 3. Check parent action state
-        if (IPowers(powers).getActionState(mem.parentActionId) != PowersTypes.ActionState.Fulfilled) {
+        if (IPowers(payable(powers)).getActionState(mem.parentActionId) != PowersTypes.ActionState.Fulfilled) {
             revert("Invalid parent action state");
         }
 
         // 4. Check return value in Powers
-        try IPowers(powers).getActionReturnData(mem.parentActionId, 0) returns (bytes memory returnData_) {
+        try IPowers(payable(powers)).getActionReturnData(mem.parentActionId, 0) returns (bytes memory returnData_) {
             mem.returnData = returnData_;
         } catch {
             revert("Error fetching return data for parent action");
@@ -76,7 +76,7 @@ contract PowersFactory_AddSafeDelegate is Mandate {
         mem.decodedAddress = abi.decode(mem.returnData, (address));
 
         // 6. Get Treasury Address
-        address safeProxyAddress = IPowers(powers).getTreasury();
+        address safeProxyAddress = IPowers(payable(powers)).getTreasury();
         if (safeProxyAddress == address(0)) {
             revert("Treasury not set in Powers");
         }

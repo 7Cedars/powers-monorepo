@@ -96,7 +96,7 @@ contract ChecksTest is TestSetupPowers {
     //////////////////////////////////////////////////////////////
     //                  DELAY EXECUTION CHECKS                   //
     //////////////////////////////////////////////////////////////
-    function testcheckWithDelayExecution() public {
+    function testcheckWithDelayExecutionRevert() public {
         // Setup: Use mandateId 4 from powersTestConstitution which now has timelock = 250
         mandateId = 3;
         address[] memory tar = new address[](1);

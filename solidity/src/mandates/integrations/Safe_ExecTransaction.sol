@@ -65,7 +65,7 @@ contract Safe_ExecTransaction is Mandate {
 
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         (, mem.functionSelector, mem.target) = abi.decode(getConfig(powers, mandateId), (string[], bytes4, address));
-        mem.safeAddress = IPowers(powers).getTreasury();
+        mem.safeAddress = IPowers(payable(powers)).getTreasury();
         if (mem.safeAddress == address(0)) {
             revert("No Safe treasury set");
         }

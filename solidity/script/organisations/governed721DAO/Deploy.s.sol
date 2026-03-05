@@ -52,7 +52,7 @@ contract Deploy is DeploySetup {
     string[] inputParams;
     string[] dynamicParams;
  
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifdaiq7ae2we6jyz7chgak4ppnmfitkzlwdjrubaycjgftyurnhie/";
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidklnn4b7heysrhr5pqtiabvcl5aldnzuv2mdybotdtx5vvq44nqi/";
 
     function run() external {
         // step 0, setup.
@@ -110,8 +110,6 @@ contract Deploy is DeploySetup {
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
-        // NB! £todo CHECK: ROLE DESIGNATIONS HAVE CHANGED 2 <-> 3  ALL OK?
-
         calldatas = new bytes[](11);
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", string.concat(baseURI, "/admin.json"));  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", string.concat(baseURI, "/public.json")); 

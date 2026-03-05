@@ -143,6 +143,12 @@ contract Powers is EIP712, IPowers, Context {
         emit Powers__Initialized(address(this), name, uri);
     }
 
+    /// @notice Function to receive Ether. Emits a {PowersEvents::FundsReceived} event.
+    /// @dev If the protocol does not have a mandate to handle transfers of native currency (and is not upgradable) it will be stuck in the contract. 
+    receive() external payable {
+        emit FundsReceived(_msgSender(), msg.value);
+    }
+
     //////////////////////////////////////////////////////////////
     //                  CONSTITUTE LOGIC                        //
     //////////////////////////////////////////////////////////////

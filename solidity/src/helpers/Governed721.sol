@@ -64,9 +64,13 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
     }
 
     function setSplit(Role role, uint8 percentage) external onlyOwner {
-        if (percentage + roleToSplit[Role.Intermediary] >= DENOMINATOR) revert("Total split payment cannot be 100% or more");
-        roleToSplit[Role.Artist] = percentage;
-        totalSplitPayment = roleToSplit[Role.Artist] + roleToSplit[Role.Intermediary];
+        if (uint8(role) > 4) revert("Invalid role  specified. Valid roles are: Admin (0), Artist (1), OldOwner (2), Intermediary (3), NewOwner (4)"); 
+
+        uint8 currentPercentage = roleToSplit[role];
+        if (percentage > currentPercentage && totalSplitPayment + (percentage - currentPercentage) >= DENOMINATOR) revert("Total split payment cannot be 100% or more"); 
+
+        roleToSplit[role] = percentage;
+        totalSplitPayment = totalSplitPayment + percentage - currentPercentage; // we update the total split payment based on the change in percentage for the role.
     }
 
     function setWhitelist(address token, bool isWhitelisted) external onlyOwner {
@@ -102,26 +106,21 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         uint256 quantity;
         uint256 nonce; 
         
-        if (data.length == 0) {
-            // if no data is provided, we assume it's a normal transfer without payment. 
-            paymentToken = address(0);
-            quantity = 0;
-        } else {
-            // if data is provided, we assume it's a transfer with payment. The data needs to be encoded as (address paymentToken, uint256 quantity, uint256 nonce). 
-            (paymentToken, quantity, nonce) = abi.decode(data, (address, uint256, uint256));
-        }
-
-        // check 1: is token whitelisted? 
-        if (paymentToken != address(0) && !whitelist[paymentToken]) revert("Payment token is not whitelisted");
-
-        // check 2: are any accounts blacklisted? 
+        // check 1: are any accounts blacklisted? 
         if (blacklist[oldOwner] || blacklist[newOwner] || blacklist[msg.sender]) revert("Blacklisted account involved in transfer");
 
-        // if checks pass, we proceed with fetching tokens to Powers instance. 
-        (bool success) = IERC20(paymentToken).transferFrom(newOwner, owner(), quantity); // transfer payment tokens to this contract. This requires the sender to have approved this contract to spend their tokens.
+        // if data length is greater than 0, we expect it to contain payment information. We decode it and check the payment token.  
+        if (data.length != 0) {
+            (paymentToken, quantity, nonce) = abi.decode(data, (address, uint256, uint256));
 
-        if (!success) revert("Payment transfer failed");
+            // check 3: is payment token whitelisted?
+            if (paymentToken != address(0) && !whitelist[paymentToken]) revert("Payment token is not whitelisted");
 
+            (bool success) = IERC20(paymentToken).transferFrom(newOwner, owner(), quantity); // transfer payment tokens to this contract. This requires the sender to have approved this contract to spend their tokens.
+            if (!success) revert("Payment transfer failed");
+        } else{ 
+            nonce = block.number; // only needed for uniqueness, does not need to be random. 
+        }
         // if payment succeeded, we proceed with the transfer. First we log the transfer 
         uint256 transferId = uint256(keccak256(abi.encode(oldOwner, newOwner, tokenId, paymentToken, quantity, nonce)));
         _transfers[transferId] = TransferData(

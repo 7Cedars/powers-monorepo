@@ -66,7 +66,7 @@ contract SafeAllowance_Action is Mandate {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         bytes32 mandateHash_ = MandateUtilities.hashMandate(powers, mandateId);
         ConfigData memory config = mandateConfig[mandateHash_];
-        address safeProxyAddress = IPowers(powers).getTreasury();
+        address safeProxyAddress = IPowers(payable(powers)).getTreasury();
         if (safeProxyAddress == address(0)) {
             revert("SafeAllowance_Action: Treasury not set in Powers");
         }

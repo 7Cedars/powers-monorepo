@@ -58,7 +58,7 @@ contract BespokeAction_OnReturnValue is Mandate {
         ) = abi.decode(getConfig(powers, mandateId), (address, bytes4, bytes, string[], uint16, bytes));
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         uint256 parentActionId = MandateUtilities.computeActionId(parentMandateId, mandateCalldata, nonce);
-        bytes memory returnData = IPowers(powers).getActionReturnData(parentActionId, 0);
+        bytes memory returnData = IPowers(payable(powers)).getActionReturnData(parentActionId, 0);
 
         // Send the calldata to the target function
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);

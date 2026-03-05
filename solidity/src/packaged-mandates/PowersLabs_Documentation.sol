@@ -63,7 +63,7 @@ contract PowerLabs_Documentation is Mandate {
         Mem memory mem;
 
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
-        mem.mandateCount = Powers(powers).mandateCounter();
+        mem.mandateCount = Powers(payable(powers)).mandateCounter();
         // (mem.safeProxy) = abi.decode(mandateCalldata, (address));
         mem.signature = abi.encodePacked(
             uint256(uint160(powers)), // r = address of the signer (powers contract)

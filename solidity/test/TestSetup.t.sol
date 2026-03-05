@@ -358,7 +358,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         // forks
         sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
         optSepoliaFork = vm.createFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
-        arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
+        // arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
 
         setUpVariables();
         // run mandates deploy script here.
