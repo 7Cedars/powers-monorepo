@@ -21,8 +21,8 @@ import { PowersMock } from "@mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 
 // organisations
-import { Powers101 } from "../script/organisations/powers101/Powers101.s.sol";
-import { ElectionListsDAO } from "../script/organisations/electoralDAO/ElectionListsDAO.s.sol";
+import { Powers101 } from "../script/organisations/examples/Powers101.s.sol";
+import { ElectionListsDAO } from "../script/organisations/examples/ElectionListsDAO.s.sol";
 // import { Deploy } from "../script/organisations/CulturalStewardsDAO/Deploy.s.sol";
 
 // helpers
@@ -41,6 +41,7 @@ import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // protocol and mocks
@@ -72,8 +73,9 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     PowersFactory powersFactory;
     Soulbound1155 soulbound1155;
     ElectionList electionList;
+    ZKPassport_PowersRegistry zkPassportRegistry;
 
-    uint256 sepoliaFork;
+    uint256 sepoliaFork; 
     uint256 optSepoliaFork;
     uint256 arbSepoliaFork;
 
@@ -187,6 +189,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     address lisa;
     address oracle;
     address[] users;
+    address cedars; 
 
     // list of dao names
     string[] daoNames;
@@ -355,11 +358,6 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
     function setUp() public virtual {
         vm.roll(block.number + 10);
 
-        // forks
-        sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
-        optSepoliaFork = vm.createFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
-        // arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
-
         setUpVariables();
         // run mandates deploy script here.
     }
@@ -368,6 +366,15 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         nonce = 123;
         MAX_FUZZ_TARGETS = 5;
         MAX_FUZZ_CALLDATA_LENGTH = 2000;
+
+        sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
+        optSepoliaFork = vm.createFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
+        arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
+
+        console2.log("Forks created:");
+        console2.log("Sepolia Fork ID:", sepoliaFork);
+        console2.log("Optimism Sepolia Fork ID:", optSepoliaFork);  
+        console2.log("Arbitrum Sepolia Fork ID:", arbSepoliaFork);
 
         // users
         // note that when fork testing, addresses are often already taken. Therefore we loop to find addresses without code deployed on them to use as users in our tests.
@@ -421,6 +428,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         kate = makeAddr("kate");
         lisa = makeAddr("lisa");
         oracle = makeAddr("oracle");
+        cedars = vm.envAddress("DEV2_ADDRESS"); 
 
         // assign funds
         vm.deal(alice, 10 ether);
@@ -436,9 +444,10 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         vm.deal(kate, 10 ether);
         vm.deal(lisa, 10 ether);
         vm.deal(oracle, 10 ether);
+        vm.deal(cedars, 10 ether);
 
-        users = [alice, bob, charlotte, david, eve, frank, gary, helen, ian, jacob, kate, lisa];
-
+        users = [alice, bob, charlotte, david, eve, frank, gary, helen, ian, jacob, kate, lisa];  
+        
         // deploy mock powers
         daoMock = new PowersMock();
         daoMockChild1 = new PowersMock();
@@ -464,7 +473,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
 
 abstract contract TestSetupPowers is BaseSetup {
     function setUpVariables() public override {
-        vm.selectFork(sepoliaFork);
+        // vm.selectFork(sepoliaFork);
 
         super.setUpVariables();
 
@@ -604,7 +613,6 @@ abstract contract TestSetupExecutive is BaseSetup {
 abstract contract TestSetupIntegrations is BaseSetup {
     function setUpVariables() public override { 
         // vm.skip(true);
-        vm.selectFork(optSepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
 
         super.setUpVariables();
 
@@ -624,6 +632,8 @@ abstract contract TestSetupIntegrations is BaseSetup {
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();
+        
+        zkPassportRegistry = ZKPassport_PowersRegistry(findMandateAddress("ZKPassport_PowersRegistry"));
         vm.stopPrank();
 
         // initiate multi constitution
@@ -633,7 +643,8 @@ abstract contract TestSetupIntegrations is BaseSetup {
             address(powersFactory),
             address(soulbound1155),
             address(electionList),
-            address(erc20Taxed)
+            address(erc20Taxed),
+            address(zkPassportRegistry)
         );
         // (PowersTypes.MandateInitData[] memory mandateInitData2_) =
         //     testConstitutions.integrationsTestConstitution2(address(daoMock), address(allowedTokens));
@@ -850,7 +861,7 @@ abstract contract TestSetupGovernorProtocolFlow is BaseSetup {
 abstract contract TestSetupSafeProtocolFlow is BaseSetup {
     function setUpVariables() public override {
         vm.skip(false);
-        vm.selectFork(arbSepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
+        vm.selectFork(sepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
         super.setUpVariables();
 
         // initiate multi constitution
@@ -910,32 +921,6 @@ abstract contract TestSetupElectionListsDAO is BaseSetup {
         // Note: this test runs the full initalisation scripts. It takes a while to run.
         // But it is needed to be able to test the full deployment flow of an organisation.
         vm.skip(false);
-
-        super.setUpVariables();
-
-        ElectionListsDAO openElections = new ElectionListsDAO();
-        (powers, openElection) = openElections.run();
-        daoMock = PowersMock(payable(address(powers)));
-
-        vm.startPrank(address(daoMock));
-        daoMock.assignRole(ROLE_ONE, alice);
-        daoMock.assignRole(ROLE_ONE, bob);
-        daoMock.assignRole(ROLE_ONE, frank);
-        daoMock.assignRole(ROLE_ONE, gary);
-        daoMock.assignRole(ROLE_ONE, helen);
-        daoMock.assignRole(ROLE_TWO, charlotte);
-        daoMock.assignRole(ROLE_TWO, david);
-        vm.stopPrank();
-    }
-}
-
-// Cultural Stewards DAO Setup
-abstract contract TestSetupCulturalStewardsDAO is BaseSetup {
-    function setUpVariables() public override {
-        // Note: this test runs the full initalisation scripts. It takes a while to run.
-        // But it is needed to be able to test the full deployment flow of an organisation.
-        vm.skip(false);
-        vm.selectFork(sepoliaFork);
 
         super.setUpVariables();
 

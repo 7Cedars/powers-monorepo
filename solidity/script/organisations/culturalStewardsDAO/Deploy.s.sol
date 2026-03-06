@@ -1339,7 +1339,6 @@ contract Deploy is DeploySetup {
         uint16 vetoPhysicalId = mandateCount;
 
         // Checkpoint 1: Executives confirm Members Veto passed (or timed out without veto)
-        string[] memory emptyParams = new string[](0);
         mandateCount++;
         conditions.allowedRole = 2; // Executives
         conditions.needFulfilled = initiateReformId;
@@ -1349,7 +1348,7 @@ contract Deploy is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Reform Checkpoint 1: Executives confirm Members did not veto.",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(emptyParams),
+                config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
         );
@@ -1365,7 +1364,7 @@ contract Deploy is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Reform Checkpoint 2: Executives confirm Digital sub-DAO did not veto.",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(emptyParams),
+                config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
         );
@@ -1381,7 +1380,7 @@ contract Deploy is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Reform Checkpoint 3: Executives confirm Ideas sub-DAO did not veto.",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(emptyParams),
+                config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
         );
@@ -2755,7 +2754,10 @@ contract Deploy is DeploySetup {
             PowersTypes.MandateInitData({
                 nameDescription: "Redeem 'Merit' NFTs for a rewards: Anyone with a 'Merit' NFT can redeem for a reward.",
                 targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_BurnToAccess"),
-                config: abi.encode(inputParams), // input params can include details about the redemption process, such as the rewards available and the criteria for redeeming 'Merit' NFTs.
+                config: abi.encode(
+                    inputParams,
+                    createPlaceholderAddress("Dependency0") // the actvityToken contract where 'Merit' NFTs are minted
+                    ), // input params can include details about the redemption process, such as the rewards available and the criteria for redeeming 'Merit' NFTs.
                 conditions: conditions
             })
         );

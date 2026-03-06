@@ -128,17 +128,16 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
 
     address treasury;
     address safeAllowanceModule;
-    uint256 sepoliaFork;
-    uint256 optSepoliaFork;
     address cedars = 0x328735d26e5Ada93610F0006c32abE2278c46211;
 
     function setUp() public {
         helperConfig = new Configurations();
+        uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
+        uint256 optSepoliaFork = vm.createSelectFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
+        uint256 arbSepoliaFork = vm.createSelectFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
+        
         vm.skip(false); // Remove this line to run the test
-        // Create and select fork
-        sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
-        optSepoliaFork = vm.createSelectFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
-        vm.selectFork(optSepoliaFork);
+        vm.selectFork(sepoliaFork);
 
         // Deploy the script
         deployScript = new Deploy();
@@ -766,7 +765,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
 
         console.log("Initiating Ideas sub-DAO...");
         // Propose
-        mem.actionId = primaryDAO.propose(mem.initiateIdeasMandateId, mem.params, mem.nonce, "");
+        mem.actionId = primaryDAO.propose(mem.initiateIdeasMandateId, mem.params, mem.nonce, "Initiate Ideas sub-DAO - Propose");
         vm.stopPrank();
 
         // Vote
@@ -783,7 +782,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
 
         // Execute (Request)
         vm.startPrank(mem.admin);
-        primaryDAO.request(mem.initiateIdeasMandateId, mem.params, mem.nonce, "");
+        primaryDAO.request(mem.initiateIdeasMandateId, mem.params, mem.nonce, "Initiate Ideas sub-DAO - Request");
         vm.stopPrank();
 
         // --- Step 2: Create Ideas sub-DAO (Executives) ---
@@ -791,7 +790,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         console.log("Creating Ideas sub-DAO...");
 
         // Propose
-        mem.actionId = primaryDAO.propose(mem.createIdeasMandateId, mem.params, mem.nonce, "");
+        mem.actionId = primaryDAO.propose(mem.createIdeasMandateId, mem.params, mem.nonce, "Create Ideas sub-DAO - Propose");
 
         // Vote
         primaryDAO.castVote(mem.actionId, 1);
@@ -801,7 +800,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.roll(block.number + mem.votingPeriod + 1);
 
         // Execute
-        mem.actionId = primaryDAO.request(mem.createIdeasMandateId, mem.params, mem.nonce, "");
+        mem.actionId = primaryDAO.request(mem.createIdeasMandateId, mem.params, mem.nonce, "Create Ideas sub-DAO - Request");
         vm.stopPrank();
 
         // --- Step 3: Assign Role Id (Executives) ---
@@ -809,7 +808,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         console.log("Assigning Role...");
 
         // Execute (No quorum, immediate execution)
-        primaryDAO.request(mem.assignRoleMandateId, mem.params, mem.nonce, "");
+        primaryDAO.request(mem.assignRoleMandateId, mem.params, mem.nonce, "Assign Role - Request");
         vm.stopPrank();
 
         // --- Verify Creation ---
@@ -833,19 +832,19 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         mem.endBlock = uint48(block.number + 100);
         mem.electionParams = abi.encode("Convener Election", mem.startBlock, mem.endBlock);
 
-        mem.createElectionId = findMandateIdInOrg("Create an election: an election can be initiated be any member.", Powers(payable(mem.ideasSubDAOAddress)));
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.createElectionId, mem.electionParams, mem.nonce, "");
+        mem.createElectionId = findMandateIdInOrg("Create a Convener election: an election for the convener role can be initiated be any member.", Powers(payable(mem.ideasSubDAOAddress)));
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.createElectionId, mem.electionParams, mem.nonce, "Create Election - Request");
 
         // 2. Nominate (Mandate 9)
         console.log("Nominating...");
         mem.nominateId = findMandateIdInOrg("Nominate for election: any member can nominate for an election.", Powers(payable(mem.ideasSubDAOAddress)));
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.nominateId, mem.electionParams, mem.nonce, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.nominateId, mem.electionParams, mem.nonce, "Nominate - Request");
 
         // 3. Open Vote (Mandate 11)
         console.log("Creating Vote...");
         vm.roll(mem.startBlock + 1); // Advance to start
-        mem.openVoteId = findMandateIdInOrg("Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.", Powers(payable(mem.ideasSubDAOAddress)));
-        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).request(mem.openVoteId, mem.electionParams, mem.nonce, "");
+        mem.openVoteId = findMandateIdInOrg("Open voting for Convener election: Members can open the vote for a convener election. This will create a dedicated vote mandate.", Powers(payable(mem.ideasSubDAOAddress)));
+        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).request(mem.openVoteId, mem.electionParams, mem.nonce, "Open Vote - Request");
 
         // Get Vote Mandate ID
         mem.returnData = Powers(payable(mem.ideasSubDAOAddress)).getActionReturnData(mem.actionId, 0);
@@ -858,13 +857,13 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         // mem.votes[0] = true;
         mem.params = abi.encode(true);
 
-        Powers(payable(mem.ideasSubDAOAddress)).request(uint16(mem.voteMandateId), mem.params, mem.nonce, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(uint16(mem.voteMandateId), mem.params, mem.nonce, "Vote - Request");
 
         // 5. Tally (Mandate 12)
         console.log("Tallying...");
         vm.roll(mem.endBlock + 1); // Advance to end
-        mem.tallyElectionId = findMandateIdInOrg("Tally elections: After an election has finished, assign the Convener role to the winners.", Powers(payable(mem.ideasSubDAOAddress)));
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.tallyElectionId, mem.electionParams, mem.nonce, "");
+        mem.tallyElectionId = findMandateIdInOrg("Tally Convener elections: After a convener election has finished, assign the Convener role to the winners.", Powers(payable(mem.ideasSubDAOAddress)));
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.tallyElectionId, mem.electionParams, mem.nonce, "Tally - Request");
 
         // 6. Clean Up (Mandate 13)
         console.log("Cleaning Up...");
@@ -873,8 +872,8 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         assertTrue(mem.isActive, "Vote Mandate should be active before cleanup");
 
         // Clean up needs same calldata and nonce as Open Vote to find the return value
-        mem.cleanupElectionId = findMandateIdInOrg("Clean up election: After an election has finished, clean up related mandates.", Powers(payable(mem.ideasSubDAOAddress)));
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.cleanupElectionId, mem.electionParams, mem.nonce, "");
+        mem.cleanupElectionId = findMandateIdInOrg("Clean up Convener election: After a convener election has finished, clean up related mandates.", Powers(payable(mem.ideasSubDAOAddress)));
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.cleanupElectionId, mem.electionParams, mem.nonce, "Clean Up - Request");
 
         // Verify Vote Mandate Revoked
         (,, mem.isActive) = Powers(payable(mem.ideasSubDAOAddress)).getAdoptedMandate(uint16(mem.voteMandateId));
@@ -893,7 +892,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         mem.nonce = 1;
 
         // Initiate
-        mem.actionId = primaryDAO.propose(mem.initiateIdeasMandateId, mem.params, mem.nonce, "");
+        mem.actionId = primaryDAO.propose(mem.initiateIdeasMandateId, mem.params, mem.nonce, "Initiate Ideas - Request");
         vm.stopPrank();
 
         mem.amountRoleHolders = primaryDAO.getAmountRoleHolders(1);
@@ -906,21 +905,21 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.roll(block.number + primaryDAO.getConditions(mem.initiateIdeasMandateId).votingPeriod + 1);
         
         vm.prank(mem.admin);
-        primaryDAO.request(mem.initiateIdeasMandateId, mem.params, mem.nonce, "");
+        primaryDAO.request(mem.initiateIdeasMandateId, mem.params, mem.nonce, "Initiate Ideas - Request");
 
         // Create
         vm.startPrank(mem.admin);
-        mem.actionId = primaryDAO.propose(mem.createIdeasMandateId, mem.params, mem.nonce, "");
+        mem.actionId = primaryDAO.propose(mem.createIdeasMandateId, mem.params, mem.nonce, "Create Ideas - Request");
         primaryDAO.castVote(mem.actionId, 1);
         
         vm.roll(block.number + primaryDAO.getConditions(mem.createIdeasMandateId).votingPeriod + 1);
         
-        mem.actionId = primaryDAO.request(mem.createIdeasMandateId, mem.params, mem.nonce, "");
+        mem.actionId = primaryDAO.request(mem.createIdeasMandateId, mem.params, mem.nonce, "Create Ideas - Request");
         mem.ideasSubDAOAddress = abi.decode(primaryDAO.getActionReturnData(mem.actionId, 0), (address));
         console.log("Ideas sub-DAO created at: %s", mem.ideasSubDAOAddress);
 
         // Assign Role 4 to the new DAO (in Primary DAO)
-        primaryDAO.request(mem.assignRoleMandateId, mem.params, mem.nonce, "");
+        primaryDAO.request(mem.assignRoleMandateId, mem.params, mem.nonce, "Assign Role - Request");
         vm.stopPrank();
 
         // --- Step 1: Assign Moderator Role & execute setup ---
@@ -940,40 +939,37 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.startPrank(cedars);
         console.log("Assigning Moderator...");
         
-        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).propose(mem.assignModeratorId, mem.params, mem.nonce, "");
+        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).propose(mem.assignModeratorId, mem.params, mem.nonce, "Assign Moderator - Request");
         Powers(payable(mem.ideasSubDAOAddress)).castVote(mem.actionId, 1);
         
         mem.votingPeriod = Powers(payable(mem.ideasSubDAOAddress)).getConditions(mem.assignModeratorId).votingPeriod;
         vm.roll(block.number + mem.votingPeriod + 1);
         
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.assignModeratorId, mem.params, mem.nonce, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.assignModeratorId, mem.params, mem.nonce, "Assign Moderator - Request");
         vm.stopPrank();
 
         assertTrue(Powers(payable(mem.ideasSubDAOAddress)).hasRoleSince(mem.moderator, 3) > 0, "Moderator should have Role 3");
 
         // --- Step 2: Apply and Assign Membership ---
         mem.appParams = abi.encode(mem.applicant, "ipfs://application");
-        mem.nonce++;
-        
+   
         vm.startPrank(mem.applicant);
         console.log("Applying for Membership...");
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.applyMembershipId, mem.appParams, mem.nonce, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.applyMembershipId, mem.appParams, mem.nonce, "Apply for Membership - Request");
         vm.stopPrank();
 
         vm.startPrank(mem.moderator);
         console.log("Assigning Membership...");
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.assignMembershipId, mem.appParams, mem.nonce, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.assignMembershipId, mem.appParams, mem.nonce, "Assign Membership - Request");
         vm.stopPrank();
 
         assertTrue(Powers(payable(mem.ideasSubDAOAddress)).hasRoleSince(mem.applicant, 1) > 0, "Applicant should have Role 1 (Member)");
 
         // --- Step 3: Revoke Membership ---
-        mem.nonce++;
-        mem.revokeParams = abi.encode(mem.applicant);
         
         vm.startPrank(mem.moderator);
         console.log("Revoking Membership...");
-        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).propose(mem.revokeMembershipId, mem.revokeParams, mem.nonce, "");
+        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).propose(mem.revokeMembershipId, mem.appParams, mem.nonce, "Revoke Membership - Propose");
         vm.stopPrank();
         
         mem.amountRoleHolders = Powers(payable(mem.ideasSubDAOAddress)).getAmountRoleHolders(3);
@@ -988,17 +984,16 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.roll(block.number + mem.votingPeriod + mem.timelock + 1);
         
         vm.prank(mem.moderator);
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.revokeMembershipId, mem.revokeParams, mem.nonce, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.revokeMembershipId, mem.appParams, mem.nonce, "Revoke Membership - Request");
  
         assertTrue(Powers(payable(mem.ideasSubDAOAddress)).hasRoleSince(mem.applicant, 1) == 0, "Applicant should NOT have Role 1 anymore");
 
         // --- Step 4: Revoke Moderator ---
-        mem.nonce++;
         mem.revokeParams = abi.encode(mem.moderator);
         
         vm.startPrank(cedars);
         console.log("Revoking Moderator...");
-        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).propose(mem.revokeModeratorId, mem.revokeParams, mem.nonce, "");
+        mem.actionId = Powers(payable(mem.ideasSubDAOAddress)).propose(mem.revokeModeratorId, mem.revokeParams, mem.nonce, "Revoke Moderator - Request");
         vm.stopPrank();
 
         mem.amountRoleHolders = Powers(payable(mem.ideasSubDAOAddress)).getAmountRoleHolders(2);
@@ -1012,7 +1007,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.roll(block.number + mem.votingPeriod + 1);
         
         vm.prank(cedars);
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.revokeModeratorId, mem.revokeParams, mem.nonce, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.revokeModeratorId, mem.revokeParams, mem.nonce, "Revoke Moderator - Request");
  
         assertTrue(Powers(payable(mem.ideasSubDAOAddress)).hasRoleSince(mem.moderator, 3) == 0, "Moderator should NOT have Role 3 anymore");
     }

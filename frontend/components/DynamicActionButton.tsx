@@ -129,8 +129,8 @@ export function DynamicActionButton({checks}: {checks: Checks}) {
       {
         //NB: note that the 'Check' button is managed in the DynamicForm component
         
-        // option 1: When action does not exist, and needs a vote, create proposal button
-        Number(mandate?.conditions?.quorum) > 0 &&
+        // option 1: When action does not exist, and needs a proposal (vote or timelock), create proposal button
+        (Number(mandate?.conditions?.quorum) > 0 || Number(mandate?.conditions?.timelock) > 0) &&
         (populatedAction?.state == 0 || populatedAction?.state == undefined) &&
         action?.upToDate ? (
           <div className="w-full px-6 py-2" help-nav-item="propose-or-vote">
@@ -158,9 +158,10 @@ export function DynamicActionButton({checks}: {checks: Checks}) {
               </Button>
             </div>
           </div>
-        ) : // option 2: When action does not exist and does not need a vote, execute button
+        ) : // option 2: When action does not exist and does not need a proposal (no vote, no timelock), execute button
         Number(mandate?.conditions?.quorum) == 0 &&
-          populatedAction?.state == 0 &&
+        Number(mandate?.conditions?.timelock) == 0 &&
+          (populatedAction?.state == 0 || populatedAction?.state == undefined) &&
           action?.upToDate ? (
           <div
             className="w-full h-fit px-6 py-2 pb-6"
@@ -177,7 +178,6 @@ export function DynamicActionButton({checks}: {checks: Checks}) {
                   action.description as string
                 )
               }
-              // (mandate: Mandate, paramValues: (InputType | InputType[])[], nonce: bigint, description: string)
               filled={false}
               selected={true}
               statusButton={
@@ -191,8 +191,7 @@ export function DynamicActionButton({checks}: {checks: Checks}) {
               Execute {checks?.allPassed ? "" : " (checks did not pass)"}
             </Button>
           </div>
-        ) : // option 2: When action does exist and has a succeeded state, execute button
-        Number(mandate?.conditions?.quorum) > 0 &&
+        ) : // option 3: When action does exist and has a succeeded state, execute button
           populatedAction?.state == 5 &&
           action?.upToDate ? (
           <div
@@ -223,13 +222,15 @@ export function DynamicActionButton({checks}: {checks: Checks}) {
               Execute {checks?.allPassed ? "" : " (checks did not pass)"}
             </Button>
           </div>
-        ) : populatedAction?.state == 4 && action?.upToDate ? (
+        ) : // option 4: Action defeated
+        populatedAction?.state == 4 && action?.upToDate ? (
           <div className="w-full h-fit px-6 min-h-16 flex flex-col justify-center items-center">
             <div className="w-full flex text-sm flex-row justify-center items-center gap-2 text-slate-500">
               Action defeated
             </div>
           </div>
-        ) : // option 3: When action exists, and is active, show vote button
+        ) : // option 5: When action exists, and is active, show vote button
+        Number(mandate?.conditions?.quorum) > 0 &&
         populatedAction?.state == 3 && action?.upToDate ? (
           <div className="w-full h-fit px-6 min-h-16 flex flex-col justify-center items-center">
             {checks && checks.hasVoted ? (
@@ -300,6 +301,14 @@ export function DynamicActionButton({checks}: {checks: Checks}) {
                 </Button>
               </div>
             )}
+          </div>
+        ) : // option 6: When action exists, is active, but no vote needed (timelock pending edge case)
+        Number(mandate?.conditions?.quorum) == 0 &&
+        populatedAction?.state == 3 && action?.upToDate ? (
+          <div className="w-full h-fit px-6 min-h-16 flex flex-col justify-center items-center">
+            <div className="w-full flex text-sm flex-row justify-center items-center gap-2 text-slate-500">
+              Timelock pending
+            </div>
           </div>
         ) : null
       }

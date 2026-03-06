@@ -23,7 +23,7 @@
     "Github_AssignRoleWithSig": "0xa7B82D419f241dc82e044021f3a4B9028ecbf1fB",
     "Github_ClaimRoleWithSig": "0xeE482dCd71AFaa9c5CFB6F8f22809A23256EB789",
     "Governed721": "0x832a4322285293d6070b42d45D0aCb9c3f8aa4C1",
-    "GovernedToken_BurnToAccess": "0x8bA1C95f163af3A1DF12c8Fe0E07131Fb06fa6aE",
+    "GovernedToken_BurnToAccess": "0x48D6262a73d0314dcBBeB6b6cCb07559031451aa",
     "GovernedToken_CollectSplitPayment": "0x3F1d0890028Ae534b0147f20230cB3d27C7feF84",
     "GovernedToken_GatedAccess": "0x70D1eCd11d2E08Fb078F1F730d8524BcA26eaF70",
     "GovernedToken_MintEncodedToken": "0x5a51eA3aeA402144F93d3B4f1E36b9c7e07E5D49",

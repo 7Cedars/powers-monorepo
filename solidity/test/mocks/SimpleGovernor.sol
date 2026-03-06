@@ -6,9 +6,7 @@ import { Governor } from "@openzeppelin/contracts/governance/Governor.sol";
 import { GovernorCountingSimple } from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import { GovernorSettings } from "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
 import { GovernorVotes } from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
-import {
-    GovernorVotesQuorumFraction
-} from "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+import { GovernorVotesQuorumFraction } from "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 contract SimpleGovernor is
