@@ -861,6 +861,7 @@ abstract contract TestSetupGovernorProtocolFlow is BaseSetup {
 abstract contract TestSetupSafeProtocolFlow is BaseSetup {
     function setUpVariables() public override {
         vm.skip(false);
+        vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
         vm.selectFork(sepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
         super.setUpVariables();
 

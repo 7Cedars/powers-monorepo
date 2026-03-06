@@ -204,7 +204,8 @@ contract SafeAllowanceTest is TestSetupIntegrations {
     uint256 public actionIdSafeSetup; 
 
     function setUp() public override {
-        vm.selectFork(optSepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
+        uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
+        vm.selectFork(sepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
         
         super.setUp();
 
@@ -583,78 +584,45 @@ contract ElectionListIntegrationTest is TestSetupIntegrations {
 //            ZKPASSPORT CHECK TESTS            //
 //////////////////////////////////////////////////
 contract ZKPassport_CheckTest is TestSetupIntegrations {
-    uint16 public checkMandateId;
+    uint16 public checkMandateAboveId;
+    uint16 public checkMandateBelowId;
     address public registryAddress;
 
     function setUp() public override {
-        // ZKPassport protocol pre-exists on sepolia.
+        // The only robust approach is to create fork BEFORE setup is run. 
+        uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
         vm.selectFork(sepoliaFork);
-        super.setUp();
 
-        checkMandateId = findMandateIdInOrg("ZKPassport Check: Check if a user is born in 1983.", daoMock);
+        // important:  // We created an actual proof in the registry for cedars proving he was born in 1983. So we can test the full integration on the fork, without mocking any part of the flow.   
+        
+        super.setUp();
+        checkMandateAboveId = findMandateIdInOrg("ZKPassport Check: Check if a user is above 18 years old.", daoMock);
+        checkMandateBelowId = findMandateIdInOrg("ZKPassport Check: Check if a user is below 18 years old.", daoMock);
         registryAddress = address(zkPassportRegistry);
     }
 
-    function test_ZKPassport_Check_Success() public {
-        // Mock the registry verification call
-        // Note: we are mocking verifyProof because we cannot generate a valid ZK proof in a test environment.
-        // We assume that the user HAS a valid passport and the verification logic in ZKPassport_PowersRegistry works as intended.
-        // This test validates that the mandate correctly calls the registry and handles the result.
-        
-        vm.mockCall(
-            registryAddress,
-            abi.encodeWithSelector(ZKPassport_PowersRegistry.verifyProof.selector),
-            abi.encode(true)
-        );
-
-        // Execute via DAO
-        // The mandate expects "address AccountToCheck" as input param
+    function test_ZKPassport_Check_Success() public { 
+        // Here we check of cedars is below 18, which should pass.
         vm.prank(cedars);
-        daoMock.request(checkMandateId, abi.encode(cedars), nonce, "Check Birthdate");
-        
-        // If request succeeds without revert, the test passes.
-        // Verify action state is Fulfilled (since it is an immediate execution mandate with no voting)
-        // Wait, 'request' returns actionId. 
-        // Is it immediate? 
-        // Config: allowedRole = max (public). No quorum. So it should be executed immediately if it passes checks?
-        // request() calls executeMandate(). executeMandate calls handleRequest.
-        // If handleRequest returns data, request emits ActionRequested.
-        // It does NOT automatically fulfill unless _replyPowers calls fulfill.
-        // ZKPassport_Check returns empty arrays in handleRequest.
-        // It calls _externalCall (empty) and _replyPowers (calls fulfill if targets.length > 0).
-        // Since targets is empty, it does NOT call fulfill.
-        // Wait, let's check ZKPassport_Check.sol again.
-        // (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1); 
-        // It creates arrays of length 1! containing 0/0/0?
-        // MandateUtilities.createEmptyArrays(1) creates arrays of length 1.
-        // targets[0] = address(0).
-        // If targets.length > 0, _replyPowers calls fulfill.
-        // So it WILL call fulfill.
-        // But fulfill checks: `if (targetsLength != values.length || targetsLength != calldatas.length)`.
-        // And `if (targetsLength > MAX_EXECUTIONS_LENGTH)`.
-        // And then loop execute. `targets[i].call`. address(0).call?
-        // address(0).call succeeds.
-        
-        // So the action should be Fulfilled.
+        uint256 actionId = daoMock.request(checkMandateAboveId, abi.encode(cedars), nonce, "Check Birthdate");
+
+        // check status of call.
+        uint8 status = uint8(daoMock.getActionState(actionId));
+        assertTrue(status == 7); // 7 = Fulfilled
     }
 
+    // Following tests are nonsense. (AI generated)
     function test_ZKPassport_Check_Revert_VerificationFailed() public {
-        // Mock verification failure
-        vm.mockCall(
-            registryAddress,
-            abi.encodeWithSelector(ZKPassport_PowersRegistry.verifyProof.selector),
-            abi.encode(false)
-        );
-
+        // Here we check of cedars is below 18, which should fail.
         vm.prank(cedars);
         vm.expectRevert("ZKPassport: Proof verification failed");
-        daoMock.request(checkMandateId, abi.encode(cedars), nonce, "Check Birthdate Fail");
+        daoMock.request(checkMandateBelowId, abi.encode(cedars), nonce, "Check Birthdate Fail");
     }
 
-    function test_ZKPassport_Check_Revert_WrongAccount() public {
-        // Try to check someone else's account
+    function test_ZKPassport_Check_Revert_NoRegistration() public {
+        // Try to check someone else's account. Which should fail. 
         vm.prank(alice);
-        vm.expectRevert("ZKPassport: Caller is not the account to check");
-        daoMock.request(checkMandateId, abi.encode(cedars), nonce, "Check Someone Else");
+        vm.expectRevert("No registration found");
+        daoMock.request(checkMandateAboveId, abi.encode(alice), nonce, "Check alice");
     }
 }

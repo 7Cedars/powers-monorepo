@@ -2769,6 +2769,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     ZKProof zkProof;
 
     function setUp() public override {
+        uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
         vm.selectFork(sepoliaFork); // options: only sepoliaFork 
 
         super.setUp();

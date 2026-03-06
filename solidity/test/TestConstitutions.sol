@@ -1015,21 +1015,40 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ZKPassport Check (ID 15)
+        // ZKPassport Check Above 18 (ID 15)
         mandateCounter++;
         inputParams = new string[](1);
         inputParams[0] = "address AccountToCheck";
         conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "ZKPassport Check: Check if a user is born in 1983.",
+                nameDescription: "ZKPassport Check: Check if a user is above 18 years old.",
                 targetMandate: getInitialisedAddress("ZKPassport_Check"),
                 config: abi.encode(
                     inputParams,
                     zkPassportRegistry, // Registry address
-                    0, // staleAfterSeconds (0 = no stale check for testing)
-                    bytes4(0x6ec786a4), // isBirthdateEqual(uint256,bytes)
-                    abi.encode(19830101) // 1983-01-01
+                    5 * 60 * 60, // stale after five hours (input in seconds). 
+                    bytes4(0xac9367d3), // isAgeAbove(uint256)
+                    abi.encode(18) // age to check
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ZKPassport Check below 18 (ID 16)
+        mandateCounter++; 
+        conditions.allowedRole = type(uint256).max; // Public
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ZKPassport Check: Check if a user is below 18 years old.",
+                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                config: abi.encode(
+                    inputParams,
+                    zkPassportRegistry, // Registry address
+                    5 * 60 * 60, // stale after five hours (input in seconds)  
+                    bytes4(0x48b6e1f0), // isAgeBelow(uint256)
+                    abi.encode(18) // age to check
                 ),
                 conditions: conditions
             })
