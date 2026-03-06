@@ -2799,8 +2799,8 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     } 
 
     function testSubmitProof() public {
-        vm.skip(true);
-
+        vm.skip(false);
+        
         ProofVerificationParams memory proof = zkProof.getProof();   
         bool isIDCard = false; 
 

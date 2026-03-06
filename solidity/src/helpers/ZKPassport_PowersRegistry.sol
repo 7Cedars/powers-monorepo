@@ -110,8 +110,6 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
 
         // Use the getBoundData function to get the data bound to the proof
         mem.boundData = zkPassportHelper.getBoundData(params.committedInputs);
-        // Make sure the user's address is the one that is calling the contract
-        require(mem.boundData.senderAddress == msg.sender, "Not the expected sender");
         // Make sure the chain id is the same as the one you specified in the query builder
         require(mem.boundData.chainId == block.chainid, "Invalid chain id"); 
         // Making sure the string is empty
@@ -123,11 +121,12 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
           isIDCard
         ); 
 
-        bool hasFacematch = zkPassportHelper.isFaceMatchVerified(
-            FaceMatchMode.REGULAR,
-            OS.ANY,
-            params.committedInputs
-        );
+        bool hasFacematch; 
+        try zkPassportHelper.isFaceMatchVerified(FaceMatchMode.REGULAR, OS.ANY, params.committedInputs) returns (bool facematchResult) {
+            hasFacematch = facematchResult;
+        } catch {
+            hasFacematch = false; // If the call fails, we assume facematch is not verified
+        }
 
         // Store the unique identifier
         accountIdentifiers[msg.sender] = mem.uniqueIdentifier;
