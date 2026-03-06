@@ -211,7 +211,7 @@ export default function VerificationPage() {
         writeContract({
           address: registryAddress,
           abi: ZKPassportPowersRegistry.abi,
-          functionName: "register", 
+          functionName: "registerProof", 
           args: [params],
         });
     } catch (error) {

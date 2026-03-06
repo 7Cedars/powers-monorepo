@@ -944,7 +944,7 @@ contract Deploy is DeploySetup {
         //                      ELECTORAL MANDATES                          //
         //////////////////////////////////////////////////////////////////////
 
-        // CLAIM MEMBER PARENT DAO // -- on the basis of request at ideas DAO and POAP ownership.
+        // CLAIM MEMBER PRIMARY DAO // -- on the basis of request at ideas DAO and POAP ownership.
         // Ideas DAO: request membership - statement of intent.
         inputParams = new string[](1);
         inputParams[0] = "uint256[] TokenIds";
