@@ -77,7 +77,7 @@ export default function VerificationPage() {
 
   useEffect(() => {
     if (!zkPassportRef.current) {
-      zkPassportRef.current = new ZKPassport("https://powers-git-develop-7cedars-projects.vercel.app/verifier");
+      zkPassportRef.current = new ZKPassport("https://powers-git-develop-7cedars-projects.vercel.app/verification");
     }
   }, []);
 
