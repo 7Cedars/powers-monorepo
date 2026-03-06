@@ -2802,9 +2802,10 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
         vm.skip(true);
 
         ProofVerificationParams memory proof = zkProof.getProof();   
+        bool isIDCard = false; 
 
         vm.prank(address(daoMock));
-        registryAddress.call(abi.encodeWithSelector(IZKPassport_PowersRegistry.registerProof.selector, proof));
+        registryAddress.call(abi.encodeWithSelector(IZKPassport_PowersRegistry.registerProof.selector, proof, isIDCard));
     }  
 }
 

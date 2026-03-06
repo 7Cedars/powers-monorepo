@@ -8,9 +8,11 @@ import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "@src/
 /// @notice Helper contract to verify and register ZKPassport identities for the Powers protocol.
 /// @author 7Cedars
 interface IZKPassport_PowersRegistry {
-    function registerProof(ProofVerificationParams calldata params) external returns (bytes32 identifier);
+    function registerProof(ProofVerificationParams calldata params, bool isIdCard) external returns (bytes32 identifier);
     function deleteProof() external;
-    function verifyProof(address account, uint256 staleAfterSeconds, bytes4 functionSelector, bytes calldata input) external view returns (bool);
+    function getDisclosedData(address account) external view returns (DisclosedData memory);
+    function getProofTimestamp(address account) external view returns (uint256);
+    function getIsFacematched(address account) external view returns (bool);
 }
 
 contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
@@ -21,9 +23,14 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
         uint256 proofTimestamp;
         BoundData boundData;
         bytes32 identifier; 
-
         bool success; 
     }
+
+    struct Disclosed {
+        DisclosedData disclosedData;
+        bool isFacematched;
+        uint256 timestamp;
+    } 
 
     //////////////////////////////////////////////////////////////
     //                        STORAGE                           //
@@ -36,13 +43,12 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     // Mapping from account address to unique passport identifier (e.g. hash of nullifier)
     mapping(address => bytes32) internal accountIdentifiers;
     
-    // Mapping from unique passport identifier to account address
-    // Used to prevent sybil attacks (one passport per account)
+    // Mapping from unique passport identifier to account address 
     mapping(bytes32 => address) internal identifierAccounts;
 
     // Mapping from unique identifier to proof verification parameters
-    mapping(bytes32 => ProofVerificationParams) internal accountProofs;
-
+    mapping(bytes32 => Disclosed) internal identifierToDisclosedData;
+ 
     // Domain and Scope for ZKPassport verification
     string public validDomain;
     string public validScope;
@@ -50,9 +56,8 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     //////////////////////////////////////////////////////////////
     //                        EVENTS                            //
     //////////////////////////////////////////////////////////////
-    event IdentityRegistered(address indexed account, bytes32 indexed identifier);
-    event IdentityMoved(bytes32 indexed identifier, address indexed oldAccount, address indexed newAccount);
-    event IdentityDeleted(bytes32 indexed identifier, address indexed oldAccount);
+    event IdentityRegistered(address indexed account, bytes32 indexed identifier); 
+    event IdentityDeleted(bytes32 indexed identifier, address indexed oldAccount); 
 
     //////////////////////////////////////////////////////////////
     //                     CONSTRUCTOR                          //
@@ -71,14 +76,15 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     }
 
     //////////////////////////////////////////////////////////////
-    //                  VERIFICATION LOGIC                      //
+    //            VERIFICATION AND REGISTRATION                 //
     //////////////////////////////////////////////////////////////
 
     /// @notice Verify a ZKPassport proof and register the identity and disclosed data.
     /// @param params The proof verification parameters from ZKPassport SDK. 
+    /// @param isIDCard A boolean indicating if the proof is for an ID card.
     /// @return identifier The unique identifier of the passport.
     function registerProof(
-        ProofVerificationParams calldata params
+        ProofVerificationParams calldata params, bool isIDCard
     ) external returns (bytes32 identifier) {
         Mem memory mem;
 
@@ -111,19 +117,34 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
         // Making sure the string is empty
         require(bytes(mem.boundData.customData).length == 0, "Custom data should be empty");
 
-        // if all checks pass, save proof and identifiers to state. 
-        // £NOTE this is a key difference from standard implmentation. 
-        // But proofs are shared on chain in standard implementation, so it should not be a problem to store them here.
-        // In this case, storing them allows for splitting the registration and checking steps, which is necessary for Powers integration.
+        // if all checks pass, retrieve disclosed data 
+        DisclosedData memory disclosedData = zkPassportHelper.getDisclosedData(
+          params.committedInputs,
+          isIDCard
+        ); 
+
+        bool hasFacematch = zkPassportHelper.isFaceMatchVerified(
+            FaceMatchMode.REGULAR,
+            OS.ANY,
+            params.committedInputs
+        );
 
         // Store the unique identifier
         accountIdentifiers[msg.sender] = mem.uniqueIdentifier;
         identifierAccounts[mem.uniqueIdentifier] = msg.sender;
-        accountProofs[mem.uniqueIdentifier] = params;
+        identifierToDisclosedData[mem.uniqueIdentifier] = Disclosed({
+            disclosedData: disclosedData,
+            isFacematched: hasFacematch,
+            timestamp: mem.proofTimestamp
+        }); 
 
         emit IdentityRegistered(msg.sender, mem.uniqueIdentifier);
         return mem.uniqueIdentifier;
     }
+
+    //////////////////////////////////////////////////////////////
+    //                      DELETE PROOF                        //
+    //////////////////////////////////////////////////////////////
 
     function deleteProof() external {
         bytes32 identifier = accountIdentifiers[msg.sender];
@@ -136,202 +157,29 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
 
         delete accountIdentifiers[msg.sender];
         delete identifierAccounts[identifier];
-        delete accountProofs[identifier];
-
+        delete identifierToDisclosedData[identifier];
         emit IdentityDeleted(identifier, msg.sender);
     }
 
     //////////////////////////////////////////////////////////////
-    //                   CHECK PROOFS                           //
+    //                      GETTER FUNCTIONS                    //
     //////////////////////////////////////////////////////////////
 
-    /// @notice Verify a specific proof (e.g. age over 18) for a caller's registered passport.
-    /// @param account The address of the account to check.
-    /// @param staleAfterSeconds The time in seconds after which the proof is considered stale/expired.
-    /// @param functionSelector The function selector of the specific check to perform (e.g. CHECK_AGE or CHECK_EQUAL).
-    /// @param input The encoded input parameters for the check (e.g. age threshold or field name and expected value).
-    /// @return verified Whether the proof verification succeeded.
-    function verifyProof(address account, uint256 staleAfterSeconds, bytes4 functionSelector, bytes calldata input) external view returns (bool) {
-        Mem memory mem;
-
-        mem.identifier = accountIdentifiers[account];
-        
-        // 1. check that the caller has a registered passport
-        require(mem.identifier != bytes32(0), "No registration found");
-
-        ProofVerificationParams memory params = accountProofs[mem.identifier];
-
-        // 2. check that the proof is not stale  
-        mem.proofTimestamp = zkPassportHelper.getProofTimestamp(params.proofVerificationData.publicInputs);
-        require(block.timestamp - mem.proofTimestamp < staleAfterSeconds, "Proof is stale");
-
-        // 3. call internal function according to functionSelector that will then call the ZKPassportHelper contract to verify the specific check.
-        /// @dev it is not the most elegant solution, but it is clear and robust. 
-        if (functionSelector == bytes4(keccak256("isAgeAbove(uint8,bytes)"))) {
-            mem.success = _verifyAgeAbove(input, params);
-        } else if (functionSelector == bytes4(keccak256("isAgeAboveOrEqual(uint8,bytes)"))) {
-            mem.success = _verifyAgeAboveOrEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isAgeBelow(uint8,bytes)"))) {
-            mem.success = _verifyAgeBelow(input, params);
-        } else if (functionSelector == bytes4(keccak256("isAgeBelowOrEqual(uint8,bytes)"))) {
-            mem.success = _verifyAgeBelowOrEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isAgeBetween(uint8,uint8,bytes)"))) {
-            mem.success = _verifyAgeBetween(input, params);
-        } else if (functionSelector == bytes4(keccak256("isAgeEqual(uint8,bytes)"))) {
-            mem.success = _verifyAgeEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isBirthdateAfter(uint256,bytes)"))) {
-            mem.success = _verifyBirthdateAfter(input, params);
-        } else if (functionSelector == bytes4(keccak256("isBirthdateAfterOrEqual(uint256,bytes)"))) {
-            mem.success = _verifyBirthdateAfterOrEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isBirthdateBefore(uint256,bytes)"))) {
-            mem.success = _verifyBirthdateBefore(input, params);
-        } else if (functionSelector == bytes4(keccak256("isBirthdateBeforeOrEqual(uint256,bytes)"))) {
-           mem.success = _verifyBirthdateBeforeOrEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isBirthdateBetween(uint256,uint256,bytes)"))) {
-            mem.success = _verifyBirthdateBetween(input, params);
-        } else if (functionSelector == bytes4(keccak256("isBirthdateEqual(uint256,bytes)"))) { 
-            mem.success = _verifyBirthdateEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isExpiryDateAfter(uint256,bytes)"))) {
-            mem.success = _verifyExpiryDateAfter(input, params);
-        } else if (functionSelector == bytes4(keccak256("isExpiryDateAfterOrEqual(uint256,bytes)"))) {
-            mem.success = _verifyExpiryDateAfterOrEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isExpiryDateBefore(uint256,bytes)"))) {
-            mem.success = _verifyExpiryDateBefore(input, params);
-        } else if (functionSelector == bytes4(keccak256("isExpiryDateBeforeOrEqual(uint256,bytes)"))) {
-            mem.success = _verifyExpiryDateBeforeOrEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isExpiryDateBetween(uint256,uint256,bytes)"))) {
-            mem.success = _verifyExpiryDateBetween(input, params);
-        } else if (functionSelector == bytes4(keccak256("isExpiryDateEqual(uint256,bytes)"))) {
-            mem.success = _verifyExpiryDateEqual(input, params);
-        } else if (functionSelector == bytes4(keccak256("isFaceMatchVerified(uint8,uint8,bytes)"))) {
-            mem.success = _verifyFaceMatchVerified(input, params);
-        } else if (functionSelector == bytes4(keccak256("isIssuingCountryIn(string[],bytes)"))) {
-            mem.success = _verifyIssuingCountryIn(input, params);
-        } else if (functionSelector == bytes4(keccak256("isIssuingCountryOut(string[],bytes)"))) {
-            mem.success = _verifyIssuingCountryOut(input, params);
-        } else if (functionSelector == bytes4(keccak256("isNationalityIn(string[],bytes)"))) {
-            mem.success = _verifyNationalityIn(input, params);
-        } else if (functionSelector == bytes4(keccak256("isNationalityOut(string[],bytes)"))) {
-            mem.success = _verifyNationalityOut(input, params);
-        } else {
-            revert("Unsupported function selector");
-        }
-
-        return mem.success;
+    function getDisclosedData(address account) external view returns (DisclosedData memory) {
+        bytes32 identifier = accountIdentifiers[account];
+        require(identifier != bytes32(0), "No registration found");
+        return identifierToDisclosedData[identifier].disclosedData;
     }
 
-    function _verifyAgeAbove(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint8 age = abi.decode(input, (uint8));
-        return zkPassportHelper.isAgeAbove(age, params.committedInputs);
+    function getProofTimestamp(address account) external view returns (uint256) {
+        bytes32 identifier = accountIdentifiers[account];
+        require(identifier != bytes32(0), "No registration found");
+        return identifierToDisclosedData[identifier].timestamp;
     }
 
-    function _verifyAgeAboveOrEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint8 age = abi.decode(input, (uint8));
-        return zkPassportHelper.isAgeAboveOrEqual(age, params.committedInputs);
-    }
-
-    function _verifyAgeBelow(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint8 age = abi.decode(input, (uint8));
-        return zkPassportHelper.isAgeBelow(age, params.committedInputs);
-    }
-
-    function _verifyAgeBelowOrEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint8 age = abi.decode(input, (uint8));
-        return zkPassportHelper.isAgeBelowOrEqual(age, params.committedInputs);
-    }
-
-    function _verifyAgeBetween(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        (uint8 ageLower, uint8 ageUpper) = abi.decode(input, (uint8, uint8));
-        return zkPassportHelper.isAgeBetween(ageLower, ageUpper, params.committedInputs);
-    }
-
-    function _verifyAgeEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint8 age = abi.decode(input, (uint8));
-        return zkPassportHelper.isAgeEqual(age, params.committedInputs);
-     }
-
-    function _verifyBirthdateAfter(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isBirthdateAfter(timestamp, params.committedInputs);
-    }
-
-    function _verifyBirthdateAfterOrEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isBirthdateAfterOrEqual(timestamp, params.committedInputs);
-    }
-
-    function _verifyBirthdateBefore(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isBirthdateBefore(timestamp, params.committedInputs);
-    }
-
-    function _verifyBirthdateBeforeOrEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isBirthdateBeforeOrEqual(timestamp, params.committedInputs);
-    }
-
-    function _verifyBirthdateBetween(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        (uint256 timestampLower, uint256 timestampUpper) = abi.decode(input, (uint256, uint256)); 
-        return zkPassportHelper.isBirthdateBetween(timestampLower, timestampUpper, params.committedInputs);
-    }
-
-    function _verifyBirthdateEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isBirthdateEqual(timestamp, params.committedInputs);
-    }
-
-    function _verifyExpiryDateAfter(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isExpiryDateAfter(timestamp, params.committedInputs);
-    }
-
-    function _verifyExpiryDateAfterOrEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isExpiryDateAfterOrEqual(timestamp, params.committedInputs);
-    }
-
-    function _verifyExpiryDateBefore(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isExpiryDateBefore(timestamp, params.committedInputs);
-    }
-
-    function _verifyExpiryDateBeforeOrEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isExpiryDateBeforeOrEqual(timestamp, params.committedInputs);
-    }
-
-    function _verifyExpiryDateBetween(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        (uint256 timestampLower, uint256 timestampUpper) = abi.decode(input, (uint256, uint256)); 
-        return zkPassportHelper.isExpiryDateBetween(timestampLower, timestampUpper, params.committedInputs);
-    }
-
-    function _verifyExpiryDateEqual(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
-        return zkPassportHelper.isExpiryDateEqual(timestamp, params.committedInputs);
-    }
-
-    function _verifyFaceMatchVerified(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        (FaceMatchMode mode, OS os) = abi.decode(input, (FaceMatchMode, OS)); 
-        return zkPassportHelper.isFaceMatchVerified(mode, os, params.committedInputs);
-    }
-
-    function _verifyIssuingCountryIn(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        string[] memory countries = abi.decode(input, (string[])); 
-        return zkPassportHelper.isIssuingCountryIn(countries, params.committedInputs);
-    }
-
-    function _verifyIssuingCountryOut(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        string[] memory countries = abi.decode(input, (string[])); 
-        return zkPassportHelper.isIssuingCountryOut(countries, params.committedInputs);
-    }
-
-    function _verifyNationalityIn(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        string[] memory nationalities = abi.decode(input, (string[])); 
-        return zkPassportHelper.isNationalityIn(nationalities, params.committedInputs);
-    }
-
-    function _verifyNationalityOut(bytes calldata input, ProofVerificationParams memory params) internal view returns (bool) {
-        string[] memory nationalities = abi.decode(input, (string[])); 
-        return zkPassportHelper.isNationalityOut(nationalities, params.committedInputs);
+    function getIsFacematched(address account) external view returns (bool) {
+        bytes32 identifier = accountIdentifiers[account];
+        require(identifier != bytes32(0), "No registration found");
+        return identifierToDisclosedData[identifier].isFacematched;
     }
 }

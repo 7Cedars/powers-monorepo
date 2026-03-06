@@ -586,6 +586,7 @@ contract ElectionListIntegrationTest is TestSetupIntegrations {
 contract ZKPassport_CheckTest is TestSetupIntegrations {
     uint16 public checkMandateAboveId;
     uint16 public checkMandateBelowId;
+    uint16 public checkMandateNationalityId;
     address public registryAddress;
 
     function setUp() public override {
@@ -598,13 +599,14 @@ contract ZKPassport_CheckTest is TestSetupIntegrations {
         super.setUp();
         checkMandateAboveId = findMandateIdInOrg("ZKPassport Check: Check if a user is above 18 years old.", daoMock);
         checkMandateBelowId = findMandateIdInOrg("ZKPassport Check: Check if a user is below 18 years old.", daoMock);
+        checkMandateNationalityId = findMandateIdInOrg("ZKPassport Check: Check if a user is from GBR.", daoMock);
         registryAddress = address(zkPassportRegistry);
     }
 
     function test_ZKPassport_Check_Success() public { 
         // Here we check of cedars is below 18, which should pass.
         vm.prank(cedars);
-        uint256 actionId = daoMock.request(checkMandateAboveId, abi.encode(cedars), nonce, "Check Birthdate");
+        uint256 actionId = daoMock.request(checkMandateNationalityId, abi.encode(cedars), nonce, "Check Nationality");
 
         // check status of call.
         uint8 status = uint8(daoMock.getActionState(actionId));

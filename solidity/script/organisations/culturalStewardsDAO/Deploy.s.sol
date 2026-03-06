@@ -623,6 +623,7 @@ contract Deploy is DeploySetup {
                     inputParams,
                     helperConfig.getZkPassportRootRegistry(block.chainid), // the address of the ZK-Passport root registry contract, which is needed to verify the ZKPs. This is set in the helper config for each chain.
                     60 * 60 * 24 * 90, // the time window in which the ZKP proof needs to have been created. This is three months.  
+                    false, // no facematch needed for now 
                     ZKPassportHelper.isAgeAboveOrEqual.selector,  
                     abi.encode(18) // the input for the zkp check (age > 18) 
                     ),
@@ -643,6 +644,7 @@ contract Deploy is DeploySetup {
                     inputParams,
                     helperConfig.getZkPassportRootRegistry(block.chainid), // the address of the ZK-Passport root registry contract, which is needed to verify the ZKPs. This is set in the helper config for each chain.
                     60 * 60 * 24 * 90, // the time window in which the ZKP proof needs to have been created. This is three months.  
+                    false, // no facematch needed for now
                     ZKPassportHelper.isIssuingCountryIn.selector,
                     abi.encode(["GBR"]) // the input for the zkp check (issuing country = GBR) 
                     ),
@@ -972,7 +974,7 @@ contract Deploy is DeploySetup {
                 config: abi.encode(
                     address(actvityToken), // soulbound token contract
                     1, // member role Id
-                    5, // checks if token is from address that is an Ideas sub-DAO
+                    3, // checks if token is from address that is an Physical sub-DAO
                     daysToBlocks(180, helperConfig.getBlocksPerHour(block.chainid)), // look back period in blocks = 30 days.
                     2 // number of tokens required
                 ),
@@ -2860,6 +2862,7 @@ contract Deploy is DeploySetup {
                     inputParams,
                     helperConfig.getZkPassportRootRegistry(block.chainid), // the address of the ZK-Passport root registry contract, which is needed to verify the ZKPs. This is set in the helper config for each chain.
                     60 * 60 * 24 * 90, // the time window in which the ZKP proof needs to have been created. This is three months.
+                    false, // facematch not required (for now) 
                     ZKPassportHelper.isAgeAboveOrEqual.selector,  
                     abi.encode(18) // the input for the zkp check (age > 18) 
                     ),

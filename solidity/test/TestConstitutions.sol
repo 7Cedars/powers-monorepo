@@ -1015,7 +1015,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ZKPassport Check Above 18 (ID 15)
+        // ZKPassport Check Above 18  
         mandateCounter++;
         inputParams = new string[](1);
         inputParams[0] = "address AccountToCheck";
@@ -1028,6 +1028,7 @@ contract TestConstitutions is Test {
                     inputParams,
                     zkPassportRegistry, // Registry address
                     5 * 60 * 60, // stale after five hours (input in seconds). 
+                    false, // facematch not required
                     bytes4(0xac9367d3), // isAgeAbove(uint256)
                     abi.encode(18) // age to check
                 ),
@@ -1036,7 +1037,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ZKPassport Check below 18 (ID 16)
+        // ZKPassport Check below 18  
         mandateCounter++; 
         conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
@@ -1047,8 +1048,35 @@ contract TestConstitutions is Test {
                     inputParams,
                     zkPassportRegistry, // Registry address
                     5 * 60 * 60, // stale after five hours (input in seconds)  
+                    false, // facematch not required 
                     bytes4(0x48b6e1f0), // isAgeBelow(uint256)
                     abi.encode(18) // age to check
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ZKPassport Check Above 18
+        string[] memory nationalitiesToCheck = new string[](2);
+        nationalitiesToCheck[0] = "GBR";
+        nationalitiesToCheck[1] = "ABW";
+
+        mandateCounter++;
+        inputParams = new string[](1);
+        inputParams[0] = "address AccountToCheck";
+        conditions.allowedRole = type(uint256).max; // Public
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ZKPassport Check: Check if a user is from GBR.",
+                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                config: abi.encode(
+                    inputParams,
+                    zkPassportRegistry, // Registry address
+                    5 * 60 * 60, // stale after five hours (input in seconds).
+                    false, // facematch not required  
+                    bytes4(0x103bd3fd), // isNationalityIn(string[],bytes)
+                    abi.encode(nationalitiesToCheck) // nationality to check
                 ),
                 conditions: conditions
             })
