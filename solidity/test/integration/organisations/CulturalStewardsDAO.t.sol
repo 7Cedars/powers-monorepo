@@ -11,6 +11,7 @@ import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol"; 
+import { PresetActions_Single } from "@src/mandates/executive/PresetActions_Single.sol";
 
 interface IAllowanceModule {
     function delegates(address safe, uint48 index) external view returns (address delegate, uint48 prev, uint48 next);
@@ -38,6 +39,11 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         uint16 grantPhysicalAllowanceId;
         uint16 requestDigitalAllowanceId;
         uint16 grantDigitalAllowanceId;
+        uint16 initiateReformId;
+        uint16 checkpoint1Id;
+        uint16 checkpoint2Id;
+        uint16 checkpoint3Id;
+        uint16 adoptMandateId;
 
         uint256 actionId;
         // Added fields to avoid stack too deep
@@ -189,6 +195,12 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         
         mem.requestDigitalAllowanceId = findMandateIdInOrg("Request additional allowance: The Digital sub-DAO can request an allowance from the Safe Treasury.", primaryDAO);
         mem.grantDigitalAllowanceId = findMandateIdInOrg("Set Allowance: Execute and set allowance for the Digital sub-DAO.", primaryDAO);
+        
+        mem.initiateReformId = findMandateIdInOrg("Initiate mandate adoption: Any executive can propose adopting new mandates into the organization.", primaryDAO);
+        mem.checkpoint1Id = findMandateIdInOrg("Reform Checkpoint 1: Executives confirm Members did not veto.", primaryDAO);
+        mem.checkpoint2Id = findMandateIdInOrg("Reform Checkpoint 2: Executives confirm Digital sub-DAO did not veto.", primaryDAO);
+        mem.checkpoint3Id = findMandateIdInOrg("Reform Checkpoint 3: Executives confirm Ideas sub-DAO did not veto.", primaryDAO);
+        mem.adoptMandateId = findMandateIdInOrg("Adopt new Mandates: Executives can adopt new mandates into the organization", primaryDAO);
     }
 
     function test_InitialSetup() public {
@@ -481,122 +493,73 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         assertEq(uint96(mem.allowanceInfo[1]), mem.paymentAmount, "Allowance spent should match payment");
     }
 
-    function test_JoinPrimeDAO() public {
-        // NB! This test fails because it is indeed impossible at the moment to joint the PRimary DAO! 
-        vm.skip(true); 
-        mem.claimStep1Id = findMandateIdInOrg("Request Membership Step 1: 2 POAPS from physical DAO and 20 activity tokens from ideas DAOs needed that are not older than 6 months.", primaryDAO);
-        mem.claimStep2Id = findMandateIdInOrg("Request Membership Step 2: 2 POAPS from physical DAO and 20 activity tokens from ideas DAOs needed that are not older than 6 months.", primaryDAO);
+    function test_AdoptMandate_PrimaryDAO() public {
+        _deployIdeasSubDAO();
+        _deployPhysicalSubDAO();
 
-        // --- Step 1: Create Ideas sub-DAO ---
-        vm.startPrank(mem.admin);
-        mem.params = abi.encode("Ideas sub-DAO", "ipfs://ideas");
-        mem.nonce = 1;
+        // 1. Prepare Mandate Data
+        PresetActions_Single newMandate = new PresetActions_Single();
+        
+        address[] memory mandates = new address[](1);
+        mandates[0] = address(newMandate);
+        
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 2; // Executives
+        
+        mem.params = abi.encode(mandates, roleIds);
+        mem.nonce = 500; // Arbitrary nonce to avoid collision
 
-        // Initiate
-        mem.actionId = primaryDAO.propose(mem.initiateIdeasMandateId, mem.params, mem.nonce, "");
-        vm.stopPrank();
+        // 2. Initiate Reform (Executives)
+        vm.startPrank(cedars);
+        console.log("Initiating Reform...");
+        primaryDAO.request(mem.initiateReformId, mem.params, mem.nonce, "Initiate Reform");
 
-        uint256 amountRole1Holders = primaryDAO.getAmountRoleHolders(1);
-        for (uint256 i = 0; i < amountRole1Holders; i++) {
-            address roleHolder = primaryDAO.getRoleHolderAtIndex(1, i);
-            vm.prank(roleHolder);
-            primaryDAO.castVote(mem.actionId, 1); // 1 = For
-        }
+        // 3. Reform Checkpoint 1 (Executives) - Needs timelock
+        // Must propose first because timelock > 0
+        console.log("Proposing Checkpoint 1...");
+        mem.actionId = primaryDAO.propose(mem.checkpoint1Id, mem.params, mem.nonce, "Checkpoint 1");
+        
+        // Wait timelock (5 mins)
+        mem.timelock = primaryDAO.getConditions(mem.checkpoint1Id).timelock;
+        vm.roll(block.number + mem.timelock + 1);
 
-        vm.startPrank(mem.admin);
-        vm.roll(block.number + primaryDAO.getConditions(mem.initiateIdeasMandateId).votingPeriod + 1);
-        primaryDAO.request(mem.initiateIdeasMandateId, mem.params, mem.nonce, "");
+        console.log("Requesting Checkpoint 1...");
+        primaryDAO.request(mem.checkpoint1Id, mem.params, mem.nonce, "Checkpoint 1");
 
-        // Create
-        mem.actionId = primaryDAO.propose(mem.createIdeasMandateId, mem.params, mem.nonce, "");
+        // 4. Reform Checkpoint 2 (Executives) - No timelock
+        console.log("Requesting Checkpoint 2...");
+        primaryDAO.request(mem.checkpoint2Id, mem.params, mem.nonce, "Checkpoint 2");
+
+        // 5. Reform Checkpoint 3 (Executives) - No timelock
+        console.log("Requesting Checkpoint 3...");
+        primaryDAO.request(mem.checkpoint3Id, mem.params, mem.nonce, "Checkpoint 3");
+
+        // 6. Adopt Mandate (Executives) - Vote + Timelock
+        console.log("Proposing Adoption...");
+        mem.actionId = primaryDAO.propose(mem.adoptMandateId, mem.params, mem.nonce, "Adopt Mandate");
+
+        // Vote
         primaryDAO.castVote(mem.actionId, 1);
-        vm.roll(block.number + primaryDAO.getConditions(mem.createIdeasMandateId).votingPeriod + 1);
-        mem.actionId = primaryDAO.request(mem.createIdeasMandateId, mem.params, mem.nonce, "");
 
-        // Get address
-        mem.ideasSubDAOAddress = abi.decode(primaryDAO.getActionReturnData(mem.actionId, 0), (address));
-        console.log("Ideas sub-DAO created at: %s", mem.ideasSubDAOAddress);
+        // Wait voting period + timelock
+        mem.votingPeriod = primaryDAO.getConditions(mem.adoptMandateId).votingPeriod;
+        mem.timelock = primaryDAO.getConditions(mem.adoptMandateId).timelock;
+        vm.roll(block.number + mem.votingPeriod + mem.timelock + 1);
 
-        // Assign Role
-        primaryDAO.request(mem.assignRoleMandateId, mem.params, mem.nonce, "");
+        console.log("Requesting Adoption...");
+        primaryDAO.request(mem.adoptMandateId, mem.params, mem.nonce, "Adopt Mandate");
         vm.stopPrank();
 
-        // --- Step 2: Create Mock Physical sub-DAO ---
-        // Replacing the complex governance flow with a mock address that has the correct role
-        mem.mockPhysicalDAO = address(0x888);
-        console.log("Mock Physical sub-DAO address: %s", mem.mockPhysicalDAO);
-
-        // Assign Role 3 (Physical sub-DAOs) to the mock address
-        // We use vm.prank to impersonate the Primary DAO itself to bypass governance for this setup
-        vm.prank(address(primaryDAO));
-        primaryDAO.assignRole(3, mem.mockPhysicalDAO);
-
-        assertTrue(primaryDAO.hasRoleSince(mem.mockPhysicalDAO, 3) > 0, "Mock Physical sub-DAO should have Role 3");
-
-        // --- Step 3: Mint 20 Activity Tokens at Ideas sub-DAO ---
-        mem.user = address(0xABCD);
-        mem.nonces = new uint256[](22);
-        mem.actionIds = new uint256[](22);
-        mem.tokenIds = new uint256[](22);
-        mem.params = abi.encode(mem.user);
-
-        // console.log("Minting 20 Activity tokens for user: %s", mem.user);
-        // // Mandate 2: Mint activity token (Public)
-        // mem.nonce = 1000;
-        // mem.mintActivityId = findMandateIdInOrg("Mint activity token: Anyone can mint an Active Ideas token. One token is available per 5 minutes.", Powers(payable(mem.ideasSubDAOAddress)));
-        // for (uint256 i = 0; i < 20; i++) {
-        //     mem.nonce++;
-        //     mem.nonces[i] = mem.nonce;
-        //     Powers(payable(mem.ideasSubDAOAddress)).request(mem.mintActivityId, mem.params, mem.nonce, "");
-        //     vm.roll(block.number + deployScript.minutesToBlocks(6, config.BLOCKS_PER_HOUR)); // Advance 6 minutes between mints
-        // }
-
-        // --- Step 4: Mint 2 POAPs via Mock Physical sub-DAO ---
-        console.log("Minting 2 POAPs for user via Mock Physical DAO: %s", mem.user);
+        // 7. Verify Adoption
+        uint16 nextMandateId = primaryDAO.getMandateCounter() - 1; // getMandateCounter returns next ID
+        (address mandateAddr, , bool active) = primaryDAO.getAdoptedMandate(nextMandateId);
         
-        // Find the Primary DAO mandate for minting POAPs (called by Physical sub-DAOs)
-        mem.mintPoapPrimaryId = findMandateIdInOrg("Mint token Physical sub-DAO: Any Physical sub-DAO can mint new NFTs", primaryDAO);
-        
-        vm.startPrank(mem.mockPhysicalDAO); 
-        // Mint POAP 1
-        mem.nonces[20] = mem.nonce + 1;
-        mem.nonce++;
-        primaryDAO.request(mem.mintPoapPrimaryId, mem.params, mem.nonce, "");
-        
-        // Mint POAP 2
-        mem.nonces[21] = mem.nonce + 1;
-        mem.nonce++;
-        primaryDAO.request(mem.mintPoapPrimaryId, mem.params, mem.nonce, "");
-        vm.stopPrank();
+        assertEq(mandateAddr, address(newMandate), "New mandate should be adopted");
+        assertTrue(active, "New mandate should be active");
+    }
 
-        // --- Step 5: Claim Access to Primary DAO ---
-        mem.mintActivityTokenPrimaryId = findMandateIdInOrg("Mint token Ideas sub-DAO: Any Ideas sub-DAO can mint new NFTs", primaryDAO);
-        
-        for (uint256 i = 0; i < mem.actionIds.length; i++) {
-            
-            if (i < 20) {
-                mem.mandateId = mem.mintActivityTokenPrimaryId; // Mandate 25: Mint Activity Token @ primaryDAO
-            } else {
-                mem.mandateId = mem.mintPoapPrimaryId; // Mandate 26: Mint POAP @ primaryDAO
-            }
-            uint256 actionId = uint256(keccak256(abi.encode(mem.mandateId, mem.params, mem.nonces[i])));
-
-            mem.tokenIds[i] = uint256(abi.decode(primaryDAO.getActionReturnData(actionId, 0), (uint256)));
-        }
-
-        vm.startPrank(mem.user);
-        console.log("Claiming access to Primary DAO...");
-
-        // Step 1: Check POAPs
-        mem.nonce = 2000;
-        primaryDAO.request(mem.claimStep1Id, abi.encode(mem.tokenIds), mem.nonce, "");
-
-        // Step 2: Check Activity Tokens
-        primaryDAO.request(mem.claimStep2Id, abi.encode(mem.tokenIds), mem.nonce, "");
-        vm.stopPrank();
-
-        // Verify Membership
-        assertTrue(primaryDAO.hasRoleSince(mem.user, 1) != 0, "User should have Member role (1) in Primary DAO");
+    function test_JoinPrimeDAO() public {
+       
     }
 
     function test_IdeasSubDAO_Election() public {

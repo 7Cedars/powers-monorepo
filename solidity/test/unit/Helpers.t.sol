@@ -2804,7 +2804,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
         ProofVerificationParams memory proof = zkProof.getProof();   
 
         vm.prank(address(daoMock));
-        registryAddress.call(abi.encodeWithSelector(IZKPassport_PowersRegistry.register.selector, proof));
+        registryAddress.call(abi.encodeWithSelector(IZKPassport_PowersRegistry.registerProof.selector, proof));
     }  
 }
 

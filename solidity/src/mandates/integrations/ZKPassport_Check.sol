@@ -30,7 +30,13 @@ contract ZKPassport_Check is Mandate {
     //////////////////////////////////////////////////////////////
     constructor() {
         bytes memory configParams =
-            abi.encode("string[] inputParams", "address registry", "uint256 staleAfterSeconds", "bytes4 functionSelector", "bytes input");
+            abi.encode(
+                "string[] inputParams", // NB: these input params are not used in the actual contract. By changing the inputParams, the mandate can be places in a broader governance flow. See StatementOfIntent.sol for a similar approach.  
+                "address registry", 
+                "uint256 staleAfterSeconds", 
+                "bytes4 functionSelector", 
+                "bytes input"
+                );
         emit Mandate__Deployed(configParams);
     }
 
