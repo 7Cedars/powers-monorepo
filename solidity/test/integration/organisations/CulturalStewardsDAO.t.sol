@@ -214,6 +214,10 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         assertEq(mem.delegateAddr, address(digitalSubDAO), "Digital sub-DAO should be a delegate on Allowance Module");
     }
 
+    function test_adoptNewMandatesPrimaryDAO() public {
+        
+    }
+
     function test_CreateAndRevokeIdeasSubDAO() public {
         _deployIdeasSubDAO();
 

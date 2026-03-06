@@ -612,10 +612,10 @@ contract ZKPassport_CheckTest is TestSetupIntegrations {
     }
 
     // Following tests are nonsense. (AI generated)
-    function test_ZKPassport_Check_Revert_VerificationFailed() public {
+    function test_ZKPassport_Check_Fail() public {
         // Here we check of cedars is below 18, which should fail.
         vm.prank(cedars);
-        vm.expectRevert("ZKPassport: Proof verification failed");
+        vm.expectRevert("Proof verification failed");
         daoMock.request(checkMandateBelowId, abi.encode(cedars), nonce, "Check Birthdate Fail");
     }
 

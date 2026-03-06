@@ -172,7 +172,7 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
             abi.encodePacked(
                 functionSelector,
                 input, // input should be abi.encoded arguments
-                abi.encode(params.committedInputs) // committedInputs is bytes calldata, so it needs to be encoded as bytes
+                params.committedInputs 
             )
         );
         
