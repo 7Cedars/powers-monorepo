@@ -77,7 +77,7 @@ export default function VerificationPage() {
 
   useEffect(() => {
     if (!zkPassportRef.current) {
-      zkPassportRef.current = new ZKPassport("https://powers-git-develop-7cedars-projects.vercel.app/verifier");
+      zkPassportRef.current = new ZKPassport("https://powers-git-develop-7cedars-projects.vercel.app/verification");
     }
   }, []);
 
@@ -131,7 +131,8 @@ export default function VerificationPage() {
               }
           }
       });
-
+      // builder.disclose("facematch"); // Always request facematch for enhanced verification 
+      builder.disclose("document_type"); // Always disclose document type for on-chain verification logic
       builder.bind("user_address", address);
       builder.bind("chain", "ethereum_sepolia");
       builder.bind("custom_data", "");
@@ -169,8 +170,8 @@ export default function VerificationPage() {
       onResult(async ({ result, uniqueIdentifier, verified, queryResultErrors }: any) => {
           console.log("Result of the query", result);
           if (generatedProof && verified) {
-              // const isIDCard = result.document_type?.disclose?.result !== "passport";
-              verifyOnChain(generatedProof);
+              const isIDCard = result.document_type?.disclose?.result !== "passport";
+              verifyOnChain(generatedProof, isIDCard);
           }
       });
 
@@ -187,7 +188,7 @@ export default function VerificationPage() {
     }
   };
 
-  const verifyOnChain = (proofResult: ProofResult) => {
+  const verifyOnChain = (proofResult: ProofResult, isIDCard: boolean) => {
     if (!zkPassportRef.current) return;
 
     let registryAddress: `0x${string}`;
@@ -211,8 +212,8 @@ export default function VerificationPage() {
         writeContract({
           address: registryAddress,
           abi: ZKPassportPowersRegistry.abi,
-          functionName: "register", 
-          args: [params],
+          functionName: "registerProof", 
+          args: [params, isIDCard],
         });
     } catch (error) {
         console.error("Error preparing verification:", error);

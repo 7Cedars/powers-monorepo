@@ -11,7 +11,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
 
-// import { console2 } from "forge-std/console2.sol"; // remove before deploying.
+import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
 /**
  * @title GovernedToken_BurnToAccess
@@ -33,10 +33,18 @@ contract GovernedToken_BurnToAccess is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        (string[] memory params, ) = abi.decode(getConfig(msg.sender, index), (string[], address));
-
-        inputParams = abi.encode(params, "uint256 tokenId");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        console2.log("waypoint 1");
+        (string[] memory params, ) = abi.decode(config, (string[], address));
+        console2.log("waypoint 2");
+        string[] memory newParams = new string[](params.length + 1);
+        console2.log("waypoint 3");
+        for (uint256 i = 0; i < params.length; i++) {
+            newParams[i] = params[i];
+        }
+        console2.log("waypoint 4");
+        newParams[params.length] = "uint256 tokenId";
+        console2.log("waypoint 5");
+        super.initializeMandate(index, nameDescription, abi.encode(newParams), config);
     }
 
     function handleRequest(

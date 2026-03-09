@@ -56,7 +56,7 @@ When asked to design a governance structure, follow the **5-Step Process** (deta
 2.  **Inventory**: List assets, actions, roles, and their relationships.
 3.  **Design**: Map governance flows to execute actions and assign roles.
 4.  **Spec**: Create a `.mdx` specification in `documentation/powers/docs/pages/organisations`.
-5.  **Implement**: Create a Solidity deploy script in `solidity/script/deployOrganisations`.
+5.  **Implement**: Create a Solidity deploy script in `solidity/script/organisations`.
 
 ### B. Smart Contract Development
 -   **Refactoring**: When refactoring contracts (e.g., `Mandate.sol`), ensure you update related tests in `test/`.

@@ -4,13 +4,17 @@ pragma solidity ^0.8.26;
 import { DisclosedData, ProofVerificationParams, BoundData } from "@zkpassport/circuits/src/Types.sol";
 import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "@src/interfaces/IZKPassport.sol";
 
+import { console } from "forge-std/console.sol"; // only for testing purposes.
+
 /// @title ZKPassport Powers Registry
 /// @notice Helper contract to verify and register ZKPassport identities for the Powers protocol.
 /// @author 7Cedars
 interface IZKPassport_PowersRegistry {
-    function register(ProofVerificationParams calldata params) external returns (bytes32 identifier);
-    function deleteRegistration() external;
-    function verifyProof(address account, uint256 staleAfterSeconds, bytes4 functionSelector, bytes calldata input) external view returns (bool);
+    function registerProof(ProofVerificationParams calldata params, bool isIdCard) external returns (bytes32 identifier);
+    function deleteProof() external;
+    function getDisclosed(address account) external view returns (DisclosedData memory);
+    function getProofTimestamp(address account) external view returns (uint256);
+    function getIsFacematched(address account) external view returns (bool);
 }
 
 contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
@@ -21,9 +25,14 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
         uint256 proofTimestamp;
         BoundData boundData;
         bytes32 identifier; 
-
         bool success; 
     }
+
+    struct Disclosed {
+        DisclosedData disclosedData;
+        bool isFacematched;
+        uint256 timestamp;
+    } 
 
     //////////////////////////////////////////////////////////////
     //                        STORAGE                           //
@@ -36,13 +45,12 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     // Mapping from account address to unique passport identifier (e.g. hash of nullifier)
     mapping(address => bytes32) internal accountIdentifiers;
     
-    // Mapping from unique passport identifier to account address
-    // Used to prevent sybil attacks (one passport per account)
+    // Mapping from unique passport identifier to account address 
     mapping(bytes32 => address) internal identifierAccounts;
 
     // Mapping from unique identifier to proof verification parameters
-    mapping(bytes32 => ProofVerificationParams) internal accountProofs;
-
+    mapping(bytes32 => Disclosed) internal identifierToDisclosedData;
+ 
     // Domain and Scope for ZKPassport verification
     string public validDomain;
     string public validScope;
@@ -50,9 +58,8 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     //////////////////////////////////////////////////////////////
     //                        EVENTS                            //
     //////////////////////////////////////////////////////////////
-    event IdentityRegistered(address indexed account, bytes32 indexed identifier);
-    event IdentityMoved(bytes32 indexed identifier, address indexed oldAccount, address indexed newAccount);
-    event IdentityDeleted(bytes32 indexed identifier, address indexed oldAccount);
+    event IdentityRegistered(address indexed account, bytes32 indexed identifier); 
+    event IdentityDeleted(bytes32 indexed identifier, address indexed oldAccount); 
 
     //////////////////////////////////////////////////////////////
     //                     CONSTRUCTOR                          //
@@ -71,14 +78,15 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     }
 
     //////////////////////////////////////////////////////////////
-    //                  VERIFICATION LOGIC                      //
+    //            VERIFICATION AND REGISTRATION                 //
     //////////////////////////////////////////////////////////////
 
     /// @notice Verify a ZKPassport proof and register the identity and disclosed data.
     /// @param params The proof verification parameters from ZKPassport SDK. 
+    /// @param isIDCard A boolean indicating if the proof is for an ID card.
     /// @return identifier The unique identifier of the passport.
-    function register(
-        ProofVerificationParams calldata params
+    function registerProof(
+        ProofVerificationParams calldata params, bool isIDCard
     ) external returns (bytes32 identifier) {
         Mem memory mem;
 
@@ -104,28 +112,48 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
 
         // Use the getBoundData function to get the data bound to the proof
         mem.boundData = zkPassportHelper.getBoundData(params.committedInputs);
-        // Make sure the user's address is the one that is calling the contract
-        require(mem.boundData.senderAddress == msg.sender, "Not the expected sender");
         // Make sure the chain id is the same as the one you specified in the query builder
         require(mem.boundData.chainId == block.chainid, "Invalid chain id"); 
         // Making sure the string is empty
         require(bytes(mem.boundData.customData).length == 0, "Custom data should be empty");
 
-        // if all checks pass, save proof and identifiers to state. 
-        // £NOTE this is a key difference from standard implmentation. 
-        // But proofs are shared on chain in standard implementation, so it should not be a problem to store them here.
-        // In this case, storing them allows for splitting the registration and checking steps, which is necessary for Powers integration.
+        // if all checks pass, retrieve disclosed data 
+        DisclosedData memory disclosedData = zkPassportHelper.getDisclosedData(
+          params.committedInputs,
+          isIDCard
+        ); 
+        // console.log here the disclosed data for testing purposes? 
+        console.log("Disclosed Data:");
+        console.log(disclosedData.name);
+        console.log(disclosedData.issuingCountry); 
+        console.log(disclosedData.nationality);
+        console.log(disclosedData.birthDate);
+
+        bool hasFacematch; 
+        try zkPassportHelper.isFaceMatchVerified(FaceMatchMode.REGULAR, OS.ANY, params.committedInputs) returns (bool facematchResult) {
+            hasFacematch = facematchResult;
+        } catch {
+            hasFacematch = false; // If the call fails, we assume facematch is not verified
+        }
 
         // Store the unique identifier
         accountIdentifiers[msg.sender] = mem.uniqueIdentifier;
         identifierAccounts[mem.uniqueIdentifier] = msg.sender;
-        accountProofs[mem.uniqueIdentifier] = params;
+        identifierToDisclosedData[mem.uniqueIdentifier] = Disclosed({
+            disclosedData: disclosedData,
+            isFacematched: hasFacematch,
+            timestamp: mem.proofTimestamp
+        }); 
 
         emit IdentityRegistered(msg.sender, mem.uniqueIdentifier);
         return mem.uniqueIdentifier;
     }
 
-    function deleteRegistration() external {
+    //////////////////////////////////////////////////////////////
+    //                      DELETE PROOF                        //
+    //////////////////////////////////////////////////////////////
+
+    function deleteProof() external {
         bytes32 identifier = accountIdentifiers[msg.sender];
         require(identifier != bytes32(0), "No registration found");
 
@@ -136,58 +164,29 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
 
         delete accountIdentifiers[msg.sender];
         delete identifierAccounts[identifier];
-        delete accountProofs[identifier];
-
+        delete identifierToDisclosedData[identifier];
         emit IdentityDeleted(identifier, msg.sender);
     }
 
     //////////////////////////////////////////////////////////////
-    //                   CHECK PROOFS                           //
+    //                      GETTER FUNCTIONS                    //
     //////////////////////////////////////////////////////////////
 
-    /// @notice Verify a specific proof (e.g. age over 18) for a caller's registered passport.
-    /// @param account The address of the account to check.
-    /// @param staleAfterSeconds The time in seconds after which the proof is considered stale/expired.
-    /// @param functionSelector The function selector of the specific check to perform (e.g. CHECK_AGE or CHECK_EQUAL).
-    /// @param input The encoded input parameters for the check (e.g. age threshold or field name and expected value).
-    /// @return verified Whether the proof verification succeeded.
-    function verifyProof(address account, uint256 staleAfterSeconds, bytes4 functionSelector, bytes calldata input) external view returns (bool) {
-        Mem memory mem;
+    function getDisclosed(address account) external view returns (DisclosedData memory) {
+        bytes32 identifier = accountIdentifiers[account];
+        require(identifier != bytes32(0), "No registration found");
+        return identifierToDisclosedData[identifier].disclosedData;
+    }
 
-        mem.identifier = accountIdentifiers[account];
-        
-        // 1. check that the caller has a registered passport
-        require(mem.identifier != bytes32(0), "No registration found");
+    function getProofTimestamp(address account) external view returns (uint256) {
+        bytes32 identifier = accountIdentifiers[account];
+        require(identifier != bytes32(0), "No registration found");
+        return identifierToDisclosedData[identifier].timestamp;
+    }
 
-        ProofVerificationParams memory params = accountProofs[mem.identifier];
-
-        // 2. check that the proof is not stale  
-        mem.proofTimestamp = zkPassportHelper.getProofTimestamp(params.proofVerificationData.publicInputs);
-        require(block.timestamp - mem.proofTimestamp < staleAfterSeconds, "Proof is stale");
-
-        // Note that the verifier will return an error if no relevant (age, country, etc) proof has been provided. 
-        // We use staticcall here because verifyProof is view and we don't want state changes
-        bytes memory returnData;
-        (mem.success, returnData) = address(zkPassportHelper).staticcall(
-            abi.encodePacked(
-                functionSelector,
-                input, // input should be abi.encoded arguments
-                abi.encode(params.committedInputs) // committedInputs is bytes calldata, so it needs to be encoded as bytes
-            )
-        );
-        
-        if (!mem.success) {
-            // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
-            if (returnData.length > 0) {
-                assembly {
-                    let returndata_size := mload(returnData)
-                    revert(add(32, returnData), returndata_size)
-                }
-            } else {
-                revert ("Proof verification call failed");
-            }
-        }
-
-        return abi.decode(returnData, (bool));
+    function getIsFacematched(address account) external view returns (bool) {
+        bytes32 identifier = accountIdentifiers[account];
+        require(identifier != bytes32(0), "No registration found");
+        return identifierToDisclosedData[identifier].isFacematched;
     }
 }

@@ -9,7 +9,8 @@ import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
  * @dev Soulbound1155 is meant as a soulbound ERC 1155 token that has a dynamic token ID, allowing for encoding data into the token ID.
  */
 interface ISoulbound1155 {
-    function mint(address to, uint256 tokenId, address artist) external; 
+    function mint(address to, uint256 tokenId) external; 
+    function mint(address to, uint256 tokenId, address artist, string memory uri) external; 
     function burn(address from, uint256 tokenId) external;
 }
 
@@ -34,8 +35,13 @@ contract Soulbound1155 is ERC1155, ISoulbound1155, Ownable {
     // the dao address receives half of mintable coins.
     constructor(string memory uri_) ERC1155(uri_) Ownable(msg.sender) { }
 
+    // Mint token with the same selector as Governed721.mint. 
+    function mint(address to, uint256 tokenId, address /* artists */, string memory /* uri */) public virtual onlyOwner {
+        _mint(to, tokenId, 1, ""); 
+    }
+
     // Mint tokenIds that encode the minter address and block number.
-    function mint(address to, uint256 tokenId, address /* artists */) public virtual onlyOwner {
+    function mint(address to, uint256 tokenId) public virtual onlyOwner {
         _mint(to, tokenId, 1, ""); 
     }
 

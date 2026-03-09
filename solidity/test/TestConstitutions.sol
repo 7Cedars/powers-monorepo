@@ -40,6 +40,7 @@ contract TestConstitutions is Test {
 
     string[] mandateNames;
     address[] mandateAddresses;
+    uint16 mandateCounter;
 
     string[] descriptions;
     string[] params;
@@ -116,7 +117,8 @@ contract TestConstitutions is Test {
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
         conditions.votingPeriod = 1200; // = number of blocks
         conditions.throttleExecution = 5000;
-        conditions.timelock = 250; // = 250 blocks to wait after proposal success before execution
+        // NOTE: the timelock starts counting after proposal has been made, NOT after vote has passed! 
+        conditions.timelock = 2500; // = 2500 blocks to wait after success before execution
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "StatementOfIntent: Propose any kind of action.",
@@ -331,16 +333,27 @@ contract TestConstitutions is Test {
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
         delete constitution; // restart constitution array.
 
-        // PeerSelect - for peer voting
+        // Nominate - for self-nomination
         conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Nominate: Nominate yourself for a role.",
+                targetMandate: getInitialisedAddress("Nominate"), // Nominate (electoral mandate)
+                config: abi.encode( nominees ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // PeerSelect
+        conditions.allowedRole = 1; // e.g. members vote
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "PeerSelect: A mandate to select roles by peer votes from nominees.",
                 targetMandate: getInitialisedAddress("PeerSelect"), // PeerSelect (electoral mandate)
                 config: abi.encode(
-                    2, // max role holders
-                    4, // roleId to be assigned
-                    1, // max votes per voter
+                    uint8(2), // numberToSelect
+                    uint256(4), // roleId to assign (e.g. 4)
                     nominees // Nominees contract
                 ),
                 conditions: conditions
@@ -681,12 +694,15 @@ contract TestConstitutions is Test {
         address powersFactory,
         address soulbound1155,
         address electionList, 
-        address erc20Taxed
+        address erc20Taxed,
+        address zkPassportRegistry
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
         delete constitution; // restart constitution array
+        mandateCounter = 0;
 
         // Governor Integration //
         // Governor_CreateProposal - for creating governance proposals
+        mandateCounter++;
         conditions.allowedRole = 1; // role 1 can create proposals
         constitution.push(
             PowersTypes.MandateInitData({
@@ -699,6 +715,7 @@ contract TestConstitutions is Test {
         delete conditions;
 
         // Governor_ExecuteProposal - for executing governance proposals
+        mandateCounter++;
         conditions.allowedRole = 1; // role 1 can execute proposals
         constitution.push(
             PowersTypes.MandateInitData({
@@ -712,6 +729,7 @@ contract TestConstitutions is Test {
 
         // Safe Allowance Integration //
         // Safe_Setup
+        mandateCounter++;
         conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
             PowersTypes.MandateInitData({
@@ -731,6 +749,7 @@ contract TestConstitutions is Test {
         inputParams = new string[](1);
         inputParams[0] = "address sub-DAO";
 
+        mandateCounter++;
         conditions.allowedRole = type(uint256).max; // Public 
         constitution.push(
             PowersTypes.MandateInitData({
@@ -753,6 +772,8 @@ contract TestConstitutions is Test {
         inputParams[2] = "uint96 allowanceAmount";
         inputParams[3] = "uint16 resetTimeMin";
         inputParams[4] = "uint32 resetBaseMin";
+
+        mandateCounter++;
         conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
             PowersTypes.MandateInitData({
@@ -773,6 +794,7 @@ contract TestConstitutions is Test {
         inputParams[0] = "address To";
         inputParams[1] = "uint256 Value";
        
+        mandateCounter++;
         conditions.allowedRole = 1;
         constitution.push(
             PowersTypes.MandateInitData({
@@ -793,6 +815,7 @@ contract TestConstitutions is Test {
 
         uint256 roleIdnewOrg = 9; // roleId for the new organisation.
 
+        mandateCounter++;
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
@@ -804,6 +827,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
+        mandateCounter++;
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
@@ -821,6 +845,7 @@ contract TestConstitutions is Test {
 
         // Soulbound1155 integration //
         // minting mandate //
+        mandateCounter++;
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
@@ -833,6 +858,7 @@ contract TestConstitutions is Test {
         delete conditions;
 
         // access mandate //
+        mandateCounter++;
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
@@ -850,6 +876,26 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
+        // burn to access mandate //
+        inputParams = new string[](2);
+        inputParams[0] = "uint256 TokenId";
+        inputParams[1] = "uint256 Amount"; 
+        
+        mandateCounter++;
+        conditions.allowedRole = 1; //
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Burn to Access: Burn a soulbound ERC1155 token to gain access.",
+                targetMandate: getInitialisedAddress("GovernedToken_BurnToAccess"),
+                config: abi.encode(
+                    inputParams,
+                    soulbound1155
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         // ElectionList Integration //
         // create election mandate //
         inputParams = new string[](3);
@@ -857,9 +903,8 @@ contract TestConstitutions is Test {
         inputParams[1] = "uint48 StartBlock";
         inputParams[2] = "uint48 EndBlock";
 
-        uint256 mandateCount = 9;
-
         // Members: create election (ID 9)
+        mandateCounter++;
         conditions.allowedRole = 1; // = Members (should be Executives according to MD, but code says Members)
         conditions.throttleExecution = 600; // = once every 2 hours approx (120 mins)
         constitution.push(
@@ -875,9 +920,10 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
+        uint16 createElectionId = mandateCounter; 
 
         // Members: Nominate for Executive election (ID 10)
-        mandateCount++;
+        mandateCounter++;
         conditions.allowedRole = 1; // = Members (should be Executives according to MD, but code says Members)
         constitution.push(
             PowersTypes.MandateInitData({
@@ -891,11 +937,12 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
+        uint16 nominateId = mandateCounter;  
 
         // Members revoke nomination for Executive election. (ID 11)
-        mandateCount++;
+        mandateCounter++;
         conditions.allowedRole = 1; // = Members (should be Executives according to MD, but code says Members)
-        conditions.needFulfilled = 12; // = Nominate for election
+        conditions.needFulfilled = nominateId; // = Nominate for election
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: any member can revoke their nomination for an election.",
@@ -910,9 +957,9 @@ contract TestConstitutions is Test {
         delete conditions;
 
         // Members: Open Vote for election (ID 12)
-        mandateCount++;
+        mandateCounter++;
         conditions.allowedRole = 1; // = Members
-        conditions.needFulfilled = 11; // = Create election
+        conditions.needFulfilled = createElectionId; // = Create election
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
@@ -927,11 +974,12 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
+        uint16 openVoteId = mandateCounter;
 
         // Members: Tally election (ID 13)
-        mandateCount++;
+        mandateCounter++;
         conditions.allowedRole = 1;
-        conditions.needFulfilled = 12; // = Open Vote election
+        conditions.needFulfilled = openVoteId; // = Open Vote election
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally elections: After an election has finished, assign the Executive role to the winners.",
@@ -947,9 +995,9 @@ contract TestConstitutions is Test {
         delete conditions;
 
         // Members: clean up election (ID 14)
-        mandateCount++;
+        mandateCounter++;
         conditions.allowedRole = 1;
-        conditions.needFulfilled = 12; // = Open Vote election
+        conditions.needFulfilled = openVoteId; // = Open Vote election
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
@@ -959,8 +1007,76 @@ contract TestConstitutions is Test {
                     IPowers.revokeMandate.selector, // function selector to call
                     abi.encode(), // params before
                     inputParams,
-                    12, // parent mandate id (the open vote mandate)
+                    openVoteId, // parent mandate id (the open vote mandate)
                     abi.encode() // no params after
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ZKPassport Check Above 18  
+        mandateCounter++;
+        inputParams = new string[](1);
+        inputParams[0] = "address AccountToCheck";
+        conditions.allowedRole = type(uint256).max; // Public
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ZKPassport Check: Check if a user is above 18 years old.",
+                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                config: abi.encode(
+                    inputParams,
+                    zkPassportRegistry, // Registry address
+                    5 * 60 * 60, // stale after five hours (input in seconds). 
+                    false, // facematch not required
+                    bytes4(keccak256("isAgeAbove(uint8)")), // isAgeAbove(uint8)
+                    abi.encode(18) // age to check
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ZKPassport Check below 18  
+        mandateCounter++; 
+        conditions.allowedRole = type(uint256).max; // Public
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ZKPassport Check: Check if a user is below 18 years old.",
+                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                config: abi.encode(
+                    inputParams,
+                    zkPassportRegistry, // Registry address
+                    5 * 60 * 60, // stale after five hours (input in seconds)  
+                    false, // facematch not required 
+                    bytes4(keccak256("isAgeBelow(uint8)")), // isAgeBelow(uint8)
+                    abi.encode(18) // age to check
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ZKPassport Check Above 18
+        string[] memory nationalitiesToCheck = new string[](2);
+        nationalitiesToCheck[0] = "GBR";
+        nationalitiesToCheck[1] = "ABW";
+
+        mandateCounter++;
+        inputParams = new string[](1);
+        inputParams[0] = "address AccountToCheck";
+        conditions.allowedRole = type(uint256).max; // Public
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ZKPassport Check: Check if a user is from GBR.",
+                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                config: abi.encode(
+                    inputParams,
+                    zkPassportRegistry, // Registry address
+                    5 * 60 * 60, // stale after five hours (input in seconds).
+                    false, // facematch not required  
+                    bytes4(keccak256("isNationalityIn(string[])")), // isNationalityIn(string[],bytes)
+                    abi.encode(nationalitiesToCheck) // nationality to check
                 ),
                 conditions: conditions
             })

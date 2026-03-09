@@ -16,6 +16,7 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersMock } from "@mocks/PowersMock.sol";
 import { Nominees } from "@src/helpers/Nominees.sol"; 
 import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
+import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 
 /// @notice Comprehensive unit tests for all electoral mandates
 /// @dev Tests all functionality of electoral mandates including initialization, execution, and edge cases
@@ -35,167 +36,119 @@ contract PeerSelectTest is TestSetupElectoral {
     }
 
     function testPeerSelectInitialization() public {
-        // Setup nominees
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(alice, true);
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(bob, true); 
-
-        // Verify mandate data is stored correctly 
-        (uint256 maxRoleHolders, uint256 roleId, uint8 maxVotes, address nomineesContract) =
-            abi.decode(peerSelect.getConfig(address(daoMock), mandateId), (uint256, uint256, uint8, address));
+        (uint8 numberToSelect, uint256 roleId, address configuredNominees) =
+            abi.decode(peerSelect.getConfig(address(daoMock), mandateId), (uint8, uint256, address));
         
-        assertEq(maxRoleHolders, 2);
+        assertEq(numberToSelect, 2);
         assertEq(roleId, 4);
-        assertEq(maxVotes, 1);
-        assertEq(nomineesContract, address(nomineesContract));
+        assertEq(configuredNominees, address(nomineesContract));
     }
 
-    function testPeerSelectWithValidSelection() public {
-        // Setup nominees
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(alice, true);
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(bob, true);
+    function testPeerSelectExecution() public {
+        // Nominate 3 candidates
+        vm.startPrank(address(daoMock));
+        nomineesContract.nominate(charlotte, true);
+        nomineesContract.nominate(david, true);
+        nomineesContract.nominate(eve, true);
+        vm.stopPrank();
+        // Verify nominees are registered
+        address[] memory currentNominees = nomineesContract.getNominees();
+        assertEq(currentNominees.length, 3);
 
-        // Execute with valid selection
-        bool[] memory selection = new bool[](2);
-        selection[0] = true; // Select alice
-        selection[1] = false; // Don't select bob
+        // Prepare selection matching the nominees array length
+        // We select the first two: charlotte and david
+        bytes memory selectionCalldata;
+        selectionCalldata = abi.encode(true, true, false);
 
+        // Execute mandate (allowedRole = 1, alice has role 1)
         vm.prank(alice);
-        daoMock.request(mandateId, abi.encode(selection), nonce, "Test peer select");
+        daoMock.request(mandateId, selectionCalldata, nonce, "Test peer select execution");
 
-        // Should succeed
-        actionId = uint256(keccak256(abi.encode(mandateId, abi.encode(selection), nonce)));
+        // Verify the action was fulfilled
+        actionId = uint256(keccak256(abi.encode(mandateId, selectionCalldata, nonce)));
         assertTrue(daoMock.getActionState(actionId) == PowersTypes.ActionState.Fulfilled);
+
+        // Verify roles were assigned to charlotte and david, but not eve
+        assertEq(daoMock.hasRoleSince(charlotte, 4) > 0, true);
+        assertEq(daoMock.hasRoleSince(david, 4) > 0, true);
+        assertEq(daoMock.hasRoleSince(eve, 4) > 0, false);
     }
 
-    function testPeerSelectRevertsWithTooManySelections() public {
-        // Setup nominees
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(alice, true);
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(bob, true);
+    function testPeerSelectRevertsNotEnoughNominees() public {
+        // Nominate only 1 candidate (we need 2)
+        vm.startPrank(address(daoMock));
+        nomineesContract.nominate(charlotte, true);
+        vm.stopPrank();
 
-        // Execute with too many selections
-        bool[] memory selection = new bool[](2);
-        selection[0] = true; // Select alice
-        selection[1] = true; // Select bob (exceeds maxVotes)
+        bytes memory selectionCalldata;
+        selectionCalldata = abi.encode(true);
 
         vm.prank(alice);
-        vm.expectRevert("Too many selections. Exceeds maxVotes limit.");
-        daoMock.request(mandateId, abi.encode(selection), nonce, "Test peer select");
+        vm.expectRevert("Not enough nominees to fill the seats.");
+        daoMock.request(mandateId, selectionCalldata, nonce, "Test peer select not enough nominees");
     }
 
-    function testPeerSelectWithNoNominees() public {
-        // Create a new nominees contract with no nominees
-        Nominees emptyNominees = new Nominees();
+    function testPeerSelectRevertsIncorrectSelections() public {
+        // Nominate 3 candidates
+        vm.startPrank(address(daoMock));
+        nomineesContract.nominate(charlotte, true);
+        nomineesContract.nominate(david, true);
+        nomineesContract.nominate(eve, true);
+        vm.stopPrank();
 
-        // Setup mandate with empty nominees
-        uint16 newMandateId = daoMock.mandateCounter();
-        nameDescription = "Test Peer Select No Nominees";
-        configBytes = abi.encode(2, 4, 1, address(emptyNominees));
-        conditions.allowedRole = type(uint256).max;
+        // Prepare selection with 1 choice (we need exactly 2)
+        bytes memory selectionCalldata;
+        selectionCalldata = abi.encode(true, false, false);
 
-        vm.prank(address(daoMock));
-        daoMock.adoptMandate(
-            PowersTypes.MandateInitData({
-                nameDescription: nameDescription,
-                targetMandate: address(peerSelect),
-                config: configBytes,
-                conditions: conditions
-            })
-        );
+        vm.prank(alice);
+        vm.expectRevert("Must select exactly numberToSelect options.");
+        daoMock.request(mandateId, selectionCalldata, nonce, "Test peer select invalid selection");
 
+        // Prepare selection with 3 choices (we need exactly 2)
+        selectionCalldata = abi.encode(true, true, true);
 
-        // Verify mandate data is stored correctly
-        mandateHash = keccak256(abi.encode(address(daoMock), newMandateId));
-                // Verify mandate data is stored correctly 
-        (uint256 maxRoleHolders, uint256 roleId, uint8 maxVotes, address nomineesContract) =
-            abi.decode(peerSelect.getConfig(address(daoMock), newMandateId), (uint256, uint256, uint8, address));
-        
-        assertEq(maxRoleHolders, 2);
-        assertEq(roleId, 4);
-        assertEq(maxVotes, 1);
-        assertEq(nomineesContract, address(emptyNominees)); 
+        vm.prank(alice);
+        vm.expectRevert("Must select exactly numberToSelect options.");
+        daoMock.request(mandateId, selectionCalldata, nonce, "Test peer select invalid selection too many");
     }
 
-    function testPeerSelectRevertsWithInvalidSelectionLength() public {
-        // Setup nominees
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(alice, true);
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(bob, true);
-
-        // Execute with wrong selection length
-        bool[] memory selection = new bool[](3); // Wrong length
-        selection[0] = true;
-        selection[1] = false;
-        selection[2] = false;
+    function testPeerSelectRevertsInvalidCalldataLength() public {
+        // Nominate 3 candidates
+        vm.startPrank(address(daoMock));
+        nomineesContract.nominate(charlotte, true);
+        nomineesContract.nominate(david, true);
+        nomineesContract.nominate(eve, true);
+        vm.stopPrank();
+        // Pass 2 bools instead of 3
+        bytes memory selectionCalldata = abi.encode(true, true);
 
         vm.prank(alice);
         vm.expectRevert("Invalid selection length.");
-        daoMock.request(mandateId, abi.encode(selection), nonce, "Test peer select");
+        daoMock.request(mandateId, selectionCalldata, nonce, "Test peer select length mismatch");
     }
 
-    function testPeerSelectRevertsWithNoSelections() public {
-        // Setup nominees
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(alice, true);
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(bob, true);
+    function testPeerSelectOneTimeExecution() public {
+        // Nominate 3 candidates
+        vm.startPrank(address(daoMock));
+        nomineesContract.nominate(charlotte, true);
+        nomineesContract.nominate(david, true);
+        nomineesContract.nominate(eve, true);
+        vm.stopPrank();
 
-        // Execute with no selections
-        bool[] memory selection = new bool[](2);
-        selection[0] = false; // Don't select alice
-        selection[1] = false; // Don't select bob
+        bytes memory selectionCalldata = abi.encode(true, true, false);
 
+        // First execution succeeds
         vm.prank(alice);
-        vm.expectRevert("Must select at least one nominee.");
-        daoMock.request(mandateId, abi.encode(selection), nonce, "Test peer select");
-    }
+        daoMock.request(mandateId, selectionCalldata, nonce, "Test peer select first execution");
 
-    function testPeerSelectRevertsWithTooManyAssignments() public {
-        // Setup nominees
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(alice, true);
-        vm.prank(address(daoMock));
-        nomineesContract.nominate(bob, true);
+        // Mandate should be revoked
+        (,, bool active) = daoMock.getAdoptedMandate(mandateId);
+        assertEq(active, false);
 
-        // Give alice and bob the role first (to test revocation)
-        vm.prank(address(daoMock));
-        daoMock.assignRole(4, alice);
-        vm.prank(address(daoMock));
-        daoMock.assignRole(4, bob);
-
-        // Setup mandate with maxRoleHolders = 1
-        uint16 newMandateId = daoMock.mandateCounter();
-        nameDescription = "Test Peer Select Too Many Assignments";
-        configBytes = abi.encode(1, 4, 2, address(nomineesContract)); // maxRoleHolders = 1
-        conditions.allowedRole = type(uint256).max;
-
-        vm.prank(address(daoMock));
-        daoMock.adoptMandate(
-            PowersTypes.MandateInitData({
-                nameDescription: nameDescription,
-                targetMandate: address(peerSelect),
-                config: configBytes,
-                conditions: conditions
-            })
-        );
-
-        // Execute with selections that would exceed max role holders
-        bool[] memory selection = new bool[](2);
-        selection[0] = true; // Select alice (already has role, so revocation)
-        selection[1] = true; // Select bob (already has role, so revocation)
-
+        // Second execution should fail because mandate is inactive
         vm.prank(alice);
-        daoMock.request(newMandateId, abi.encode(selection), nonce, "Test peer select");
-
-        // Should succeed (both are revocations, not assignments)
-        actionId = uint256(keccak256(abi.encode(newMandateId, abi.encode(selection), nonce)));
-        assertTrue(daoMock.getActionState(actionId) == PowersTypes.ActionState.Fulfilled);
+        vm.expectRevert(PowersErrors.Powers__MandateNotActive.selector);
+        daoMock.request(mandateId, selectionCalldata, nonce + 1, "Test peer select second execution");
     }
 }
 

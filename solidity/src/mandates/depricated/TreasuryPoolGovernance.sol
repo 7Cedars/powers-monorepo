@@ -140,22 +140,22 @@ pragma solidity ^0.8.26;
 //         Mem memory m;
 
 //         // First get the mandate Id of the mandate that created the pool
-//         IPowers.Conditions memory conditions = IPowers(powers).getConditions(mandateId);
+//         IPowers.Conditions memory conditions = IPowers(payable(powers)).getConditions(mandateId);
 //         if (conditions.needFulfilled == 0) revert("Fulfilled not set");
 
 //         // Then retrieve the source action data
 //         m.createPoolActionId = MandateUtilities.computeActionId(conditions.needFulfilled, mandateCalldata, nonce);
-//         (m.sourceActionMandateId,,, m.sourceActionFulfilledAt,,,) = IPowers(powers).getActionData(m.createPoolActionId);
+//         (m.sourceActionMandateId,,, m.sourceActionFulfilledAt,,,) = IPowers(payable(powers)).getActionData(m.createPoolActionId);
 
 //         // Check if action exists, is fulfilled, and came from the correct mandate type
 //         if (m.sourceActionFulfilledAt == 0) revert InvalidSourceAction();
 
 //         // --- Decode necessary data, get the poolId ---
-//         m.createPoolActionReturnData = IPowers(powers).getActionReturnData(m.createPoolActionId, 0);
+//         m.createPoolActionReturnData = IPowers(payable(powers)).getActionReturnData(m.createPoolActionId, 0);
 //         (m.poolId) = abi.decode(m.createPoolActionReturnData, (uint256));
 //         if (m.poolId == 0) revert("Cannot decode poolId"); // NB! PoolId 0 is invalid
 
-//         // m.createPoolActionCalldata = IPowers(powers).getActionCalldata(m.createPoolActionId);
+//         // m.createPoolActionCalldata = IPowers(payable(powers)).getActionCalldata(m.createPoolActionId);
 //         (,, m.managerRoleId) = abi.decode(mandateCalldata, (address, uint256, uint256));
 
 //         // --- Predict the upcoming Mandate IDs ---

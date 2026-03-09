@@ -56,14 +56,14 @@ contract PowersFactory_AssignRole is Mandate {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         mem.parentActionId = MandateUtilities.computeActionId(mem.factoryMandateId, mandateCalldata, nonce);
 
-        if (IPowers(powers).getActionState(mem.parentActionId) != PowersTypes.ActionState.Fulfilled) {
+        if (IPowers(payable(powers)).getActionState(mem.parentActionId) != PowersTypes.ActionState.Fulfilled) {
             revert("Invalid parent action state");
         }
 
         // 5. Check return value in Powers
         // If the action hasn't been fulfilled or has no return data, this will revert (index out of bounds)
         // or return empty bytes if that was the return value.
-        try IPowers(powers).getActionReturnData(mem.parentActionId, 0) returns (bytes memory returnData_) {
+        try IPowers(payable(powers)).getActionReturnData(mem.parentActionId, 0) returns (bytes memory returnData_) {
             mem.returnData = returnData_;
         } catch {
             revert("Error fetching return data for parent action");

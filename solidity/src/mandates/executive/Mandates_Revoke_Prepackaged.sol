@@ -55,7 +55,7 @@ contract Mandates_Revoke_Prepackaged is Mandate {
         Mem memory mem;
         
         // 1. Get conditions to find adoptMandatesId (needFulfilled)
-        mem.conditions = IPowers(powers).getConditions(mandateId);
+        mem.conditions = IPowers(payable(powers)).getConditions(mandateId);
         mem.adoptMandatesId = mem.conditions.needFulfilled;
         require(mem.adoptMandatesId != 0, "AdoptMandatesId is 0");
 
@@ -74,7 +74,7 @@ contract Mandates_Revoke_Prepackaged is Mandate {
 
         for (uint256 i = 0; i < mem.count; i++) {
             // Get return data from the adoption action
-            mem.returnData = IPowers(powers).getActionReturnData(mem.adoptionActionId, i);
+            mem.returnData = IPowers(payable(powers)).getActionReturnData(mem.adoptionActionId, i);
             
             // Decode the returned mandateId (uint16)
             // Note: Powers.adoptMandate returns uint16, encoded as 32 bytes in returnData usually?

@@ -69,11 +69,11 @@ export const usePowers = () => {
       powersPopulated.name = namePowers as string
       powersPopulated.uri = uriPowers as string
       powersPopulated.treasury = treasuryPowers as `0x${string}`
-      // console.log("@fetchPowersData, waypoint 2", {powersPopulated})
+      //  console.log("@fetchPowersData, waypoint 2", {powersPopulated})
       return powersPopulated
 
     } catch (error) {
-      console.log("@fetchPowersData, waypoint 3", {error})
+      // console.log("@fetchPowersData, waypoint 3", {error})
       setStatus({status: "error"}) 
       setError({error: error as Error})
     }
@@ -82,14 +82,19 @@ export const usePowers = () => {
   const fetchMetaData = async (powers: Powers): Promise<Metadata | undefined> => {
     let updatedMetaData: Metadata | undefined
 
+    // console.log("@fetchMetaData, waypoint 0", {powers}) 
+
     if (powers && powers.uri) {
       try {
           const fetchedMetadata: unknown = await(
             await fetch(powers.uri as string)
             ).json() 
+            // console.log("@fetchMetaData, waypoint 1", {fetchedMetadata})
           updatedMetaData = parseMetadata(fetchedMetadata) 
+          // console.log("@fetchMetaData, waypoint 2", {updatedMetaData})
           return updatedMetaData
       } catch (error) {
+          // console.log("@fetchMetaData, waypoint 3", {error})
         setStatus({status: "error"}) 
         setError({error: error as Error})
       }
@@ -99,6 +104,7 @@ export const usePowers = () => {
   
   const checkMandates = async (mandateIds: bigint[]) => {
     const fetchedMandates: Mandate[] = []
+    // console.log("@checkMandates, waypoint 0", {mandateIds, address})
 
     if (wagmiConfig && mandateIds.length > 0 && address) {
         try {
@@ -109,11 +115,13 @@ export const usePowers = () => {
             args: [BigInt(id)] as [bigint],
             chainId: parseChainId(chainId)
           }))
+          // console.log("@checkMandates, waypoint 1", {contracts})
 
           const results = await readContracts(wagmiConfig, {
             allowFailure: false,
             contracts
           }) as Array<[`0x${string}`, `0x${string}`, boolean]>
+          // console.log("@checkMandates, waypoint 2", {results})
 
           results.forEach((mandateTuple, idx) => {
             const id = mandateIds[idx]
@@ -125,8 +133,10 @@ export const usePowers = () => {
               active: mandateTuple[2] as unknown as boolean
             })
           })
+          // console.log("@checkMandates, waypoint 3", {fetchedMandates})  
           return fetchedMandates
         } catch (error) {
+          // console.log("@checkMandates, waypoint 4", {error})
           setStatus({status: "error"})
           setError({error: error as Error})
         }
@@ -136,6 +146,7 @@ export const usePowers = () => {
   const populateMandates = async (mandates: Mandate[]) => {
     let mandate: Mandate
     const populatedMandates: Mandate[] = []
+    // console.log("@populateMandates, waypoint 0", {mandates})
 
     try {
       type PendingCall = {
@@ -146,6 +157,7 @@ export const usePowers = () => {
       const pending: PendingCall[] = []
 
       mandates.forEach((l, idx) => {
+        // console.log("@populateMandates, waypoint 1 loop", {l})
         if (l.mandateAddress != `0x0000000000000000000000000000000000000000`) {
           if (!l.conditions) {
             contracts.push({
@@ -165,6 +177,7 @@ export const usePowers = () => {
               args: [l.powers, l.index],
               chainId: parseChainId(chainId)!
             })
+            // console.log("@populateMandates, waypoint 1.5 loop", {contracts, l})
             pending.push({ kind: 'inputParams', mandateIdx: idx })
           }
           if (!l.nameDescription) {
@@ -186,6 +199,8 @@ export const usePowers = () => {
           contracts
         })
 
+        // console.log("@populateMandates, waypoint 1.75", {results})
+
         // Apply results back to the corresponding mandates in order
         results.forEach((value, i) => {
           const meta = pending[i]
@@ -204,8 +219,10 @@ export const usePowers = () => {
       for (mandate of mandates) {
         populatedMandates.push(mandate)
       }
+      // console.log("@populateMandates, waypoint 2", {populatedMandates})
       return populatedMandates
     } catch (error) {
+      // console.log("@populateMandates, waypoint 3", {error})
       setStatus({status: "error"}) 
       setError({error: error as Error})
     }

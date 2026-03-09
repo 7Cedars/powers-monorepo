@@ -22,7 +22,7 @@
 /// 4 - The core protocol uses a non-weighted voting mechanism: one account has one vote. Accounts vote with their roles, not with their tokens.
 /// 5 - The core protocol is intentionally minimalistic. Any complexities (multi-chain governance, oracle based governance, timelocks, delayed execution, guardian roles, weighted votes, staking, etc.) has to be integrated through mandates.
 ///
-/// For example organisational implementations, see the script/deployOrganisations folder.
+/// For example organisational implementations, see the script/organisations folder.
 ///
 /// Note This protocol is a work in progress. A number of features are planned to be added in the future.
 /// - Gas efficiency improvements.
@@ -141,6 +141,12 @@ contract Powers is EIP712, IPowers, Context {
         MAX_EXECUTIONS_LENGTH = maxExecutionsLength_;
 
         emit Powers__Initialized(address(this), name, uri);
+    }
+
+    /// @notice Function to receive Ether. Emits a {PowersEvents::FundsReceived} event.
+    /// @dev If the protocol does not have a mandate to handle transfers of native currency (and is not upgradable) it will be stuck in the contract. 
+    receive() external payable {
+        emit FundsReceived(_msgSender(), msg.value);
     }
 
     //////////////////////////////////////////////////////////////

@@ -20,6 +20,7 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { Governor } from "@openzeppelin/contracts/governance/Governor.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 /// @notice Comprehensive unit tests for all executive mandates
 /// @dev Tests all functionality of executive mandates including initialization, execution, and edge cases
@@ -203,6 +204,9 @@ contract SafeAllowanceTest is TestSetupIntegrations {
     uint256 public actionIdSafeSetup; 
 
     function setUp() public override {
+        uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
+        vm.selectFork(sepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
+        
         super.setUp();
 
         // skip these tests if allowance module is not set
@@ -317,7 +321,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
         for (uint256 i = 0; i < 4; i++) {
             // Config for mandate 7: params[0] = "address to"
             // So request calldata should be abi.encode(to).
-            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob, ""), nonce, "Mint Token");
 
             // Calculate ID that was minted
             // TokenID = (minter << 48) | blockNumber
@@ -348,7 +352,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
         // Mint 3 tokens (Threshold is 3, check is <= threshold, so 3 fails)
         uint256[] memory tokenIds = new uint256[](3);
         for (uint256 i = 0; i < 3; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob, ""), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(daoMock))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;
@@ -366,7 +370,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
         // Mint 4 tokens
         uint256[] memory tokenIds = new uint256[](4);
         for (uint256 i = 0; i < 4; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob, ""), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;
@@ -387,7 +391,7 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
 
         uint256[] memory tokenIds = new uint256[](4);
         for (uint256 i = 0; i < 4; i++) {
-            daoMock.request(mintMandateId, abi.encode(alice, bob), nonce, "Mint Token");
+            daoMock.request(mintMandateId, abi.encode(alice, bob, ""), nonce, "Mint Token");
             tokenIds[i] = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
             vm.roll(block.number + 1);
             nonce++;
@@ -403,6 +407,56 @@ contract GovernedToken_GatedAccessTest is TestSetupIntegrations {
         vm.roll(block.number + 101);
         vm.expectRevert("Insuffiicent valid tokens provided");
         daoMock.request(accessMandateId, abi.encode(tokenIds), nonce, "Request Access");
+
+        vm.stopPrank();
+    }
+}
+
+contract GovernedToken_BurnToAccessTest is TestSetupIntegrations {
+    uint16 public mintMandateId;
+    uint16 public burnToAccessId;
+
+    function setUp() public override {
+        super.setUp();
+
+        mintMandateId = findMandateIdInOrg(
+            "Mint soulbound token: mint a soulbound ERC1155 token and send it to an address of choice.", daoMock
+        );
+        burnToAccessId = findMandateIdInOrg(
+            "Burn to Access: Burn a soulbound ERC1155 token to gain access.", daoMock
+        );
+    }
+
+    function test_GovernedToken_BurnToAccess_Success() public {
+        vm.startPrank(alice);
+
+        // 1. Mint 1 token
+        daoMock.request(mintMandateId, abi.encode(alice, bob, ""), nonce, "Mint Token");
+
+        // TokenID = (minter << 48) | blockNumber
+        // Minter is daoMock (owner of soulbound1155)
+        uint256 tokenId = (uint256(uint160(address(alice))) << 48) | uint256(block.number);
+
+        // Balance should be 1
+        assertEq(soulbound1155.balanceOf(alice, tokenId), 1);
+
+        // 2. Request BurnToAccess using the minted token
+        uint256 actionId = daoMock.request(burnToAccessId, abi.encode(tokenId), nonce + 1, "Request Burn");
+
+        // 3. Verify token was burned
+        assertEq(soulbound1155.balanceOf(alice, tokenId), 0);
+
+        vm.stopPrank();
+    }
+
+    function test_GovernedToken_BurnToAccess_Revert_InsufficientBalance() public {
+        vm.startPrank(alice);
+
+        // Don't mint anything, just try to burn a non-existent token
+        uint256 fakeTokenId = 123456789;
+
+        vm.expectRevert("Insufficient balance");
+        daoMock.request(burnToAccessId, abi.encode(fakeTokenId), nonce, "Request Burn");
 
         vm.stopPrank();
     }
@@ -523,5 +577,54 @@ contract ElectionListIntegrationTest is TestSetupIntegrations {
 
         // Verify Alice has role 2
         assertTrue(daoMock.hasRoleSince(alice, 2) > 0);
+    }
+}
+
+//////////////////////////////////////////////////
+//            ZKPASSPORT CHECK TESTS            //
+//////////////////////////////////////////////////
+contract ZKPassport_CheckTest is TestSetupIntegrations {
+    uint16 public checkMandateAboveId;
+    uint16 public checkMandateBelowId;
+    uint16 public checkMandateNationalityId;
+    address public registryAddress;
+
+    function setUp() public override {
+        // The only robust approach is to create fork BEFORE setup is run. 
+        uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
+        vm.selectFork(sepoliaFork);
+
+        // important:  // We created an actual proof in the registry for cedars proving he was born in 1983. So we can test the full integration on the fork, without mocking any part of the flow.   
+        
+        super.setUp();
+        checkMandateAboveId = findMandateIdInOrg("ZKPassport Check: Check if a user is above 18 years old.", daoMock);
+        checkMandateBelowId = findMandateIdInOrg("ZKPassport Check: Check if a user is below 18 years old.", daoMock);
+        checkMandateNationalityId = findMandateIdInOrg("ZKPassport Check: Check if a user is from GBR.", daoMock);
+        registryAddress = address(zkPassportRegistry);
+    }
+
+    function test_ZKPassport_Check_Success() public { 
+        // Here we check of cedars is below 18, which should pass.
+        vm.prank(cedars);
+        uint256 actionId = daoMock.request(checkMandateNationalityId, abi.encode(cedars), nonce, "Check Nationality");
+
+        // check status of call.
+        uint8 status = uint8(daoMock.getActionState(actionId));
+        assertTrue(status == 7); // 7 = Fulfilled
+    }
+
+    // Following tests are nonsense. (AI generated)
+    function test_ZKPassport_Check_Fail() public {
+        // Here we check of cedars is below 18, which should fail.
+        vm.prank(cedars);
+        vm.expectRevert("Proof verification failed");
+        daoMock.request(checkMandateBelowId, abi.encode(cedars), nonce, "Check Birthdate Fail");
+    }
+
+    function test_ZKPassport_Check_Revert_NoRegistration() public {
+        // Try to check someone else's account. Which should fail. 
+        vm.prank(alice);
+        vm.expectRevert("No registration found");
+        daoMock.request(checkMandateAboveId, abi.encode(alice), nonce, "Check alice");
     }
 }

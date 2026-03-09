@@ -5,6 +5,18 @@ import { Powers } from "../Powers.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+interface IPowersDeployer is PowersTypes { 
+    function deployAndConstitute(
+        string memory name,
+        string memory uri,
+        uint256 maxCallDataLength,
+        uint256 maxReturnDataLength,
+        uint256 maxExecutionsLength,
+        MandateInitData[] memory configuredMandates,
+        address finalAdmin
+    ) external returns (address);
+}
+
 /// @title Powers Deployer
 /// @notice Helper contract to deploy Powers instances.
 /// @dev This separates the bytecode of Powers from PowersFactory to avoid contract size limits.

@@ -54,7 +54,7 @@ contract MandatePackage is Mandate {
         returns (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
-        uint16 mandateCount = Powers(powers).mandateCounter();
+        uint16 mandateCount = Powers(payable(powers)).mandateCounter();
         PowersTypes.MandateInitData[] memory smandateInitData = getNewMandates(sMandateAddresses, powers, mandateCount);
 
         // Create arrays for the calls to adoptMandate
