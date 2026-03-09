@@ -1029,7 +1029,7 @@ contract TestConstitutions is Test {
                     zkPassportRegistry, // Registry address
                     5 * 60 * 60, // stale after five hours (input in seconds). 
                     false, // facematch not required
-                    bytes4(0xac9367d3), // isAgeAbove(uint256)
+                    bytes4(keccak256("isAgeAbove(uint8)")), // isAgeAbove(uint8)
                     abi.encode(18) // age to check
                 ),
                 conditions: conditions
@@ -1049,7 +1049,7 @@ contract TestConstitutions is Test {
                     zkPassportRegistry, // Registry address
                     5 * 60 * 60, // stale after five hours (input in seconds)  
                     false, // facematch not required 
-                    bytes4(0x48b6e1f0), // isAgeBelow(uint256)
+                    bytes4(keccak256("isAgeBelow(uint8)")), // isAgeBelow(uint8)
                     abi.encode(18) // age to check
                 ),
                 conditions: conditions
@@ -1075,7 +1075,7 @@ contract TestConstitutions is Test {
                     zkPassportRegistry, // Registry address
                     5 * 60 * 60, // stale after five hours (input in seconds).
                     false, // facematch not required  
-                    bytes4(0x103bd3fd), // isNationalityIn(string[],bytes)
+                    bytes4(keccak256("isNationalityIn(string[])")), // isNationalityIn(string[],bytes)
                     abi.encode(nationalitiesToCheck) // nationality to check
                 ),
                 conditions: conditions

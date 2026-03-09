@@ -4,13 +4,15 @@ pragma solidity ^0.8.26;
 import { DisclosedData, ProofVerificationParams, BoundData } from "@zkpassport/circuits/src/Types.sol";
 import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "@src/interfaces/IZKPassport.sol";
 
+import { console } from "forge-std/console.sol"; // only for testing purposes.
+
 /// @title ZKPassport Powers Registry
 /// @notice Helper contract to verify and register ZKPassport identities for the Powers protocol.
 /// @author 7Cedars
 interface IZKPassport_PowersRegistry {
     function registerProof(ProofVerificationParams calldata params, bool isIdCard) external returns (bytes32 identifier);
     function deleteProof() external;
-    function getDisclosedData(address account) external view returns (DisclosedData memory);
+    function getDisclosed(address account) external view returns (DisclosedData memory);
     function getProofTimestamp(address account) external view returns (uint256);
     function getIsFacematched(address account) external view returns (bool);
 }
@@ -120,6 +122,12 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
           params.committedInputs,
           isIDCard
         ); 
+        // console.log here the disclosed data for testing purposes? 
+        console.log("Disclosed Data:");
+        console.log(disclosedData.name);
+        console.log(disclosedData.issuingCountry); 
+        console.log(disclosedData.nationality);
+        console.log(disclosedData.birthDate);
 
         bool hasFacematch; 
         try zkPassportHelper.isFaceMatchVerified(FaceMatchMode.REGULAR, OS.ANY, params.committedInputs) returns (bool facematchResult) {
@@ -164,7 +172,7 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     //                      GETTER FUNCTIONS                    //
     //////////////////////////////////////////////////////////////
 
-    function getDisclosedData(address account) external view returns (DisclosedData memory) {
+    function getDisclosed(address account) external view returns (DisclosedData memory) {
         bytes32 identifier = accountIdentifiers[account];
         require(identifier != bytes32(0), "No registration found");
         return identifierToDisclosedData[identifier].disclosedData;

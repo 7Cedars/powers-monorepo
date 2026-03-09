@@ -98,7 +98,7 @@ contract ZKPassport_Check is Mandate {
         }
 
         // 4. retrieve disclosed data
-        mem.disclosedData = registry.getDisclosedData(mem.accountToCheck);
+        mem.disclosedData = registry.getDisclosed(mem.accountToCheck);
 
         // 5. call internal function to check against disclosed data
         if (mem.functionSelector == bytes4(keccak256("isAgeAbove(uint8)"))) {
