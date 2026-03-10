@@ -31,13 +31,19 @@ Each organisation has its own dedicated website for actions that are not directl
 - minting NFTs and linking them to RWAs. 
 - ... 
 
-### ***User stories***  
+### ***User stories***  -  
+[comment]: <> (EXAMPLE COMMENT: translate them and link them with the functionalities cover as many functionalities inside stories - if something is missing in the flow, highlight it.) 
 
 #### Create and revoke Ideas Sub-DAO
+"example" 
 
 #### Veto Calls to Sub-DAOs
+(unsure)
 
-#### Update Uri Primary DAO.  
+#### Update Uri Primary DAO. 
+- IMAGE / BANNER of org 
+- has info on where documentation / communication channels are 
+- its the metadata 
 
 #### Claim membership Primary DAO and Revoke. 
 
