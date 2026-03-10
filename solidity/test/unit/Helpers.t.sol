@@ -2809,7 +2809,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     }  
 
     function testSubmitProofBytecode() public {
-        vm.skip(true);
+        vm.skip(false);
         
         bytes memory bytesInput = zkProof.getBytesInputs();   
 
@@ -2817,7 +2817,15 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
         registryAddress.call(bytesInput);
 
         DisclosedData memory disclosedData = ZKPassport_PowersRegistry(registryAddress).getDisclosed(cedars);
-        // £todo: add actual checks. 
+
+        console2.log("Disclosed data name:", disclosedData.name);
+        console2.log("Disclosed data issuing country:", disclosedData.issuingCountry);
+        console2.log("Disclosed data nationality:", disclosedData.nationality);
+        console2.log("Disclosed data gender:", disclosedData.gender);
+        console2.log("Disclosed data birth date:", disclosedData.birthDate);
+        console2.log("Disclosed data expiry date:", disclosedData.expiryDate);
+        console2.log("Disclosed data document number:", disclosedData.documentNumber);
+        console2.log("Disclosed data document type:", disclosedData.documentType);
 
     }  
 
