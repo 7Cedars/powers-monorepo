@@ -305,7 +305,7 @@ contract ZKPassport_Check is Mandate {
         return (cYYYYMMDD - bYYYYMMDD) / 10000;
     }
 
-    function _mrzToYYYYMMDD(string memory mrz, bool isExpiry) internal view returns (uint256) {
+    function _mrzToYYYYMMDD(string memory mrz, bool isExpiry) internal view returns (uint256) { 
         bytes memory d = bytes(mrz);
         require(d.length == 6, "Invalid MRZ date length");
         uint256 yy = _stringToUint(string(abi.encodePacked(d[0], d[1])));
