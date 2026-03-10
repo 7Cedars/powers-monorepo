@@ -2236,7 +2236,7 @@ contract Deploy is DeploySetup {
         conditions.needFulfilled = mandateCount - 1; // need the application to have been submitted.
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5 minutes to vote
         conditions.succeedAt = 51; // simple majority
-        conditions.quorum = 77; // high quorum to ensure only clear applications pass.
+        conditions.quorum = 10; // low quorum.
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Membership of Primary DAO: Moderators can ok requests for membership of the Primary DAO and send them to the Primary DAO for assessment.",

@@ -33,6 +33,12 @@ const nextConfig = {
             tls: false,
         };
         
+        // Ignore react-native dependencies
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            '@react-native-async-storage/async-storage': false,
+        };
+        
         return config;
     }
 };

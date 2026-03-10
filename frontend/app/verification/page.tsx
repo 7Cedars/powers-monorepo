@@ -32,7 +32,7 @@ const AVAILABLE_FIELDS = [
   { id: "nationality", label: "Nationality", fields: ["nationality"] },
   { id: "issuing_country", label: "Issuing Country", fields: ["issuing_country"] },
   { id: "gender", label: "Gender", fields: ["gender"] },
-  { id: "birth_date", label: "Birth Date", fields: ["birth_date"] },
+  { id: "birthdate", label: "Birth Date", fields: ["birthdate"] },
   // { id: "expiration_date", label: "Expiry Date", fields: ["expiration_date"] },
   { id: "facematch", label: "FaceMatch", fields: [] },
 ];
