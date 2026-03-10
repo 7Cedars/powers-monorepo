@@ -120,11 +120,16 @@ update-deps:
 
 install-deps:
 	@echo "Installing dependencies..."
-	forge install foundry-rs/forge-std --no-commit --no-git || exit 1
-	forge install openzeppelin/openzeppelin-contracts@v5.0.2 --no-commit --no-git || exit 1
-	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 --no-commit --no-git || exit 1
-	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-commit --no-git || exit 1
-	forge install safe-fndn/safe-smart-account@v1.4.1 --no-commit --no-git || exit 1
+	forge install foundry-rs/forge-std --no-git || exit 1
+	forge install openzeppelin/openzeppelin-contracts@v5.0.2  --no-git || exit 1
+	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  --no-git || exit 1
+	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
+	forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
+	forge install safe-fndn/safe-modules --no-git || exit 1
+	forge install zkpassport/circuits --no-git || exit 1
+	forge install zkpassport/zkpassport-packages --no-git || exit 1
+	@echo "Dependencies installed without git metadata."
+	
 
 reset-deps:
 	@echo "Resetting dependencies..."

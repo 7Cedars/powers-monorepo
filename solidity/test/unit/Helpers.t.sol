@@ -2799,14 +2799,54 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     } 
 
     function testSubmitProof() public {
-        vm.skip(false);
+        // because proofs actually expire after a certain time, we need to skip this test for now.
+        vm.skip(true);
         
         ProofVerificationParams memory proof = zkProof.getProof();   
         bool isIDCard = false; 
 
         vm.prank(address(daoMock));
-        registryAddress.call(abi.encodeWithSelector(IZKPassport_PowersRegistry.registerProof.selector, proof, isIDCard));
+        ZKPassport_PowersRegistry(registryAddress).registerProof(proof, isIDCard);
     }  
+
+    function testSubmitProofBytecode() public {
+        // because proofs actually expire after a certain time, we need to skip this test for now.
+        vm.skip(true);
+        
+        bytes memory bytesInput = zkProof.getBytesInputs();   
+
+        vm.prank(address(daoMock));
+        registryAddress.call(bytesInput);
+
+        DisclosedData memory disclosedData = ZKPassport_PowersRegistry(registryAddress).getDisclosed(cedars);
+
+        console2.log("Disclosed data name:", disclosedData.name);
+        console2.log("Disclosed data issuing country:", disclosedData.issuingCountry);
+        console2.log("Disclosed data nationality:", disclosedData.nationality);
+        console2.log("Disclosed data gender:", disclosedData.gender);
+        console2.log("Disclosed data birth date:", disclosedData.birthDate);
+        console2.log("Disclosed data expiry date:", disclosedData.expiryDate);
+        console2.log("Disclosed data document number:", disclosedData.documentNumber);
+        console2.log("Disclosed data document type:", disclosedData.documentType);
+
+    }  
+
+    function testRetrieveDisclosedData() public {
+        vm.skip(false);
+
+        DisclosedData memory disclosedData = ZKPassport_PowersRegistry(registryAddress).getDisclosed(cedars);
+
+        console2.log("Disclosed data name:", disclosedData.name);
+        console2.log("Disclosed data issuing country:", disclosedData.issuingCountry);
+        console2.log("Disclosed data nationality:", disclosedData.nationality);
+        console2.log("Disclosed data gender:", disclosedData.gender);
+        console2.log("Disclosed data birth date:", disclosedData.birthDate);
+        console2.log("Disclosed data expiry date:", disclosedData.expiryDate);
+        console2.log("Disclosed data document number:", disclosedData.documentNumber);
+        console2.log("Disclosed data document type:", disclosedData.documentType);
+  
+        assertEq(abi.encode(disclosedData.documentType), abi.encode("P<"));
+    }
 }
 
 //////////////////////////////////////////////////////////////

@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import { DisclosedData, ProofVerificationParams, BoundData } from "@zkpassport/circuits/src/Types.sol";
 import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "@src/interfaces/IZKPassport.sol";
 
-import { console } from "forge-std/console.sol"; // only for testing purposes.
+// import { console } from "forge-std/console.sol"; // only for testing purposes.
 
 /// @title ZKPassport Powers Registry
 /// @notice Helper contract to verify and register ZKPassport identities for the Powers protocol.
@@ -122,12 +122,12 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
           params.committedInputs,
           isIDCard
         ); 
-        // console.log here the disclosed data for testing purposes? 
-        console.log("Disclosed Data:");
-        console.log(disclosedData.name);
-        console.log(disclosedData.issuingCountry); 
-        console.log(disclosedData.nationality);
-        console.log(disclosedData.birthDate);
+        // // console.log here the disclosed data for testing purposes? 
+        // console.log("Disclosed Data:");
+        // console.log(disclosedData.name);
+        // console.log(disclosedData.issuingCountry); 
+        // console.log(disclosedData.nationality);
+        // console.log(disclosedData.birthDate);
 
         bool hasFacematch; 
         try zkPassportHelper.isFaceMatchVerified(FaceMatchMode.REGULAR, OS.ANY, params.committedInputs) returns (bool facematchResult) {
