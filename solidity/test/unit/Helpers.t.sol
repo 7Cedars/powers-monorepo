@@ -2799,7 +2799,8 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     } 
 
     function testSubmitProof() public {
-        vm.skip(false);
+        // because proofs actually expire after a certain time, we need to skip this test for now.
+        vm.skip(true);
         
         ProofVerificationParams memory proof = zkProof.getProof();   
         bool isIDCard = false; 
@@ -2809,7 +2810,8 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     }  
 
     function testSubmitProofBytecode() public {
-        vm.skip(false);
+        // because proofs actually expire after a certain time, we need to skip this test for now.
+        vm.skip(true);
         
         bytes memory bytesInput = zkProof.getBytesInputs();   
 
@@ -2842,11 +2844,8 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
         console2.log("Disclosed data expiry date:", disclosedData.expiryDate);
         console2.log("Disclosed data document number:", disclosedData.documentNumber);
         console2.log("Disclosed data document type:", disclosedData.documentType);
- 
-        // £todo: add actual checks. 
-        // Check that the disclosed data is returned correctly
-        // assertTrue(disclosedData.timestamp > 0);
-        // assertTrue(disclosedData.data.length > 0);
+  
+        assertEq(abi.encode(disclosedData.documentType), abi.encode("P<"));
     }
 }
 
