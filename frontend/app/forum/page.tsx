@@ -64,7 +64,7 @@ export default function AllDaos() {
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         <h1 className="font-mono text-foreground tracking-wider mb-2 text-center uppercase text-lg">ALL DAOs</h1>
-        <p className="font-mono text-xs text-muted-foreground text-center mb-6">Here is an  overview of all saved DAOs in your browser.</p>
+        <p className="font-mono text-xs text-muted-foreground text-center mb-6">Here is an  overview of all DAOs saved in your browser.</p>
 
         {/* DAO Summary Boxes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

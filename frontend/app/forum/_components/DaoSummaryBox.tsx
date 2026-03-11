@@ -14,7 +14,7 @@ export const DaoSummaryBox = ({ powers, onArchive }: DaoSummaryBoxProps) => {
         <div
         key={powers.contractAddress}
         className="border border-border cursor-pointer hover:bg-muted/10 transition-colors relative"
-        onClick={() => router.push(`/view/${powers.contractAddress}`)}>
+        onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)}>
         
             <div className="px-4 py-2 border-b border-border bg-muted/10 flex items-center justify-between">
             <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">{powers.name}</span>

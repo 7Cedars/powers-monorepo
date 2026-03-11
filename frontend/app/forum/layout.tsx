@@ -61,7 +61,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       <header className="border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <a href="/dao-info" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">{
+            <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">{
                 powers.name ? powers.name : "FORUM"
             } </a>
           </div>
@@ -88,7 +88,16 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 </div>
               </>
             }
-            {!ready || !authenticated || !walletsReady || !wallets[0] &&
+            {ready && !authenticated &&
+            <button
+              onClick={ login }
+              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
+              
+                <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
+                <span className="text-muted-foreground">NOT CONNECTED</span>
+              </button>
+            }
+            {ready && authenticated && walletsReady && !wallets[0] &&
             <button
               onClick={ connectWallet }
               className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">

@@ -72,7 +72,7 @@ export function NavigationDropdownMenu({
       {isOpen && (
         <div
           className={cn(
-            "absolute z-50 min-w-[12rem] overflow-hidden rounded-md border bg-white dark:bg-slate-800 shadow-md",
+            "absolute z-50 min-w-[12rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md",
             "animate-in fade-in-0 zoom-in-95",
             alignmentClasses[align]
           )}
@@ -84,7 +84,7 @@ export function NavigationDropdownMenu({
               onClick={() => handleNavigation("/forum")}
               className={cn(
                 "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-                "hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-slate-100 dark:focus:bg-slate-700",
+                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                 "text-left"
               )}
             >
@@ -96,7 +96,7 @@ export function NavigationDropdownMenu({
               onClick={() => handleNavigation("/forum/profile")}
               className={cn(
                 "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-                "hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-slate-100 dark:focus:bg-slate-700",
+                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                 "text-left"
               )}
             >
@@ -105,7 +105,7 @@ export function NavigationDropdownMenu({
 
             {/* Separator if there are saved protocols */}
             {savedProtocols.length > 0 && (
-              <div className="-mx-1 my-1 h-px bg-slate-200 dark:bg-slate-700" />
+              <div className="-mx-1 my-1 h-px bg-border" />
             )}
 
             {/* Saved Protocols */}
@@ -119,7 +119,7 @@ export function NavigationDropdownMenu({
                 }
                 className={cn(
                   "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-                  "hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-slate-100 dark:focus:bg-slate-700",
+                  "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                   "text-left"
                 )}
               >
