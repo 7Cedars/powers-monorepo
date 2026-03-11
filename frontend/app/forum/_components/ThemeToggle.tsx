@@ -1,4 +1,4 @@
-import { Sun } from 'lucide-react';
+import { SunIcon } from "@heroicons/react/24/outline";
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
@@ -23,7 +23,7 @@ export function ThemeToggle() {
       className="p-2 border border-border hover:bg-foreground hover:text-background transition-colors"
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
     >
-      <Sun className="h-4 w-4" />
+      <SunIcon className="h-4 w-4" />
     </button>
   );
 }

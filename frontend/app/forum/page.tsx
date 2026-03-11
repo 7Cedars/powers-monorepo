@@ -1,138 +1,85 @@
 'use client'
 
-import React from 'react'
-import { ProtocolListingLayout } from '../protocol/ProtocolListingLayout'
-import { TitleText } from '@/components/StandardFonts'
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { usePowersStore } from "@/context/store";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 
-export default function MainPage() {
-  const navigate = useNavigate();
-  const { isConnected, isAnonymous, walletAddress, ensName, disconnect } = useWallet();
-  const [walletModalOpen, setWalletModalOpen] = useState(false);
-  const [selectedMandate, setSelectedMandate] = useState<(DaoMandate & {daoName: string;}) | null>(null);
-  const [selectedMandateDaoName, setSelectedMandateDaoName] = useState('');
-  const [hiddenDaos, setHiddenDaos] = useState<string[]>([]);
-  const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
+import { DaoSummaryBox } from '@/app/forum/_components/DaoSummaryBox'; 
+import { defaultPowers101 } from '@/context/defaultProtocols'
 
-  const isWalletConnected = isConnected && !isAnonymous;
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle } from
+'@/app/forum/_components/ui/alert-dialog';
+import { useChains } from 'wagmi';
+import { Powers } from '@/context/types';
 
-  const truncateAddress = (address: string) => {
-    if (!address) return '';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
+export default function AllDaos() {
+  const pathname = usePathname();
+  const powers = usePowersStore(); 
+  const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
+    
+  const [archiveTarget, setArchiveTarget] = useState<`0x${string}` | null>(null);
 
-  const handleDisconnect = () => {
-    disconnect();
-    navigate('/');
-  };
 
-  const displayName = ensName || (walletAddress ? truncateAddress(walletAddress) : '');
+  useEffect(() => {
+    const loadSavedProtocols = () => {
+      try {
+        const localStore = localStorage.getItem('powersProtocols')
+        let protocols: Powers[] = []
+        
+        if (localStore && localStore !== 'undefined') {
+          protocols = JSON.parse(localStore)
+        }
+
+        // Check if Powers 101 already exists
+        const powers101Exists = protocols.some(p => p.name === 'Powers 101')
+        
+        if (!powers101Exists) {
+          // Add Powers 101 to the list
+          protocols.unshift(defaultPowers101) 
+        }
+
+        setSavedProtocols(protocols)
+      } catch (error) {
+        console.error('Error loading saved protocols:', error)
+        setSavedProtocols([defaultPowers101])
+      }
+    }
+
+    loadSavedProtocols()
+  }, [])
+
+  // const displayName = ensName || (walletAddress ? truncateAddress(walletAddress) : ''); // Needs to be implemented through asap. 
 
   return (
-    <div className="min-h-screen flex flex-col bg-background scanlines">
-      <header className="border-b border-border px-3 sm:px-4 py-4">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <a href="/dao-info" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">[DAO NAME]</a>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            {isWalletConnected &&
-            <>
-                <button
-                onClick={() => navigate('/profile')}
-                className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors">
-                
-                  {displayName}
-                </button>
-                <button
-                onClick={handleDisconnect}
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                
-                  <LogOut className="h-3 w-3" />
-                  <span className="hidden sm:inline">DISCONNECT</span>
-                </button>
-                <span className="text-muted-foreground">|</span>
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <Circle className="h-2 w-2 fill-primary text-primary" />
-                  <span className="text-foreground">CONNECTED</span>
-                </div>
-              </>
-            }
-            {!isWalletConnected &&
-            <button
-              onClick={() => setWalletModalOpen(true)}
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
-                <Circle className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
-                <span className="text-muted-foreground">NOT CONNECTED</span>
-              </button>
-            }
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
-      <div className="border-b border-border px-4 py-2 bg-muted/5">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <NavigationDropdown />
-        </div>
-      </div>
+    <div className="min-h-full min-w-full flex flex-col bg-background scanlines"> 
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         <h1 className="font-mono text-foreground tracking-wider mb-2 text-center uppercase text-lg">ALL DAOs</h1>
-        <p className="font-mono text-xs text-muted-foreground text-center mb-6">Here is a live overview of all DAOs in the [DAO NAME] ecosystem.</p>
+        <p className="font-mono text-xs text-muted-foreground text-center mb-6">Here is an  overview of all saved DAOs in your browser.</p>
 
         {/* DAO Summary Boxes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {DAO_CONFIGS.filter((dao) => !hiddenDaos.includes(dao.id)).map((dao) =>
-          <div
-            key={dao.id}
-            className="border border-border cursor-pointer hover:bg-muted/10 transition-colors relative"
-            onClick={() => navigate(`/view/${dao.slug}`)}>
-            
-              <div className="px-4 py-2 border-b border-border bg-muted/10 flex items-center justify-between">
-                <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">{dao.name}</span>
-                <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setArchiveTarget(dao.id);
-                }}
-                className="text-muted-foreground hover:text-foreground transition-colors">
-                
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-              <div className="px-4 py-3 space-y-3">
-                <p className="font-mono text-xs text-muted-foreground leading-relaxed">
-                  [CUSTOM DAO SUMMARY TEXT]
-                </p>
-                <div className="grid grid-cols-3 gap-x-6 gap-y-2">
-                  <div className="space-y-0.5">
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase">Members</span>
-                    <p className="font-mono text-sm text-foreground">0</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase">Founded</span>
-                    <p className="font-mono text-sm text-foreground">dd-mm-yyyy</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase">Mandates</span>
-                    <p className="font-mono text-sm text-foreground">0</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase">Active</span>
-                    <p className="font-mono text-sm text-foreground">0</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase">Treasury</span>
-                    <p className="font-mono text-sm text-foreground">0</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {
+            savedProtocols.map((protocol) => (
+              <DaoSummaryBox
+                key={protocol.contractAddress}
+                powers={protocol}
+                onArchive={() => setArchiveTarget(protocol.contractAddress)}
+              />
+            ))
+          }
         </div>
 
-        <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
+        {/* <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
           <AlertDialogContent className="font-mono">
             <AlertDialogHeader>
               <AlertDialogTitle className="font-mono text-sm tracking-wider">ARCHIVE DAO</AlertDialogTitle>
@@ -155,25 +102,10 @@ export default function MainPage() {
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
-        </AlertDialog>
+        </AlertDialog> */}
 
       </main>
-
-      
-      <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
-
-      {selectedMandate &&
-      <MandateSheet
-        mandate={selectedMandate}
-        daoName={selectedMandateDaoName}
-        isWalletConnected={isWalletConnected}
-        onClose={() => setSelectedMandate(null)}
-        onSwitchMandate={(m) => {
-          setSelectedMandate({ ...m, daoName: selectedMandateDaoName });
-        }} />
-
-      }
-    </div>);
+    </div>
+    );
 
 }
- 

@@ -29,7 +29,7 @@ export const DaoSummaryBox = ({ powers, onArchive }: DaoSummaryBoxProps) => {
             </div>
             <div className="px-4 py-3 space-y-3">
             <p className="font-mono text-xs text-muted-foreground leading-relaxed">
-                [CUSTOM DAO SUMMARY TEXT]
+                {powers?.metadatas?.description ? powers.metadatas.description : "No description available."}
             </p>
             <div className="grid grid-cols-3 gap-x-6 gap-y-2">
                 <div className="space-y-0.5">

@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "../context/Providers"
 import "./globals.css";
+import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
   title: "Powers Protocol",
@@ -30,11 +31,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <head />
+      <ThemeProvider>
       <body className="h-dvh w-screen relative bg-slate-100 overflow-hidden">
         <Providers>
           {children}
         </Providers>
       </body>
+      </ThemeProvider>
     </html>
   );
 }

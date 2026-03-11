@@ -15,7 +15,7 @@ interface NavigationDropdownMenuProps {
 export function NavigationDropdownMenu({
   savedProtocols,
   trigger,
-  align = "end",
+  align = "start",
   sideOffset = 4,
 }: NavigationDropdownMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -62,7 +62,7 @@ export function NavigationDropdownMenu({
   };
 
   return (
-    <div ref={dropdownRef} className="relative inline-block">
+    <div ref={dropdownRef} className="relative inline-block font-mono">
       {/* Trigger */}
       <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
         {trigger}
