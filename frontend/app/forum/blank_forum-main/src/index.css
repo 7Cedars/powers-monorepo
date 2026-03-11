@@ -1,0 +1,332 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+
+/* Breaking news ticker */
+@keyframes ticker {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Page flip animations - smooth cubic bezier */
+@keyframes flip-from-right {
+  0% { 
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotateY(-90deg) scale(0.95);
+    opacity: 0.5;
+  }
+  100% { 
+    transform: rotateY(-180deg) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes flip-from-left {
+  0% { 
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotateY(90deg) scale(0.95);
+    opacity: 0.5;
+  }
+  100% { 
+    transform: rotateY(180deg) scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-flip-from-right {
+  animation: flip-from-right 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  backface-visibility: hidden;
+}
+
+.animate-flip-from-left {
+  animation: flip-from-left 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  backface-visibility: hidden;
+}
+
+.perspective-1000 {
+  perspective: 1200px;
+}
+@tailwind components;
+@tailwind utilities;
+
+/* Terminal/Hacker Design System - Black/White/Grey with CRT effects */
+
+@layer base {
+  :root {
+    /* Light mode - white background, black text */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 95%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 95%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 85%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 0 0% 85%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 75%;
+    --input: 0 0% 85%;
+    --ring: 0 0% 0%;
+
+    --radius: 0rem;
+
+    /* Custom terminal colors */
+    --terminal-green: 120 100% 50%;
+    --terminal-glow: 0 0% 0%;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 25%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M5 3l14 9-7 2-3 7-4-18z' fill='%23000000' stroke='%23ff6600' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") 0 0, auto;
+  }
+
+  body {
+    @apply bg-background text-foreground font-mono;
+    font-family: 'Fira Code', monospace;
+  }
+
+  /* Pointer cursor for interactive elements */
+  a, button, [role="button"], input[type="submit"], input[type="button"], 
+  select, label[for], .cursor-pointer {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M5 3l14 9-7 2-3 7-4-18z' fill='%23000000' stroke='%23ff6600' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") 0 0, pointer;
+  }
+}
+
+/* CRT Scanline Effect */
+@layer utilities {
+  .scanlines {
+    position: relative;
+  }
+
+  .scanlines::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsla(0, 0%, 0%, 0.03) 2px,
+      hsla(0, 0%, 0%, 0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .dark .scanlines::before {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsla(0, 0%, 100%, 0.03) 2px,
+      hsla(0, 0%, 100%, 0.03) 4px
+    );
+  }
+
+  .scanlines-glitch::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsla(0, 0%, 100%, 0.08) 30%,
+      hsla(0, 0%, 100%, 0.15) 50%,
+      hsla(0, 0%, 100%, 0.08) 70%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 11;
+    animation: glitch-line 8s linear infinite;
+  }
+
+  @keyframes glitch-line {
+    0% { top: -8px; opacity: 0; }
+    5% { opacity: 1; }
+    90% { opacity: 1; }
+    95% { opacity: 0; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* Text glow effect */
+  .text-glow {
+    text-shadow: 0 0 10px hsla(0, 0%, 100%, 0.5),
+                 0 0 20px hsla(0, 0%, 100%, 0.3),
+                 0 0 30px hsla(0, 0%, 100%, 0.1);
+  }
+
+  /* Blinking cursor animation */
+  .cursor-blink::after {
+    content: "_";
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Subtle flicker animation */
+  .flicker {
+    animation: flicker 0.15s infinite;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.97; }
+    50% { opacity: 1; }
+    100% { opacity: 0.98; }
+  }
+
+  /* Broken lamp flicker effect */
+  .flicker-lamp {
+    animation: flicker-lamp 3s infinite;
+  }
+
+  @keyframes flicker-lamp {
+    0%, 100% { opacity: 1; filter: brightness(1); }
+    2% { opacity: 0.8; filter: brightness(0.9); }
+    4% { opacity: 1; filter: brightness(1.1); }
+    6% { opacity: 0.6; filter: brightness(0.8); }
+    8% { opacity: 1; filter: brightness(1); }
+    18% { opacity: 1; filter: brightness(1); }
+    19% { opacity: 0.7; filter: brightness(0.85); }
+    20% { opacity: 1; filter: brightness(1.05); }
+    21% { opacity: 0.9; filter: brightness(0.95); }
+    22% { opacity: 1; filter: brightness(1); }
+    55% { opacity: 1; filter: brightness(1); }
+    56% { opacity: 0.5; filter: brightness(0.7); }
+    57% { opacity: 0.85; filter: brightness(0.9); }
+    58% { opacity: 0.4; filter: brightness(0.6); }
+    59% { opacity: 1; filter: brightness(1.1); }
+    60% { opacity: 1; filter: brightness(1); }
+  }
+
+  /* Coin fly animation */
+  @keyframes coin-fly {
+    0% {
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    20% {
+      opacity: 1;
+      transform: translate(calc(var(--velocity-x) * 0.15), calc(var(--velocity-y) * 0.15 - 60px)) rotate(calc(var(--rotation) * 0.2)) scale(1.4);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(calc(var(--velocity-x) * 0.5), calc(var(--velocity-y) * 0.5 - 100px)) rotate(calc(var(--rotation) * 0.5)) scale(1.2);
+    }
+    100% {
+      transform: translate(var(--velocity-x), calc(var(--velocity-y) + 200px)) rotate(var(--rotation)) scale(0.6);
+      opacity: 0;
+    }
+  }
+
+  .animate-coin-fly {
+    animation: coin-fly 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  /* Terminal button style */
+  .terminal-btn {
+    @apply border border-foreground px-10 py-5 font-mono text-base uppercase tracking-wider;
+    @apply transition-all duration-200;
+    @apply hover:bg-foreground hover:text-background;
+    @apply focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .terminal-btn-secondary {
+    @apply border border-muted-foreground text-muted-foreground px-10 py-5 font-mono text-base uppercase tracking-wider;
+    @apply transition-all duration-200;
+    @apply hover:border-foreground hover:text-foreground;
+    @apply focus:outline-none focus:ring-2 focus:ring-muted-foreground focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .terminal-btn-sm {
+    @apply border border-foreground px-4 py-2 font-mono text-xs uppercase tracking-wider;
+    @apply transition-all duration-200;
+    @apply hover:bg-foreground hover:text-background;
+    @apply focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .terminal-btn-sm-muted {
+    @apply border border-muted-foreground text-muted-foreground px-4 py-2 font-mono text-xs uppercase tracking-wider;
+    @apply transition-all duration-200;
+    @apply hover:border-foreground hover:text-foreground;
+    @apply focus:outline-none;
+  }
+}
+
+/* Custom scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.2);
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.4);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.4) hsl(var(--muted) / 0.2);
+}
