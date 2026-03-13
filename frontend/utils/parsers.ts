@@ -504,17 +504,17 @@ export const shorterDescription = (message: string | undefined, output: "short" 
 // would be great to make this more dynamic. 
 type ChainId = (typeof wagmiConfig)['chains'][number]['id']
 
-export const parseChainId = (chainId: string | undefined): ChainId | undefined => {
+export const parseChainId = (chainId: string | undefined): ChainId => {
   // console.log("@parseChainId: waypoint 0", {chainId})
   if (!chainId) {
-    return undefined
+    throw new Error('Chain ID is undefined');
   }
   
   const parsedId = parseInt(chainId)
   const isSupported = chains.some(chain => chain.id === parsedId)
   
   if (!isSupported) {
-    return undefined
+    throw new Error('Unsupported chain ID');
   }
 
   return parsedId as ChainId

@@ -123,6 +123,54 @@ export const howLongTillFutureBlock = (futureBlock: bigint, currentBlock: bigint
 }
 
 /**
+ * Calculate remaining time for a vote based on block numbers
+ * @param proposedAt - Block number when vote started
+ * @param votingPeriod - Number of blocks for voting period
+ * @param currentBlock - Current block number
+ * @param chainId - Chain ID
+ * @returns Formatted string with days, hours, and minutes remaining or "Ended"
+ */
+export const calculateVoteTimeRemaining = (
+  proposedAt: bigint,
+  votingPeriod: bigint,
+  currentBlock: bigint,
+  chainId: number
+): string => {
+  const constants = getConstants(chainId);
+  
+  // Ensure all values are BigInt
+  const proposedAtBigInt = BigInt(proposedAt);
+  const votingPeriodBigInt = BigInt(votingPeriod);
+  const currentBlockBigInt = BigInt(currentBlock);
+  
+  const voteEndBlock = proposedAtBigInt + votingPeriodBigInt;
+  
+  // Check if vote has ended
+  if (currentBlockBigInt >= voteEndBlock) {
+    return "Ended";
+  }
+  
+  // Calculate blocks remaining (convert to Number for arithmetic operations)
+  const blocksRemaining = Number(voteEndBlock - currentBlockBigInt);
+  
+  // Convert blocks to minutes
+  const minutesRemaining = (blocksRemaining * 60) / constants.BLOCKS_PER_HOUR;
+  
+  // Calculate days, hours, and minutes
+  const days = Math.floor(minutesRemaining / (60 * 24));
+  const hours = Math.floor((minutesRemaining % (60 * 24)) / 60);
+  const minutes = Math.floor(minutesRemaining % 60);
+  
+  // Format the result
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+  
+  return parts.join(' ');
+}
+
+/**
  * Validate an Ethereum address format
  * @param address - Address to validate
  * @returns True if valid Ethereum address

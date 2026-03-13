@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Powers } from "@/context/types";
 import { cn } from "@/lib/utils";
+import { usePowersStore } from "@/context/store";
 
 interface NavigationDropdownMenuProps {
   savedProtocols: Powers[];
@@ -21,6 +22,7 @@ export function NavigationDropdownMenu({
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const powers = usePowersStore();
 
   // Close dropdown when clicking outside
   React.useEffect(() => {

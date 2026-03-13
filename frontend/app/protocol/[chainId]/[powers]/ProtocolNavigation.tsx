@@ -18,7 +18,7 @@ import { PowersFlow } from '../../../../components/PowersFlow';
 import { usePowers } from '@/hooks/usePowers';
 import { useEffect, useState } from 'react';
 import { useStatusStore, usePowersStore, useErrorStore, setStatus, setError, setAction, useActionStore } from '@/context/store';
-import { useAccount, usePublicClient, useSwitchChain } from 'wagmi';
+import { useConnection, usePublicClient, useSwitchChain } from 'wagmi';
 import { switchChain } from '@wagmi/core/actions';
 
 // Navigation styling constants
@@ -37,8 +37,6 @@ interface NavigationItem {
   hideLabel?: boolean;
   helpNavItem?: string;
 }
-
-
 
 // Default navigation configuration for protocol pages
 const protocolNavigationConfig: NavigationItem[] = [
@@ -259,13 +257,13 @@ export const ProtocolNavigation: React.FC<{ children: React.ReactNode }> = ({ ch
   const powers = usePowersStore();
   const { chainId } = useParams<{ chainId: string }>()
   const { fetchPowers } = usePowers();
-  const { switchChain } = useSwitchChain();
-  const { chain } = useAccount();
+  const switchChain = useSwitchChain();
+  const { chain } = useConnection();
   
   // Switch chain when selected chain changes
   useEffect(() => {
     if (chainId && chain?.id !== Number(chainId)) {
-      switchChain({ chainId: Number(chainId) });
+      switchChain.mutate({ chainId: Number(chainId) });
     }
   }, [chainId, chain?.id, switchChain]);
 

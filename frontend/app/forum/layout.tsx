@@ -1,18 +1,21 @@
 'use client'
 
 import React from "react";
-import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { usePowersStore } from "@/context/store";
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, usePathname, useParams } from 'next/navigation';
+import { usePowersStore, setStatus, setError,  } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import { NavigationDropdownMenu } from '@/app/forum/_components/ui/NavigationDropdownMenu';
 import { ThemeToggle } from '@/app/forum/_components/ThemeToggle';
 import { truncateAddress } from '@/utils/addressUtils';
 import { defaultPowers101 } from '@/context/defaultProtocols'
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
-import { ArrowRightStartOnRectangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Powers } from "@/context/types";
+import { usePowers } from "@/hooks/usePowers";
+import { useConnection, useSwitchChain } from "wagmi";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
@@ -21,13 +24,20 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
     const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
+    const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
+    const { chainId } = useParams<{ chainId: string }>()
+    const { fetchPowers } = usePowers();
+    const switchChain = useSwitchChain();
+    const { chain } = useConnection();
+    const isFetchingRef = useRef(false); 
 
+    const triggerName =
+      pathname.includes('/profile') ? "Profile" : 
+      pathname.includes('/allDaos') ? "All DAOs" : 
+      !chainId ? "Navigation" :
+      "Main"
 
-    const triggerName = pathname.includes('/profile') ? "Profile" : 
-                        pathname.includes('/allDaos') ? "All DAOs" : 
-                        powers.name ? powers.name : 
-                        "Navigation"; 
-
+    // 
     useEffect(() => {
         const loadSavedProtocols = () => {
             try {
@@ -55,6 +65,31 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
 
         loadSavedProtocols()
     }, [])
+
+    // Switch chain when selected chain changes
+    useEffect(() => {
+      if (chainId && chain?.id !== Number(chainId)) {
+        switchChain.mutate({ chainId: Number(chainId) });
+      }
+    }, [chainId, chain?.id, switchChain]);
+  
+    useEffect(() => {
+      const shouldFetch = (
+        powers.contractAddress == undefined || 
+        powers.contractAddress == `0x0` || 
+        powers.contractAddress.toLowerCase() != powersAddress?.toLowerCase()
+      )
+      
+      if (shouldFetch && !isFetchingRef.current && powersAddress) {
+        console.log("@ForumLayout: Fetching powers", { powersAddress, currentAddress: powers.contractAddress })
+        isFetchingRef.current = true
+        fetchPowers(powersAddress as `0x${string}`).finally(() => {
+          console.log("@ForumLayout: Fetch complete")
+          isFetchingRef.current = false
+        })
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [powersAddress, powers.contractAddress])
  
   return (  
     <div className="min-h-screen min-w-screen flex flex-col bg-background scanlines">
@@ -112,8 +147,23 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       </header>
 
       <div className="border-b border-border px-4 py-2 bg-muted/5">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <NavigationDropdownMenu savedProtocols={savedProtocols} trigger={<span>{triggerName}</span>} />
+        <div className="max-w-6xl mx-auto flex items-center gap-2">
+      
+          { pathname.includes('/action') || pathname.includes('/mandate') || pathname.includes('/flow') ?
+              <button 
+                onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)} 
+                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                <ArrowLeftIcon className="h-3 w-3" />
+                <span>Back to DAO</span>
+              </button>
+              :
+              <>
+              <div className="w-3 h-3">
+                <ChevronRightIcon />
+              </div> 
+              <NavigationDropdownMenu savedProtocols={savedProtocols} trigger={<span>{triggerName}</span>} />
+              </>
+          }
         </div>
       </div>
 

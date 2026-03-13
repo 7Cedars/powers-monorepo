@@ -9,7 +9,7 @@ import { setPowers, setError, setStatus } from "@/context/store";
 
 export const usePowers = () => {
   const { chainId, powers: address } = useParams<{ chainId: string, powers: `0x${string}` }>()
-  // console.log("@usePowers, MAIN", {chainId, error, powers, status})
+  console.log("@usePowers, MAIN", {chainId, address})
 
   // function to save powers to local storage
   const savePowers = (powers: Powers) => {
@@ -587,7 +587,7 @@ export const usePowers = () => {
 
       const powersToBeUpdated = existing ? existing : {
         contractAddress: address,
-        chainId: BigInt(chainId)
+        chainId: BigInt(parseChainId(chainId))
       }
       // console.log("@refetchPowers, waypoint 1", {powersToBeUpdated})
 
@@ -633,7 +633,7 @@ export const usePowers = () => {
       } finally {
         setStatus({status: "success"})
       }
-    }, [ ] 
+    }, [ chainId ] 
   )
 
   return {fetchPowers}  

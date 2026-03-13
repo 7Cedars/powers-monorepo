@@ -1,33 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { usePowersStore } from "@/context/store";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-
 import { DaoSummaryBox } from '@/app/forum/_components/DaoSummaryBox'; 
 import { defaultPowers101 } from '@/context/defaultProtocols'
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle } from
-'@/app/forum/_components/ui/alert-dialog';
-import { useChains } from 'wagmi';
+import { AlertDialog } from '@/app/forum/_components/AlertDialog';
 import { Powers } from '@/context/types';
 
 export default function AllDaos() {
-  const pathname = usePathname();
-  const powers = usePowersStore(); 
   const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
-    
   const [archiveTarget, setArchiveTarget] = useState<`0x${string}` | null>(null);
-
 
   useEffect(() => {
     const loadSavedProtocols = () => {
@@ -57,6 +38,30 @@ export default function AllDaos() {
     loadSavedProtocols()
   }, [])
 
+  const handleArchiveDao = (contractAddress: `0x${string}`) => {
+    try {
+      const localStore = localStorage.getItem('powersProtocols')
+      let protocols: Powers[] = []
+      
+      if (localStore && localStore !== 'undefined') {
+        protocols = JSON.parse(localStore)
+      }
+
+      // Remove the archived DAO
+      const updatedProtocols = protocols.filter(p => p.contractAddress !== contractAddress)
+      
+      // Save back to localStorage
+      localStorage.setItem('powersProtocols', JSON.stringify(updatedProtocols))
+      
+      // Update state
+      setSavedProtocols(updatedProtocols)
+      
+      console.log('DAO archived successfully')
+    } catch (error) {
+      console.error('Error archiving DAO:', error)
+    }
+  }
+
   // const displayName = ensName || (walletAddress ? truncateAddress(walletAddress) : ''); // Needs to be implemented through asap. 
 
   return (
@@ -74,35 +79,25 @@ export default function AllDaos() {
                 key={protocol.contractAddress}
                 powers={protocol}
                 onArchive={() => setArchiveTarget(protocol.contractAddress)}
+                alignment = "column"
               />
             ))
           }
         </div>
 
-        {/* <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
-          <AlertDialogContent className="font-mono">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="font-mono text-sm tracking-wider">ARCHIVE DAO</AlertDialogTitle>
-              <AlertDialogDescription className="font-mono text-xs leading-relaxed">
-                Are you sure you want to archive this DAO? To add it again, you will need to visit [ADDRESS].
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="font-mono text-xs">Go back</AlertDialogCancel>
-              <AlertDialogAction
-                className="font-mono text-xs"
-                onClick={() => {
-                  if (archiveTarget) {
-                    setHiddenDaos((prev) => [...prev, archiveTarget]);
-                  }
-                  setArchiveTarget(null);
-                }}>
-                
-                Confirm
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog> */}
+        <AlertDialog
+          open={!!archiveTarget}
+          onOpenChange={(open) => !open && setArchiveTarget(null)}
+          title="ARCHIVE DAO"
+          description={`Are you sure you want to archive this DAO? To add it again, you will need to visit ${archiveTarget || '[ADDRESS]'}.`}
+          cancelText="Go back"
+          confirmText="Confirm"
+          onConfirm={() => {
+            if (archiveTarget) {
+              handleArchiveDao(archiveTarget);
+            }
+          }}
+        />
 
       </main>
     </div>
