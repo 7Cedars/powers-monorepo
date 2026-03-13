@@ -58,7 +58,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
         <h2 className="text-sm font-semibold tracking-wider font-mono">
           {title}
         </h2>
-        <p className="text-xs leading-relaxed text-muted-foreground font-mono">
+        <p className="text-xs leading-relaxed text-muted-foreground break-all font-mono">
           {description}
         </p>
       </div>

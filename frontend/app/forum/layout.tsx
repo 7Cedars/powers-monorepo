@@ -28,8 +28,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { chainId } = useParams<{ chainId: string }>()
     const { fetchPowers } = usePowers();
     const switchChain = useSwitchChain();
-    const { chain } = useConnection();
-    const isFetchingRef = useRef(false); 
+    const { chain } = useConnection(); 
 
     const triggerName =
       pathname.includes('/profile') ? "Profile" : 
@@ -66,6 +65,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         loadSavedProtocols()
     }, [])
 
+    // Load powers instance if not loaded yet. 
     // Switch chain when selected chain changes
     useEffect(() => {
       if (chainId && chain?.id !== Number(chainId)) {
@@ -74,23 +74,17 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     }, [chainId, chain?.id, switchChain]);
   
     useEffect(() => {
-      const shouldFetch = (
-        powers.contractAddress == undefined || 
-        powers.contractAddress == `0x0` || 
-        powers.contractAddress.toLowerCase() != powersAddress?.toLowerCase()
-      )
-      
-      if (shouldFetch && !isFetchingRef.current && powersAddress) {
-        console.log("@ForumLayout: Fetching powers", { powersAddress, currentAddress: powers.contractAddress })
-        isFetchingRef.current = true
-        fetchPowers(powersAddress as `0x${string}`).finally(() => {
-          console.log("@ForumLayout: Fetch complete")
-          isFetchingRef.current = false
-        })
+      if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
+          fetchPowers(powersAddress as `0x${string}`)
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [powersAddress, powers.contractAddress])
- 
+    }, [ powersAddress ])
+  
+    // reset status and error when pathname changes
+    useEffect(() => {
+      setError({error: null})
+      setStatus({status: "idle"})
+    }, [pathname])
+
   return (  
     <div className="min-h-screen min-w-screen flex flex-col bg-background scanlines">
       <header className="border-b border-border px-3 sm:px-4 py-4 bg-background">

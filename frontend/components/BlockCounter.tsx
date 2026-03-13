@@ -13,17 +13,17 @@ export function BlockCounter({ onRefresh, blockNumber }: { onRefresh: () => void
     <button
       onClick={onRefresh} 
       disabled={statusPowers.status == "pending" || !publicClient}
-      className="h-full flex items-center gap-3 px-2 md:px-3 py-1 rounded-md border border-slate-400 hover:border-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="h-full flex items-center gap-3 px-2 md:px-3 py-1 rounded-md border border-border hover:border-foreground/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       title="Refresh block number"
     >
       <div className="hidden md:flex items-center gap-1">
-        <span className="text-sm text-slate-600 font-mono leading-none">Block {blockNumber ? blockNumber.toString() : '...'}</span>
+        <span className="text-sm text-muted-foreground font-mono leading-none">Block {blockNumber ? blockNumber.toString() : '...'}</span>
       </div>
       <div className="flex items-center justify-center rounded-md transition-colors">
           <ArrowPathIcon 
-            className={`w-5 h-5 text-slate-600 ${statusPowers.status == "pending" ? 'animate-spin' : ''}`}
+            className={`w-5 h-5 text-muted-foreground ${statusPowers.status == "pending" ? 'animate-spin' : ''}`}
           />
       </div>
     </button>
   );
-} 
+}

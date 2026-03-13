@@ -8,7 +8,7 @@ import { Powers } from '@/context/types';
 
 export default function AllDaos() {
   const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
-  const [archiveTarget, setArchiveTarget] = useState<`0x${string}` | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<Powers | null>(null);
 
   useEffect(() => {
     const loadSavedProtocols = () => {
@@ -66,7 +66,6 @@ export default function AllDaos() {
 
   return (
     <div className="min-h-full min-w-full flex flex-col bg-background scanlines"> 
-
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         <h1 className="font-mono text-foreground tracking-wider mb-2 text-center uppercase text-lg">ALL DAOs</h1>
         <p className="font-mono text-xs text-muted-foreground text-center mb-6">Here is an  overview of all DAOs saved in your browser.</p>
@@ -78,7 +77,7 @@ export default function AllDaos() {
               <DaoSummaryBox
                 key={protocol.contractAddress}
                 powers={protocol}
-                onArchive={() => setArchiveTarget(protocol.contractAddress)}
+                onArchive={() => setArchiveTarget(protocol)}
                 alignment = "column"
               />
             ))
@@ -89,12 +88,12 @@ export default function AllDaos() {
           open={!!archiveTarget}
           onOpenChange={(open) => !open && setArchiveTarget(null)}
           title="ARCHIVE DAO"
-          description={`Are you sure you want to archive this DAO? To add it again, you will need to visit ${archiveTarget || '[ADDRESS]'}.`}
+          description={`Are you sure you want to archive this DAO? To add it again, you will need to visit https://powers-protocol.vercel.app/${archiveTarget?.chainId || '[CHAINID]'}/${archiveTarget?.contractAddress || '[ADDRESS]'}.`}
           cancelText="Go back"
           confirmText="Confirm"
           onConfirm={() => {
             if (archiveTarget) {
-              handleArchiveDao(archiveTarget);
+              handleArchiveDao(archiveTarget.contractAddress);
             }
           }}
         />
