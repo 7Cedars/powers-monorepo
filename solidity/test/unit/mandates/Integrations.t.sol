@@ -603,10 +603,20 @@ contract ZKPassport_CheckTest is TestSetupIntegrations {
         registryAddress = address(zkPassportRegistry);
     }
 
-    function test_ZKPassport_Check_Success() public { 
-        // Here we check of cedars is below 18, which should pass.
+    function test_ZKPassport_Nationality_Check_Success() public { 
+        // Here we check of cedars is from GBR, which should pass.
         vm.prank(cedars);
         uint256 actionId = daoMock.request(checkMandateNationalityId, abi.encode(cedars), nonce, "Check Nationality");
+
+        // check status of call.
+        uint8 status = uint8(daoMock.getActionState(actionId));
+        assertTrue(status == 7); // 7 = Fulfilled
+    }
+
+    function test_ZKPassport_Age_Check_Success() public { 
+        // Here we check of cedars is below 18, which should pass.
+        vm.prank(cedars);
+        uint256 actionId = daoMock.request(checkMandateAboveId, abi.encode(cedars), nonce, "Check Age");
 
         // check status of call.
         uint8 status = uint8(daoMock.getActionState(actionId));
@@ -617,7 +627,7 @@ contract ZKPassport_CheckTest is TestSetupIntegrations {
     function test_ZKPassport_Check_Fail() public {
         // Here we check of cedars is below 18, which should fail.
         vm.prank(cedars);
-        vm.expectRevert("Proof verification failed");
+        vm.expectRevert("ZKPassport: Proof verification failed");
         daoMock.request(checkMandateBelowId, abi.encode(cedars), nonce, "Check Birthdate Fail");
     }
 
