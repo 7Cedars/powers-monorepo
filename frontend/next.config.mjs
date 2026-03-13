@@ -39,6 +39,12 @@ const nextConfig = {
             '@react-native-async-storage/async-storage': false,
         };
         
+        // Enable WASM support for XMTP SDK
+        config.experiments = {
+            ...config.experiments,
+            asyncWebAssembly: true,
+        };
+        
         return config;
     }
 };
