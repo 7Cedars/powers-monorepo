@@ -1,18 +1,62 @@
 'use client'
- import { useState  } from 'react'; 
- import { usePowersStore } from "@/context/store";  
+ import { useState, useEffect } from 'react'; 
+ import { usePowersStore, useStatusStore } from "@/context/store";  
  import { DaoSummaryBox } from '@/app/forum/_components/DaoSummaryBox';
  import { ActivityOverview } from './ActivityOverview';
  import { identifyFlows } from '@/utils/identifyFlows';
+ import { usePowers } from '@/hooks/usePowers';
+ import { useParams } from 'next/navigation';
+ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
  export default function DaoView() {
     const powers = usePowersStore();
+    const statusPowers = useStatusStore();
+    const { fetchPowers } = usePowers();
+    const { powers: powersAddress } = useParams<{ powers: `0x${string}` }>();
+    const [fetchAttempted, setFetchAttempted] = useState(false);
+
+    const handleFetchPowers = async () => {
+      if (powersAddress) {
+        setFetchAttempted(true);
+        await fetchPowers(powersAddress as `0x${string}`);
+      }
+    };
 
    if (!powers.name) {
      return (
-       <div className="min-h-screen flex items-center justify-center bg-background font-mono text-muted-foreground">
-         No Powers DAO found at this address and chain. Please check the URL or add this DAO to your saved list.
-       </div>);
+       <div className="min-h-screen flex flex-col items-center justify-center bg-background font-mono scanlines p-4">
+         <div className="max-w-md w-full border border-border bg-background">
+           <div className="px-4 py-2 border-b border-border bg-muted/50">
+             <span className="text-muted-foreground uppercase tracking-wider text-sm">FETCH POWERS</span>
+           </div>
+           <div className="p-6 flex flex-col items-center gap-4">
+             {!fetchAttempted || statusPowers.status === "pending" ? (
+               <>
+                 <p className="text-muted-foreground text-center text-sm">
+                   Powers has not been loaded yet. Click below to fetch the instance and enter the organisation.
+                 </p>
+                 <button
+                   onClick={handleFetchPowers}
+                   disabled={statusPowers.status === "pending"}
+                   className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   <ArrowPathIcon 
+                     className={`w-4 h-4 ${statusPowers.status === "pending" ? 'animate-spin' : ''}`}
+                   />
+                   <span className="text-sm uppercase tracking-wider">
+                     {statusPowers.status === "pending" ? "FETCHING..." : "ENTER POWERS"}
+                   </span>
+                 </button>
+               </>
+             ) : (
+               <p className="text-muted-foreground text-center text-sm">
+                 No Powers DAO found at this address and chain. Please check the URL or add this DAO to your saved list.
+               </p>
+             )}
+           </div>
+         </div>
+       </div>
+     );
    }
  
    return (

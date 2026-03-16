@@ -15,7 +15,8 @@ import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Powers } from "@/context/types";
 import { usePowers } from "@/hooks/usePowers";
-import { useConnection, useSwitchChain } from "wagmi";
+import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
+import { BlockCounter } from "@/components/BlockCounter";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
@@ -24,9 +25,11 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
     const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
+    const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
     const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
     const { chainId } = useParams<{ chainId: string }>()
     const { fetchPowers } = usePowers();
+    const publicClient = usePublicClient();
     const switchChain = useSwitchChain();
     const { chain } = useConnection(); 
 
@@ -65,6 +68,21 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         loadSavedProtocols()
     }, [])
 
+    useEffect(() => {
+        const fetchBlockNumber = async () => {
+          if (powers)  
+          try {
+            const number = await publicClient?.getBlockNumber() ?? null;
+            setBlockNumber(number as bigint);
+          } catch (error) {
+            console.error('Failed to fetch block number:', error);
+            return null;
+          }
+        }
+        fetchBlockNumber();
+    }, [publicClient, powers])
+    
+
     // Load powers instance if not loaded yet. 
     // Switch chain when selected chain changes
     useEffect(() => {
@@ -73,11 +91,11 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       }
     }, [chainId, chain?.id, switchChain]);
   
-    useEffect(() => {
-      if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
-          fetchPowers(powersAddress as `0x${string}`)
-      }
-    }, [ powersAddress ])
+    // useEffect(() => {
+    //   if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
+    //       fetchPowers(powersAddress as `0x${string}`)
+    //   }
+    // }, [ powersAddress ])
   
     // reset status and error when pathname changes
     useEffect(() => {
@@ -92,7 +110,13 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">{
                 powers.name ? powers.name : "FORUM"
-            } </a>
+            } 
+            </a>
+              { 
+                <BlockCounter onRefresh={() => {
+                  fetchPowers(powersAddress as `0x${string}`);
+                }} blockNumber={blockNumber} />
+              }
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {ready && authenticated && walletsReady && wallets[0] &&

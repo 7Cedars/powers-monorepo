@@ -7,6 +7,7 @@ import { useParams } from 'next/dist/client/components/navigation';
 import { Mandate } from '@/context/types';
 import { bigintToRole } from '@/utils/bigintTo';
 import { NewActionDialog } from '@/app/forum/_components/NewActionDialog';
+import { Chatroom } from '@/app/forum/_components/Chatroom';
 
 export default function MandatePage() {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -17,7 +18,7 @@ export default function MandatePage() {
    
 
   return (
-    <div className="min-h-screen flex flex-col bg-background scanlines font-mono">
+    <div className="flex-1 flex flex-col bg-background scanlines font-mono">
       {/* Main Content */}
       <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
         <div className="flex-1 flex flex-col border border-border overflow-hidden">
@@ -27,7 +28,7 @@ export default function MandatePage() {
               <h3 className="text-foreground text-base"> {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
               <p className="text-muted-foreground text-sm">Mandate #{mandate?.index}</p>
             </div>
-            <span className="text-xs text-muted-foreground"> 
+            <span className="text-xs text-right text-muted-foreground"> 
               <p> {bigintToRole(BigInt(mandate?.conditions?.allowedRole?.toString() || '0'), powers)} </p>
               <p> {numberOfRoleMembers}/250 </p>
             </span>
@@ -58,8 +59,7 @@ export default function MandatePage() {
             </div>
           </div>
 
-          {/* Mandate Chatroom */}
-          {/* Here need to add chat room */}
+          <Chatroom chatroomType="Mandate" />
         </div>
       </main>
 

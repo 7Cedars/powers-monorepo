@@ -10,6 +10,7 @@ import { parseChainId } from '@/utils/parsers';
 import { bigintToRole } from '@/utils/bigintTo';
 import { Voting } from '@/components/Voting';
 import { toFullDateFormat } from '@/utils/toDates';
+import { Chatroom } from '@/app/forum/_components/Chatroom';
 
 export default function ActionPage() {
   const router = useRouter();
@@ -72,7 +73,7 @@ export default function ActionPage() {
 
   if (!action || !mandate) {
     return (
-      <div className="min-h-screen flex flex-col bg-background scanlines font-mono">
+      <div className="flex-1 flex flex-col bg-background scanlines font-mono">
         <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4">
           <div className="flex-1 flex flex-col border border-border overflow-hidden">
             <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/50">
@@ -99,7 +100,7 @@ export default function ActionPage() {
     : 'N/A';
 
   return (
-    <div className="min-h-screen flex flex-col bg-background scanlines font-mono">
+    <div className="flex-1 flex flex-col bg-background scanlines font-mono">
       {/* Main Content */}
       <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
         <div className="flex-1 flex flex-col border border-border overflow-hidden">
@@ -272,14 +273,8 @@ export default function ActionPage() {
           )}
 
           {/* Action Chatroom Placeholder */}
-          <div className="flex-1 p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Discussion</h4>
-            </div>
-            <p className="text-xs text-muted-foreground/40 italic">
-              Action-specific chatroom will be placed here.
-            </p>
-          </div>
+          <Chatroom chatroomType="Action" />
+         
         </div>
       </main>
     </div>

@@ -1,8 +1,11 @@
 'use client'
+
+import { Chatroom } from "@/app/forum/_components/Chatroom";
+
  
 export default function FlowSequencePage() { 
     return (
-        <div className="min-h-screen flex flex-col bg-background scanlines font-mono">
+        <div className="flex-1 flex flex-col bg-background scanlines font-mono">
             {/* Main Content */}
             <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
                 <div className="flex-1 flex flex-col border border-border overflow-hidden">
@@ -26,9 +29,8 @@ export default function FlowSequencePage() {
                     
                     <p className="text-xs text-muted-foreground mt-1">Flow ID: 48291</p>
                 </div>
-
-                {/* Flow Chatroom */}
-                {/* Chatroom will be placed here asap.  */}
+                
+                <Chatroom chatroomType="Flow" />
                 
                 </div>
             </main>    

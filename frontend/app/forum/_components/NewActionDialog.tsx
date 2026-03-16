@@ -249,8 +249,24 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
     }
   }, [action, mandate, powers, propose, request, onOpenChange]);
 
-  const canSubmit = checks?.allPassed && action.upToDate;
   const needsVote = mandate.conditions?.quorum && mandate.conditions.quorum > 0n;
+  
+  // For NEW proposals, we need different checks than for executing existing actions
+  // When proposing, the action shouldn't exist yet (actionExists should be false)
+  // We only care about: authorised, throttlePassed, actionNotFulfilled, mandateFulfilled, mandateNotFulfilled
+  const canSubmit = action.upToDate && checks && (() => {
+    if (needsVote) {
+      // For proposals: action should NOT exist yet, so we skip actionExists and proposalPassed checks
+      return checks.authorised === true &&
+             checks.throttlePassed === true &&
+             checks.actionNotFulfilled === true &&
+             checks.mandateFulfilled === true &&
+             checks.mandateNotFulfilled === true;
+    } else {
+      // For direct execution: use all checks
+      return checks.allPassed === true;
+    }
+  })();
 
   return (
     <ForumModal open={open} onOpenChange={onOpenChange} className="font-mono max-w-2xl">
