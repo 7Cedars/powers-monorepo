@@ -372,7 +372,7 @@ export default function ChatPage() {
           />
 
           {/* Connection Status */}
-          <div className="mt-8 p-6 border border-slate-200 rounded-lg bg-white shadow-sm">
+          <div className="mt-8 p-6 border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-slate-800">Connection Status</h3>
@@ -388,7 +388,7 @@ export default function ChatPage() {
                 <button
                   onClick={initializeClient}
                   disabled={isLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
                   {isLoading ? 'Connecting...' : 'Connect to XMTP'}
                 </button>
@@ -406,7 +406,7 @@ export default function ChatPage() {
           {isConnected && (
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 h-[600px]">
               {/* Group Chats List */}
-              <div className="md:col-span-1 border border-slate-200 rounded-lg bg-white shadow-sm flex flex-col">
+              <div className="md:col-span-1 border border-slate-200 bg-white shadow-sm flex flex-col">
                 <div className="p-4 border-b border-slate-200">
                   <h3 className="text-lg font-semibold text-slate-800 mb-3">Group Chats</h3>
                   
@@ -423,12 +423,12 @@ export default function ChatPage() {
                             placeholder={`Address ${index + 1}`}
                             value={input.address}
                             onChange={(e) => updateMemberAddress(input.id, e.target.value)}
-                            className="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 px-2 py-1.5 border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                           {memberInputs.length > 1 && (
                             <button
                               onClick={() => removeMemberSlot(input.id)}
-                              className="px-2 py-1.5 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                              className="px-2 py-1.5 bg-red-500 text-white text-xs hover:bg-red-600"
                             >
                               ✕
                             </button>
@@ -439,7 +439,7 @@ export default function ChatPage() {
                     
                     <button
                       onClick={addMemberSlot}
-                      className="w-full px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-xs hover:bg-slate-300 transition-colors"
+                      className="w-full px-3 py-1.5 bg-slate-200 text-slate-700 text-xs hover:bg-slate-300 transition-colors"
                     >
                       + Add Member Slot
                     </button>
@@ -447,7 +447,7 @@ export default function ChatPage() {
                     <button
                       onClick={handleStartGroupChat}
                       disabled={isCreatingGroup}
-                      className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm transition-colors font-medium"
+                      className="w-full px-4 py-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm transition-colors font-medium"
                     >
                       {isCreatingGroup ? 'Creating...' : 'Start Group Chat'}
                     </button>
@@ -504,7 +504,7 @@ export default function ChatPage() {
               </div>
 
               {/* Messages Panel */}
-              <div className="md:col-span-2 border border-slate-200 rounded-lg bg-white shadow-sm flex flex-col">
+              <div className="md:col-span-2 border border-slate-200 bg-white shadow-sm flex flex-col">
                 {selectedGroupChat ? (
                   <>
                     {/* Messages Header */}
@@ -521,7 +521,7 @@ export default function ChatPage() {
                         )}
                       </div>
                       {selectedGroupChat.uninitializedMembers.length > 0 && (
-                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 text-xs">
                           <div className="font-medium text-red-800 mb-1">Uninitialized members:</div>
                           {selectedGroupChat.uninitializedMembers.map((addr, idx) => (
                             <div key={idx} className="text-red-700">{formatAddress(addr)}</div>
@@ -549,7 +549,7 @@ export default function ChatPage() {
                               className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                             >
                               <div
-                                className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                                className={`max-w-[70%] px-4 py-2 ${
                                   isOwnMessage
                                     ? 'bg-blue-600 text-white'
                                     : 'bg-slate-100 text-slate-800'
@@ -580,13 +580,13 @@ export default function ChatPage() {
                           value={messageInput}
                           onChange={(e) => setMessageInput(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                          className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-4 py-2 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           disabled={isSending}
                         />
                         <button
                           onClick={handleSendMessage}
                           disabled={!messageInput.trim() || isSending}
-                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                          className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                         >
                           {isSending ? 'Sending...' : 'Send'}
                         </button>

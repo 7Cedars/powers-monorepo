@@ -3,7 +3,7 @@
 import React from "react";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { usePowersStore, setStatus, setError,  } from "@/context/store";
+import { usePowersStore, useStatusStore, setStatus, setError,  } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import { NavigationDropdownMenu } from './NavigationDropdownMenu';
@@ -21,7 +21,8 @@ import { BlockCounter } from "@/components/BlockCounter";
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
     const pathname = usePathname();
-    const powers = usePowersStore(); 
+    const powers = usePowersStore();
+    const statusPowers = useStatusStore();
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
     const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
@@ -31,7 +32,8 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { fetchPowers } = usePowers();
     const publicClient = usePublicClient();
     const switchChain = useSwitchChain();
-    const { chain } = useConnection(); 
+    const { chain } = useConnection();
+    const isFetchingRef = useRef(false);
 
     const triggerName =
       pathname.includes('/profile') ? "Profile" : 
@@ -39,20 +41,19 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       !chainId ? "Navigation" :
       "Main"
 
-    useEffect(() => {
-        const fetchBlockNumber = async () => {
-          if (powers)  
-          try {
-            const number = await publicClient?.getBlockNumber() ?? null;
-            setBlockNumber(number as bigint);
-          } catch (error) {
-            console.error('Failed to fetch block number:', error);
-            return null;
-          }
-        }
-        fetchBlockNumber();
-    }, [publicClient, powers])
-    
+    // useEffect(() => {
+    //     const fetchBlockNumber = async () => {
+    //       if (powers)  
+    //       try {
+    //         const number = await publicClient?.getBlockNumber() ?? null;
+    //         setBlockNumber(number as bigint);
+    //       } catch (error) {
+    //         console.error('Failed to fetch block number:', error);
+    //         return null;
+    //       }
+    //     }
+    //     fetchBlockNumber();
+    // }, [publicClient])
 
     // Load powers instance if not loaded yet. 
     // Switch chain when selected chain changes
@@ -62,11 +63,22 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       }
     }, [chainId, chain?.id, switchChain]);
   
-    // useEffect(() => {
-    //   if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
-    //       fetchPowers(powersAddress as `0x${string}`)
-    //   }
-    // }, [ powersAddress ])
+    useEffect(() => {
+      const shouldFetch = 
+        powersAddress && 
+        (powers.contractAddress === undefined || 
+         powers.contractAddress === `0x0` || 
+         powers.contractAddress.toLowerCase() !== powersAddress.toLowerCase()) &&
+        !isFetchingRef.current &&
+        statusPowers.status !== "pending";
+
+      if (shouldFetch) {
+        isFetchingRef.current = true;
+        fetchPowers(powersAddress as `0x${string}`).finally(() => {
+          isFetchingRef.current = false;
+        });
+      }
+    }, [ powers.contractAddress ])
   
     // reset status and error when pathname changes
     useEffect(() => {

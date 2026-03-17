@@ -23,9 +23,10 @@ interface GroupChatInfo {
 
 interface ChatroomProps {
   chatroomType?: 'Mandate' | 'Flow' | 'Action' | 'Vote' | 'General'
+  hasRole?: boolean
 }
 
-export function Chatroom({ chatroomType = 'Mandate' }: ChatroomProps) {
+export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomProps) {
   const { address } = useConnection ()
   const { client, isLoading, error, isConnected, initializeClient } = useXmtpClient()
   
@@ -342,7 +343,15 @@ export function Chatroom({ chatroomType = 'Mandate' }: ChatroomProps) {
       </div>
 
       {/* Content Area */}
-      {!address || !isConnected ? (
+      {!hasRole ? (
+        // No role - Show informational message
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
+          <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
+            You do not have the required role to execute any actions in this mandate.
+          </p>
+        </div>
+      ) : !address || !isConnected ? (
         // Not connected - Show connection button
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
           <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />

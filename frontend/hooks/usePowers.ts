@@ -337,6 +337,7 @@ export const usePowers = () => {
   }
 
   const populateActions = async(actionIds: string[], powersAddress: `0x${string}`): Promise<Action[]> => {
+    console.log("@populateActions, waypoint 0", {actionIds, powersAddress})
     if (actionIds.length === 0) return []
 
     const [stateResults, dataResults, calldataResults, metadataResults] = await Promise.all([
@@ -350,7 +351,7 @@ export const usePowers = () => {
           chainId: parseChainId(chainId)
         }))
       }) as Promise<Array<number>>,
-
+ 
       readContracts(wagmiConfig, {
         allowFailure: false,
         contracts: actionIds.map((actionId) => ({
@@ -369,7 +370,7 @@ export const usePowers = () => {
         `0x${string}`, // caller (address)
         bigint       // nonce (uint256)
       ]>>,
-
+ 
       readContracts(wagmiConfig, {
         allowFailure: false,
         contracts: actionIds.map((actionId) => ({
@@ -416,6 +417,7 @@ export const usePowers = () => {
   
   // Returns a mapping of non-stale actionIds to their mandateId and index
   const fetchActions = async (mandates: Mandate[]): Promise<Mandate[] | undefined> => {
+    console.log("@fetchActions, waypoint 0", {mandates})
     const activeMandates = mandates.filter((mandate) => mandate.active)
 
     // Step 1: Identify stale actions by mandate
@@ -437,6 +439,8 @@ export const usePowers = () => {
       }
     })
 
+    console.log("@fetchActions, waypoint 1", {staleActionsByMandate})
+
     // Step 2: Fetch action quantities for each active mandate
     const actionQuantities = await readContracts(wagmiConfig, {
       allowFailure: false,
@@ -448,6 +452,8 @@ export const usePowers = () => {
         chainId: parseChainId(chainId)
       }))
     }) as Array<bigint>
+
+    console.log("@fetchActions, waypoint 2", {actionQuantities})
 
     // Step 3: Create list of non-stale action indices to fetch per mandate
     type FetchRequest = {
@@ -473,6 +479,8 @@ export const usePowers = () => {
       }
     })
 
+    console.log("@fetchActions, waypoint 3", {fetchRequests})
+
     // Early exit if no actions to fetch
     if (fetchRequests.length === 0) {
       return mandates
@@ -489,6 +497,8 @@ export const usePowers = () => {
         chainId: parseChainId(chainId)
       }))
     }) as Array<bigint>
+
+    console.log("@fetchActions, waypoint 4", {actionIds})
 
     // Step 5: Create mapping of actionId -> { mandateId, index }
     const actionIdMapping = new Map<string, { mandateId: bigint, index: number }>()
@@ -520,6 +530,8 @@ export const usePowers = () => {
         actionsByMandate.get(mandateKey)!.set(mapping.index, action)
       }
     })
+
+    console.log("@fetchActions, waypoint 5", {actionsByMandate})
 
     // Step 8: Update mandates with populated actions (including stale actions)
     const updatedMandates = mandates.map((mandate) => {
@@ -566,6 +578,8 @@ export const usePowers = () => {
         actions: finalActions
       }
     })
+
+    console.log("@fetchActions, waypoint 6", {updatedMandates})
     return updatedMandates
   }
 
@@ -625,13 +639,12 @@ export const usePowers = () => {
           // console.log("@refetchPowers, waypoint 8", {newPowers})
           setPowers(newPowers)
           savePowers(newPowers)
+          setStatus({status: "success"})
         }
       } catch (error) {
          console.error("@fetchPowers error:", error)
         setStatus({status: "error"})
         setError({error: error as Error})
-      } finally {
-        setStatus({status: "success"})
       }
     }, [ chainId ] 
   )

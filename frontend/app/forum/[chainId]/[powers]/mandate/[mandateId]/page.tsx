@@ -8,6 +8,9 @@ import { Mandate } from '@/context/types';
 import { bigintToRole } from '@/utils/bigintTo';
 import { NewActionDialog } from './NewActionDialog';
 import { Chatroom } from '@/components/Chatroom';
+import { useWallets } from '@privy-io/react-auth';
+import { useReadContract } from 'wagmi';
+import { powersAbi } from '@/context/abi';
 
 export default function MandatePage() {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -15,6 +18,25 @@ export default function MandatePage() {
   const { chainId, powers: powersAddress, mandateId } = useParams<{ chainId: string; powers: string; mandateId: string }>();
   const mandate: Mandate | undefined =  powers?.mandates?.find(m => m.index.toString() === mandateId);
   const numberOfRoleMembers = mandate?.conditions?.allowedRole ? powers?.roles?.find(r => r.roleId.toString() === mandate?.conditions?.allowedRole.toString())?.amountHolders : 0;
+  
+  // Get wallet address
+  const { wallets, ready: walletsReady } = useWallets();
+  const walletAddress = walletsReady && wallets[0] ? wallets[0].address : undefined;
+  
+  // Check if user has the required role
+  const { data: hasRoleSinceData } = useReadContract({
+    address: powersAddress as `0x${string}`,
+    abi: powersAbi,
+    functionName: 'hasRoleSince',
+    args: walletAddress && mandate?.conditions?.allowedRole 
+      ? [walletAddress as `0x${string}`, BigInt(mandate.conditions.allowedRole)]
+      : undefined
+  });
+
+  console.log("@MandatePage: ", {walletAddress, hasRoleSinceData, numberOfRoleMembers})
+  
+  // User has role if hasRoleSince returns non-zero value
+  const hasRequiredRole = hasRoleSinceData ? Number(hasRoleSinceData) > 0 : false;
    
 
   return (
@@ -50,7 +72,12 @@ export default function MandatePage() {
             <div className="p-4 flex items-center justify-center sm:w-80 shrink-0">
               <button
                 onClick={() => setActionDialogOpen(true)}
-                className="flex items-center gap-2 cursor-pointer bg-primary text-primary-foreground px-6 py-3 rounded hover:opacity-80 transition-opacity"
+                disabled={!hasRequiredRole}
+                className={`flex items-center gap-2 px-2 px-6 py-3 transition-opacity ${
+                  hasRequiredRole 
+                    ? 'cursor-pointer bg-primary text-primary-foreground hover:opacity-80' 
+                    : 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
+                }`}
               >
                 <PlusIcon className="h-4 w-4" />
                 <h4 className="text-sm uppercase tracking-wider">Start a New Action</h4>
@@ -58,7 +85,7 @@ export default function MandatePage() {
             </div>
           </div>
 
-          <Chatroom chatroomType="Mandate" />
+          <Chatroom chatroomType="Mandate" hasRole={hasRequiredRole} />
         </div>
       </main>
 

@@ -16,7 +16,6 @@ interface ActivityOverviewProps {
 
 export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const router = useRouter();
-  const { timestamps, fetchTimestamps } = useBlocks()
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>();
   const { data: currentBlockNumber } = useBlockNumber({ chainId: parseChainId(chainId) || undefined });
   const flows = identifyFlows(powers)
@@ -189,7 +188,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                       <div className="flex items-center gap-2">
                         {mandates.length > 1 ?  
                         <span className="text-xs text-muted-foreground  cursor-pointer hover:underline"
-                              onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${flowKey}`)}
+                              onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${flowIndices[0]}`)}
                           >
                           Flow [mandates {flowIndices.join(', ')}]
                         </span>

@@ -77,7 +77,7 @@ export const ForumModal: React.FC<ForumModalProps> = ({
         className={cn(
           "relative z-50 w-full max-w-lg bg-background border shadow-lg",
           "animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200",
-          "p-6 sm:rounded-lg",
+          "p-6",
           className
         )}
       >

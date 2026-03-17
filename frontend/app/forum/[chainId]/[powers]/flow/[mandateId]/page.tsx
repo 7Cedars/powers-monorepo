@@ -1,9 +1,13 @@
 'use client'
 
+import { useParams } from 'next/navigation';
 import { Chatroom } from "@/components/Chatroom";
+import { SingleFlow } from "./SingleFlow";
 
- 
-export default function FlowSequencePage() { 
+
+export default function FlowSequencePage() {
+    const { mandateId } = useParams<{ mandateId: string }>();
+
     return (
         <div className="flex-1 flex flex-col bg-background scanlines font-mono">
             {/* Main Content */}
@@ -15,25 +19,14 @@ export default function FlowSequencePage() {
                 </div>
 
                 {/* Flow Visualisation */}
-                <div className="border-b border-border p-6 flex flex-col items-center justify-center min-h-[150px] gap-4">
-                    {/* <img src={flowVisualisationImg} alt="Flow visualisation diagram" className="max-w-full max-h-[400px] object-contain" /> */}
-                    <p className="text-xs text-muted-foreground/40 italic">TODO: Flow visualisation will be placed here.</p>
+                <div className="border-b border-border h-[320px]">
+                    <SingleFlow mandateId={BigInt(mandateId)} />
                 </div>
 
-                {/* More Details */}
-                <div className="border-b border-border p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                    <h4 className="text-xs text-muted-foreground uppercase tracking-wider">More Details</h4>
-                    </div>
-                    <p className="text-xs text-muted-foreground/70 leading-relaxed">Here you will see more details about what this flow does, and what mandates it is comprised of.</p>
-                    
-                    <p className="text-xs text-muted-foreground mt-1">Flow ID: 48291</p>
-                </div>
-                
                 <Chatroom chatroomType="Flow" />
-                
+
                 </div>
-            </main>    
+            </main>
         </div>
     );
 
