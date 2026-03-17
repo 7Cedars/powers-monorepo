@@ -8,9 +8,12 @@ import { ClockIcon, UserIcon, DocumentTextIcon, CheckCircleIcon, XCircleIcon } f
 import { useBlocks } from '@/hooks/useBlocks';
 import { parseChainId } from '@/utils/parsers';
 import { bigintToRole } from '@/utils/bigintTo';
-import { Voting } from '@/components/Voting';
 import { toFullDateFormat } from '@/utils/toDates';
 import { Chatroom } from '@/app/forum/_components/Chatroom';
+import { ArrowLongRightIcon } from '@heroicons/react/24/outline';
+import { Vote } from './Vote';
+import { ActionOverview } from './ActionOverview';
+import { PastVotes } from './PastVotes';
 
 export default function ActionPage() {
   const router = useRouter();
@@ -94,11 +97,6 @@ export default function ActionPage() {
     );
   }
 
-  const stateDisplay = getStateDisplay(action.state);
-  const roleLabel = mandate.conditions?.allowedRole 
-    ? bigintToRole(mandate.conditions.allowedRole, powers)
-    : 'N/A';
-
   return (
     <div className="flex-1 flex flex-col bg-background scanlines font-mono">
       {/* Main Content */}
@@ -107,170 +105,44 @@ export default function ActionPage() {
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/50">
             <div className="flex-1">
-              <p className="text-muted-foreground text-sm">Action #{action.actionId}</p>
-              <h3 className="text-foreground text-base font-semibold">
+              <h3 className="text-foreground text-base">
                 {action.description || 'No Description'}
               </h3>
+              <p className="text-muted-foreground text-sm">Mandate #{action.mandateId}: {mandate.nameDescription?.split(':')[0] || 'Unnamed Mandate'}</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-sm font-medium ${stateDisplay.color}`}>
-                {stateDisplay.label}
-              </span>
+                <button
+                onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${action.mandateId}/?${action.actionId}`)}
+                className="terminal-btn-sm flex items-center gap-2 text-sm px-4 py-2 bg-foreground text-background hover:bg-foreground/80 hover:text-background">
+                VIEW FLOW SEQUENCE
+                  <ArrowLongRightIcon className="h-3 w-3" />
+                </button>
             </div>
           </div>
 
-          {/* Action Overview Section */}
+          {/* Three Component Section - Responsive Layout */}
           <div className="border-b border-border">
-            <div className="p-6">
-              <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Action Overview</h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Left Column */}
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <DocumentTextIcon className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Mandate</p>
-                      <p 
-                        className="text-sm text-foreground cursor-pointer hover:text-primary hover:underline transition-colors"
-                        onClick={() => router.push(`/forum/${chainId}/${powersAddress}/mandate/${mandate.index}`)}
-                      >
-                        #{mandate.index.toString()} - {mandate.nameDescription?.split(':')[0] || 'Unnamed Mandate'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <UserIcon className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Role Required</p>
-                      <p className="text-sm text-foreground">{roleLabel}</p>
-                    </div>
-                  </div>
-
-                  {action.caller && (
-                    <div className="flex items-start gap-3">
-                      <UserIcon className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Caller</p>
-                        <p className="text-sm text-foreground font-mono break-all">{action.caller}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-3">
-                  {action.proposedAt && action.proposedAt !== 0n && (
-                    <div className="flex items-start gap-3">
-                      <ClockIcon className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Proposed At</p>
-                        <p className="text-sm text-foreground">
-                          {timestamps.get(action.proposedAt.toString()) 
-                            ? toFullDateFormat(Number(timestamps.get(action.proposedAt.toString())))
-                            : `Block ${action.proposedAt.toString()}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {action.requestedAt && action.requestedAt !== 0n && (
-                    <div className="flex items-start gap-3">
-                      <CheckCircleIcon className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Requested At</p>
-                        <p className="text-sm text-foreground">
-                          {timestamps.get(action.requestedAt.toString()) 
-                            ? toFullDateFormat(Number(timestamps.get(action.requestedAt.toString())))
-                            : `Block ${action.requestedAt.toString()}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {action.fulfilledAt && action.fulfilledAt !== 0n && (
-                    <div className="flex items-start gap-3">
-                      <CheckCircleIcon className="h-4 w-4 text-green-700 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Fulfilled At</p>
-                        <p className="text-sm text-foreground">
-                          {timestamps.get(action.fulfilledAt.toString()) 
-                            ? toFullDateFormat(Number(timestamps.get(action.fulfilledAt.toString())))
-                            : `Block ${action.fulfilledAt.toString()}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {action.cancelledAt && action.cancelledAt !== 0n && (
-                    <div className="flex items-start gap-3">
-                      <XCircleIcon className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cancelled At</p>
-                        <p className="text-sm text-foreground">
-                          {timestamps.get(action.cancelledAt.toString()) 
-                            ? toFullDateFormat(Number(timestamps.get(action.cancelledAt.toString())))
-                            : `Block ${action.cancelledAt.toString()}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {action.nonce && (
-                    <div className="flex items-start gap-3">
-                      <DocumentTextIcon className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nonce</p>
-                        <p className="text-sm text-foreground font-mono">{action.nonce}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            <div className="flex flex-col lg:flex-row lg:divide-x divide-border w-full">
+              {/* Action Overview Section */}
+              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6">
+                <ActionOverview action={action} mandate={mandate} />
               </div>
 
-              {/* Parameters Section */}
-              {action.paramValues && action.paramValues.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Parameters</h4>
-                  <div className="space-y-2">
-                    {action.paramValues.map((value, idx) => (
-                      <div key={idx} className="flex gap-2 text-xs">
-                        <span className="text-muted-foreground font-mono">Param {idx + 1}:</span>
-                        <span className="text-foreground font-mono break-all">
-                          {typeof value === 'bigint' ? value.toString() : String(value)}
-                        </span>
-                      </div>
-                    ))}
+              {/* Voting Section - Only show if mandate has voting */}
+              {mandate.conditions?.quorum && mandate.conditions.quorum > 0n && (
+                <>
+                  <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6">
+                    <Vote action={action} mandate={mandate} />
                   </div>
-                </div>
-              )}
 
-              {/* Call Data */}
-              {action.callData && action.callData !== '0x0' && (
-                <div className="mt-6">
-                  <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Call Data</h4>
-                  <div className="bg-muted/30 p-3 rounded border border-border">
-                    <p className="text-xs text-foreground font-mono break-all">
-                      {action.callData}
-                    </p>
+                  {/* Past Votes Section */}
+                  <div className="flex-1 min-w-0 p-6">
+                    <PastVotes action={action} mandate={mandate} powers={powers} />
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>
-
-          {/* Voting Section - Only show if mandate has voting */}
-          {mandate.conditions?.quorum && mandate.conditions.quorum > 0n && (
-            <div className="border-b border-border">
-              <div className="px-6 py-2 bg-muted/50">
-                <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Voting</h4>
-              </div>
-              <div className="p-6">
-                <Voting powers={powers} />
-              </div>
-            </div>
-          )}
 
           {/* Action Chatroom Placeholder */}
           <Chatroom chatroomType="Action" />

@@ -6,7 +6,7 @@ import { usePowersStore } from '@/context/store';
 import { useParams } from 'next/dist/client/components/navigation';
 import { Mandate } from '@/context/types';
 import { bigintToRole } from '@/utils/bigintTo';
-import { NewActionDialog } from '@/app/forum/_components/NewActionDialog';
+import { NewActionDialog } from './NewActionDialog';
 import { Chatroom } from '@/app/forum/_components/Chatroom';
 
 export default function MandatePage() {
@@ -30,7 +30,6 @@ export default function MandatePage() {
             </div>
             <span className="text-xs text-right text-muted-foreground"> 
               <p> {bigintToRole(BigInt(mandate?.conditions?.allowedRole?.toString() || '0'), powers)} </p>
-              <p> {numberOfRoleMembers}/250 </p>
             </span>
           </div>
 

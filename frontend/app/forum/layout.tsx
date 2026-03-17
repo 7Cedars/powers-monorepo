@@ -39,35 +39,6 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       !chainId ? "Navigation" :
       "Main"
 
-    // 
-    useEffect(() => {
-        const loadSavedProtocols = () => {
-            try {
-            const localStore = localStorage.getItem('powersProtocols')
-            let protocols: Powers[] = []
-            
-            if (localStore && localStore !== 'undefined') {
-                protocols = JSON.parse(localStore)
-            }
-
-            // Check if Powers 101 already exists
-            const powers101Exists = protocols.some(p => p.name === 'Powers 101')
-            
-            if (!powers101Exists) {
-                // Add Powers 101 to the list
-                protocols.unshift(defaultPowers101) 
-            }
-
-            setSavedProtocols(protocols)
-            } catch (error) {
-            console.error('Error loading saved protocols:', error)
-            setSavedProtocols([defaultPowers101])
-            }
-        }
-
-        loadSavedProtocols()
-    }, [])
-
     useEffect(() => {
         const fetchBlockNumber = async () => {
           if (powers)  
@@ -104,7 +75,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     }, [pathname])
 
   return (  
-    <div className="min-h-screen min-w-screen flex flex-col bg-background scanlines">
+    <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
       <header className="border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -164,15 +135,15 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         </div>
       </header>
 
-      <div className="border-b border-border px-4 py-2 bg-muted/5">
+      <div className="border-b border-border px-4 py-1.5 bg-muted/5">
         <div className="max-w-6xl mx-auto flex items-center gap-2">
       
           { pathname.includes('/action') || pathname.includes('/mandate') || pathname.includes('/flow') ?
               <button 
                 onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)} 
-                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                className="flex items-center justify-center gap-2 px-3 py-2 border border-border border-foreground cursor-pointer hover:bg-foreground hover:text-background transition-all text-xs uppercase font-mono leading-none">
                 <ArrowLeftIcon className="h-3 w-3" />
-                <span>Back to DAO</span>
+                <span className="leading-none">BACK TO DAO</span>
               </button>
               :
               <>

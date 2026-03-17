@@ -24,7 +24,7 @@
 
    if (!powers.name) {
      return (
-       <div className="min-h-screen flex flex-col items-center justify-center bg-background font-mono scanlines p-4">
+       <div className="flex-1 flex flex-col bg-background scanlines font-mono items-center justify-center p-4">
          <div className="max-w-md w-full border border-border bg-background">
            <div className="px-4 py-2 border-b border-border bg-muted/50">
              <span className="text-muted-foreground uppercase tracking-wider text-sm">FETCH POWERS</span>
@@ -60,9 +60,10 @@
    }
  
    return (
-        <div className="min-h-full min-w-full flex flex-col bg-background scanlines">
+        // <div className="min-h-full min-w-full flex flex-col bg-background scanlines">
+        <>
         {/* Main Content */}
-        <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 overflow-hidden">
+        <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 h-0">
         
             {/* DAO Summary - full width top */}
             <DaoSummaryBox powers = {powers} alignment='row'/> 
@@ -78,6 +79,8 @@
             {/* Removed for now, can add this later again.  */}
  
        </main> 
-     </div>);
+       </>
+   )
+    //  </div>);
  
  }

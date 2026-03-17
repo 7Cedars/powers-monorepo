@@ -2,7 +2,7 @@
 
 import React, { useEffect, useCallback } from "react";
 import { XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import { ForumModal } from "./ForumModal";
+import { ForumModal } from "../../../../_components/ForumModal";
 import { DynamicInput } from "@/components/DynamicInput";
 import { SimulationBox } from "@/components/SimulationBox";
 import { Button } from "@/components/Button";
@@ -324,7 +324,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         ))}
 
         {/* Nonce Input */}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <label htmlFor="nonce" className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">
             Nonce
           </label>
@@ -354,7 +354,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           >
             <SparklesIcon className="h-4 w-4" />
           </button>
-        </div>
+        </div> */}
  
         {/* Error Display */}
         {error.error && (

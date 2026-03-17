@@ -9,6 +9,7 @@ import { useBlocks } from '@/hooks/useBlocks';
 import { useBlockNumber } from 'wagmi';
 import { parseChainId } from '@/utils/parsers';
 import { calculateVoteTimeRemaining } from '@/organisations/helpers';
+import { SearchFilterSort } from '@/app/forum/_components/SearchFilterSort';
 
 interface ActivityOverviewProps {
   powers: Powers;
@@ -156,12 +157,17 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
   };
 
   return (
-    <div className="border border-border">
-      <div className="px-4 py-2 border-b border-border bg-muted/50">
+    <div className="flex-1 flex flex-col border border-border min-h-0">
+      <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
         <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">ACTIVITY OVERVIEW</span>
+        <SearchFilterSort 
+          onSearchChange={(query) => console.log('Search:', query)}
+          onFilterChange={(filter) => console.log('Filter:', filter)}
+          onSortChange={(sort) => console.log('Sort:', sort)}
+        />
       </div>
 
-      <div className="overflow-auto max-h-[750px]">
+      <div className="flex-1 overflow-auto">
         <table className="w-full font-mono text-xs">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>

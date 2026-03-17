@@ -66,7 +66,7 @@ export function NavigationDropdownMenu({
   return (
     <div ref={dropdownRef} className="relative inline-block font-mono">
       {/* Trigger */}
-      <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+      <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer py-0.5">
         {trigger}
       </div>
 

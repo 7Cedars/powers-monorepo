@@ -6,6 +6,7 @@ import { useXmtpClient } from '@/hooks/useXmtpClient'
 import { useConnection } from 'wagmi'
 import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk'
 import { ConsentState, IdentifierKind } from '@xmtp/browser-sdk'
+import { SearchFilterSort } from './SearchFilterSort'
 
 // Hardcoded addresses for group chat creation - for demo purposes only
 const HARDCODED_ADDRESSES = [
@@ -320,14 +321,23 @@ export function Chatroom({ chatroomType = 'Mandate' }: ChatroomProps) {
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/10">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <ChatBubbleBottomCenterTextIcon className="h-3 w-3 text-muted-foreground" />
           <h4 className="text-xs text-muted-foreground uppercase tracking-wider">{chatroomType.toUpperCase()} CHATROOM</h4>
+          
         </div>
         {isConnected && groupChat && (
-          <span className="text-[10px] text-muted-foreground">
-            {groupChat.memberAddresses.length} member{groupChat.memberAddresses.length !== 1 ? 's' : ''}
-          </span>
+         <div className="flex items-center justify-between gap-2">
+          <SearchFilterSort 
+              onSearchChange={(query) => console.log('Search:', query)}
+              onFilterChange={(filter) => console.log('Filter:', filter)}
+              onSortChange={(sort) => console.log('Sort:', sort)}
+            />
+          
+            <span className="text-sm text-muted-foreground">
+              | {groupChat.memberAddresses.length}/250 members
+            </span>
+        </div>
         )}
       </div>
 
