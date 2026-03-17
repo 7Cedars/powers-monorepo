@@ -1,7 +1,6 @@
 'use client'
 import React from 'react';
 import { Powers, Action } from '@/context/types';
-import { EllipsisHorizontalCircleIcon } from '@heroicons/react/24/solid';
 import { bigintToRole } from "@/utils/bigintTo";
 import { useRouter, useParams } from 'next/navigation';
 import { identifyFlows } from '@/utils/identifyFlows';
@@ -9,7 +8,7 @@ import { useBlocks } from '@/hooks/useBlocks';
 import { useBlockNumber } from 'wagmi';
 import { parseChainId } from '@/utils/parsers';
 import { calculateVoteTimeRemaining } from '@/organisations/helpers';
-import { SearchFilterSort } from '@/app/forum/_components/SearchFilterSort';
+import { SearchFilterSort } from '@/components/SearchFilterSort';
 
 interface ActivityOverviewProps {
   powers: Powers;

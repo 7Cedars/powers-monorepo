@@ -7,7 +7,7 @@ import { useParams } from 'next/dist/client/components/navigation';
 import { Mandate } from '@/context/types';
 import { bigintToRole } from '@/utils/bigintTo';
 import { NewActionDialog } from './NewActionDialog';
-import { Chatroom } from '@/app/forum/_components/Chatroom';
+import { Chatroom } from '@/components/Chatroom';
 
 export default function MandatePage() {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);

@@ -6,8 +6,8 @@ import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, setStatus, setError,  } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
-import { NavigationDropdownMenu } from '@/app/forum/_components/ui/NavigationDropdownMenu';
-import { ThemeToggle } from '@/app/forum/_components/ThemeToggle';
+import { NavigationDropdownMenu } from './NavigationDropdownMenu';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { truncateAddress } from '@/utils/addressUtils';
 import { defaultPowers101 } from '@/context/defaultProtocols'
 import { ChevronRightIcon } from "@heroicons/react/24/solid";

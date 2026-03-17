@@ -10,7 +10,7 @@ import { parseChainId } from "@/utils/parsers";
 import { getConstants } from "@/context/constants";
 import { CheckIcon, XMarkIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { Action, Powers } from "@/context/types";
-import { ForumModal } from "@/app/forum/_components/ForumModal";
+import { ForumModal } from "@/components/ForumModal";
 import { useChecks } from "@/hooks/useChecks";
 
 interface VoteProps {

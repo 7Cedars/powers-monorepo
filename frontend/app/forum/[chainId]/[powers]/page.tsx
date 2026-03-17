@@ -1,7 +1,7 @@
 'use client'
  import { useState, useEffect } from 'react'; 
  import { usePowersStore, useStatusStore } from "@/context/store";  
- import { DaoSummaryBox } from '@/app/forum/_components/DaoSummaryBox';
+ import { DaoSummaryBox } from '@/components/DaoSummaryBox';
  import { ActivityOverview } from './ActivityOverview';
  import { identifyFlows } from '@/utils/identifyFlows';
  import { usePowers } from '@/hooks/usePowers';

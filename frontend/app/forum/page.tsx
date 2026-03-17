@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { DaoSummaryBox } from '@/app/forum/_components/DaoSummaryBox'; 
+import { DaoSummaryBox } from '@/components/DaoSummaryBox'; 
 import { defaultPowers101 } from '@/context/defaultProtocols'
-import { AlertDialog } from '@/app/forum/_components/AlertDialog';
+import { AlertDialog } from '@/components/AlertDialog';
 import { Powers } from '@/context/types';
 
 export default function AllDaos() {

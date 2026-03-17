@@ -1,14 +1,13 @@
 'use client'
 
 import React, { useEffect, useCallback } from "react";
-import { XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import { ForumModal } from "../../../../_components/ForumModal";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { ForumModal } from "../../../../../../components/ForumModal";
 import { DynamicInput } from "@/components/DynamicInput";
 import { SimulationBox } from "@/components/SimulationBox";
-import { Button } from "@/components/Button";
 import { setError, useActionStore, useErrorStore, usePowersStore } from "@/context/store";
 import { parseMandateError, parseParamValues } from "@/utils/parsers";
-import { Action, Checks, DataType, InputType, Mandate, Powers } from "@/context/types";
+import { Action, InputType, Mandate } from "@/context/types";
 import { setAction } from "@/context/store";
 import { decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from "viem";
 import { hashAction } from "@/utils/hashAction";

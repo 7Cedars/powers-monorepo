@@ -1,6 +1,6 @@
 'use client'
 
-import { Chatroom } from "@/app/forum/_components/Chatroom";
+import { Chatroom } from "@/components/Chatroom";
 
  
 export default function FlowSequencePage() { 
