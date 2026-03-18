@@ -51,7 +51,7 @@ export const Button = ({
 
   return (
     <button 
-      className={`w-full h-full aria-selected:bg-opacity-0 disabled:opacity-50 rounded-md border ${roleBorderColour[role % roleBorderColour.length]} ${fontSize[size]} ${showBorder ? "": "md:border-transparent"} ${filled ? "": "bg-opacity-0"}`}  
+      className={`w-full h-full aria-selected:bg-opacity-0 disabled:opacity-50 rounded-md border cursor-pointer ${roleBorderColour[role % roleBorderColour.length]} ${fontSize[size]} ${showBorder ? "": "md:border-transparent"} ${filled ? "": "bg-opacity-0"}`}  
       onClick={onClick} 
       aria-selected={!selected}
       disabled = {statusButton == "disabled"}

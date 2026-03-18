@@ -142,8 +142,8 @@ const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
   const hasVote = cond?.quorum != null && cond.quorum > 0n
   const hasTimelock = cond?.timelock != null && cond.timelock > 0n
   const hasThrottle = cond?.throttleExecution != null && cond.throttleExecution > 0n
-  const needsFulfilled = cond?.needFulfilled && cond.needFulfilled !== 0n
-  const needsNotFulfilled = cond?.needNotFulfilled && cond.needNotFulfilled !== 0n
+  const needsFulfilled = !!(cond?.needFulfilled && cond.needFulfilled !== 0n)
+  const needsNotFulfilled = !!(cond?.needNotFulfilled && cond.needNotFulfilled !== 0n)
 
   return (
     <div
@@ -235,6 +235,7 @@ const nodeTypes = { mandateNode: MandateNode }
 
 interface SingleFlowProps {
   mandateId: bigint
+  actionId?: bigint
 }
 
 const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId }) => {

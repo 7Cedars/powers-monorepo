@@ -1,61 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { DaoSummaryBox } from '@/components/DaoSummaryBox'; 
-import { defaultPowers101 } from '@/context/defaultProtocols'
 import { AlertDialog } from '@/components/AlertDialog';
 import { Powers } from '@/context/types';
+import { useSavedProtocolsStore } from '@/context/store';
 
 export default function AllDaos() {
-  const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
+  const { savedProtocols, removeProtocol } = useSavedProtocolsStore();
   const [archiveTarget, setArchiveTarget] = useState<Powers | null>(null);
-
-  useEffect(() => {
-    const loadSavedProtocols = () => {
-      try {
-        const localStore = localStorage.getItem('powersProtocols')
-        let protocols: Powers[] = []
-        
-        if (localStore && localStore !== 'undefined') {
-          protocols = JSON.parse(localStore)
-        }
-
-        // Check if Powers 101 already exists
-        const powers101Exists = protocols.some(p => p.name === 'Powers 101')
-        
-        if (!powers101Exists) {
-          // Add Powers 101 to the list
-          protocols.unshift(defaultPowers101) 
-        }
-
-        setSavedProtocols(protocols)
-      } catch (error) {
-        console.error('Error loading saved protocols:', error)
-        setSavedProtocols([defaultPowers101])
-      }
-    }
-
-    loadSavedProtocols()
-  }, [])
 
   const handleArchiveDao = (contractAddress: `0x${string}`) => {
     try {
-      const localStore = localStorage.getItem('powersProtocols')
-      let protocols: Powers[] = []
-      
-      if (localStore && localStore !== 'undefined') {
-        protocols = JSON.parse(localStore)
-      }
-
-      // Remove the archived DAO
-      const updatedProtocols = protocols.filter(p => p.contractAddress !== contractAddress)
-      
-      // Save back to localStorage
-      localStorage.setItem('powersProtocols', JSON.stringify(updatedProtocols))
-      
-      // Update state
-      setSavedProtocols(updatedProtocols)
-      
+      removeProtocol(contractAddress);
       console.log('DAO archived successfully')
     } catch (error) {
       console.error('Error archiving DAO:', error)
@@ -79,6 +36,7 @@ export default function AllDaos() {
                 powers={protocol}
                 onArchive={() => setArchiveTarget(protocol)}
                 alignment = "column"
+                showHeader={true}
               />
             ))
           }

@@ -1,5 +1,6 @@
 import { GetBlockReturnType } from '@wagmi/core';
 import { Log } from "viem";
+import { wagmiConfig } from './wagmiConfig';
 
 export type Status = "idle" | "pending" | "error" | "success" 
 export type Vote = 0n | 1n | 2n  // = against, FOR, ABSTAIN  
@@ -8,6 +9,8 @@ export type OrganizationType = 'Powers 101' | 'Bridging Off-Chain Governance' | 
 export type InputType = boolean | string | number | bigint | `0x${string}`
 export type DataType = "uint8" | "uint16" | "uint32" | "uint48" | "uint64" | "uint128" | "uint256" | "address" | "bytes" | "string" | "bytes32" | "bool" |
                        "uint8[]" | "uint16[]" | "uint32[]" | "uint48[]" | "uint64[]" | "uint128[]" | "uint256[]" | "address[]" | "bytes[]" | "string[]" | "bytes32[]" | "bool[]" | "unsupported" | "empty" 
+
+export type ChainId = (typeof wagmiConfig)['chains'][number]['id']
 export type MandateSimulation = [
       bigint, 
       `0x${string}`[], 

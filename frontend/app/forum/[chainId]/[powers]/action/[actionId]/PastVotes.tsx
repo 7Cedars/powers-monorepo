@@ -115,7 +115,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
         }
 
         return {
-          voter: log.args.voter as `0x${string}`,
+          voter: log.args.account as `0x${string}`,
           support: log.args.support as number,
           blockNumber: log.blockNumber as bigint,
           transactionHash: log.transactionHash as `0x${string}`,
@@ -208,9 +208,6 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
                   <th className="px-3 py-2 font-normal text-muted-foreground uppercase tracking-wider">
                     Date & Time
                   </th>
-                  <th className="px-3 py-2 font-normal text-muted-foreground uppercase tracking-wider">
-                    Tx Hash
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -251,24 +248,6 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
                         <span className="text-muted-foreground font-mono">
                           {formattedDate}
                         </span>
-                      </td>
-
-                      {/* Transaction hash */}
-                      <td className="px-3 py-2">
-                        {supportedChain?.blockExplorers?.default?.url ? (
-                          <a
-                            href={`${supportedChain.blockExplorers.default.url}/tx/${vote.transactionHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground underline font-mono transition-colors"
-                          >
-                            {vote.transactionHash.slice(0, 6)}...{vote.transactionHash.slice(-4)}
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground font-mono">
-                            {vote.transactionHash.slice(0, 6)}...{vote.transactionHash.slice(-4)}
-                          </span>
-                        )}
                       </td>
                     </tr>
                   );

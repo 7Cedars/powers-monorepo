@@ -79,7 +79,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
   // Helper to abbreviate actionId
   const abbreviateActionId = (actionId: string): string => {
     if (!actionId || actionId.length <= 10) return actionId;
-    return `${actionId.slice(0, 6)}...${actionId.slice(-4)}`;
+    return `${actionId.slice(0, 8)}...${actionId.slice(-8)}`;
   };
 
   // Helper to format parameter values for display

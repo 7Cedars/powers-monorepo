@@ -35,8 +35,12 @@ export default function MandatePage() {
 
   console.log("@MandatePage: ", {walletAddress, hasRoleSinceData, numberOfRoleMembers})
   
-  // User has role if hasRoleSince returns non-zero value
-  const hasRequiredRole = hasRoleSinceData ? Number(hasRoleSinceData) > 0 : false;
+  // PUBLIC_ROLE is type(uint256).max - everyone has this role by default
+  const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+  const allowedRole = mandate?.conditions?.allowedRole ? BigInt(mandate.conditions.allowedRole) : BigInt(0);
+  
+  // User has role if hasRoleSince returns non-zero value OR if the allowed role is PUBLIC_ROLE
+  const hasRequiredRole = allowedRole === PUBLIC_ROLE || (hasRoleSinceData ? Number(hasRoleSinceData) > 0 : false);
    
 
   return (

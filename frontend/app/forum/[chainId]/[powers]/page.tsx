@@ -8,6 +8,7 @@
  import { useParams } from 'next/navigation';
  import { ArrowPathIcon } from '@heroicons/react/24/outline';
  import { useErrorStore } from '@/context/store';
+import { parseChainId } from '@/utils/parsers';
 
  export default function OverviewPage() {
     const powers = usePowersStore();
@@ -22,14 +23,14 @@
     useEffect(() => {
       console.log("useEffect triggered with powersAddress:", powersAddress, "chainId:", chainId);
       if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
-        fetchPowers(powersAddress as `0x${string}`, chainId);
+        fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
       }
     }, [powersAddress, chainId])
 
     const handleFetchPowers = async () => {
       if (powersAddress && chainId) {
         setFetchAttempted(true);
-        await fetchPowers(powersAddress as `0x${string}`, chainId);
+        await fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
       }
     };
 
@@ -77,7 +78,7 @@
         <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 h-0">
         
             {/* DAO Summary - full width top */}
-            <DaoSummaryBox powers = {powers} alignment='row'/> 
+            <DaoSummaryBox powers={powers} alignment='row' showHeader={false} /> 
 
             {/* THE ACTIVITY OF THE ORG - Unified mandates + actions */}
             <ActivityOverview powers={powers} />

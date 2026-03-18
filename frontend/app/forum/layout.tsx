@@ -3,7 +3,7 @@
 import React from "react";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { usePowersStore, useStatusStore, setStatus, setError,  } from "@/context/store";
+import { usePowersStore, useStatusStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import { NavigationDropdownMenu } from './NavigationDropdownMenu';
@@ -19,15 +19,16 @@ import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { BlockCounter } from "@/components/BlockCounter";
 
 import { useErrorStore } from "@/context/store";
+import { parseChainId } from "@/utils/parsers";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
     const pathname = usePathname();
     const powers = usePowersStore();
     const statusPowers = useStatusStore();
+    const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
-    const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
     const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
     const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
     const { chainId } = useParams<{ chainId: string }>()
@@ -36,6 +37,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
     const isFetchingRef = useRef(false);
+    const action = useActionStore();
 
     console.log("layout being triggered")
 
@@ -57,7 +59,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           }
         }
         fetchBlockNumber();
-    }, [publicClient])
+    }, [publicClient, powers])
 
     // Load powers instance if not loaded yet. 
     // Switch chain when selected chain changes
@@ -71,7 +73,26 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     useEffect(() => {
       setError({error: null})
       setStatus({status: "idle"})
+      setAction({...action, upToDate: false})
     }, [pathname])
+
+    useEffect(() => {
+      loadSavedProtocols()
+    }, [loadSavedProtocols])
+
+    // Auto-save current Powers instance if not already saved
+    useEffect(() => {
+      if (powers && powers.contractAddress && powers.contractAddress !== '0x0' && savedProtocols.length > 0) {
+        const isAlreadySaved = savedProtocols.some(
+          p => p.contractAddress.toLowerCase() === powers.contractAddress.toLowerCase()
+        )
+        
+        if (!isAlreadySaved) {
+          console.log('Auto-saving protocol to localStorage:', powers.contractAddress)
+          addProtocol(powers)
+        }
+      }
+    }, [powers, powers.contractAddress, savedProtocols, addProtocol])
 
   return (  
     <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
@@ -85,7 +106,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
               { 
                 <BlockCounter onRefresh={() => {
                   if (powersAddress && chainId) {
-                    fetchPowers(powersAddress as `0x${string}`, chainId);
+                    fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
                   }
                 }} blockNumber={blockNumber} />
               }

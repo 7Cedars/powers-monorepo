@@ -7,9 +7,10 @@ interface DaoSummaryBoxProps {
   powers: Powers;
   alignment: "column" | "row"; 
   onArchive?: (contractAddress: string) => void;
+  showHeader?: boolean; // Controls whether to show title and banner overlay
 }
 
-export const DaoSummaryBox = ({ powers, onArchive, alignment }: DaoSummaryBoxProps) => {
+export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false }: DaoSummaryBoxProps) => {
     const router = useRouter(); 
     const pathname = usePathname();
 
@@ -19,19 +20,45 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment }: DaoSummaryBoxPro
         className={`border border-border transition-colors relative cursor-pointer hover:bg-muted/50`} // ${pathname == "/" ? "cursor-pointer hover:bg-muted/50" : ""} 
         onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)}>
         
-            <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
-            <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">{powers.name}</span>
-            {onArchive && (
-                <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onArchive(powers.contractAddress);
-                }}
-                className="text-muted-foreground hover:text-foreground transition-colors">
-                    <XMarkIcon className="h-3 w-3" />
-                </button>
+            {showHeader ? (
+                <div 
+                className="h-36 px-4 py-2 border-b border-border relative overflow-hidden"
+                style={{
+                    backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                }}>
+                    {/* Semi-transparent overlay for better text visibility */}
+                    <div className="absolute inset-0 bg-background/50" />
+                    
+                    {/* Content with relative positioning to appear above overlay */}
+                    <div className='flex flex-row items-center justify-between text-xl'>
+                    <span className="font-mono uppercase tracking-wider text-base relative z-10 text-foreground">
+                        {powers.name}
+                    </span>
+                    {onArchive && (
+                        <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onArchive(powers.contractAddress);
+                        }}
+                        className="relative z-10 text-foreground hover:text-foreground/80 transition-colors">
+                            <XMarkIcon className="h-4 w-4" />
+                        </button>
+                    )}
+                    </div>
+                </div>
+            ) : (
+                <div 
+                    className="h-36 px-4 py-2 border-b border-border relative overflow-hidden"
+                    style={{
+                        backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                    }}>
+                    <div className="absolute inset-0 bg-background/20" />
+                </div>
             )}
-            </div>
             <div className={`px-4 py-3 flex gap-4 ${alignment === "column" ? "flex-col" : "flex-row"}`}>
             {/* Description section - on top in narrow spaces, left side in wide spaces */}
             <div className="flex-1 min-w-0">

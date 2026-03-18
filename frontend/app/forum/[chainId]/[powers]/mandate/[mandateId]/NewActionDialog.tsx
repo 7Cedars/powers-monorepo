@@ -67,7 +67,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
       // Small delay to show success state before navigating
       const timer = setTimeout(() => {
         // Navigate to the action page
-        router.push(`/forum/${chainId}/${powersAddress}/action/${action.actionId}`);
+        router.push(`/forum/${chainId}/${powersAddress}`);
         // Reset state
         onOpenChange(false);
         setStatus({ status: "idle" });
@@ -395,7 +395,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         {/* Error Display */}
         {error.error && (
           <div className="w-full text-xs text-red-600 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 px-3 py-2">
-            Failed check: {parseMandateError(error.error)}
+            Failed check: {parseMandateError(error || "Unknown error")}
           </div>
         )}
 

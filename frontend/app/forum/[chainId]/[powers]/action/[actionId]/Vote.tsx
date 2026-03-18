@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePowersStore, useActionStore, useStatusStore } from "@/context/store";
+import { usePowersStore, useActionStore, useStatusStore, setError, setAction } from "@/context/store";
 import { useMandate } from "@/hooks/useMandate";
 import { useBlocks } from "@/hooks/useBlocks";
 import { useBlockNumber } from "wagmi";
@@ -9,13 +9,16 @@ import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
 import { getConstants } from "@/context/constants";
 import { CheckIcon, XMarkIcon, LockClosedIcon } from "@heroicons/react/24/outline";
-import { Action, Powers } from "@/context/types";
+import { Action, Powers, Mandate } from "@/context/types";
 import { ForumModal } from "@/components/ForumModal";
 import { useChecks } from "@/hooks/useChecks";
+import { useWallets } from "@privy-io/react-auth";
+import { Button } from "@/components/Button"; 
+import { encodeAbiParameters, parseAbiParameters } from "viem";
 
 interface VoteProps {
   action: Action;
-  mandate: any;
+  mandate: Mandate;
 }
 
 export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
@@ -25,13 +28,16 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const { chainId } = useParams<{ chainId: string }>();
   const { data: blockNumber } = useBlockNumber({ watch: true });
   const constants = getConstants(parseChainId(chainId) as number);
-  const { castVote, actionVote, fetchVoteData } = useMandate();
-  const { checks } = useChecks();
+  const { castVote, actionVote, fetchVoteData, request } = useMandate();
+  const { checks, fetchChecks, status: checksStatus } = useChecks();
   const { timestamps, fetchTimestamps } = useBlocks();
+  const { wallets } = useWallets();
 
   const [pendingVote, setPendingVote] = useState<bigint | null>(null);
   const [logSupport, setLogSupport] = useState<bigint>();
   const [populatedAction, setPopulatedAction] = useState<Action | undefined>();
+
+  // console.log({action, actionVote, checks, checksStatus, pendingVote, logSupport})
 
   // Calculate vote parameters
   const roleHolders = Number(
@@ -79,6 +85,15 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
       fetchVoteData(populatedAction as Action, powers as Powers);
     }
   }, [populatedAction]);
+ 
+  useEffect(() => {
+    if (checksStatus === "success" && checks?.allPassed !== undefined) {
+      setAction({
+        ...action,
+        upToDate: true
+      }); // Update action in global state to trigger re-render with new checks status
+    }
+  }, [checksStatus]);
 
   // Fetch timestamps
   useEffect(() => {
@@ -128,6 +143,55 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const timeRemainingMinutes = blockNumber && voteEnd && blockNumber < voteEnd
     ? Math.floor((Number(voteEnd) - Number(blockNumber)) * 60 / constants.BLOCKS_PER_HOUR)
     : 0;
+
+  const handleExecute = async () => {
+    if (!mandate || !action) return;
+    
+    setError({ error: null });
+    let mandateCalldata: `0x${string}` | undefined;
+    
+    if (action.paramValues && action.paramValues.length > 0) {
+      try {
+        mandateCalldata = encodeAbiParameters(
+          parseAbiParameters(
+            mandate.params?.map((param: any) => param.dataType).toString() || ""
+          ),
+          action.paramValues
+        );
+      } catch (error) {
+        setError({ error: error as Error });
+      }
+    } else {
+      mandateCalldata = "0x0";
+    }
+
+    await request(
+      mandate as Mandate,
+      mandateCalldata as `0x${string}`,
+      BigInt(action.nonce as string),
+      action.description as string
+    );
+  };
+
+  const handleRunChecks = () => {
+    if (powers && mandate && action && wallets.length > 0 && action.callData) {
+      // console.log("Running checks with data:", {
+      //   mandate,
+      //   callData: action.callData,
+      //   nonce: BigInt(action.nonce || 0),
+      //   wallets,
+      //   powers
+      // });
+      fetchChecks(
+        mandate,
+        action.callData as `0x${string}`,
+        BigInt(action.nonce || 0),
+        wallets,
+        powers as Powers
+      );
+
+    }
+  };
 
   // Vote Status Display Component
   const VoteStatusDisplay = () => (
@@ -288,6 +352,41 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
         </div>
       ) : (
         <VoteResultsDisplay />
+      )}
+
+      {/* Execute Button or Run Checks Button - Show when vote has passed */}
+      {populatedAction?.state === 5 && (
+        <div className="pt-2">
+          {action?.upToDate ? (
+            <Button
+              size={0}
+              role={6}
+              onClick={handleExecute}
+              filled={false}
+              selected={true}
+              statusButton={
+                checks?.allPassed
+                  ? status.status === "success"
+                    ? "idle"
+                    : status.status
+                  : "disabled"
+              }
+            >
+              Execute {checks?.allPassed ? "" : " (checks did not pass)"}
+            </Button>
+          ) : (
+            <Button
+              size={0}
+              role={6}
+              onClick={handleRunChecks}
+              filled={false}
+              selected={true}
+              statusButton="idle"
+            >
+              Run checks
+            </Button>
+          )}
+        </div>
       )}
 
       {/* Vote Confirmation Modal */}

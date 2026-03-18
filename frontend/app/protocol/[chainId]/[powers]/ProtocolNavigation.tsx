@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import { useStatusStore, usePowersStore, useErrorStore, setStatus, setError, setAction, useActionStore } from '@/context/store';
 import { useConnection, usePublicClient, useSwitchChain } from 'wagmi';
 import { switchChain } from '@wagmi/core/actions';
+import { parseChainId } from '@/utils/parsers';
 
 // Navigation styling constants
 const layoutIconBox = 'flex flex-row md:gap-1 gap-0 md:px-4 md:py-1 py-0 px-0 align-middle items-center'
@@ -158,7 +159,7 @@ const Header = () => {
         </a> 
         {!isProtocolPage && 
           <BlockCounter onRefresh={() => {
-            fetchPowers(powersAddress as `0x${string}`, chainId);
+            fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
             // fetchBlockNumber();
           }} blockNumber={blockNumber} />
         }
@@ -268,7 +269,7 @@ export const ProtocolNavigation: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
-      fetchPowers(powersAddress as `0x${string}`, chainId);
+      fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
     }
   }, [powersAddress, powers, chainId])
 

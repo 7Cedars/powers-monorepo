@@ -7,14 +7,21 @@ import { Powers, Mandate } from "@/context/types"
  * conditions.needFulfilled and conditions.needNotFulfilled requirements.
  * 
  * @param powers - The Powers object containing mandates with their conditions
- * @returns An array of arrays, where each inner array contains mandateIds that form a flow
+ * @param mandateId - Optional mandate ID to identify only the flow containing this mandate
+ * @returns An array of arrays, where each inner array contains mandateIds that form a flow.
+ *          If mandateId is provided, returns only the flow containing that mandate (array length 1).
  * 
  * @example
- * // If Mandate 2 needs Mandate 1 fulfilled, and Mandate 3 needs Mandate 2 fulfilled:
+ * // Get all flows
+ * const allFlows = identifyFlows(powers)
  * // Returns: [[1n, 2n, 3n], [4n], [5n, 6n]]
- * const flows = identifyFlows(powers)
+ * 
+ * @example
+ * // Get flow for specific mandate
+ * const specificFlow = identifyFlows(powers, 2n)
+ * // Returns: [[1n, 2n, 3n]]
  */
-export function identifyFlows(powers: Powers): bigint[][] {
+export function identifyFlows(powers: Powers, mandateId?: bigint): bigint[][] {
   if (!powers.mandates || powers.mandates.length === 0) {
     return []
   }
@@ -96,6 +103,12 @@ export function identifyFlows(powers: Powers): bigint[][] {
       }
     }
   })
+
+  // If mandateId is provided, filter to only return the flow containing that mandate
+  if (mandateId !== undefined) {
+    const targetFlow = flows.find(flow => flow.includes(mandateId))
+    return targetFlow ? [targetFlow] : []
+  }
 
   return flows
 }

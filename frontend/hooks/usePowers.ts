@@ -1,9 +1,9 @@
-import { Status, Action, Powers, Mandate, Metadata, Role, Conditions } from "../context/types"
+import { Status, Action, Powers, Mandate, Metadata, Role, Conditions, ChainId } from "../context/types"
 import { wagmiConfig } from '../context/wagmiConfig'
 import { useCallback, useState } from "react";
 import { mandateAbi, powersAbi } from "@/context/abi";
 import { readContract, readContracts } from "wagmi/actions";
-import { bytesToParams, parseChainId, parseMetadata } from "@/utils/parsers";
+import { bytesToParams, parseMetadata } from "@/utils/parsers";
 import { useParams } from "next/navigation";
 import { setPowers, setError, setStatus } from "@/context/store";
 
@@ -27,9 +27,9 @@ export const usePowers = () => {
   }
 
   // Everytime powers is fetched these functions are called. 
-  const fetchPowersData = async(powers: Powers, chainId: string): Promise<Powers | undefined> => {
+  const fetchPowersData = async(powers: Powers, chainId: ChainId): Promise<Powers | undefined> => {
     const powersPopulated: Powers | undefined = powers
-    console.log("@fetchPowersData, waypoint 0", {powers})
+    // console.log("@fetchPowersData, waypoint 0", {powers})
     try { 
       const [ namePowers, uriPowers, mandateCountPowers, treasuryPowers] = await readContracts(wagmiConfig, {
         allowFailure: false,
@@ -38,60 +38,60 @@ export const usePowers = () => {
             address: powers.contractAddress as `0x${string}`,
             abi: powersAbi,
             functionName: 'name',
-            chainId: parseChainId(chainId)
+            chainId: chainId
           },
           {
             address: powers.contractAddress as `0x${string}`,
             abi: powersAbi,
             functionName: 'uri',
-            chainId: parseChainId(chainId)
+            chainId: chainId
           },
           {
             address: powers.contractAddress as `0x${string}`,
             abi: powersAbi,
             functionName: 'mandateCounter',
-            chainId: parseChainId(chainId)
+            chainId: chainId
           },
           {
             address: powers.contractAddress as `0x${string}`,
             abi: powersAbi,
             functionName: 'getTreasury',
-            chainId: parseChainId(chainId)
+            chainId: chainId
           }
         ]
       }) as [string, string, bigint, `0x${string}`]
 
-      console.log("@fetchPowersData, waypoint 1", {namePowers, uriPowers, mandateCountPowers})
+      // console.log("@fetchPowersData, waypoint 1", {namePowers, uriPowers, mandateCountPowers})
       powersPopulated.mandateCount = mandateCountPowers as bigint
       powersPopulated.name = namePowers as string
       powersPopulated.uri = uriPowers as string
       powersPopulated.treasury = treasuryPowers as `0x${string}`
-      console.log("@fetchPowersData, waypoint 2", {powersPopulated})
+      // console.log("@fetchPowersData, waypoint 2", {powersPopulated})
       return powersPopulated
 
     } catch (error) {
-      console.log("@fetchPowersData, waypoint 3", {error})
+      // console.log("@fetchPowersData, waypoint 3", {error})
       setStatus({status: "error"}) 
       setError({error: error as Error})
     }
   }
 
-  const fetchMetaData = async (powers: Powers, chainId: string): Promise<Metadata | undefined> => {
+  const fetchMetaData = async (powers: Powers, chainId: ChainId): Promise<Metadata | undefined> => {
     let updatedMetaData: Metadata | undefined
 
-    console.log("@fetchMetaData, waypoint 0", {powers}) 
+    // console.log("@fetchMetaData, waypoint 0", {powers}) 
 
     if (powers && powers.uri) {
       try {
           const fetchedMetadata: unknown = await(
             await fetch(powers.uri as string)
             ).json() 
-            console.log("@fetchMetaData, waypoint 1", {fetchedMetadata})
+            // console.log("@fetchMetaData, waypoint 1", {fetchedMetadata})
           updatedMetaData = parseMetadata(fetchedMetadata) 
-          console.log("@fetchMetaData, waypoint 2", {updatedMetaData})
+          // console.log("@fetchMetaData, waypoint 2", {updatedMetaData})
           return updatedMetaData
       } catch (error) {
-          console.log("@fetchMetaData, waypoint 3", {error})
+          // console.log("@fetchMetaData, waypoint 3", {error})
         setStatus({status: "error"}) 
         setError({error: error as Error})
       }
@@ -99,7 +99,7 @@ export const usePowers = () => {
     return undefined
   }
   
-  const checkMandates = async (mandateIds: bigint[], address: `0x${string}`, chainId: string) => {
+  const checkMandates = async (mandateIds: bigint[], address: `0x${string}`, chainId: ChainId) => {
     const fetchedMandates: Mandate[] = []
     // console.log("@checkMandates, waypoint 0", {mandateIds, address})
 
@@ -110,7 +110,7 @@ export const usePowers = () => {
             address: address as `0x${string}`,
             functionName: 'getAdoptedMandate' as const,
             args: [BigInt(id)] as [bigint],
-            chainId: parseChainId(chainId)
+            chainId: chainId
           }))
           // console.log("@checkMandates, waypoint 1", {contracts})
 
@@ -140,10 +140,10 @@ export const usePowers = () => {
     }
   }
 
-  const populateMandates = async (mandates: Mandate[], chainId: string) => {
+  const populateMandates = async (mandates: Mandate[], chainId: ChainId) => {
     let mandate: Mandate
     const populatedMandates: Mandate[] = []
-    console.log("@populateMandates, waypoint 0", {mandates})
+    // console.log("@populateMandates, waypoint 0", {mandates})
 
     try {
       type PendingCall = {
@@ -154,7 +154,7 @@ export const usePowers = () => {
       const pending: PendingCall[] = []
 
       mandates.forEach((l, idx) => {
-        console.log("@populateMandates, waypoint 1 loop", {l})
+        // console.log("@populateMandates, waypoint 1 loop", {l})
         if (l.mandateAddress != `0x0000000000000000000000000000000000000000`) {
           if (!l.conditions) {
             contracts.push({
@@ -162,7 +162,7 @@ export const usePowers = () => {
               address: l.powers as `0x${string}`,
               functionName: 'getConditions',
               args: [l.index],
-              chainId: parseChainId(chainId)!
+              chainId: chainId!
             })
             pending.push({ kind: 'conditions', mandateIdx: idx })
           }
@@ -172,9 +172,9 @@ export const usePowers = () => {
               address: l.mandateAddress as `0x${string}`,
               functionName: 'getInputParams',
               args: [l.powers, l.index],
-              chainId: parseChainId(chainId)!
+              chainId: chainId!
             })
-            console.log("@populateMandates, waypoint 1.5 loop", {contracts, l})
+            // console.log("@populateMandates, waypoint 1.5 loop", {contracts, l})
             pending.push({ kind: 'inputParams', mandateIdx: idx })
           }
           if (!l.nameDescription) {
@@ -183,7 +183,7 @@ export const usePowers = () => {
               address: l.mandateAddress as `0x${string}`,
               functionName: 'getNameDescription',
               args: [l.powers, l.index],
-              chainId: parseChainId(chainId)!
+              chainId: chainId!
             })
             pending.push({ kind: 'nameDescription', mandateIdx: idx })
           }
@@ -196,7 +196,7 @@ export const usePowers = () => {
           contracts
         })
 
-        console.log("@populateMandates, waypoint 1.75", {results})
+        // console.log("@populateMandates, waypoint 1.75", {results})
 
         // Apply results back to the corresponding mandates in order
         results.forEach((value, i) => {
@@ -216,16 +216,16 @@ export const usePowers = () => {
       for (mandate of mandates) {
         populatedMandates.push(mandate)
       }
-      console.log("@populateMandates, waypoint 2", {populatedMandates})
+      // console.log("@populateMandates, waypoint 2", {populatedMandates})
       return populatedMandates
     } catch (error) {
-      console.log("@populateMandates, waypoint 3", {error})
+      // console.log("@populateMandates, waypoint 3", {error})
       setStatus({status: "error"}) 
       setError({error: error as Error})
     }
   }
 
-  const fetchRoles = async (mandates: Mandate[], chainId: string): Promise<Role[] | undefined> => {
+  const fetchRoles = async (mandates: Mandate[], chainId: ChainId): Promise<Role[] | undefined> => {
     const rolesIds = new Set(mandates.filter((mandate) => mandate.active).flatMap((mandate) => mandate.conditions?.allowedRole) || [])
  
     if (rolesIds.size > 0) {
@@ -237,21 +237,21 @@ export const usePowers = () => {
             address: mandates[0].powers as `0x${string}`,
             functionName: 'getRoleLabel' as const,
             args: [roleId] as [bigint],
-            chainId: parseChainId(chainId)
+            chainId: chainId
           },
           {
             abi: powersAbi,
             address: mandates[0].powers as `0x${string}`,
             functionName: 'getRoleMetadata' as const,
             args: [roleId] as [bigint],
-            chainId: parseChainId(chainId)
+            chainId: chainId
           },
           {
             abi: powersAbi,
             address: mandates[0].powers as `0x${string}`,
             functionName: 'getAmountRoleHolders' as const,
             args: [roleId] as [bigint],
-            chainId: parseChainId(chainId)
+            chainId: chainId
           }
         ]))
 
@@ -308,25 +308,25 @@ export const usePowers = () => {
     }
   }
 
-  const fetchMandates = async (powers: Powers, chainId: string): Promise<Mandate[] | undefined> => {
-    console.log("@fetchMandates, waypoint 0", {powers})
+  const fetchMandates = async (powers: Powers, chainId: ChainId): Promise<Mandate[] | undefined> => {
+    // console.log("@fetchMandates, waypoint 0", {powers})
     try {
       const mandateCount = await readContract(wagmiConfig, {
         abi: powersAbi,
         address: powers.contractAddress as `0x${string}`,
         functionName: 'getMandateCounter',
-        chainId: parseChainId(chainId)
+        chainId: chainId
       })
-      console.log("@fetchMandates, waypoint 0.5", {mandateCount})
+      // console.log("@fetchMandates, waypoint 0.5", {mandateCount})
       const mandateIds = Array.from({length: Number(mandateCount) - 1}, (_, i) => BigInt(i+1))
       const mandates = await checkMandates(mandateIds, powers.contractAddress, chainId)
-      console.log("@fetchMandates, waypoint 1", {mandateCount, mandateIds, mandates})
+      // console.log("@fetchMandates, waypoint 1", {mandateCount, mandateIds, mandates})
       if (mandates) {
         const mandatesPopulated = await populateMandates(mandates, chainId)
-        console.log("@fetchMandates, waypoint 2", {mandatesPopulated})
+        // console.log("@fetchMandates, waypoint 2", {mandatesPopulated})
         return mandatesPopulated
       } else {
-        console.log("@fetchMandates, waypoint 3", {mandates})
+        // console.log("@fetchMandates, waypoint 3", {mandates})
         setStatus({status: "error"})
         setError({error: Error("Failed to fetch mandates")})
         return undefined
@@ -338,8 +338,8 @@ export const usePowers = () => {
     }
   }
 
-  const populateActions = async(actionIds: string[], powersAddress: `0x${string}`, chainId: string): Promise<Action[]> => {
-    console.log("@populateActions, waypoint 0", {actionIds, powersAddress})
+  const populateActions = async(actionIds: string[], powersAddress: `0x${string}`, chainId: ChainId): Promise<Action[]> => {
+    // console.log("@populateActions, waypoint 0", {actionIds, powersAddress})
     if (actionIds.length === 0) return []
 
     const [stateResults, dataResults, calldataResults, metadataResults] = await Promise.all([
@@ -350,7 +350,7 @@ export const usePowers = () => {
           address: powersAddress as `0x${string}`,
           functionName: 'getActionState' as const,
           args: [BigInt(actionId)],
-          chainId: parseChainId(chainId)
+          chainId: chainId
         }))
       }) as Promise<Array<number>>,
  
@@ -361,7 +361,7 @@ export const usePowers = () => {
           address: powersAddress as `0x${string}`,
           functionName: 'getActionData' as const,
           args: [BigInt(actionId)],
-          chainId: parseChainId(chainId)
+          chainId: chainId
         }))
       }) as Promise<Array<[
         number,      // mandateId (uint16)
@@ -380,7 +380,7 @@ export const usePowers = () => {
           address: powersAddress as `0x${string}`,
           functionName: 'getActionCalldata' as const,
           args: [BigInt(actionId)],
-          chainId: parseChainId(chainId)
+          chainId: chainId
         }))
       }) as Promise<Array<`0x${string}`>>,
 
@@ -391,7 +391,7 @@ export const usePowers = () => {
           address: powersAddress as `0x${string}`,
           functionName: 'getActionUri' as const,
           args: [BigInt(actionId)],
-          chainId: parseChainId(chainId)
+          chainId: chainId
         }))
       }) as Promise<Array<string>>
     ])
@@ -418,8 +418,8 @@ export const usePowers = () => {
   }
   
   // Returns a mapping of non-stale actionIds to their mandateId and index
-  const fetchActions = async (mandates: Mandate[], chainId: string): Promise<Mandate[] | undefined> => {
-    console.log("@fetchActions, waypoint 0", {mandates})
+  const fetchActions = async (mandates: Mandate[], chainId: ChainId): Promise<Mandate[] | undefined> => {
+    // console.log("@fetchActions, waypoint 0", {mandates})
     const activeMandates = mandates.filter((mandate) => mandate.active)
 
     // Step 1: Identify stale actions by mandate
@@ -441,7 +441,7 @@ export const usePowers = () => {
       }
     })
 
-    console.log("@fetchActions, waypoint 1", {staleActionsByMandate})
+    // console.log("@fetchActions, waypoint 1", {staleActionsByMandate})
 
     // Step 2: Fetch action quantities for each active mandate
     const actionQuantities = await readContracts(wagmiConfig, {
@@ -451,11 +451,11 @@ export const usePowers = () => {
         address: activeMandates[0].powers as `0x${string}`,
         functionName: 'getQuantityMandateActions' as const,
         args: [mandate.index],
-        chainId: parseChainId(chainId)
+        chainId: chainId
       }))
     }) as Array<bigint>
 
-    console.log("@fetchActions, waypoint 2", {actionQuantities})
+    // console.log("@fetchActions, waypoint 2", {actionQuantities})
 
     // Step 3: Create list of non-stale action indices to fetch per mandate
     type FetchRequest = {
@@ -481,7 +481,7 @@ export const usePowers = () => {
       }
     })
 
-    console.log("@fetchActions, waypoint 3", {fetchRequests})
+    // console.log("@fetchActions, waypoint 3", {fetchRequests})
 
     // Early exit if no actions to fetch
     if (fetchRequests.length === 0) {
@@ -496,11 +496,11 @@ export const usePowers = () => {
         address: activeMandates[0].powers as `0x${string}`,
         functionName: 'getMandateActionAtIndex' as const,
         args: [req.mandateId, BigInt(req.actionIndex)],
-        chainId: parseChainId(chainId)
+        chainId: chainId
       }))
     }) as Array<bigint>
 
-    console.log("@fetchActions, waypoint 4", {actionIds})
+    // console.log("@fetchActions, waypoint 4", {actionIds})
 
     // Step 5: Create mapping of actionId -> { mandateId, index }
     const actionIdMapping = new Map<string, { mandateId: bigint, index: number }>()
@@ -533,7 +533,7 @@ export const usePowers = () => {
       }
     })
 
-    console.log("@fetchActions, waypoint 5", {actionsByMandate})
+    // console.log("@fetchActions, waypoint 5", {actionsByMandate})
 
     // Step 8: Update mandates with populated actions (including stale actions)
     const updatedMandates = mandates.map((mandate) => {
@@ -581,13 +581,13 @@ export const usePowers = () => {
       }
     })
 
-    console.log("@fetchActions, waypoint 6", {updatedMandates})
+    // console.log("@fetchActions, waypoint 6", {updatedMandates})
     return updatedMandates
   }
 
   const fetchPowers = useCallback(
-    async (address: `0x${string}`, chainId: string) => {
-      console.log("@fetchPowers, waypoint 0", {address, chainId})
+    async (address: `0x${string}`, chainId: ChainId) => {
+      // console.log("@fetchPowers, waypoint 0", {address, chainId})
       setStatus({status: "pending"})
       let metaData: Metadata | undefined
       let mandates: Mandate[] | undefined
@@ -601,14 +601,13 @@ export const usePowers = () => {
 
       const powersToBeUpdated = existing ? existing : {
         contractAddress: address,
-        chainId: BigInt(parseChainId(chainId))
+        chainId: BigInt(chainId)
       }
-      console.log("@refetchPowers, waypoint 1", {powersToBeUpdated})
+      // console.log("@refetchPowers, waypoint 1", {powersToBeUpdated})
 
       try {
         const data = await fetchPowersData(powersToBeUpdated, chainId)
-        console.log("@refetchPowers, waypoint 2", {data})
-
+        // console.log("@refetchPowers, waypoint 2", {data})
         if (data) {
           [metaData, mandates] = await Promise.all([
             fetchMetaData(data, chainId),
@@ -620,10 +619,10 @@ export const usePowers = () => {
           roles = await fetchRoles(mandates, chainId)
         }
 
-        console.log("@refetchPowers, waypoint 4", {metaData, mandates})
+        // console.log("@refetchPowers, waypoint 4", {metaData, mandates})
 
         if (data != undefined && metaData != undefined && mandates != undefined) {
-          console.log("@refetchPowers, waypoint 7", {data, metaData, mandates})
+          // console.log("@refetchPowers, waypoint 7", {data, metaData, mandates})
           const newPowers: Powers = {
             contractAddress: powersToBeUpdated.contractAddress as `0x${string}`,
             chainId: BigInt(chainId),
@@ -636,13 +635,13 @@ export const usePowers = () => {
             roles: roles,
             layout: powersToBeUpdated.layout
           }
-          console.log("@refetchPowers, waypoint 8", {newPowers})
+          // console.log("@refetchPowers, waypoint 8", {newPowers})
           setPowers(newPowers)
           savePowers(newPowers, address)
           setStatus({status: "success"})
         }
       } catch (error) {
-         console.error("@fetchPowers error:", error)
+        //  console.error("@fetchPowers error:", error)
         setStatus({status: "error"})
         setError({error: error as Error})
       }

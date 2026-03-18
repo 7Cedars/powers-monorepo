@@ -10,15 +10,16 @@ import { ArrowLongRightIcon } from '@heroicons/react/24/outline';
 import { Vote } from './Vote';
 import { ActionOverview } from './ActionOverview';
 import { PastVotes } from './PastVotes';
+import { setAction, useActionStore } from '@/context/store';
 
 export default function ActionPage() {
   const router = useRouter();
   const { chainId, powers: powersAddress, actionId } = useParams<{ chainId: string; powers: string; actionId: string }>();
   const powers = usePowersStore();
   const { timestamps, fetchTimestamps } = useBlocks();
+  const action = useActionStore();
   
-  // Find the action across all mandates
-  const [action, setAction] = useState<Action | undefined>();
+  // Find the action across all mandates 
   const [mandate, setMandate] = useState<Mandate | undefined>();
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function ActionPage() {
       for (const m of powers.mandates) {
         if (m.actions) {
           const foundAction = m.actions.find(a => a.actionId === actionId);
+          // console.log(`Searching for actionId ${actionId} in mandate ${m.index}:`, foundAction);
           if (foundAction) {
             setAction(foundAction);
             setMandate(m);

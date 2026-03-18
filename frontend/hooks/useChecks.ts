@@ -7,7 +7,7 @@ import { readContract } from "wagmi/actions";
 import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
 import { hashAction } from "@/utils/hashAction";
-import { getBlockNumber } from '@wagmi/core'
+import { getBlockNumber } from '@wagmi/core' 
 
 export const useChecks = () => {
   const { chainId } = useParams<{ chainId: string }>() 
