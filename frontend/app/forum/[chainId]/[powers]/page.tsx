@@ -7,18 +7,29 @@
  import { usePowers } from '@/hooks/usePowers';
  import { useParams } from 'next/navigation';
  import { ArrowPathIcon } from '@heroicons/react/24/outline';
+ import { useErrorStore } from '@/context/store';
 
- export default function DaoView() {
+ export default function OverviewPage() {
     const powers = usePowersStore();
     const statusPowers = useStatusStore();
     const { fetchPowers } = usePowers();
-    const { powers: powersAddress } = useParams<{ powers: `0x${string}` }>();
+    const { powers: powersAddress, chainId } = useParams<{ powers: `0x${string}`, chainId: string }>();
     const [fetchAttempted, setFetchAttempted] = useState(false);
+    const error = useErrorStore((state) => state.error)
+
+    console.log ("ERROR: ", error)
+
+    useEffect(() => {
+      console.log("useEffect triggered with powersAddress:", powersAddress, "chainId:", chainId);
+      if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
+        fetchPowers(powersAddress as `0x${string}`, chainId);
+      }
+    }, [powersAddress, chainId])
 
     const handleFetchPowers = async () => {
-      if (powersAddress) {
+      if (powersAddress && chainId) {
         setFetchAttempted(true);
-        await fetchPowers(powersAddress as `0x${string}`);
+        await fetchPowers(powersAddress as `0x${string}`, chainId);
       }
     };
 
@@ -33,7 +44,7 @@
              {!fetchAttempted || statusPowers.status === "pending" ? (
                <>
                  <p className="text-muted-foreground text-center text-sm">
-                   Powers has not been loaded yet. Click below to fetch the instance and enter the organisation.
+                   Powers has not been loaded yet. If it does not load automatically within one minute, click below to fetch the instance and enter the organisation.
                  </p>
                  <button
                    onClick={handleFetchPowers}

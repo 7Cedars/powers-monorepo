@@ -18,6 +18,8 @@ import { usePowers } from "@/hooks/usePowers";
 import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { BlockCounter } from "@/components/BlockCounter";
 
+import { useErrorStore } from "@/context/store";
+
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
     const pathname = usePathname();
@@ -35,25 +37,27 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { chain } = useConnection();
     const isFetchingRef = useRef(false);
 
+    console.log("layout being triggered")
+
     const triggerName =
       pathname.includes('/profile') ? "Profile" : 
       pathname.includes('/allDaos') ? "All DAOs" : 
       !chainId ? "Navigation" :
       "Main"
 
-    // useEffect(() => {
-    //     const fetchBlockNumber = async () => {
-    //       if (powers)  
-    //       try {
-    //         const number = await publicClient?.getBlockNumber() ?? null;
-    //         setBlockNumber(number as bigint);
-    //       } catch (error) {
-    //         console.error('Failed to fetch block number:', error);
-    //         return null;
-    //       }
-    //     }
-    //     fetchBlockNumber();
-    // }, [publicClient])
+    useEffect(() => {
+        const fetchBlockNumber = async () => {
+          if (powers)  
+          try {
+            const number = await publicClient?.getBlockNumber() ?? null;
+            setBlockNumber(number as bigint);
+          } catch (error) {
+            console.error('Failed to fetch block number:', error);
+            return null;
+          }
+        }
+        fetchBlockNumber();
+    }, [publicClient])
 
     // Load powers instance if not loaded yet. 
     // Switch chain when selected chain changes
@@ -61,24 +65,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       if (chainId && chain?.id !== Number(chainId)) {
         switchChain.mutate({ chainId: Number(chainId) });
       }
-    }, [chainId, chain?.id, switchChain]);
-  
-    useEffect(() => {
-      const shouldFetch = 
-        powersAddress && 
-        (powers.contractAddress === undefined || 
-         powers.contractAddress === `0x0` || 
-         powers.contractAddress.toLowerCase() !== powersAddress.toLowerCase()) &&
-        !isFetchingRef.current &&
-        statusPowers.status !== "pending";
-
-      if (shouldFetch) {
-        isFetchingRef.current = true;
-        fetchPowers(powersAddress as `0x${string}`).finally(() => {
-          isFetchingRef.current = false;
-        });
-      }
-    }, [ powers.contractAddress ])
+    }, [ chain?.id ]);
   
     // reset status and error when pathname changes
     useEffect(() => {
@@ -97,7 +84,9 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             </a>
               { 
                 <BlockCounter onRefresh={() => {
-                  fetchPowers(powersAddress as `0x${string}`);
+                  if (powersAddress && chainId) {
+                    fetchPowers(powersAddress as `0x${string}`, chainId);
+                  }
                 }} blockNumber={blockNumber} />
               }
           </div>

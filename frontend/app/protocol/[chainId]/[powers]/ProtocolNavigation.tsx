@@ -114,7 +114,7 @@ const NavigationBar = () => {
 } 
   
 const Header = () => {
-  const { powers: powersAddress } = useParams<{ powers: string }>()
+  const { powers: powersAddress, chain: chainId } = useParams<{ powers: string, chain: string }>()
   const statusPowers = useStatusStore();
   const errorPowers = useErrorStore();
   const action = useActionStore();
@@ -158,12 +158,12 @@ const Header = () => {
         </a> 
         {!isProtocolPage && 
           <BlockCounter onRefresh={() => {
-            fetchPowers(powersAddress as `0x${string}`);
+            fetchPowers(powersAddress as `0x${string}`, chainId);
             // fetchBlockNumber();
           }} blockNumber={blockNumber} />
         }
         {/* <button
-          onClick={() => fetchPowers(powersAddress as `0x${string}`)}
+          onClick={() => fetchPowers(powersAddress as `0x${string}`, chainId)}
           disabled={statusPowers.status == "pending"}
           className="flex items-center justify-center rounded-md p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-slate-400 hover:border-slate-600"
           title="Refresh Powers Data"
@@ -252,10 +252,9 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
 }
 
 export const ProtocolNavigation: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
+  const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>()
   const pathname = usePathname();
   const powers = usePowersStore();
-  const { chainId } = useParams<{ chainId: string }>()
   const { fetchPowers } = usePowers();
   const switchChain = useSwitchChain();
   const { chain } = useConnection();
@@ -269,9 +268,9 @@ export const ProtocolNavigation: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
-      fetchPowers(powersAddress as `0x${string}`)
+      fetchPowers(powersAddress as `0x${string}`, chainId);
     }
-  }, [powersAddress, powers])
+  }, [powersAddress, powers, chainId])
 
   // reset status and error when pathname changes
   useEffect(() => {
