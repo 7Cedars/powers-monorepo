@@ -13,8 +13,7 @@ import { Action, Powers, Mandate } from "@/context/types";
 import { ForumModal } from "@/components/ForumModal";
 import { useChecks } from "@/hooks/useChecks";
 import { useWallets } from "@privy-io/react-auth";
-import { Button } from "@/components/Button"; 
-import { encodeAbiParameters, parseAbiParameters } from "viem";
+import { Button } from "@/components/Button";
 
 interface VoteProps {
   action: Action;
@@ -145,29 +144,13 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
     : 0;
 
   const handleExecute = async () => {
-    if (!mandate || !action) return;
+    if (!mandate || !action || !action.callData) return;
     
     setError({ error: null });
-    let mandateCalldata: `0x${string}` | undefined;
-    
-    if (action.paramValues && action.paramValues.length > 0) {
-      try {
-        mandateCalldata = encodeAbiParameters(
-          parseAbiParameters(
-            mandate.params?.map((param: any) => param.dataType).toString() || ""
-          ),
-          action.paramValues
-        );
-      } catch (error) {
-        setError({ error: error as Error });
-      }
-    } else {
-      mandateCalldata = "0x0";
-    }
 
     await request(
       mandate as Mandate,
-      mandateCalldata as `0x${string}`,
+      action.callData as `0x${string}`,
       BigInt(action.nonce as string),
       action.description as string
     );

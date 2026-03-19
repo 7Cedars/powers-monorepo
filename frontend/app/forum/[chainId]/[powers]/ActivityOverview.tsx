@@ -142,10 +142,17 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const getLatestActions = (actions: Action[] | undefined): Action[] => {
     if (!actions || actions.length === 0) return [];
     
-    // Sort by proposedAt (most recent first), fallback to actionId
+    // Sort by the highest of proposedAt or requestedAt (most recent first)
     const sorted = [...actions].sort((a, b) => {
-      const aTime = a.proposedAt || 0n;
-      const bTime = b.proposedAt || 0n;
+      // Get the highest block number for each action
+      const aTime = a.proposedAt && a.requestedAt 
+        ? (a.proposedAt > a.requestedAt ? a.proposedAt : a.requestedAt)
+        : (a.proposedAt || a.requestedAt || 0n);
+      
+      const bTime = b.proposedAt && b.requestedAt 
+        ? (b.proposedAt > b.requestedAt ? b.proposedAt : b.requestedAt)
+        : (b.proposedAt || b.requestedAt || 0n);
+      
       if (aTime > bTime) return -1;
       if (aTime < bTime) return 1;
       return 0;

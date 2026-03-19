@@ -126,6 +126,7 @@ export type Powers = {
   contractAddress: `0x${string}`;
   chainId: bigint;
   name?: string;
+  foundedAt?: bigint;
   uri?: string;
   treasury?: `0x${string}`;
   metadatas?: Metadata; 

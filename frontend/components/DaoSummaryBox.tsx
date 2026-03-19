@@ -1,7 +1,10 @@
 import { Powers } from '@/context/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { truncateAddress } from '@/utils/addressUtils'; 
+import { truncateAddress } from '@/utils/addressUtils';
+import { toDDMMYYYY } from '@/utils/toDates';
+import { useBlocks } from '@/hooks/useBlocks';
+import { useEffect } from 'react';
 
 interface DaoSummaryBoxProps {
   powers: Powers;
@@ -13,6 +16,28 @@ interface DaoSummaryBoxProps {
 export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false }: DaoSummaryBoxProps) => {
     const router = useRouter(); 
     const pathname = usePathname();
+    const { timestamps, fetchTimestamps } = useBlocks();
+
+    // Fetch timestamp for the foundedAt block number
+    useEffect(() => {
+        if (powers.foundedAt && powers.foundedAt !== 0n) {
+            fetchTimestamps([powers.foundedAt], String(powers.chainId));
+        }
+    }, [powers.foundedAt, powers.chainId, fetchTimestamps]);
+
+    // Format the founded date
+    const getFoundedDate = () => {
+        if (!powers.foundedAt) return "N/A";
+        
+        const cacheKey = `${powers.chainId}:${powers.foundedAt}`;
+        const cachedTimestamp = timestamps.get(cacheKey);
+        
+        if (cachedTimestamp && cachedTimestamp.timestamp) {
+            return toDDMMYYYY(Number(cachedTimestamp.timestamp));
+        }
+        
+        return "Loading...";
+    };
 
     return ( 
         <div
@@ -72,7 +97,9 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                 <div className="grid grid-cols-3 gap-x-6 gap-y-2">
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Founded</span>
-                    <p className="font-mono text-sm text-foreground">dd-mm-yyyy</p>
+                    <p className="font-mono text-sm text-foreground">
+                      {getFoundedDate()}
+                    </p>
                 </div>
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Mandates</span>
@@ -88,7 +115,7 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                 </div>
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Treasury</span>
-                    <p className="font-mono text-sm text-foreground">{powers.treasury === `0x0000000000000000000000000000000000000000` ? truncateAddress(powers.treasury) : "Not set"}</p>
+                    <p className="font-mono text-sm text-foreground">{powers.treasury === `0x0000000000000000000000000000000000000000` ? "N/A" : truncateAddress(powers.treasury)}</p>
                 </div>
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Network</span>

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useLatestActions } from "@/hooks/useLatestActions";
+import { useLatestActions, ActionWithBlockNumber } from "@/hooks/useLatestActions";
 import { useBlocks } from "@/hooks/useBlocks";
 import { toFullDateAndTimeFormat } from "@/utils/toDates";
 
@@ -12,6 +12,7 @@ interface LatestActionsDropdownProps {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   onSelect?: (actionInfo: SelectedActionInfo) => void;
+  actions?: ActionWithBlockNumber[]; // Optional filtered actions
 }
 
 export interface SelectedActionInfo {
@@ -25,13 +26,15 @@ export function LatestActionsDropdown({
   align = "start",
   sideOffset = 4,
   onSelect,
+  actions: providedActions,
 }: LatestActionsDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { chainId, powers } = useParams<{ chainId: string; powers: string }>();
   
-  const latestActions = useLatestActions(25);
+  const fetchedActions = useLatestActions(25);
+  const latestActions = providedActions ?? fetchedActions; // Use provided actions or fetch all
   const { timestamps, fetchTimestamps } = useBlocks();
 
   // Fetch timestamps for all actions when dropdown opens
@@ -125,7 +128,7 @@ export function LatestActionsDropdown({
       {isOpen && (
         <div
           className={cn(
-            "absolute z-50 min-w-[24rem] max-w-[32rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md",
+            "absolute z-50 min-w-[24rem] max-w-[32rem] overflow-hidden border border-border bg-popover text-popover-foreground shadow-md",
             "animate-in fade-in-0 zoom-in-95",
             alignmentClasses[align]
           )}

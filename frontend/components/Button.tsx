@@ -34,7 +34,7 @@ const roleBorderColour = [
   "bg-purple-200 border-purple-600",
   "bg-green-200 border-green-600",
   "bg-orange-200 border-orange-600",
-  "bg-slate-200 border-slate-600"
+  "bg-background border-foreground",
 ]
 
 export const Button = ({
@@ -51,12 +51,12 @@ export const Button = ({
 
   return (
     <button 
-      className={`w-full h-full aria-selected:bg-opacity-0 disabled:opacity-50 rounded-md border cursor-pointer ${roleBorderColour[role % roleBorderColour.length]} ${fontSize[size]} ${showBorder ? "": "md:border-transparent"} ${filled ? "": "bg-opacity-0"}`}  
+      className={`w-full h-full hover:bg-accent aria-selected:bg-opacity-0 disabled:opacity-50 border cursor-pointer ${roleBorderColour[role % roleBorderColour.length]} ${fontSize[size]} ${showBorder ? "": "md:border-transparent"} ${filled ? "": "bg-opacity-0"}`}  
       onClick={onClick} 
       aria-selected={!selected}
       disabled = {statusButton == "disabled"}
       >
-        <div className={`flex flex-row items-center ${fontAlign[align]} text-slate-700 gap-1 w-full h-full px-2 py-1`}>
+        <div className={`flex flex-row items-center ${fontAlign[align]} text-foreground gap-1 w-full h-full px-2 py-1`}>
         {
           statusButton == 'pending' ?  
 

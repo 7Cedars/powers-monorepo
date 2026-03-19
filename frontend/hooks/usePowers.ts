@@ -31,7 +31,7 @@ export const usePowers = () => {
     const powersPopulated: Powers | undefined = powers
     // console.log("@fetchPowersData, waypoint 0", {powers})
     try { 
-      const [ namePowers, uriPowers, mandateCountPowers, treasuryPowers] = await readContracts(wagmiConfig, {
+      const [ namePowers, uriPowers, mandateCountPowers, treasuryPowers, foundedAtPowers ] = await readContracts(wagmiConfig, {
         allowFailure: false,
         contracts: [
           {
@@ -57,16 +57,23 @@ export const usePowers = () => {
             abi: powersAbi,
             functionName: 'getTreasury',
             chainId: chainId
+          },
+          {
+            address: powers.contractAddress as `0x${string}`,
+            abi: powersAbi,
+            functionName: 'FOUNDED_AT',
+            chainId: chainId
           }
         ]
-      }) as [string, string, bigint, `0x${string}`]
+      }) as [string, string, bigint, `0x${string}`, bigint ]
 
       // console.log("@fetchPowersData, waypoint 1", {namePowers, uriPowers, mandateCountPowers})
       powersPopulated.mandateCount = mandateCountPowers as bigint
       powersPopulated.name = namePowers as string
       powersPopulated.uri = uriPowers as string
       powersPopulated.treasury = treasuryPowers as `0x${string}`
-      // console.log("@fetchPowersData, waypoint 2", {powersPopulated})
+      powersPopulated.foundedAt = foundedAtPowers as bigint
+      console.log("@fetchPowersData, waypoint 2", {powersPopulated})
       return powersPopulated
 
     } catch (error) {
@@ -630,6 +637,7 @@ export const usePowers = () => {
             metadatas: metaData,
             uri: data.uri,
             treasury: data.treasury,
+            foundedAt: data.foundedAt,
             mandateCount: data.mandateCount,
             mandates: mandateWithActions,
             roles: roles,
