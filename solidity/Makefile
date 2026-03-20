@@ -306,11 +306,16 @@ fork-anvil :
 # Adjust the ANVIL_DEPLOY_ARGS, SEPOLIA_DEPLOY_ARGS, OPT_SEPOLIA_DEPLOY_ARGS, ARB_SEPOLIA_DEPLOY_ARGS variables above to change network and deployment settings.
 # Adjust the script path and contract name below to change which organisation is deployed.
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
-deploy-organisation : 
+organisation-deploy : 
 	@echo "Deploying organisation..."
-	forge script script/organisations/governed721DAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)  
+	forge script script/organisations/culturalStewardsDAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)  
 
-initialise-powers :
+example-deploy : 
+	@echo "Deploying example contracts..."
+	forge script script/organisations/examples/Powers101.s.sol $(SEPOLIA_DEPLOY_ARGS)
+
+
+powers-initialise :
 	@echo "Initialising Powers contract..."
 	forge script script/InitialisePowers.s.sol:InitialisePowers $(SEPOLIA_DEPLOY_ARGS)
 
