@@ -1219,16 +1219,6 @@ const FlowContent: React.FC = () => {
     }
   }, [userHasInteracted])
 
-  // Update nodes when props change
-  React.useEffect(() => {
-    setNodes(initialNodes)
-  }, [initialNodes, setNodes])
-
-  // Update edges when props change
-  React.useEffect(() => {
-    setEdges(initialEdges)
-  }, [initialEdges, setEdges])
-
   // Node drag handlers to trigger layout saving
   const onNodeDragStop = useCallback(() => {
     setUserHasInteracted(true) // Mark interaction when dragging nodes

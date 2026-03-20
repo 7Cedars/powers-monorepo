@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { ProtocolListingLayout } from '../protocol/ProtocolListingLayout'
 import { TitleText } from '@/components/StandardFonts'
 import { useXmtpClient } from '@/hooks/useXmtpClient'
 import { useAccount } from 'wagmi'
@@ -447,7 +446,6 @@ export default function ChatPage() {
   }
 
   return (
-    <ProtocolListingLayout>
       <div className="w-full flex-1 flex flex-col items-center p-4 pt-20">
         <div className="max-w-6xl w-full">
           <TitleText 
@@ -729,6 +727,5 @@ export default function ChatPage() {
           )}
         </div>
       </div>
-    </ProtocolListingLayout>
   )
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MandateList } from "@/app/protocol/[chainId]/[powers]/mandates/MandateList";
+import { MandateList } from "./MandateList";
 import { TitleText } from "@/components/StandardFonts";
 import { usePowersStore } from "@/context/store";
  

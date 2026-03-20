@@ -39,11 +39,19 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
         return "Loading...";
     };
 
+    // Determine navigation path based on current pathname
+    const getNavigationPath = () => {
+        if (pathname?.startsWith('/editor')) {
+            return `/editor/${powers.chainId}/${powers.contractAddress}`;
+        }
+        return `/forum/${powers.chainId}/${powers.contractAddress}`;
+    };
+
     return ( 
         <div
         key={powers.contractAddress}
         className={`border border-border transition-colors relative cursor-pointer hover:bg-muted/50`}
-        onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)}>
+        onClick={() => router.push(getNavigationPath())}>
         
             {/* Banner - always the same layout */}
             <div 

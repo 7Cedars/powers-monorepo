@@ -1,28 +1,24 @@
 'use client'
 
 import React from "react";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, useStatusStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-
-import { NavigationDropdownMenu } from './NavigationDropdownMenu';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { parseAddress } from '@/utils/addressUtils';
-import { defaultPowers101 } from '@/context/defaultProtocols'
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import { useAddressDisplay } from "@/hooks/useAddressDisplay";
-
-import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Powers } from "@/context/types";
-import { usePowers } from "@/hooks/usePowers";
 import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
-import { BlockCounter } from "@/components/BlockCounter";
-
-import { useErrorStore } from "@/context/store";
+import { usePowers } from "@/hooks/usePowers";
 import { parseChainId } from "@/utils/parsers";
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { useAddressDisplay } from "@/hooks/useAddressDisplay";
+import { BlockCounter } from "@/components/BlockCounter";
+import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
-export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+interface EditorLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function EditorLayout({ children }: EditorLayoutProps) {
     const router = useRouter(); 
     const pathname = usePathname();
     const powers = usePowersStore();
@@ -31,23 +27,15 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
     const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
-    const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
-    const { chainId } = useParams<{ chainId: string }>()
+    const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>();
     const { fetchPowers } = usePowers();
     const publicClient = usePublicClient();
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
-    const isFetchingRef = useRef(false);
     const action = useActionStore();
     const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
 
-    console.log("layout being triggered")
-
-    const triggerName =
-      pathname.includes('/profile') ? "Profile" : 
-      pathname.includes('/allDaos') ? "All DAOs" : 
-      !chainId ? "Navigation" :
-      "Main"
+    const isEditorPage = pathname === '/editor';
 
     useEffect(() => {
         const fetchBlockNumber = async () => {
@@ -63,19 +51,26 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         fetchBlockNumber();
     }, [publicClient, powers])
 
-    // Load powers instance if not loaded yet. 
     // Switch chain when selected chain changes
     useEffect(() => {
       if (chainId && chain?.id !== Number(chainId)) {
         switchChain.mutate({ chainId: Number(chainId) });
       }
-    }, [ chain?.id ]);
+    }, [chainId, chain?.id, switchChain]);
   
+    // Load powers instance if not loaded yet
+    useEffect(() => {
+      if (powersAddress && chainId) {
+        if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
+          fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
+        }
+      }
+    }, [powersAddress, powers, chainId, fetchPowers])
+
     // reset status and error when pathname changes
     useEffect(() => {
       setError({error: null})
       setStatus({status: "idle"})
-      setAction({...action, upToDate: false})
     }, [pathname])
 
     useEffect(() => {
@@ -101,17 +96,14 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       <header className="border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">{
-                powers.name ? powers.name : "FORUM"
-            } 
+            <a href="/editor" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
+              {powers.name ? powers.name : "EDITOR"} 
             </a>
-              { 
-                <BlockCounter onRefresh={() => {
-                  if (powersAddress && chainId) {
-                    fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                  }
-                }} blockNumber={blockNumber} />
-              }
+            {!isEditorPage && powersAddress && chainId &&
+              <BlockCounter onRefresh={() => {
+                fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
+              }} blockNumber={blockNumber} />
+            }
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {ready && authenticated && walletsReady && wallets[0] &&
@@ -157,27 +149,6 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           </div>
         </div>
       </header>
-
-      <div className="border-b border-border px-4 py-1.5 bg-muted/5">
-        <div className="max-w-6xl mx-auto flex items-center gap-2">
-      
-          { pathname.includes('/action') || pathname.includes('/mandate') || pathname.includes('/flow') ?
-              <button 
-                onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)} 
-                className="flex items-center justify-center gap-2 px-3 py-2 border border-border border-foreground cursor-pointer hover:bg-foreground hover:text-background transition-all text-xs uppercase font-mono leading-none">
-                <ArrowLeftIcon className="h-3 w-3" />
-                <span className="leading-none">BACK TO DAO</span>
-              </button>
-              :
-              <>
-              <div className="w-3 h-3">
-                <ChevronRightIcon />
-              </div> 
-              <NavigationDropdownMenu savedProtocols={savedProtocols} trigger={<span>{triggerName}</span>} />
-              </>
-          }
-        </div>
-      </div>
 
       {children}
 
