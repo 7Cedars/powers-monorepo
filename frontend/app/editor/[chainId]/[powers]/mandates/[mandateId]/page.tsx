@@ -114,7 +114,7 @@ const Page = () => {
               </div>
               <div className="flex flex-row gap-2">
                 <span className="font-semibold">Status:</span>
-                <span className={`px-2 rounded ${
+                <span className={`px-2  ${
                   populatedAction?.state === undefined ? 'text-slate-500 bg-slate-100' : // NonExistent
                   populatedAction?.state === 1 ? 'text-blue-600 bg-blue-100' : // Proposed
                   populatedAction?.state === 2 ? 'text-red-600 bg-red-100' : // Cancelled  

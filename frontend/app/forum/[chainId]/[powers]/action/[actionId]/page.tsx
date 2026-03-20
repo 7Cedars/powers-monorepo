@@ -84,7 +84,7 @@ export default function ActionPage() {
               <p className="text-muted-foreground">The requested action could not be found.</p>
               <button
                 onClick={() => router.push(`/forum/${chainId}/${powersAddress}`)}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-80 transition-opacity"
+                className="px-4 py-2 bg-primary text-primary-foreground  hover:opacity-80 transition-opacity"
               >
                 Return to Forum
               </button>

@@ -26,7 +26,7 @@ export function AssetList() {
   }, [powers, fetchTokens, supportedChain])
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden">
+    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
       {/* Header - matching LogsList.tsx structure */}
       <div className="w-full flex flex-row gap-3 justify-between items-center pt-3 px-4">
         <div className="text-slate-800 text-center text-lg">
@@ -41,7 +41,7 @@ export function AssetList() {
                     fetchTokens(powers)
                   }
                 }}
-                className={`w-full h-full flex justify-center items-center rounded-md border border-slate-400 py-1 px-2`}  
+                className={`w-full h-full flex justify-center items-center  border border-slate-400 py-1 px-2`}  
               >
                 <ArrowPathIcon 
                   className="w-5 h-5 text-slate-500 aria-selected:animate-spin"

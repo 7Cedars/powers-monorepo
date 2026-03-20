@@ -113,7 +113,7 @@ export function MetadataLinks({
   }
 
   return (
-    <section className="w-full h-fit flex flex-col gap-3 justify-left items-start border border-slate-300 rounded-md bg-slate-50 lg:max-w-full max-w-3xl p-4">
+    <section className="w-full h-fit flex flex-col gap-3 justify-left items-start border border-slate-300  bg-slate-50 lg:max-w-full max-w-3xl p-4">
       {/* Main Links */}
       {mainLinks.length > 0 && (
         <div className="flex flex-wrap gap-3 items-center">
@@ -125,7 +125,7 @@ export function MetadataLinks({
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
+                className="flex items-center gap-2 px-3 py-2  bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
                 title={link.label}
               >
                 <Icon className="w-5 h-5" />
@@ -151,7 +151,7 @@ export function MetadataLinks({
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-600 hover:text-slate-900"
+                  className="p-2  bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-600 hover:text-slate-900"
                   title={link.label}
                 >
                   <Icon className="w-5 h-5" />
@@ -169,7 +169,7 @@ export function MetadataLinks({
             <a
               key={index}
               href={`/protocol/${chainId ? Number(chainId) : ''}/${parent.address}`}
-              className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
+              className="flex items-center gap-2 px-3 py-2  bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
               title={`Parent: ${parent.title}`}
             >
               <ArrowUpIcon className="w-5 h-5" />
@@ -186,7 +186,7 @@ export function MetadataLinks({
             <a
               key={index}
               href={`/protocol/${chainId ? Number(chainId) : ''}/${child.address}`}
-              className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
+              className="flex items-center gap-2 px-3 py-2  bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
               title={`Child: ${child.title}`}
             >
               <ArrowDownIcon className="w-5 h-5" />

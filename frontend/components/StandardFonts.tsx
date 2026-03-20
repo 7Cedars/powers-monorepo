@@ -56,7 +56,7 @@ export const TitleText = ({
           {subtitle}
         </div>
       )}
-      {/* <div className="w-10 h-0.5 bg-slate-200 rounded mt-1 mb-2" /> */}
+      {/* <div className="w-10 h-0.5 bg-slate-200  mt-1 mb-2" /> */}
     </div>
   );
 };

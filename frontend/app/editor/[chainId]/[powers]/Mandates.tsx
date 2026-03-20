@@ -18,7 +18,7 @@ export function Mandates({powers, status}: MandatesProps) {
   const activeMandates = powers?.mandates && powers?.mandates?.length > 0 ? powers?.mandates?.filter(mandate => mandate.active) : [];
 
   return (
-    <div className="w-fullflex flex-col justify-start items-center bg-slate-50 border border-slate-300 max-w-full lg:max-w-72 rounded-md overflow-hidden">
+    <div className="w-fullflex flex-col justify-start items-center bg-slate-50 border border-slate-300 max-w-full lg:max-w-72  overflow-hidden">
       <button
         onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates`) } 
         className="w-full border-b border-slate-300 p-2 bg-slate-100"

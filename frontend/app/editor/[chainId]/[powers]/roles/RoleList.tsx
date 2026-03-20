@@ -21,7 +21,7 @@ export function RoleList({powers}: RoleListProps) {
 
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden">
+    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
 
       {/* Table content - matching AssetList.tsx structure */}
       {roles && roles.length > 0 ?
@@ -47,7 +47,7 @@ export function RoleList({powers}: RoleListProps) {
                       >
                         <td className="ps-4 px-2 py-3 w-auto">
                           <div className="flex flex-row items-center justify-start gap-4">
-                            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden">
+                            <div className="flex-shrink-0 w-12 h-12  overflow-hidden">
                               <DynamicThumbnail
                                 roleId={role.roleId}
                                 powers={powers as Powers}

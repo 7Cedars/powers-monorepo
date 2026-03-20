@@ -25,7 +25,7 @@ export default function Page() {
                     roleId={BigInt(roleId)} 
                     powers={powers} 
                     size={120} 
-                    className="rounded-xl shadow-sm object-cover bg-white border border-slate-200"
+                    className=" shadow-sm object-cover bg-white border border-slate-200"
                 />
             </div>
         )}

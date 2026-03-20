@@ -51,12 +51,12 @@ export function SectionExamples() {
 
 
           {/* Example Display */}
-          <section className="w-full sm:max-h-[80vh] flex flex-col justify-start items-center bg-white border border-slate-200 rounded-md overflow-hidden max-w-4xl shadow-sm">
+          <section className="w-full sm:max-h-[80vh] flex flex-col justify-start items-center bg-white border border-slate-200  overflow-hidden max-w-4xl shadow-sm">
             {/* Carousel Header */}
             <div className="w-full flex flex-row justify-between items-center py-4 px-6 border-b border-slate-200 flex-shrink-0">
               <button
                 onClick={prevExample}
-                className="p-2 rounded-md hover:bg-slate-100 transition-colors"
+                className="p-2  hover:bg-slate-100 transition-colors"
                 disabled={exampleOrganizations.length <= 1}
               >
                 <ChevronLeftIcon className="w-6 h-6 text-slate-600" />
@@ -68,7 +68,7 @@ export function SectionExamples() {
                   {exampleOrganizations.map((_, index) => (
                     <div
                       key={index}
-                      className={`w-2 h-2 rounded-full ${
+                      className={`w-2 h-2  ${
                         index === currentExampleIndex ? 'bg-slate-600' : 'bg-slate-300'
                       }`}
                     />
@@ -78,7 +78,7 @@ export function SectionExamples() {
 
               <button
                 onClick={nextExample}
-                className="p-2 rounded-md hover:bg-slate-100 transition-colors"
+                className="p-2  hover:bg-slate-100 transition-colors"
                 disabled={exampleOrganizations.length <= 1}
               >
                 <ChevronRightIcon className="w-6 h-6 text-slate-600" />
@@ -95,7 +95,7 @@ export function SectionExamples() {
                       src={currentExample.banner} 
                       alt={`${currentExample.title} example`}
                       fill
-                      className="rounded-lg object-cover"
+                      className=" object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
@@ -113,7 +113,7 @@ export function SectionExamples() {
               {/* View Example Button */}
               <div className="w-full grow mt-4 flex justify-center items-center">
                 <button
-                  className={`w-full sm:min-w-[400px] sm:w-auto h-12 px-12 font-medium rounded-md transition-colors duration-200 flex items-center justify-center ${
+                  className={`w-full sm:min-w-[400px] sm:w-auto h-12 px-12 font-medium  transition-colors duration-200 flex items-center justify-center ${
                     isComingSoon
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white'

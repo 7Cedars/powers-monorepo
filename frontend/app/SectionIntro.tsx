@@ -22,7 +22,7 @@ export function SectionIntro() {
           <section className = "w-full max-w-6xl flex flex-col justify-center items-center relative aspect-video my-8"> 
             <Image 
                 src={"/powers101.png"} 
-                className = "p-2 rounded-md" 
+                className = "p-2 " 
                 style={{objectFit: "contain"}}
                 fill={true}
                 alt="Screenshot Powers App"
@@ -33,7 +33,7 @@ export function SectionIntro() {
 
           {/* documentation link */}
           <section className="w-full max-w-4xl flex flex-row justify-center items-center p-4"> 
-              <a className="w-full h-fit flex flex-row justify-center items-center text-center py-3 px-12 sm:text-2xl text-xl text-slate-200 hover:text-slate-50 border border-slate-200 hover:border-slate-50 rounded-md text-center"
+              <a className="w-full h-fit flex flex-row justify-center items-center text-center py-3 px-12 sm:text-2xl text-xl text-slate-200 hover:text-slate-50 border border-slate-200 hover:border-slate-50  text-center"
                     href={`https://powers-docs.vercel.app/welcome`} target="_blank" rel="noopener noreferrer">
                         Read the documentation 
               </a>

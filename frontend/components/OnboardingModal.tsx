@@ -232,9 +232,9 @@ export const OnboardingModal = ({ isOpen, onClose, onRequestOpen }: OnboardingMo
         {/* Loading indicator when element is not found yet */}
         {currentStepData.highlight.target && isElementLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white rounded-lg shadow-lg p-4">
+            <div className="bg-white  shadow-lg p-4">
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-600"></div>
+                <div className="animate-spin  h-4 w-4 border-b-2 border-slate-600"></div>
                 <span className="text-slate-600 text-sm">Loading element...</span>
               </div>
             </div>
@@ -243,11 +243,11 @@ export const OnboardingModal = ({ isOpen, onClose, onRequestOpen }: OnboardingMo
       </div>
       
       {/* Modal card */}
-      <div className="relative bg-slate-50 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+      <div className="relative bg-slate-50  shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-slate-200 transition-colors"
+          className="absolute top-4 right-4 z-10 p-2  hover:bg-slate-200 transition-colors"
         >
           <XMarkIcon className="h-6 w-6 text-slate-600" />
         </button>
@@ -272,7 +272,7 @@ export const OnboardingModal = ({ isOpen, onClose, onRequestOpen }: OnboardingMo
                   <img 
                     src={currentStepData.image} 
                     alt={currentStepData.title}
-                    className="mx-auto max-w-full h-auto rounded-lg border border-slate-300"
+                    className="mx-auto max-w-full h-auto  border border-slate-300"
                   />
                 </div>
               )}
@@ -290,7 +290,7 @@ export const OnboardingModal = ({ isOpen, onClose, onRequestOpen }: OnboardingMo
           <button
             onClick={handlePrevious}
             disabled={currentStep === 0}
-            className={`px-4 py-2 rounded-md transition-colors ${
+            className={`px-4 py-2  transition-colors ${
               currentStep === 0
                 ? 'text-slate-400 cursor-not-allowed'
                 : 'text-slate-600 hover:bg-slate-200'
@@ -303,7 +303,7 @@ export const OnboardingModal = ({ isOpen, onClose, onRequestOpen }: OnboardingMo
             {Array.from({ length: totalSteps }, (_, index) => (
               <div
                 key={index}
-                className={`w-2 h-2 rounded-full ${
+                className={`w-2 h-2  ${
                   index === currentStep ? 'bg-slate-600' : 'bg-slate-300'
                 }`}
               />
@@ -312,7 +312,7 @@ export const OnboardingModal = ({ isOpen, onClose, onRequestOpen }: OnboardingMo
 
           <button
             onClick={handleNext}
-            className="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+            className="px-4 py-2 bg-slate-600 text-white  hover:bg-slate-700 transition-colors"
           >
             {currentStep === totalSteps - 1 ? 'Finish' : 'Next'}
           </button>

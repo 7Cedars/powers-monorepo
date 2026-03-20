@@ -26,7 +26,7 @@ import { parseChainId } from '@/utils/parsers';
 const layoutIconBox = 'flex flex-row md:gap-1 gap-0 md:px-4 md:py-1 py-0 px-0 align-middle items-center'
 const layoutIcons = 'h-6 w-6'
 const layoutText = 'lg:opacity-100 lg:text-sm text-[0px] lg:w-fit w-0 opacity-0'
-const layoutButton = `w-full h-full flex flex-row justify-center items-center rounded-md border aria-selected:bg-slate-200 md:hover:border-slate-600 text-sm aria-selected:text-slate-700 text-slate-500 border-transparent`
+const layoutButton = `w-full h-full flex flex-row justify-center items-center  border aria-selected:bg-slate-200 md:hover:border-slate-600 text-sm aria-selected:text-slate-700 text-slate-500 border-transparent`
 
 // Navigation item interface
 interface NavigationItem {
@@ -147,7 +147,7 @@ const Header = () => {
     <section className="grow flex flex-row gap-1 justify-between pe-2">
       <div className="flex flex-row gap-2 items-center"> 
         <a href="/protocol"  
-            className="flex flex-row justify-center items-center rounded-md p-1 px-2"
+            className="flex flex-row justify-center items-center  p-1 px-2"
             >  
           <Image 
             src='/logo1_notext.png' 
@@ -166,7 +166,7 @@ const Header = () => {
         {/* <button
           onClick={() => fetchPowers(powersAddress as `0x${string}`, chainId)}
           disabled={statusPowers.status == "pending"}
-          className="flex items-center justify-center rounded-md p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-slate-400 hover:border-slate-600"
+          className="flex items-center justify-center  p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-slate-400 hover:border-slate-600"
           title="Refresh Powers Data"
         >
           <ArrowPathIcon 

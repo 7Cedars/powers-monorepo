@@ -80,7 +80,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
   const quorum = roleHolders > 0 ? Math.ceil((roleHolders * Number(mandate?.conditions?.quorum || 0)) / 100) : 0
   const threshold = roleHolders > 0 ? Math.ceil((roleHolders * Number(mandate?.conditions?.succeedAt || 0)) / 100) : 0
   const deadline = Number(actionVote?.voteEnd || 0)
-  const layout = `w-full flex flex-row justify-center items-center px-2 py-1 text-bold rounded-md`
+  const layout = `w-full flex flex-row justify-center items-center px-2 py-1 text-bold `
 
   // resetting action state when action is changed,
   useEffect(() => {
@@ -168,7 +168,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
 
   return (
       <div className="w-full h-fit flex flex-col gap-3 justify-start items-center bg-slate-50">
-      <section className="w-full flex flex-col divide-y divide-slate-300 text-sm text-slate-600 border border-slate-300 rounded-md overflow-hidden" > 
+      <section className="w-full flex flex-col divide-y divide-slate-300 text-sm text-slate-600 border border-slate-300  overflow-hidden" > 
         <div className="w-full p-2 bg-slate-100">
           <div className="w-full flex flex-row gap-6 items-center justify-between">
             <div className="text-left text-sm text-slate-600">
@@ -177,7 +177,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
               <button
               onClick={fetchVotes}
               disabled={loading}
-              className="flex items-center justify-center rounded-md p-1.5 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center  p-1.5 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refresh Votes"
             >
               <ArrowPathIcon 
@@ -230,7 +230,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
             { Number(actionVote?.forVotes || 0) + Number(actionVote?.abstainVotes || 0) >= quorum ? "Quorum passed" : "Quorum not passed"}
             </div>
           </div>
-          <div className={`relative w-full leading-none rounded-sm h-3 border border-slate-300 overflow-hidden`}>
+          <div className={`relative w-full leading-none  h-3 border border-slate-300 overflow-hidden`}>
             <div 
               className={`absolute bottom-0 leading-none h-3 bg-slate-400`}
               style={{width:`${quorum > 0 ? ((Number(actionVote?.forVotes || 0) + Number(actionVote?.abstainVotes || 0)) * 100) / quorum : 0 }%`}}> 
@@ -249,7 +249,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
             { Number(actionVote?.forVotes || 0) >= threshold ? "Threshold passed" : "Threshold not passed"}
             </div>
           </div>
-          <div className={`relative w-full flex flex-row justify-start leading-none rounded-sm h-3 border border-slate-300`}>
+          <div className={`relative w-full flex flex-row justify-start leading-none  h-3 border border-slate-300`}>
             <div className={`absolute bottom-0 w-full leading-none h-3 bg-gray-400`} />
             <div className={`absolute bottom-0 w-full leading-none h-3 bg-red-400`} style={{width:`${allVotes > 0 ? ((Number(actionVote?.forVotes || 0) + Number(actionVote?.againstVotes || 0)) / allVotes)*100 : 0}%`}} />
             <div className={`absolute bottom-0 w-full leading-none h-3 bg-green-400`} style={{width:`${allVotes > 0 ? ((Number(actionVote?.forVotes || 0)) / allVotes)*100 : 0}%`}} />
@@ -288,7 +288,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
       </section>
 
       {/* Votes Cast Section */}
-      <section className="w-full flex flex-col divide-y divide-slate-300 text-sm text-slate-600 border border-slate-300 rounded-md overflow-hidden">
+      <section className="w-full flex flex-col divide-y divide-slate-300 text-sm text-slate-600 border border-slate-300  overflow-hidden">
         <div className="w-full p-2 bg-slate-100">
           <div className="w-full flex flex-row gap-6 items-center justify-between">
             <div className="text-left text-sm text-slate-600">

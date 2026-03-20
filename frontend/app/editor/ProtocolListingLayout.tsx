@@ -11,7 +11,7 @@ const ProtocolHeader = () => {
       <section className="grow flex flex-row gap-1 justify-between pe-2">
         <div className="flex flex-row gap-2 items-center"> 
           <a href="/protocol"  
-              className="flex flex-row justify-center items-center rounded-md p-1 px-2"
+              className="flex flex-row justify-center items-center  p-1 px-2"
               >  
             <Image 
               src='/logo1_notext.png' 

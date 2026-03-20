@@ -285,7 +285,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                                     className="flex items-center gap-1.5"
                                   >
                                     {status.isActive && (
-                                      <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                                      <span className="w-2 h-2  bg-green-500 flex-shrink-0" />
                                     )}
                                     <span className={`${status.color} text-xs`}>
                                       {status.text}

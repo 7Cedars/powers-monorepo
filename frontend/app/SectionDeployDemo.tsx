@@ -508,12 +508,12 @@ export function SectionDeployDemo() {
           </div>
         </section>
 
-        <section className="w-full grow sm:max-h-[80vh] flex flex-col justify-start items-center bg-white border border-slate-200 rounded-md overflow-hidden max-w-4xl shadow-sm">
+        <section className="w-full grow sm:max-h-[80vh] flex flex-col justify-start items-center bg-white border border-slate-200  overflow-hidden max-w-4xl shadow-sm">
           {/* Carousel Header */}
           <div className="w-full flex flex-row justify-between items-center py-4 px-6 border-b border-slate-200 flex-shrink-0">
             <button
               onClick={prevOrg}
-              className="p-2 rounded-md hover:bg-slate-100 transition-colors"
+              className="p-2  hover:bg-slate-100 transition-colors"
             >
               <ChevronLeftIcon className="w-6 h-6 text-slate-600" />
             </button>
@@ -524,7 +524,7 @@ export function SectionDeployDemo() {
                 {availableOrganizations.map((_, index) => (
                   <div
                     key={index}
-                    className={`w-2 h-2 rounded-full ${
+                    className={`w-2 h-2  ${
                       index === currentOrgIndex ? 'bg-slate-600' : 'bg-slate-300'
                     }`}
                   />
@@ -534,7 +534,7 @@ export function SectionDeployDemo() {
 
             <button
               onClick={nextOrg}
-              className="p-2 rounded-md hover:bg-slate-100 transition-colors"
+              className="p-2  hover:bg-slate-100 transition-colors"
             >
               <ChevronRightIcon className="w-6 h-6 text-slate-600" />
             </button>
@@ -550,7 +550,7 @@ export function SectionDeployDemo() {
                     src={currentOrg.metadata.banner} 
                     alt={`${currentOrg.metadata.title} template`}
                     fill
-                    className="rounded-lg object-cover"
+                    className=" object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
@@ -576,7 +576,7 @@ export function SectionDeployDemo() {
                     type={field.type}
                     name={field.name}
                     placeholder={field.placeholder}
-                    className="w-full h-12 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent border border-slate-300"
+                    className="w-full h-12 px-3  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent border border-slate-300"
                     value={formData[field.name] || ''}
                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                     required={field.required}
@@ -597,14 +597,14 @@ export function SectionDeployDemo() {
               <div className="w-full sm:w-fit h-12 order-2 sm:order-1">
                 {constituteCompleted && deployedPowersAddress ? (
                   <button 
-                    className="w-full sm:w-fit h-12 px-6 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors duration-200 flex items-center justify-center"
+                    className="w-full sm:w-fit h-12 px-6 bg-green-600 hover:bg-green-700 text-white font-medium  transition-colors duration-200 flex items-center justify-center"
                     onClick={handleSeeYourPowers}
                   > 
                     See Your New Powers
                   </button>
                 ) : (
                   <button 
-                    className={`w-full sm:w-fit h-12 px-6 font-medium rounded-md transition-colors duration-200 flex items-center justify-center ${
+                    className={`w-full sm:w-fit h-12 px-6 font-medium  transition-colors duration-200 flex items-center justify-center ${
                       status === 'error'
                         ? 'bg-red-600 hover:bg-red-700 text-white border border-red-700'
                         : !ready || !authenticated || currentOrg.metadata.disabled || !areRequiredFieldsFilled()
@@ -655,7 +655,7 @@ export function SectionDeployDemo() {
 
                   {/* Drop-up Menu */}
                   {isChainMenuOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200  shadow-lg z-10">
                       {chains.map((chain) => (
                         <button
                           key={chain.id}
@@ -685,14 +685,14 @@ export function SectionDeployDemo() {
 
         {/* Deployment Status Display */}
         {(status === 'pending' || status === 'error' || status === 'success') && (
-          <section className="w-full flex flex-col justify-start items-start bg-white border border-slate-200 rounded-md max-w-4xl shadow-sm p-6">
+          <section className="w-full flex flex-col justify-start items-start bg-white border border-slate-200  max-w-4xl shadow-sm p-6">
             <h4 className="text-lg font-semibold text-slate-800 mb-4">Deployment Status</h4>
             
             <div className="w-full space-y-3">
               {/* Step 1: Powers Contract */}
               <div className="flex items-center gap-3">
                 {deployStatus.powersCreate === 'success' ? (
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6  bg-green-500 flex items-center justify-center flex-shrink-0">
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -702,13 +702,13 @@ export function SectionDeployDemo() {
                     <TwoSeventyRingWithBg className="w-6 h-6" />
                   </div>
                 ) : deployStatus.powersCreate === 'error' ? (
-                  <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6  bg-red-500 flex items-center justify-center flex-shrink-0">
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </div>
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-slate-300 flex-shrink-0" />
+                  <div className="w-6 h-6  bg-slate-300 flex-shrink-0" />
                 )}
                 <span className={`text-sm ${deployStatus.powersCreate === 'success' ? 'text-green-600 font-medium' : deployStatus.powersCreate === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
                   Deploy Powers Contract
@@ -721,7 +721,7 @@ export function SectionDeployDemo() {
                 return (
                   <div key={idx} className="flex items-center gap-3">
                     {mockStatus === 'success' ? (
-                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6  bg-green-500 flex items-center justify-center flex-shrink-0">
                         <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -731,13 +731,13 @@ export function SectionDeployDemo() {
                         <TwoSeventyRingWithBg className="w-6 h-6" />
                       </div>
                     ) : mockStatus === 'error' ? (
-                      <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6  bg-red-500 flex items-center justify-center flex-shrink-0">
                         <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </div>
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-slate-300 flex-shrink-0" />
+                      <div className="w-6 h-6  bg-slate-300 flex-shrink-0" />
                     )}
                     <span className={`text-sm ${mockStatus === 'success' ? 'text-green-600 font-medium' : mockStatus === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
                       Deploy {dep.name}
@@ -750,7 +750,7 @@ export function SectionDeployDemo() {
               {deployStatus.finalTransactions.map((tx, idx) => (
                 <div key={idx} className="flex items-center gap-3">
                   {tx.status === 'success' ? (
-                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6  bg-green-500 flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -760,13 +760,13 @@ export function SectionDeployDemo() {
                       <TwoSeventyRingWithBg className="w-6 h-6" />
                     </div>
                   ) : tx.status === 'error' ? (
-                    <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6  bg-red-500 flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-slate-300 flex-shrink-0" />
+                    <div className="w-6 h-6  bg-slate-300 flex-shrink-0" />
                   )}
                   <span className={`text-sm ${tx.status === 'success' ? 'text-green-600 font-medium' : tx.status === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
                     {tx.name}
@@ -776,7 +776,7 @@ export function SectionDeployDemo() {
             </div>
 
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md max-h-64 h-full overflow-y-auto">
+              <div className="mt-4 p-3 bg-red-50 border border-red-200  max-h-64 h-full overflow-y-auto">
                 <p className="text-sm text-red-600 break-words break-all whitespace-pre-wrap">
                   <strong>Error:</strong> {error.message}
                 </p>

@@ -212,7 +212,7 @@ export function DynamicForm({mandate, params, status, checks, onCheck}: DynamicF
         }
       <div className="w-full mt-4 flex flex-row justify-center items-center ps-3 pe-6 gap-3">
         <label htmlFor="nonce" className="text-xs text-slate-600 ps-3 min-w-28 ">Nonce</label>
-        <div className="w-full h-fit flex items-center text-md justify-center rounded-md bg-white ps-2 outline outline-1 outline-slate-300">
+        <div className="w-full h-fit flex items-center text-md justify-center  bg-white ps-2 outline outline-1 outline-slate-300">
             <input 
               type="number"   
               name={`nonce`} 
@@ -227,7 +227,7 @@ export function DynamicForm({mandate, params, status, checks, onCheck}: DynamicF
             />
           </div>
           <button 
-              className = "h-8 min-w-8 py-2 grow flex flex-row items-center justify-center  rounded-md bg-white outline outline-1 outline-gray-300"
+              className = "h-8 min-w-8 py-2 grow flex flex-row items-center justify-center   bg-white outline outline-1 outline-gray-300"
               onClick = {(event) => {
                 event.preventDefault()
                 setAction({...action, nonce: BigInt(Math.floor(Math.random() * 1000000000000000000000000)).toString(), upToDate: false})
@@ -239,7 +239,7 @@ export function DynamicForm({mandate, params, status, checks, onCheck}: DynamicF
 
         <div className="w-full mt-4 flex flex-row justify-center items-center ps-3 pe-6 gap-3">
         <label htmlFor="uri" className="text-xs text-slate-600 ps-3 min-w-28 ">Description</label>
-          <div className="w-full h-fit flex items-center text-md justify-center rounded-md bg-white ps-2 outline outline-1 outline-slate-300">
+          <div className="w-full h-fit flex items-center text-md justify-center  bg-white ps-2 outline outline-1 outline-slate-300">
               <input 
                 type="text"
                 name="uri" 

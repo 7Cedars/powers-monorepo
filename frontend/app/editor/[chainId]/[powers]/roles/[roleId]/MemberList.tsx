@@ -87,7 +87,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
   }, [powers, roleId, fetchRoleHolders])
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden">
+    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
 
       {/* Table content */}
       {status == 'pending' ? 

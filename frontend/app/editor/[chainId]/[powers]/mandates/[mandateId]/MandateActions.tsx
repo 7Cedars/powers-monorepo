@@ -65,7 +65,7 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
 
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden" help-nav-item="latest-executions">
+    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden" help-nav-item="latest-executions">
       <div
         className="w-full border-b border-slate-300 p-2 bg-slate-100"
       >

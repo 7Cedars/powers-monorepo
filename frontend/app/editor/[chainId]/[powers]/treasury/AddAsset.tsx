@@ -14,7 +14,7 @@ export function AddAsset() {
   const {status, error, addErc20} = useAssets(powers as Powers)
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden">
+    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
       {/* Header - matching LogsList.tsx structure */}
       <div className="w-full flex flex-row gap-4 justify-between items-center pt-3 px-4 pb-3">
         <div className="text-slate-800 text-center text-lg">
@@ -27,7 +27,7 @@ export function AddAsset() {
         {/* Input and Button Row */}
         <div className="w-full flex flex-row gap-3 items-center">
           {/* Address input */}
-          <div className="flex-1 min-w-0 flex items-center rounded-md bg-white pl-3 outline outline-1 outline-gray-300">  
+          <div className="flex-1 min-w-0 flex items-center  bg-white pl-3 outline outline-1 outline-gray-300">  
             <input 
               type="text" 
               name="input" 

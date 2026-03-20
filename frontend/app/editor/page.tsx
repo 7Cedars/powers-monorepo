@@ -113,9 +113,9 @@ export default function ProtocolPage() {
                 <div
                   key={`${protocol.contractAddress}-${index}`}
                   onClick={() => handleProtocolClick(protocol)}
-                  className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer group relative"
+                  className="bg-white  border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer group relative"
                 >
-                  <div className="relative min-h-48 flex flex-col justify-between items-end text-slate-50 border border-slate-300 rounded-t-lg overflow-hidden">
+                  <div className="relative min-h-48 flex flex-col justify-between items-end text-slate-50 border border-slate-300  overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br to-indigo-500 from-orange-400" />
                     
                     {protocol.metadatas?.banner && (
@@ -142,7 +142,7 @@ export default function ProtocolPage() {
                   {/* Trash Icon - visible on hover */}
                   <button
                       onClick={(e) => handleDeleteClick(e, protocol)}
-                      className="absolute bottom-2 right-2 p-2 bg-white/80 rounded-full text-red-500 hover:bg-white hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm z-10"
+                      className="absolute bottom-2 right-2 p-2 bg-white/80  text-red-500 hover:bg-white hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm z-10"
                       title="Delete Protocol"
                   >
                       <TrashIcon className="w-5 h-5" />
@@ -157,7 +157,7 @@ export default function ProtocolPage() {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && protocolToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
+          <div className="bg-white  shadow-xl max-w-md w-full p-6 relative">
             <button
               onClick={() => setIsDeleteModalOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
@@ -174,7 +174,7 @@ export default function ProtocolPage() {
                 Are you sure you want to delete <span className="font-semibold">{protocolToDelete.name}</span>?
               </p>
               
-              <div className="bg-slate-50 p-3 rounded border border-slate-200 text-sm break-all">
+              <div className="bg-slate-50 p-3  border border-slate-200 text-sm break-all">
                 <p className="font-mono text-xs text-slate-500 mb-1">Contract Address:</p>
                 {protocolToDelete.contractAddress}
               </div>
@@ -189,13 +189,13 @@ export default function ProtocolPage() {
             <div className="flex gap-3 mt-6 justify-end">
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="px-4 py-2 rounded text-slate-600 hover:bg-slate-100 transition-colors"
+                className="px-4 py-2  text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm"
+                className="px-4 py-2  bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm"
               >
                 Delete Protocol
               </button>

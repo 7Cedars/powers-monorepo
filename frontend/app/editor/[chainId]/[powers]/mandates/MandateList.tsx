@@ -29,7 +29,7 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
   const blockExplorerUrl = chains.find(chain => chain.id === parseInt(chainId))?.blockExplorers?.default.url;
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden">
+    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
       {/* Role filter bar - matching ActionsList.tsx structure */}
       <div className="w-full flex flex-row gap-12 justify-start items-center py-4 overflow-x-auto border-b border-slate-200 p-4 pe-8">
         {powers?.roles?.map((role, i) => (

@@ -461,7 +461,7 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
 
   return (
     <div 
-      className={`shadow-lg rounded-lg bg-white ${borderThickness} min-w-[300px] max-w-[380px] w-[380px] overflow-hidden ${roleBorderClass} cursor-pointer hover:shadow-xl transition-shadow ${opacityClass} relative`}
+      className={`shadow-lg  bg-white ${borderThickness} min-w-[300px] max-w-[380px] w-[380px] overflow-hidden ${roleBorderClass} cursor-pointer hover:shadow-xl transition-shadow ${opacityClass} relative`}
       help-nav-item="flow-node"
       onClick={handleClick}
     >        
@@ -492,39 +492,39 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ( {data} )
                 <div className="flex items-center space-x-2 flex-1">
                     <div className="w-6 h-6 flex justify-center items-center relative">
                       {item.key === 'fulfilled' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <RocketLaunchIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : item.key === 'requested' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <CheckCircleIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : item.key === 'delay' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <CalendarDaysIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : item.key === 'throttle' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <QueueListIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : item.key === 'needFulfilled' || item.key === 'needNotFulfilled' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <DocumentCheckIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : item.key === 'voteStarted' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <ArchiveBoxIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : item.key === 'voteEnded' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <FlagIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : item.key === 'proposalCreated' ? (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <ClipboardDocumentCheckIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       ) : (
-                        <div className="w-6 h-6 rounded-full border border-black flex items-center justify-center bg-white relative z-10">
+                        <div className="w-6 h-6  border border-black flex items-center justify-center bg-white relative z-10">
                           <ShieldCheckIcon className={`w-4 h-4 ${iconColor}`} />
                         </div>
                       )}
@@ -1248,7 +1248,7 @@ const FlowContent: React.FC = () => {
   const ActiveMandates = powers?.mandates?.filter(mandate => mandate.active)
   if (!ActiveMandates || ActiveMandates.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+      <div className="w-full h-full flex items-center justify-center bg-gray-50 ">
         <div className="text-center">
           <div className="text-gray-500 text-lg mb-2">No active mandates found</div>
           <div className="text-gray-400 text-sm">Deploy some mandates to see the visualization</div>

@@ -113,7 +113,7 @@ export function DynamicInput({dataType, varName, values, onChange, index}: Input
                   name={`input${item}`} 
                   id={`input${item}`}
                   value={typeof inputArray[item] != "boolean" && inputArray[item] ? String(inputArray[item]) : ""}
-                  className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
+                  className="flex-1 bg-background border border-border  px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
                   placeholder={`Enter ${dataType.replace(/[\[\]']+/g, '')} here.`}
                   onChange={(event) => handleChange({event, item})}
                 />
@@ -126,20 +126,20 @@ export function DynamicInput({dataType, varName, values, onChange, index}: Input
                   name={`input${item}`} 
                   id={`input${item}`}
                   value={inputArray[item] ? inputArray[item].toString() : "0"}
-                  className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
+                  className="flex-1 bg-background border border-border  px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
                   placeholder={`Enter ${dataType.replace(/[\[\]']+/g, '')} value here.`}
                   onChange={(event) => handleChange({event, item})}
                 />
             :
             inputType == "boolean" ? 
-                <div className="flex-1 bg-background border border-border rounded px-3 py-2 flex items-center gap-2">
+                <div className="flex-1 bg-background border border-border  px-3 py-2 flex items-center gap-2">
                   <input 
                     type="checkbox" 
                     name={`input${item}`} 
                     id={`input${item}`}
                     value={inputArray[item] === true ? "false" : "true"} 
                     checked={inputArray[item] === true}
-                    className="h-4 w-4 rounded border-border text-foreground focus:ring-foreground/50" 
+                    className="h-4 w-4  border-border text-foreground focus:ring-foreground/50" 
                     onChange={(event) => handleChange({event, item})}
                   />
                   <span className="text-xs font-mono text-foreground">
@@ -147,7 +147,7 @@ export function DynamicInput({dataType, varName, values, onChange, index}: Input
                   </span>
                 </div>
             :
-            <div className="flex-1 bg-background border border-destructive rounded px-3 py-2 text-xs text-destructive">  
+            <div className="flex-1 bg-background border border-destructive  px-3 py-2 text-xs text-destructive">  
               error: data not recognised.
             </div>  
             }
@@ -156,7 +156,7 @@ export function DynamicInput({dataType, varName, values, onChange, index}: Input
                 <div className="flex gap-2">
                   <button 
                     type="button"
-                    className="h-9 w-9 flex items-center justify-center rounded bg-background border border-border hover:bg-muted transition-colors"
+                    className="h-9 w-9 flex items-center justify-center  bg-background border border-border hover:bg-muted transition-colors"
                     onClick={(event) => handleResizeArray(event, true)}
                   > 
                     <PlusIcon className="h-4 w-4"/> 
@@ -165,7 +165,7 @@ export function DynamicInput({dataType, varName, values, onChange, index}: Input
                   item > 0 ? 
                     <button 
                       type="button"
-                      className="h-9 w-9 flex items-center justify-center rounded bg-background border border-border hover:bg-muted transition-colors"
+                      className="h-9 w-9 flex items-center justify-center  bg-background border border-border hover:bg-muted transition-colors"
                       onClick={(event) => handleResizeArray(event, false, item)}
                     > 
                       <MinusIcon className="h-4 w-4"/> 

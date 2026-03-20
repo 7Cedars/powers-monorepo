@@ -124,7 +124,7 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
               </button>
               <button
                 onClick={scrollRight}
-                className="p-1 hover:bg-muted rounded transition-colors"
+                className="p-1 hover:bg-muted  transition-colors"
                 aria-label="Scroll right"
               >
                 <svg
