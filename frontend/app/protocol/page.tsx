@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { ProtocolListingLayout } from './ProtocolListingLayout'
-import { defaultPowers101, defaultPowerLabs, defaultPowerLabsChild } from '@/context/defaultProtocols'
+import { defaultPowers101 } from '@/context/defaultProtocols'
 import { parseAddress } from '@/utils/addressUtils'
 
 export default function ProtocolPage() {
