@@ -118,7 +118,6 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
       const powers101Exists = protocols.some(p => p.name === 'Powers 101')
       const powersGoverned721Exists = protocols.some(p => p.name === 'Governed 721 DAO')
       const culturalStewardsDAOExists = protocols.some(p => p.name === 'Cultural Stewards DAO')
-      const digitalSubDAOExampleExists = protocols.some(p => p.name === 'Digital Sub DAO')
 
       if (!powersGoverned721Exists) {
         // Add Governed 721 DAO to the list
@@ -131,11 +130,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
       if (!powers101Exists) {
         // Add Powers 101 to the list
         protocols.unshift(require('./defaultProtocols').defaultPowers101)
-      } 
-      if (!digitalSubDAOExampleExists) {
-        // Add Digital Sub DAO Example to the list
-        protocols.unshift(require('./defaultProtocols').DigitalSubDAOExample)
-      }
+      }  
 
       set({ savedProtocols: protocols })
     } catch (error) {
