@@ -24,11 +24,14 @@ interface GroupChatInfo {
 interface ChatroomProps {
   chatroomType?: 'Mandate' | 'Flow' | 'Action' | 'Vote' | 'General'
   hasRole?: boolean
+  chainId?: string
+  powersAddress?: string
+  contextId?: string  // mandateId or actionId depending on type
 }
 
-export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomProps) {
+export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, powersAddress, contextId }: ChatroomProps) {
   const { address } = useConnection ()
-  const { client, isLoading, error, isConnected, initializeClient } = useXmtpClient()
+  const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations } = useXmtpClient()
   
   const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null)
   const [messages, setMessages] = useState<DecodedMessage[]>([])
@@ -37,7 +40,49 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
   const [isLoadingChats, setIsLoadingChats] = useState(false)
   const [inboxToAddress, setInboxToAddress] = useState<Map<string, string>>(new Map())
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [isAddingMember, setIsAddingMember] = useState(false)
+  const [addMemberError, setAddMemberError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // Generate unique chatroom identifier
+  const getChatroomId = (): string | null => {
+    if (!chainId || !powersAddress) return null
+    
+    const parts = [chatroomType, chainId, powersAddress]
+    if (contextId) parts.push(contextId)
+    
+    return parts.join('-')
+  }
+  
+  const chatroomId = getChatroomId()
+  
+  // localStorage key for conversation mapping
+  const CHAT_MAPPING_KEY = 'xmtp-chat-mapping'
+  
+  // Helper to get/set localStorage mapping
+  const getChatMapping = (): Record<string, string> => {
+    try {
+      const stored = localStorage.getItem(CHAT_MAPPING_KEY)
+      return stored ? JSON.parse(stored) : {}
+    } catch (err) {
+      console.error('Failed to parse chat mapping from localStorage:', err)
+      return {}
+    }
+  }
+  
+  const saveChatMapping = (conversationId: string, roomId: string) => {
+    try {
+      const mapping = getChatMapping()
+      mapping[conversationId] = roomId
+      localStorage.setItem(CHAT_MAPPING_KEY, JSON.stringify(mapping))
+      console.log('Saved chat mapping:', conversationId, '->', roomId)
+    } catch (err) {
+      console.error('Failed to save chat mapping:', err)
+    }
+  }
+ 
+  console.log('NB: XMTP Chatroom render:', { client, address, isConnected, groupChat, messages, error, chatroomId })
 
   // Scroll to bottom of messages
   const scrollToBottom = useCallback(() => {
@@ -79,22 +124,53 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
 
   // Load existing group chats when client is connected
   useEffect(() => {
-    if (!client || !isConnected) return
+    if (!client || !isConnected || !chatroomId) return
 
     const loadGroupChats = async () => {
       setIsLoadingChats(true)
       try {
         await client.conversations.sync()
         const allConvos = await client.conversations.list()
+
+        console.log('All conversations:', allConvos)
+        console.log('Looking for chatroom with ID:', chatroomId)
         
         // Filter for group chats only
         const groupConvos = allConvos.filter((convo: any) => {
           return 'addMembers' in convo || convo.conversationType === 'group'
         })
 
-        if (groupConvos.length > 0) {
-          // Load the first group chat found
-          const convo = groupConvos[0] as any
+        // Find the specific chatroom matching our identifier
+        // Check both name field and localStorage mapping
+        const chatMapping = getChatMapping()
+        
+        const matchingConvo = groupConvos.find((convo: any) => {
+          // Priority 1: Check name field (most reliable)
+          if (convo.name && convo.name === chatroomId) {
+            console.log('Found chat by name match:', convo.id)
+            return true
+          }
+          
+          // Priority 2: Check description field
+          if (convo.description && convo.description === chatroomId) {
+            console.log('Found chat by description match:', convo.id)
+            return true
+          }
+          
+          // Priority 3: Check localStorage mapping
+          if (chatMapping[convo.id] === chatroomId) {
+            console.log('Found chat by localStorage mapping:', convo.id)
+            return true
+          }
+          
+          return false
+        })
+        
+        console.log('Matching conversation result:', matchingConvo ? 'Found' : 'Not found', matchingConvo?.id)
+
+        if (matchingConvo) {
+          // Load the matching chatroom
+          const convo = matchingConvo as any
           const members: string[] = []
           let isOptimistic = false
           const mapping = new Map<string, string>()
@@ -102,10 +178,11 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
           try {
             if ('members' in convo && typeof convo.members === 'function') {
               const memberList = await convo.members()
+              console.log('Group members:', memberList)
               memberList.forEach((m: any) => {
                 const inboxId = m.inboxId || 'Unknown'
-                const ethAddress = m.accountAddresses?.[0] || m.accountAddress || inboxId
-                members.push(inboxId)
+                const ethAddress = m.accountIdentifiers?.[0].identifier || m.accountAddress || inboxId
+                members.push(ethAddress)
                 if (ethAddress && ethAddress !== inboxId) {
                   mapping.set(inboxId, ethAddress)
                 }
@@ -125,6 +202,8 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
           }
 
           const uninitializedMembers = await checkMemberInitialization(members)
+
+          console.log('@checkMemberInitialization: uninitializedMembers:', uninitializedMembers)
 
           setInboxToAddress(mapping)
           setGroupChat({
@@ -149,11 +228,16 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
         const stream = await client.conversations.stream()
         for await (const conversation of stream) {
           if ('addMembers' in conversation || (conversation as any).conversationType === 'group') {
+            // Check if this is the chatroom we're looking for
+            if ((conversation as any).description !== chatroomId) {
+              continue
+            }
+            
             const members: string[] = []
             try {
               if ('members' in conversation && typeof (conversation as any).members === 'function') {
                 const memberList = await (conversation as any).members()
-                members.push(...memberList.map((m: any) => m.inboxId || m.accountAddress || 'Unknown'))
+                members.push(...memberList.map((m: any) =>  m.accountIdentifiers?.[0]?.identifier || m.accountAddress || m.inboxId || 'Unknown'))
               }
             } catch (err) {
               console.error('Error getting group members:', err)
@@ -177,7 +261,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
     }
 
     streamConversations()
-  }, [client, isConnected])
+  }, [client, isConnected, chatroomId])
 
   // Load messages for the group chat
   useEffect(() => {
@@ -188,6 +272,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
         await groupChat.conversation.sync()
         const msgs = await groupChat.conversation.messages()
         setMessages(msgs)
+        setSendError(null)
       } catch (err) {
         console.error('Failed to load messages:', err)
       }
@@ -198,7 +283,9 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
 
   // Stream all messages
   useEffect(() => {
+    console.log('Setting up message stream with client:', client, 'isConnected:', isConnected, 'groupChat:', groupChat)
     if (!client || !isConnected || !groupChat) return
+    console.log('Streaming messages for conversation ID:', groupChat.conversation.id)
 
     const streamMessages = async () => {
       try {
@@ -214,11 +301,11 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
             }
           },
           onError: (error) => {
-            console.error('Error streaming messages:', error)
+            console.error('@streamMessages: Error streaming messages:', error)
           },
         })
       } catch (err) {
-        console.error('Error setting up message stream:', err)
+        console.error('@streamMessages: Error setting up message stream:', err)
       }
     }
 
@@ -226,55 +313,78 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
   }, [client, isConnected, groupChat])
 
   const handleCreateGroupChat = async () => {
-    if (!client) return
+    console.log('@handleCreateGroupChat: Creating group chat with addresses 1:', HARDCODED_ADDRESSES)
+    if (!client || !chatroomId) return
+
+    console.log('@handleCreateGroupChat: Creating group chat with ID:', chatroomId)
 
     setIsCreatingGroup(true)
     try {
-      // Create optimistic group chat
+      // Create optimistic group chat (stays local until members are added)
       const newGroup = await (client.conversations as any).createGroupOptimistic({
-        name: 'Powers Protocol Chat',
-        description: 'Powers Protocol Group Chat'
+        name: chatroomId,  // Use the unique ID as the name for reliable filtering
+        description: `Powers Protocol ${chatroomType} Chat`
       })
+      
+      // Save the mapping to localStorage immediately
+      saveChatMapping(newGroup.id, chatroomId)
 
       // Create group info
       const groupInfo: GroupChatInfo = {
         conversation: newGroup,
         memberAddresses: HARDCODED_ADDRESSES,
         uninitializedMembers: [],
-        isOptimistic: false
+        isOptimistic: HARDCODED_ADDRESSES.length === 0
       }
 
       setGroupChat(groupInfo)
 
-      // Add members
-      try {
-        const identifiers: Identifier[] = HARDCODED_ADDRESSES.map(addr => ({
-          identifier: addr,
-          identifierKind: IdentifierKind.Ethereum
-        }))
-        
-        const canMessageMap = await client.canMessage(identifiers)
-        const validInboxes: string[] = []
-        const uninitializedAddresses: string[] = []
+      // Add members if there are any
+      if (HARDCODED_ADDRESSES.length > 0) {
+        try {
+          const identifiers: Identifier[] = HARDCODED_ADDRESSES.map(addr => ({
+            identifier: addr,
+            identifierKind: IdentifierKind.Ethereum
+          }))
+          
+          const canMessageMap = await client.canMessage(identifiers)
+          const validInboxes: string[] = []
+          const uninitializedAddresses: string[] = []
 
-        for (const addr of HARDCODED_ADDRESSES) {
-          const canMessage = canMessageMap.get(addr)
-          if (canMessage) {
-            validInboxes.push(addr)
-          } else {
-            uninitializedAddresses.push(addr)
+          for (const addr of HARDCODED_ADDRESSES) {
+            const canMessage = canMessageMap.get(addr)
+            if (canMessage) {
+              validInboxes.push(addr)
+            } else {
+              uninitializedAddresses.push(addr)
+            }
           }
-        }
 
-        groupInfo.uninitializedMembers = uninitializedAddresses
-        
-        if (validInboxes.length > 0) {
-          await newGroup.addMembers(validInboxes)
-          groupInfo.isOptimistic = false
-          setGroupChat({ ...groupInfo })
+          groupInfo.uninitializedMembers = uninitializedAddresses
+          
+          // Add valid members to the group (this syncs the group to the network)
+          if (validInboxes.length > 0) {
+            await newGroup.addMembers(validInboxes)
+            groupInfo.isOptimistic = false
+            
+            // Re-save the mapping after adding members (in case ID changed)
+            saveChatMapping(newGroup.id, chatroomId)
+            
+            // Explicitly update name and description after syncing to ensure metadata persists
+            try {
+              await newGroup.updateName(chatroomId)
+              await newGroup.updateDescription(`Powers Protocol ${chatroomType} Chat`)
+              console.log('Successfully updated group metadata:', chatroomId)
+            } catch (err) {
+              console.error('Failed to update group metadata:', err)
+            }
+            
+            // Update the group chat info
+            setGroupChat({ ...groupInfo })
+          }
+        } catch (err) {
+          console.error('Failed to add members to group:', err)
         }
-      } catch (err) {
-        console.error('Failed to add members to group:', err)
       }
     } catch (err) {
       console.error('Failed to create group chat:', err)
@@ -284,14 +394,49 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
   }
 
   const handleSendMessage = async () => {
-    if (!groupChat || !messageInput.trim()) return
+    console.log('@handleSendMessage: Attempting to send message:', messageInput)
+    if (!groupChat || !messageInput.trim() || !client) return
 
+    const messageText = messageInput.trim()
+    console.log('@handleSendMessage: Sending message:', messageText)
     setIsSending(true)
+    setSendError(null)
+    
     try {
-      await groupChat.conversation.sendText(messageInput)
+      // Send the message
+      const msgId = await groupChat.conversation.sendText(messageText)
+      console.log('@handleSendMessage: Message sent:', messageText, 'Message ID:', msgId)
+      
+      // Clear input immediately after successful send
       setMessageInput('')
+      
+      // Try to sync, but don't fail the whole operation if sync has issues
+      try {
+        await groupChat.conversation.sync()
+      } catch (syncErr) {
+        // Log sync warnings but don't treat them as fatal errors
+        console.warn('@handleSendMessage: Sync completed with warnings:', syncErr)
+      }
+      console.log('@handleSendMessage: Sync completed (with or without warnings) after sending message')
+      
+      // Always attempt to reload messages, even if sync reported issues
+      try {
+        const updatedMessages = await groupChat.conversation.messages()
+        console.log('@handleSendMessage: Messages reloaded after send:', updatedMessages)
+        setMessages(updatedMessages)
+        console.log('@handleSendMessage: Message sent and loaded successfully')
+      } catch (loadErr) {
+        console.error('@handleSendMessage: Failed to reload messages after send:', loadErr)
+        // Don't show this as an error to user - the message was still sent
+      }
+      
     } catch (err) {
-      console.error('Failed to send message:', err)
+      console.error('@handleSendMessage: Failed to send message:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
+      setSendError(errorMessage)
+      
+      // Log the full error for debugging
+      console.error('Full error details:', err)
     } finally {
       setIsSending(false)
     }
@@ -318,17 +463,88 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
     })
   }
 
+  const handleAddConnectedAddress = async () => {
+    if (!client || !groupChat || !address) return
+
+    // Check if address is already a member
+    const isAlreadyMember = groupChat.memberAddresses.some(
+      (memberAddr) => memberAddr.toLowerCase() === address.toLowerCase()
+    )
+    
+    if (isAlreadyMember) {
+      setAddMemberError('Your wallet address is already a member of this group')
+      setTimeout(() => setAddMemberError(null), 3000)
+      return
+    }
+
+    setIsAddingMember(true)
+    setAddMemberError(null)
+
+    try {
+      // Check if the address can message on XMTP
+      const identifier: Identifier = {
+        identifier: address,
+        identifierKind: IdentifierKind.Ethereum
+      }
+      
+      const canMessageMap = await client.canMessage([identifier])
+      const canMessage = canMessageMap.get(address)
+
+      if (!canMessage) {
+        setAddMemberError('Your wallet address is not initialized with XMTP')
+        setTimeout(() => setAddMemberError(null), 5000)
+        return
+      }
+
+      // Add the address to the group
+      await (groupChat.conversation as any).addMembers([address])
+
+      // Update the group chat info
+      const updatedMemberAddresses = [...groupChat.memberAddresses, address]
+      const updatedUninitializedMembers = groupChat.uninitializedMembers.filter(
+        (addr) => addr.toLowerCase() !== address.toLowerCase()
+      )
+
+      setGroupChat({
+        ...groupChat,
+        memberAddresses: updatedMemberAddresses,
+        uninitializedMembers: updatedUninitializedMembers,
+        isOptimistic: false
+      })
+
+      // Sync the conversation
+      await groupChat.conversation.sync()
+
+      console.log('Successfully added connected address to group:', address)
+    } catch (err) {
+      console.error('Failed to add connected address to group:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add member'
+      setAddMemberError(errorMessage)
+      setTimeout(() => setAddMemberError(null), 5000)
+    } finally {
+      setIsAddingMember(false)
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/10">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between px-6 py-1 border-b border-border bg-muted/10">
+        <div className="flex items-center gap-2">
           <ChatBubbleBottomCenterTextIcon className="h-3 w-3 text-muted-foreground" />
           <h4 className="text-xs text-muted-foreground uppercase tracking-wider">{chatroomType.toUpperCase()} CHATROOM</h4>
-          
+          {isConnected && (
+            <button
+              onClick={removeAllInstallations}
+              disabled={isLoading}
+              className="ml-2 px-3 py-1 bg-destructive text-destructive-foreground rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+            >
+              Remove All Installations
+            </button>
+          )}
         </div>
         {isConnected && groupChat && (
-         <div className="flex items-center justify-between gap-2">
+         <div className="flex items-center justify-between gap-3">
           <SearchFilterSort 
               onSearchChange={(query) => console.log('Search:', query)}
               onFilterChange={(filter) => console.log('Filter:', filter)}
@@ -336,8 +552,31 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
             />
           
             <span className="text-sm text-muted-foreground">
-              | {groupChat.memberAddresses.length}/250 members
+              | {groupChat.memberAddresses.length}/250 members 
             </span>
+            
+            {address && (
+              <button
+                onClick={handleAddConnectedAddress}
+                disabled={isAddingMember || groupChat.memberAddresses.some(
+                  (memberAddr) => memberAddr.toLowerCase() === address.toLowerCase()
+                )}
+                className="px-3 py-1 bg-primary text-primary-foreground rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+                title={groupChat.memberAddresses.some(
+                  (memberAddr) => memberAddr.toLowerCase() === address.toLowerCase()
+                ) ? 'Already a member' : 'Add your wallet to group'}
+              >
+                {isAddingMember ? 'Adding...' : 'Add Me'}
+              </button>
+            )}
+            
+            {/* <button
+              onClick={removeAllInstallations}
+              disabled={isLoading}
+              className="px-4 py-1 bg-primary text-primary-foreground text-[10px] hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+            >
+              {isLoading ? 'Logging out...' : 'Logout'}
+            </button> */}
         </div>
         )}
       </div>
@@ -438,6 +677,16 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true }: ChatroomP
 
           {/* Message Input */}
           <div className="px-6 py-3 border-t border-border">
+            {sendError && (
+              <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive font-mono">
+                Failed to send: {sendError}
+              </div>
+            )}
+            {addMemberError && (
+              <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive font-mono">
+                {addMemberError}
+              </div>
+            )}
             <div className="flex gap-2">
               <input
                 type="text"

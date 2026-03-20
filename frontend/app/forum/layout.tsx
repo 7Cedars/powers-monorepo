@@ -8,9 +8,10 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import { NavigationDropdownMenu } from './NavigationDropdownMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { truncateAddress } from '@/utils/addressUtils';
+import { parseAddress } from '@/utils/addressUtils';
 import { defaultPowers101 } from '@/context/defaultProtocols'
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Powers } from "@/context/types";
@@ -38,6 +39,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { chain } = useConnection();
     const isFetchingRef = useRef(false);
     const action = useActionStore();
+    const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
 
     console.log("layout being triggered")
 
@@ -117,8 +119,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 <button
                 onClick={() => router.push('/profile')}
                 className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors">
-                
-                  {truncateAddress(wallets[0].address)}
+                  {isLoading ? 'Loading...' : displayName}
                 </button>
                 <button
                 onClick={ logout }

@@ -89,7 +89,13 @@ export default function MandatePage() {
             </div>
           </div>
 
-          <Chatroom chatroomType="Mandate" hasRole={hasRequiredRole} />
+          <Chatroom 
+            chatroomType="Mandate" 
+            hasRole={hasRequiredRole}
+            chainId={chainId}
+            powersAddress={powersAddress}
+            contextId={mandateId}
+          />
         </div>
       </main>
 

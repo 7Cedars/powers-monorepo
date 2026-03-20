@@ -17,7 +17,7 @@ import { LoadingBox } from "@/components/LoadingBox"
 import { useMandate } from "@/hooks/useMandate";
 
 // Helper function to truncate addresses, preferring ENS names
-const truncateAddress = (address: string | undefined, ensName: string | null | undefined): string => {
+const parseAddress = (address: string | undefined, ensName: string | null | undefined): string => {
   if (ensName) return ensName
   if (!address) return 'Unknown'
   if (address.length < 10) return address
@@ -349,7 +349,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
                       {/* Voter */}
                       <td className="px-2 py-3 w-24">
                         <div className="truncate text-slate-500 text-xs font-mono">
-                          {truncateAddress(vote.voter, vote.ensName)}
+                          {parseAddress(vote.voter, vote.ensName)}
                         </div>
                       </td>
 

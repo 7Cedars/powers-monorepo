@@ -19,7 +19,7 @@ export default function AllDaos() {
     }
   }
 
-  // const displayName = ensName || (walletAddress ? truncateAddress(walletAddress) : ''); // Needs to be implemented through asap. 
+  // const displayName = ensName || (walletAddress ? parseAddress(walletAddress) : ''); // Needs to be implemented through asap. 
 
   return (
     <div className="min-h-full min-w-full flex flex-col bg-background scanlines"> 

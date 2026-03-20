@@ -101,7 +101,7 @@ export default function ActionPage() {
       <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
         <div className="flex-1 flex flex-col border border-border overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-2 border-b border-border bg-muted/50 gap-3">
             <div className="flex-1">
               <h3 className="text-foreground text-base">
                 {action.description || 'No Description'}
@@ -111,7 +111,7 @@ export default function ActionPage() {
             <div className="flex items-center gap-3">
                 <button
                 onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${action.mandateId}?actionId=${action.actionId}`)}
-                className="terminal-btn-sm flex items-center gap-2 text-sm px-4 py-2 bg-foreground text-background hover:bg-foreground/80 hover:text-background">
+                className="terminal-btn-sm flex items-center gap-2 text-sm px-4 py-2 bg-foreground text-background hover:bg-foreground/80 hover:text-background whitespace-nowrap">
                 VIEW FLOW SEQUENCE
                   <ArrowLongRightIcon className="h-3 w-3" />
                 </button>
@@ -143,7 +143,12 @@ export default function ActionPage() {
           </div>
 
           {/* Action Chatroom Placeholder */}
-          <Chatroom chatroomType="Action" />
+          <Chatroom 
+            chatroomType="Action"
+            chainId={chainId}
+            powersAddress={powersAddress}
+            contextId={actionId}
+          />
          
         </div>
       </main>

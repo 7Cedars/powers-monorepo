@@ -13,7 +13,7 @@ import { toFullDateAndTimeFormat } from '@/utils/toDates';
 
 
 export default function FlowSequencePage() {
-    const { chainId, mandateId } = useParams<{ chainId: string; mandateId: string }>();
+    const { chainId, powers: powersAddress, mandateId } = useParams<{ chainId: string; powers: string; mandateId: string }>();
     const searchParams = useSearchParams();
     const [selectedAction, setSelectedAction] = useState<SelectedActionInfo | null>(null);
     
@@ -109,7 +109,12 @@ export default function FlowSequencePage() {
                     <SingleFlow mandateId={BigInt(mandateId)} actionId={BigInt(selectedAction?.actionId ?? 0)} />
                 </div>
 
-                <Chatroom chatroomType="Flow" />
+                <Chatroom 
+                    chatroomType="Flow" 
+                    chainId={chainId}
+                    powersAddress={powersAddress}
+                    contextId={mandateId}
+                />
 
                 </div>
             </main>

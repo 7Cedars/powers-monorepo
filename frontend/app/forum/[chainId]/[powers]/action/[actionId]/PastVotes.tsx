@@ -48,7 +48,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
     : 0n;
 
   // Helper to truncate addresses, preferring ENS names
-  const truncateAddress = (address: string, ensName: string | null): string => {
+  const parseAddress = (address: string, ensName: string | null): string => {
     if (ensName) return ensName;
     if (!address || address.length < 10) return address;
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -232,7 +232,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
                       {/* Voter */}
                       <td className="px-3 py-2">
                         <span className="text-foreground font-mono">
-                          {truncateAddress(vote.voter, vote.ensName)}
+                          {parseAddress(vote.voter, vote.ensName)}
                         </span>
                       </td>
 

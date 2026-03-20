@@ -31,9 +31,14 @@ export default function ChatPage() {
   const [memberInputs, setMemberInputs] = useState<GroupMemberInput[]>([
     { id: '1', address: '' }
   ])
+  const [addMemberInputs, setAddMemberInputs] = useState<GroupMemberInput[]>([
+    { id: '1', address: '' }
+  ])
   const [isLoadingGroupChats, setIsLoadingGroupChats] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
+  const [isAddingMembers, setIsAddingMembers] = useState(false)
+  const [showAddMemberSection, setShowAddMemberSection] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Scroll to bottom of messages
@@ -63,6 +68,28 @@ export default function ChatPage() {
   // Update member address
   const updateMemberAddress = (id: string, address: string) => {
     setMemberInputs(prev =>
+      prev.map(input => input.id === id ? { ...input, address } : input)
+    )
+  }
+
+  // Add member slot for existing chat
+  const addAddMemberSlot = () => {
+    setAddMemberInputs(prev => [
+      ...prev,
+      { id: Date.now().toString(), address: '' }
+    ])
+  }
+
+  // Remove member slot for existing chat
+  const removeAddMemberSlot = (id: string) => {
+    if (addMemberInputs.length > 1) {
+      setAddMemberInputs(prev => prev.filter(input => input.id !== id))
+    }
+  }
+
+  // Update member address for existing chat
+  const updateAddMemberAddress = (id: string, address: string) => {
+    setAddMemberInputs(prev =>
       prev.map(input => input.id === id ? { ...input, address } : input)
     )
   }
@@ -125,7 +152,8 @@ export default function ChatPage() {
             try {
               if ('members' in convo && typeof convo.members === 'function') {
                 const memberList = await convo.members()
-                members.push(...memberList.map((m: any) => m.inboxId || m.accountAddress || 'Unknown'))
+                console.log('Fetched members for conversation', convo.id, memberList)
+                members.push(...memberList.map((m: any) => m.accountIdentifiers?.[0]?.identifier || m.inboxId || m.accountAddress || 'Unknown'))
               }
               
               // Check if group is synced to network
@@ -312,6 +340,8 @@ export default function ChatPage() {
               g.conversation.id === newGroup.id ? groupInfo : g
             ))
           }
+
+          console.log('Group chat created with members:', validInboxes)
         } catch (err) {
           console.error('Failed to add members to group:', err)
           alert('Group created but some members could not be added. They may not have XMTP enabled.')
@@ -325,6 +355,61 @@ export default function ChatPage() {
       alert('Failed to create group chat.')
     } finally {
       setIsCreatingGroup(false)
+    }
+  }
+
+  const handleAddMyselfToChat = async () => {
+    if (!selectedGroupChat || !client || !address) return
+
+    setIsAddingMembers(true)
+    try {
+      // Check if current address is already in the group
+      if (selectedGroupChat.memberAddresses.includes(address)) {
+        alert('You are already a member of this group')
+        setIsAddingMembers(false)
+        return
+      }
+
+      // Check if XMTP is enabled for the current address
+      const identifier: Identifier = {
+        identifier: address,
+        identifierKind: IdentifierKind.Ethereum
+      }
+      
+      const canMessageMap = await client.canMessage([identifier])
+      const canMessage = canMessageMap.get(address)
+
+      if (!canMessage) {
+        // If XMTP is not enabled, attempt to initialize it
+        alert('XMTP is not fully initialized for your address. Please reconnect to XMTP.')
+        setIsAddingMembers(false)
+        return
+      }
+
+      // Add the current user to the group
+      await (selectedGroupChat.conversation as any).addMembers([address])
+      
+      // Update the group chat info
+      const updatedGroupInfo: GroupChatInfo = {
+        ...selectedGroupChat,
+        memberAddresses: [...selectedGroupChat.memberAddresses, address],
+        uninitializedMembers: selectedGroupChat.uninitializedMembers,
+        isOptimistic: false
+      }
+      
+      // Update both selectedGroupChat and groupChats list
+      setSelectedGroupChat(updatedGroupInfo)
+      setGroupChats(prev => prev.map(g => 
+        g.conversation.id === selectedGroupChat.conversation.id ? updatedGroupInfo : g
+      ))
+
+      setShowAddMemberSection(false)
+      alert('Successfully added yourself to the group')
+    } catch (err) {
+      console.error('Failed to add yourself to group:', err)
+      alert('Failed to add yourself to the group. You may already be a member or lack permissions.')
+    } finally {
+      setIsAddingMembers(false)
     }
   }
 
@@ -509,17 +594,52 @@ export default function ChatPage() {
                   <>
                     {/* Messages Header */}
                     <div className="p-4 border-b border-slate-200">
-                      <h3 className="text-lg font-semibold text-slate-800">
-                        {getGroupName(selectedGroupChat)}
-                      </h3>
-                      <div className="text-sm text-slate-500 mt-1">
-                        {selectedGroupChat.memberAddresses.length} member{selectedGroupChat.memberAddresses.length !== 1 ? 's' : ''}
-                        {selectedGroupChat.uninitializedMembers.length > 0 && (
-                          <span className="text-red-600 ml-2">
-                            ({selectedGroupChat.uninitializedMembers.length} not initialized)
-                          </span>
-                        )}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-slate-800">
+                            {getGroupName(selectedGroupChat)}
+                          </h3>
+                          <div className="text-sm text-slate-500 mt-1">
+                            {selectedGroupChat.memberAddresses.length} member{selectedGroupChat.memberAddresses.length !== 1 ? 's' : ''}
+                            {selectedGroupChat.uninitializedMembers.length > 0 && (
+                              <span className="text-red-600 ml-2">
+                                ({selectedGroupChat.uninitializedMembers.length} not initialized)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowAddMemberSection(!showAddMemberSection)}
+                          className="px-3 py-1.5 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
+                        >
+                          {showAddMemberSection ? '✕ Cancel' : '+ Add Members'}
+                        </button>
                       </div>
+
+                      {/* Add Member Section */}
+                      {showAddMemberSection && (
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 space-y-3">
+                          <div className="text-sm font-medium text-blue-800">Add Yourself to Group:</div>
+                          
+                          <div className="p-2 bg-white border border-blue-200">
+                            <div className="text-xs text-slate-600 mb-1">Your Address:</div>
+                            <div className="text-sm font-mono text-slate-800">{formatAddress(address!)}</div>
+                          </div>
+                          
+                          <button
+                            onClick={handleAddMyselfToChat}
+                            disabled={isAddingMembers}
+                            className="w-full px-4 py-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm transition-colors font-medium"
+                          >
+                            {isAddingMembers ? 'Adding...' : 'Add Me to Group'}
+                          </button>
+                          
+                          <p className="text-xs text-blue-700">
+                            This will add your connected wallet address to the group chat
+                          </p>
+                        </div>
+                      )}
+
                       {selectedGroupChat.uninitializedMembers.length > 0 && (
                         <div className="mt-2 p-2 bg-red-50 border border-red-200 text-xs">
                           <div className="font-medium text-red-800 mb-1">Uninitialized members:</div>

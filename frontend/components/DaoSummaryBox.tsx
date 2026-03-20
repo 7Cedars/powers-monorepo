@@ -1,7 +1,7 @@
 import { Powers } from '@/context/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { truncateAddress } from '@/utils/addressUtils';
+import { parseAddress } from '@/utils/addressUtils';
 import { toDDMMYYYY } from '@/utils/toDates';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useEffect } from 'react';
@@ -111,11 +111,11 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                 </div>
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Powers</span>
-                    <p className="font-mono text-sm text-foreground">{truncateAddress(powers.contractAddress)} </p>
+                    <p className="font-mono text-sm text-foreground">{parseAddress(powers.contractAddress)} </p>
                 </div>
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Treasury</span>
-                    <p className="font-mono text-sm text-foreground">{powers.treasury === `0x0000000000000000000000000000000000000000` ? "N/A" : truncateAddress(powers.treasury)}</p>
+                    <p className="font-mono text-sm text-foreground">{powers.treasury === `0x0000000000000000000000000000000000000000` ? "N/A" : parseAddress(powers.treasury)}</p>
                 </div>
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Network</span>
