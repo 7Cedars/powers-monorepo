@@ -42,46 +42,34 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
     return ( 
         <div
         key={powers.contractAddress}
-        className={`border border-border transition-colors relative cursor-pointer hover:bg-muted/50`} // ${pathname == "/" ? "cursor-pointer hover:bg-muted/50" : ""} 
+        className={`border border-border transition-colors relative cursor-pointer hover:bg-muted/50`}
         onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)}>
         
-            {showHeader ? (
-                <div 
+            {/* Banner - always the same layout */}
+            <div 
                 className="h-36 px-4 py-2 border-b border-border relative overflow-hidden"
                 style={{
                     backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                 }}>
-                    {/* Semi-transparent overlay for better text visibility */}
-                    <div className="absolute inset-0 bg-background/50" />
-                    
-                    {/* Content with relative positioning to appear above overlay */}
-                    <div className='flex flex-row items-center justify-between text-xl'>
-                    <span className="font-mono uppercase tracking-wider text-base relative z-10 text-foreground">
-                        {powers.name}
-                    </span>
+                <div className="absolute inset-0 bg-background/20" />
+            </div>
+
+            {/* Top row - only visible when showHeader is true */}
+            {showHeader && (
+                <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/50">
+                    <h3 className="text-foreground uppercase tracking-wider text-sm">{powers.name}</h3>
                     {onArchive && (
                         <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onArchive(powers.contractAddress);
-                        }}
-                        className="relative z-10 text-foreground hover:text-foreground/80 transition-colors">
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onArchive(powers.contractAddress);
+                            }}
+                            className="text-foreground hover:text-foreground/80 transition-colors">
                             <XMarkIcon className="h-4 w-4" />
                         </button>
                     )}
-                    </div>
-                </div>
-            ) : (
-                <div 
-                    className="h-36 px-4 py-2 border-b border-border relative overflow-hidden"
-                    style={{
-                        backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                    }}>
-                    <div className="absolute inset-0 bg-background/20" />
                 </div>
             )}
             <div className={`px-4 py-3 flex gap-4 ${alignment === "column" ? "flex-col" : "flex-row"}`}>

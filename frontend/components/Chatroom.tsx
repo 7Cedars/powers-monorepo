@@ -325,6 +325,8 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         name: chatroomId,  // Use the unique ID as the name for reliable filtering
         description: `Powers Protocol ${chatroomType} Chat`
       })
+
+      console.log('@handleCreateGroupChat: Created new group chat:', {newGroup})
       
       // Save the mapping to localStorage immediately
       saveChatMapping(newGroup.id, chatroomId)
@@ -362,26 +364,31 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
 
           groupInfo.uninitializedMembers = uninitializedAddresses
           
-          // Add valid members to the group (this syncs the group to the network)
+          // Sync the group to the network
           if (validInboxes.length > 0) {
+            // Add valid members (this syncs the group to the network)
             await newGroup.addMembers(validInboxes)
             groupInfo.isOptimistic = false
-            
-            // Re-save the mapping after adding members (in case ID changed)
-            saveChatMapping(newGroup.id, chatroomId)
-            
-            // Explicitly update name and description after syncing to ensure metadata persists
-            try {
-              await newGroup.updateName(chatroomId)
-              await newGroup.updateDescription(`Powers Protocol ${chatroomType} Chat`)
-              console.log('Successfully updated group metadata:', chatroomId)
-            } catch (err) {
-              console.error('Failed to update group metadata:', err)
-            }
-            
-            // Update the group chat info
-            setGroupChat({ ...groupInfo })
+          } else {
+            // If no valid members, sync the group using publishMessages
+            await newGroup.publishMessages()
+            groupInfo.isOptimistic = false
           }
+          
+          // Re-save the mapping after sync (in case ID changed)
+          saveChatMapping(newGroup.id, chatroomId)
+          
+          // Update metadata after the group has been synced to the network
+          try {
+            await newGroup.updateName(chatroomId)
+            await newGroup.updateDescription(`Powers Protocol ${chatroomType} Chat`)
+            console.log('Successfully updated group metadata:', chatroomId)
+          } catch (err) {
+            console.error('Failed to update group metadata:', err)
+          }
+          
+          // Update the group chat info
+          setGroupChat({ ...groupInfo })
         } catch (err) {
           console.error('Failed to add members to group:', err)
         }
@@ -533,7 +540,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         <div className="flex items-center gap-2">
           <ChatBubbleBottomCenterTextIcon className="h-3 w-3 text-muted-foreground" />
           <h4 className="text-xs text-muted-foreground uppercase tracking-wider">{chatroomType.toUpperCase()} CHATROOM</h4>
-          {isConnected && (
+          {/* {isConnected && (
             <button
               onClick={removeAllInstallations}
               disabled={isLoading}
@@ -541,7 +548,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
             >
               Remove All Installations
             </button>
-          )}
+          )} */}
         </div>
         {isConnected && groupChat && (
          <div className="flex items-center justify-between gap-3">
