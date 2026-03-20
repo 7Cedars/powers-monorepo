@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Action, CommunicationChannels, Powers, Status } from '../context/types'
+import { Governed721DAO, CulturalStewardsDAO, defaultPowers101 } from './defaultProtocols';
 
 // Action Store
 type PowersStore = Powers;
@@ -114,28 +115,34 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
         protocols = JSON.parse(localStore)
       }
 
-      // Check if Powers 101 already exists
-      const powers101Exists = protocols.some(p => p.name === 'Powers 101')
-      const powersGoverned721Exists = protocols.some(p => p.name === 'Governed 721 DAO')
-      const culturalStewardsDAOExists = protocols.some(p => p.name === 'Cultural Stewards DAO')
+      // Check if default protocols already exist by contract address
+      const powers101Exists = protocols.some(
+        p => p.contractAddress.toLowerCase() === defaultPowers101.contractAddress.toLowerCase()
+      )
+      const powersGoverned721Exists = protocols.some(
+        p => p.contractAddress.toLowerCase() === Governed721DAO.contractAddress.toLowerCase()
+      )
+      const culturalStewardsDAOExists = protocols.some(
+        p => p.contractAddress.toLowerCase() === CulturalStewardsDAO.contractAddress.toLowerCase()
+      )
 
       if (!powersGoverned721Exists) {
         // Add Governed 721 DAO to the list
-        protocols.unshift(require('./defaultProtocols').Governed721DAO)
+        protocols.unshift(Governed721DAO)
       }
       if (!culturalStewardsDAOExists) {
         // Add Cultural Stewards DAO to the list
-        protocols.unshift(require('./defaultProtocols').CulturalStewardsDAO)
+        protocols.unshift(CulturalStewardsDAO)
       }
       if (!powers101Exists) {
         // Add Powers 101 to the list
-        protocols.unshift(require('./defaultProtocols').defaultPowers101)
-      }  
+        protocols.unshift(defaultPowers101)
+      }
 
       set({ savedProtocols: protocols })
     } catch (error) {
       console.error('Error loading saved protocols:', error)
-      set({ savedProtocols: [require('./defaultProtocols').defaultPowers101] })
+      set({ savedProtocols: [defaultPowers101] })
     }
   },
   
