@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "../context/Providers"
 import "./globals.css";
+import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
   title: "Powers Protocol",
@@ -17,23 +18,17 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-
-  // Full screen layout for landing page -- integrate here? 
-//   <div className="w-full h-full grid grid-cols-1 overflow-y-scroll" id="navigation-bar">
-//   <main className="w-full h-full grid grid-cols-1 overflow-y-scroll">
-//     {children}
-//   </main>
-// </div>
-
-{/* <Footer />  */}
-
+  
   return (
-    <html lang="en">
+    <html suppressHydrationWarning lang="en">
       <head />
+     
       <body className="h-dvh w-screen relative bg-slate-100 overflow-hidden">
-        <Providers>
-          {children}
-        </Providers>
+        <ThemeProvider attribute="class">
+          <Providers>
+            {children}
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

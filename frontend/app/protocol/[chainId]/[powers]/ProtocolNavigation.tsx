@@ -18,8 +18,9 @@ import { PowersFlow } from '../../../../components/PowersFlow';
 import { usePowers } from '@/hooks/usePowers';
 import { useEffect, useState } from 'react';
 import { useStatusStore, usePowersStore, useErrorStore, setStatus, setError, setAction, useActionStore } from '@/context/store';
-import { useAccount, usePublicClient, useSwitchChain } from 'wagmi';
+import { useConnection, usePublicClient, useSwitchChain } from 'wagmi';
 import { switchChain } from '@wagmi/core/actions';
+import { parseChainId } from '@/utils/parsers';
 
 // Navigation styling constants
 const layoutIconBox = 'flex flex-row md:gap-1 gap-0 md:px-4 md:py-1 py-0 px-0 align-middle items-center'
@@ -37,8 +38,6 @@ interface NavigationItem {
   hideLabel?: boolean;
   helpNavItem?: string;
 }
-
-
 
 // Default navigation configuration for protocol pages
 const protocolNavigationConfig: NavigationItem[] = [
@@ -116,7 +115,7 @@ const NavigationBar = () => {
 } 
   
 const Header = () => {
-  const { powers: powersAddress } = useParams<{ powers: string }>()
+  const { powers: powersAddress, chain: chainId } = useParams<{ powers: string, chain: string }>()
   const statusPowers = useStatusStore();
   const errorPowers = useErrorStore();
   const action = useActionStore();
@@ -160,12 +159,12 @@ const Header = () => {
         </a> 
         {!isProtocolPage && 
           <BlockCounter onRefresh={() => {
-            fetchPowers(powersAddress as `0x${string}`);
+            fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
             // fetchBlockNumber();
           }} blockNumber={blockNumber} />
         }
         {/* <button
-          onClick={() => fetchPowers(powersAddress as `0x${string}`)}
+          onClick={() => fetchPowers(powersAddress as `0x${string}`, chainId)}
           disabled={statusPowers.status == "pending"}
           className="flex items-center justify-center rounded-md p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-slate-400 hover:border-slate-600"
           title="Refresh Powers Data"
@@ -254,26 +253,25 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
 }
 
 export const ProtocolNavigation: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
+  const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>()
   const pathname = usePathname();
   const powers = usePowersStore();
-  const { chainId } = useParams<{ chainId: string }>()
   const { fetchPowers } = usePowers();
-  const { switchChain } = useSwitchChain();
-  const { chain } = useAccount();
+  const switchChain = useSwitchChain();
+  const { chain } = useConnection();
   
   // Switch chain when selected chain changes
   useEffect(() => {
     if (chainId && chain?.id !== Number(chainId)) {
-      switchChain({ chainId: Number(chainId) });
+      switchChain.mutate({ chainId: Number(chainId) });
     }
   }, [chainId, chain?.id, switchChain]);
 
   useEffect(() => {
     if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
-      fetchPowers(powersAddress as `0x${string}`)
+      fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
     }
-  }, [powersAddress, powers])
+  }, [powersAddress, powers, chainId])
 
   // reset status and error when pathname changes
   useEffect(() => {

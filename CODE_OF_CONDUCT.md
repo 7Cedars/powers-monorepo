@@ -1,4 +1,4 @@
-# **Power Base Code of Conduct**
+# **(example title) Power Base Code of Conduct**
 
 ## **1\. Our Mission & Pledge**
 

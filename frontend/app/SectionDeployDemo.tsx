@@ -4,7 +4,7 @@ import { Button } from "@/components/Button";
 import { ConnectButton } from "@/components/ConnectButton";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
-import { useSwitchChain, useAccount } from "wagmi";
+import { useSwitchChain, useConnection } from "wagmi";
 import { useRouter } from "next/navigation";
 import { powersAbi } from "@/context/abi";
 import { Status } from "@/context/types";
@@ -39,8 +39,8 @@ export function SectionDeployDemo() {
   const [bytecodePowers, setBytecodePowers] = useState<`0x${string}` | undefined>();
   const [deployedMandates, setDeployedMandates] = useState<Record<string, `0x${string}`>>({});
   const { ready, authenticated } = usePrivy();
-  const { chain } = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { chain } = useConnection();
+  const switchChain = useSwitchChain();
   const router = useRouter();
 
   const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
@@ -100,7 +100,7 @@ export function SectionDeployDemo() {
   // Switch chain when selected chain changes
   useEffect(() => {
     if (selectedChainId && chain?.id !== selectedChainId) {
-      switchChain({ chainId: selectedChainId });
+      switchChain.mutate({ chainId: selectedChainId });
     }
     if (selectedChainId) {
       getPowered(selectedChainId);

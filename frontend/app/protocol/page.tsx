@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { ProtocolListingLayout } from './ProtocolListingLayout'
 import { defaultPowers101, defaultPowerLabs, defaultPowerLabsChild } from '@/context/defaultProtocols'
+import { parseAddress } from '@/utils/addressUtils'
 
 export default function ProtocolPage() {
   const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
@@ -64,10 +65,6 @@ export default function ProtocolPage() {
     const parsedChainId = Number(chainId)
     const chain = chains.find(chain => chain.id === parsedChainId)
     return chain?.name || 'Unknown Chain'
-  }
-
-  const abbreviateAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
   const handleProtocolClick = (protocol: Powers) => {
@@ -135,7 +132,7 @@ export default function ProtocolPage() {
 
                     <div className="relative w-full max-w-fit h-full max-h-fit p-4 pb-0" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
                       <div className="text-lg text-right">{chainName}</div>
-                      <div className="text-sm opacity-80 font-mono text-right">{abbreviateAddress(protocol.contractAddress)}</div>
+                      <div className="text-sm opacity-80 font-mono text-right">{parseAddress(protocol.contractAddress)}</div>
                     </div>
                     <div className="relative w-full max-w-fit h-full max-h-fit text-3xl p-4" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
                       {protocol.name || 'Unnamed Protocol'}

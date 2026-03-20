@@ -75,7 +75,7 @@ export const deleteError: typeof useErrorStore.setState = () => {
 }
 
 
-// Error Store
+// Status Store
 type StatusStore = {
   status: Status
 }
@@ -92,3 +92,74 @@ export const setStatus: typeof useStatusStore.setState = (status) => {
 export const deleteStatus: typeof useStatusStore.setState = () => {
   useStatusStore.setState(initialStateStatus)
 }
+
+// Saved Protocols Store
+type SavedProtocolsStore = {
+  savedProtocols: Powers[]
+  loadSavedProtocols: () => void
+  addProtocol: (protocol: Powers) => void
+  removeProtocol: (contractAddress: `0x${string}`) => void
+  updateProtocol: (contractAddress: `0x${string}`, updates: Partial<Powers>) => void
+}
+
+export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => ({
+  savedProtocols: [],
+  
+  loadSavedProtocols: () => {
+    try {
+      const localStore = localStorage.getItem('powersProtocols')
+      let protocols: Powers[] = []
+      
+      if (localStore && localStore !== 'undefined') {
+        protocols = JSON.parse(localStore)
+      }
+
+      // Check if Powers 101 already exists
+      const powers101Exists = protocols.some(p => p.name === 'Powers 101')
+      
+      if (!powers101Exists) {
+        // Add Powers 101 to the list
+        protocols.unshift(require('./defaultProtocols').defaultPowers101)
+      }
+
+      set({ savedProtocols: protocols })
+    } catch (error) {
+      console.error('Error loading saved protocols:', error)
+      set({ savedProtocols: [require('./defaultProtocols').defaultPowers101] })
+    }
+  },
+  
+  addProtocol: (protocol: Powers) => {
+    const { savedProtocols } = get()
+    const exists = savedProtocols.some(
+      p => p.contractAddress.toLowerCase() === protocol.contractAddress.toLowerCase()
+    )
+    
+    if (!exists) {
+      const updated = [...savedProtocols, protocol]
+      localStorage.setItem('powersProtocols', JSON.stringify(updated))
+      set({ savedProtocols: updated })
+      console.log('Protocol added to localStorage:', protocol.contractAddress)
+    }
+  },
+  
+  removeProtocol: (contractAddress: `0x${string}`) => {
+    const { savedProtocols } = get()
+    const updated = savedProtocols.filter(
+      p => p.contractAddress.toLowerCase() !== contractAddress.toLowerCase()
+    )
+    localStorage.setItem('powersProtocols', JSON.stringify(updated))
+    set({ savedProtocols: updated })
+    console.log('Protocol removed from localStorage:', contractAddress)
+    console.log('Remaining protocols:', updated.length)
+  },
+  
+  updateProtocol: (contractAddress: `0x${string}`, updates: Partial<Powers>) => {
+    const { savedProtocols } = get()
+    const updated = savedProtocols.map(p => 
+      p.contractAddress === contractAddress ? { ...p, ...updates } : p
+    )
+    localStorage.setItem('powersProtocols', JSON.stringify(updated))
+    set({ savedProtocols: updated })
+  }
+}))

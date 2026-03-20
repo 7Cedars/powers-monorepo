@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain, useConnection } from "wagmi";
 import { ZKPassport, ProofResult } from "@zkpassport/sdk";
 import { parseEther, keccak256, toHex, encodeAbiParameters, parseAbiParameters, encodeFunctionData } from "viem";
 import { Button } from "../../components/Button";
@@ -38,9 +38,9 @@ const AVAILABLE_FIELDS = [
 ];
 
 export default function VerificationPage() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useConnection();
   const chainId = useChainId();
-  const { switchChain } = useSwitchChain();
+  const switchChain = useSwitchChain();
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
@@ -276,7 +276,7 @@ export default function VerificationPage() {
                 <h3 className="text-lg font-medium text-slate-700">Wrong Network</h3>
                 <p className="text-slate-500 max-w-sm">Please switch to Sepolia testnet to continue.</p>
                 <div className="pt-2">
-                  <Button onClick={() => switchChain({ chainId: targetChainId })}>
+                  <Button onClick={() => switchChain.mutate({ chainId: targetChainId })}>
                     Switch to Sepolia
                   </Button>
                 </div>

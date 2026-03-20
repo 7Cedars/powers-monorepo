@@ -7,7 +7,7 @@ import { callDataToActionParams } from "@/utils/callDataToActionParams";
 import { setAction } from "@/context/store";
 
 // Helper function to truncate addresses, preferring ENS names
-const truncateAddress = (address: string | undefined): string => {
+const parseAddress = (address: string | undefined): string => {
   if (!address) return 'Unknown'
   if (address.length < 10) return address
   return `${address.slice(0, 6)}...${address.slice(-4)}`
@@ -135,7 +135,7 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
                         {/* Executioner */}
                         <td className="px-2 py-3 w-24">
                           <div className="truncate text-slate-500 text-xs font-mono">
-                            {truncateAddress(action.caller)}
+                            {parseAddress(action.caller)}
                           </div>
                         </td>
 
