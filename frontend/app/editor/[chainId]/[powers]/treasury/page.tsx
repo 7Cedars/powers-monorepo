@@ -15,6 +15,8 @@ export default function Page() {
   const powers = usePowersStore(); 
   const chains = useChains()
   const supportedChain = chains.find(chain => chain.id == parseChainId(chainId))
+
+  console.log("@treasury page rendered:", {chains, supportedChain, powers})
    
   return (
     <main className="w-full h-fit flex flex-col gap-1 justify-start items-center pt-16 ps-4">  

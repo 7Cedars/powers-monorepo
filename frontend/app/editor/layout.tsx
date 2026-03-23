@@ -37,6 +37,16 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
 
     const isEditorPage = pathname === '/editor';
 
+    // reset status and error when pathname changes
+    useEffect(() => {
+      setError({error: null})
+      setStatus({status: "idle"})
+    }, [pathname])
+
+    useEffect(() => {
+      loadSavedProtocols()
+    }, [loadSavedProtocols])
+
     useEffect(() => {
         const fetchBlockNumber = async () => {
           if (powers)  
@@ -49,33 +59,14 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
           }
         }
         fetchBlockNumber();
-    }, [publicClient, powers])
+    }, [ publicClient ])
 
     // Switch chain when selected chain changes
     useEffect(() => {
       if (chainId && chain?.id !== Number(chainId)) {
         switchChain.mutate({ chainId: Number(chainId) });
       }
-    }, [chainId, chain?.id, switchChain]);
-  
-    // Load powers instance if not loaded yet
-    useEffect(() => {
-      if (powersAddress && chainId) {
-        if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
-          fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-        }
-      }
-    }, [powersAddress, powers, chainId, fetchPowers])
-
-    // reset status and error when pathname changes
-    useEffect(() => {
-      setError({error: null})
-      setStatus({status: "idle"})
-    }, [pathname])
-
-    useEffect(() => {
-      loadSavedProtocols()
-    }, [loadSavedProtocols])
+    }, [chain?.id]);
 
     // Auto-save current Powers instance if not already saved
     useEffect(() => {
@@ -89,11 +80,11 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
           addProtocol(powers)
         }
       }
-    }, [powers, powers.contractAddress, savedProtocols, addProtocol])
+    }, [powers.contractAddress, addProtocol])
 
   return (  
     <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
-      <header className="border-b border-border px-3 sm:px-4 py-4 bg-background">
+      <header className="z-10 border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a href="/editor" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">

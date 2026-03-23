@@ -24,35 +24,14 @@ export default function FlowPage() {
   const supportedChain = chains.find(chain => chain.id == parseChainId(chainId))
   const powers = usePowersStore(); 
   const statusPowers = useStatusStore();
-  // console.log("@home:", {chains, supportedChain, powers})
-
-  const validateBannerImage = useCallback(async (url: string | undefined) => {
-      if (!url) {
-          setIsValidBanner(false)
-          return
-      }
-
-      try {
-          const response = await fetch(url)
-          const contentType = response.headers.get('content-type')
-          if (contentType?.includes('image/png')) {
-              setIsValidBanner(true)
-          } else {
-              setIsValidBanner(false)
-          }
-      } catch (error) {
-          setIsValidBanner(false)
-      }
-  }, [])
-
-  useEffect(() => {
-      validateBannerImage(powers?.metadatas?.banner)
-  }, [powers?.metadatas?.banner, validateBannerImage])
+  
+  console.log("@home page rendered:", {chains, supportedChain, powers})
   
   return (
-    <main className="w-full h-full flex flex-col justify-start items-center gap-3 px-2 overflow-x-scroll pt-16 pb-20" >
-    {/* hero banner  */}
-    <section className="w-full min-h-64 flex flex-col justify-between items-end text-slate-50 border border-slate-300  relative">
+    <div className="min-h-full min-w-full flex flex-col bg-background scanlines">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+        {/* hero banner */}
+        <section className="w-full min-h-64 flex flex-col justify-between items-end text-foreground border border-border relative mb-6">
       {/* Gradient background (always present) */}
       <div className="absolute inset-0 bg-gradient-to-br to-indigo-500 from-orange-400" />
       
@@ -72,80 +51,74 @@ export default function FlowPage() {
       )}
 
       {/* Content */}
-      <div className="relative w-full max-w-fit h-full max-h-fit text-lg p-6" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+      <div className="relative w-full max-w-fit h-full max-h-fit font-mono text-sm p-6 text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
         {supportedChain && supportedChain.name}
       </div>
-      <div className="relative w-full max-w-fit h-full max-h-fit text-6xl p-6" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+      <div className="relative w-full max-w-fit h-full max-h-fit font-mono text-4xl p-6 text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
         {powers?.name}
       </div>
     </section>
     
-    {/* Description + link to powers protocol deployment */}  
-    <section className="w-full h-fit flex flex-col gap-2 justify-left items-center border border-slate-300  bg-slate-50 lg:max-w-full max-w-3xl p-4">
-      <>
-      <div className="w-full text-slate-800 text-left text-pretty">
-         {powers?.metadatas?.description} 
-      </div>
-      
-      <a
-        href={`${supportedChain?.blockExplorers?.default.url}/address/${addressPowers as `0x${string}`}#code`} target="_blank" rel="noopener noreferrer"
-        className="w-full"
-      >
-      <div className="flex flex-row gap-1 items-center justify-start">
-        <div className="text-left text-sm text-slate-500 break-all w-fit">
-          {addressPowers as `0x${string}`}
-        </div> 
-          <ArrowUpRightIcon
-            className="w-4 h-4 text-slate-500"
-            />
+    {/* Description + link to powers protocol deployment */}
+    <div className="border border-border bg-muted/30 mb-6">
+      <div className="px-4 py-3">
+        <div className="text-foreground text-sm mb-3 font-mono">
+          {powers?.metadatas?.description}
         </div>
-      </a>
-      </>
-      {/* } */}
-    </section>
+        
+        <a
+          href={`${supportedChain?.blockExplorers?.default.url}/address/${addressPowers as `0x${string}`}#code`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span className="text-xs font-mono break-all">
+            {addressPowers as `0x${string}`}
+          </span>
+          <ArrowUpRightIcon className="w-4 h-4 flex-shrink-0" />
+        </a>
+      </div>
+    </div>
     
     {/* Metadata Links */}
-    <MetadataLinks 
-      website={powers?.metadatas?.website}
-      codeOfConduct={powers?.metadatas?.codeOfConduct}
-      disputeResolution={powers?.metadatas?.disputeResolution}
-      communicationChannels={powers?.metadatas?.communicationChannels as CommunicationChannels}
-      parentContracts={powers?.metadatas?.parentContracts}
-      childContracts={powers?.metadatas?.childContracts}
-      chainId={powers?.chainId}
-    />
+    <div className="mb-6">
+      <MetadataLinks 
+        website={powers?.metadatas?.website}
+        codeOfConduct={powers?.metadatas?.codeOfConduct}
+        disputeResolution={powers?.metadatas?.disputeResolution}
+        communicationChannels={powers?.metadatas?.communicationChannels as CommunicationChannels}
+        parentContracts={powers?.metadatas?.parentContracts}
+        childContracts={powers?.metadatas?.childContracts}
+        chainId={powers?.chainId}
+      />
+    </div>
     
-    {/* main body  */}
-    <section className="w-full h-fit flex flex-wrap gap-3 justify-between items-start" help-nav-item="home-screen">
-      <Assets status = {statusPowers.status} powers = {powers}/> 
-      
-      <Actions powers = {powers} status = {statusPowers.status} />
-      
-      <Roles powers = {powers} status = {statusPowers.status}/>
-      
-      <Mandates powers = {powers} status = {statusPowers.status}/>      
-      
-    </section>
+    {/* main body */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <Assets status={statusPowers.status} powers={powers} />
+      <Actions powers={powers} status={statusPowers.status} />
+      <Roles powers={powers} status={statusPowers.status} />
+      <Mandates powers={powers} status={statusPowers.status} />
+    </div>
 
     {/* Go to forum button */}
-    <section className="w-full flex justify-center items-center py-4 text-slate-800 opacity-75 hover:opacity-100">
-      <div className="w-full">
-        <Button 
-          size={0} 
-          showBorder={true} 
-          role={6}
-          filled={false}
-          selected={true}
-          onClick={() => router.push(`/forum`)}
-          statusButton="idle"
-        > 
-          <div className="flex flex-row gap-1 items-center justify-center">
-            Go to forum
-            <ArrowUpRightIcon className="w-4 h-4" />
-          </div>
-        </Button>
-      </div>
-    </section>
-  </main>
+    <div className="flex justify-center">
+      <Button 
+        size={0} 
+        showBorder={true} 
+        role={6}
+        filled={false}
+        selected={true}
+        onClick={() => router.push(`/forum`)}
+        statusButton="idle"
+      > 
+        <div className="flex items-center gap-2 font-mono text-sm uppercase tracking-wider">
+          Go to forum
+          <ArrowUpRightIcon className="w-4 h-4" />
+        </div>
+      </Button>
+    </div>
+      </main>
+    </div>
   )
 }

@@ -23,64 +23,55 @@ export function Roles({powers, status}: RolesProps) {
   };
 
   return (
-    <div className="w-full flex flex-col justify-start items-center bg-slate-50 border border-slate-300 max-w-full lg:max-w-72  overflow-hidden">
-      <button
-        onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/roles`) } 
-        className="w-full border-b border-slate-300 p-2 bg-slate-100"
+    <div className="flex flex-col border border-border min-h-0">
+      <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
+        onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/roles`)}
       >
-        <div className="w-full flex flex-row gap-6 items-center justify-between">
-          <div className="text-left text-sm text-slate-600 w-32">
-            Roles
-          </div> 
-          <ArrowUpRightIcon
-            className="w-4 h-4 text-slate-800"
-          />
-        </div>
-      </button>
+        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">ROLES</span>
+        <ArrowUpRightIcon className="w-4 h-4 text-muted-foreground" />
+      </div>
       
       {status === 'pending' ? 
-        <div className="w-full flex flex-col justify-center items-center p-6">
+        <div className="px-4 py-8 flex justify-center items-center">
           <LoadingBox /> 
         </div>
       : 
       powers?.roles && powers?.roles.length > 0 ? 
-        <div className="w-full h-fit lg:max-h-56 max-h-48 flex flex-col justify-start items-center overflow-hidden">
-          <div className="w-full overflow-x-auto overflow-y-auto">
-            <table className="w-full table-auto text-sm">
-              <thead className="w-full border-b border-slate-200 sticky top-0 bg-slate-50">
-                <tr className="w-full text-xs font-light text-left text-slate-500">
-                  <th className="pl-2 pr-1 py-3 font-light"> Role </th>
-                  <th className="pl-1 pr-2 py-3 font-light text-right"> Mandates </th>
+        <div className="flex-1 overflow-auto">
+          <table className="w-full font-mono text-xs">
+            <thead className="sticky top-0 bg-background border-b border-border">
+              <tr>
+                <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Role</th>
+                <th className="px-4 py-2 text-right text-muted-foreground uppercase text-[10px] tracking-wider w-24">Mandates</th>
+              </tr>
+            </thead>
+            <tbody>
+              {powers?.roles?.map((role, i) => (
+                <tr
+                  key={i}
+                  className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                  onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`)}
+                >
+                  <td className="px-4 py-3">
+                    <span className="text-foreground">
+                      {role.roleId == 115792089237316195423570985008687907853269984665640564039457584007913129639935n 
+                        ? 'Public' 
+                        : bigintToRole(role.roleId as bigint, powers as Powers)
+                      }
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-muted-foreground">
+                      {getMandateCountForRole(role.roleId as bigint)}
+                    </span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="w-full text-sm text-left text-slate-500 divide-y divide-slate-200">
-                {powers?.roles?.map((role, i) => (
-                  <tr
-                    key={i}
-                    className="text-sm text-left text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
-                    onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`)}
-                  >
-                    <td className="pl-2 pr-1 py-3">
-                      <div className="text-xs text-slate-800">
-                        {role.roleId == 115792089237316195423570985008687907853269984665640564039457584007913129639935n 
-                          ? 'Public' 
-                          : bigintToRole(role.roleId as bigint, powers as Powers)
-                        }
-                      </div>
-                    </td>
-                    <td className="pl-1 pr-2 py-3">
-                      <div className="text-xs text-slate-500 text-right">
-                        {getMandateCountForRole(role.roleId as bigint)}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       :
-        <div className="w-full h-full flex flex-col justify-center text-sm text-slate-500 items-center p-3">
+        <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm">
           No roles found
         </div>
       }

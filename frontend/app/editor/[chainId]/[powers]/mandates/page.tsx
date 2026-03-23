@@ -7,6 +7,8 @@ import { usePowersStore } from "@/context/store";
  
 export default function Page() {    
   const powers = usePowersStore(); 
+
+  console.log("@mandates page rendered:", {powers})
   
   return (
     <main className="w-full h-fit flex flex-col justify-start items-center pb-20 pt-16 ps-4">

@@ -21,7 +21,7 @@ const Page = () => {
   const mandate = powers?.mandates?.find(mandate => BigInt(mandate.index) == BigInt(mandateId)) 
   const [populatedAction, setPopulatedAction] = useState<Action | undefined>();
 
-  // console.log("@Page: waypoint 0", {populatedAction, action})
+  console.log("@act page rendered:", {powers, mandate, action, populatedAction})
 
   // Helper function to map state numbers to their labels
   const getStateLabel = (state: number | undefined): string => {

@@ -1,10 +1,13 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import { usePathname } from 'next/navigation';
-import { setStatus, setError, setAction, useActionStore } from "@/context/store";
+import { useParams, usePathname } from 'next/navigation';
+import { setStatus, setError, setAction, useActionStore, usePowersStore, useSavedProtocolsStore } from "@/context/store";
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
-import { PowersFlow } from '@/components/PowersFlow';
+import { AllFlows } from './AllFlows'; 
+import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
+import { usePowers } from "@/hooks/usePowers";
+import { parseChainId } from "@/utils/parsers"; 
 
 interface EditorLayoutProps {
   children: React.ReactNode;
@@ -15,14 +18,14 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
  
   return (
     <div 
-      className="fixed top-0 right-0 h-screen flex flex-row transition-all duration-300 ease-in-out z-20"
+      className="fixed top-0 left-0 h-screen flex flex-row transition-all duration-300 ease-in-out z-5"
       style={{
         width: isCollapsed ? '36px' : 'min(670px, 100vw)',
       }}
-      help-nav-item="right-panel"
+      help-nav-item="left-panel"
     >
       {/* Collapse/Expand Button - appears on the left edge of the panel */}
-      <button
+      {/* <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="h-full flex-shrink-0 bg-slate-100 border-l border-slate-300 transition-all duration-200 flex items-center justify-center hover:bg-slate-200"
         style={{
@@ -38,7 +41,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
             <ChevronRightIcon className="w-6 h-6" />
           </div>
         </div>
-      </button>
+      </button> */}
 
       {/* Panel Content */}
       <div 
@@ -61,16 +64,32 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
 }
 
 export default function EditorLayout({ children }: EditorLayoutProps) {
-  const pathname = usePathname();
+  const pathname = usePathname(); 
+  const { fetchPowers } = usePowers();
+  const publicClient = usePublicClient();
+  const switchChain = useSwitchChain();
+  const { chain } = useConnection();
   const action = useActionStore();
+  const powers = usePowersStore();
+  const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
+  const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>();
+  const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
 
-  console.log('EditorLayout rendered with pathname:', pathname, 'and action:', action)
+    // Load powers instance if not loaded yet
+  useEffect(() => {
+    if (powersAddress && chainId) {
+      if (powers.contractAddress == undefined || powers.contractAddress == `0x0` || powers.contractAddress != powersAddress) {
+        fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
+      }
+    }
+  }, [powersAddress, chainId, fetchPowers])
+
+  console.log('@EditorLayout rendered:', {powersAddress, chainId, action, powers})
 
   // reset status, error, and action when pathname changes
   useEffect(() => {
     setError({error: null})
     setStatus({status: "idle"})
-    setAction({...action, upToDate: false})
   }, [pathname, action])
 
   return (  
@@ -80,12 +99,14 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
         className="fixed top-0 left-0 w-full h-full bg-slate-100 z-0" 
         style={{ boxShadow: 'inset 8px 0 16px -8px rgba(0, 0, 0, 0.1)' }}
       >
-        <PowersFlow 
+        { chainId && powersAddress &&
+          <AllFlows 
           key={`powers-flow`} 
         />
+        }
       </div>
       
-      {/* Side Panel - positioned on the right */}
+      {/* Side Panel - positioned on the left */}
       <SidePanel>
         {children}
       </SidePanel>

@@ -8,18 +8,19 @@ import { usePowersStore } from "@/context/store";
 
 export default function Page() {
   const powers = usePowersStore(); 
+
+  console.log("@roles page rendered:", {powers})
   
   return (
-    <main className="w-full h-fit flex flex-col justify-start items-center pb-20 pt-16 ps-4">
-      <div className="w-full flex flex-row justify-between items-end gap-4 mb-2">
-        <TitleText
-          title="Roles"
-          subtitle="View roles and their holders in the organization."
-          size={2}
-        />
-      </div>
-      {powers && <RoleList powers={powers} />}
-    </main>
+    <div className="min-h-full min-w-full flex flex-col bg-background scanlines">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+        <h1 className="font-mono text-foreground tracking-wider mb-2 text-center uppercase text-lg">ROLES</h1>
+        <p className="font-mono text-xs text-muted-foreground text-center mb-6">
+          View roles and their holders in the organization.
+        </p>
+        {powers && <RoleList powers={powers} />}
+      </main>
+    </div>
   )
 }
 
