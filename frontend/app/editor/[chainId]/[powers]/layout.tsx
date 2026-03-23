@@ -76,7 +76,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
   
   // Navigation items
   const navItems = [
-    { label: 'Home', path: `/editor/${chainId}/${powers}` },
+    { label: 'Home', path: `/editor/${chainId}/${powers}/home` },
     { label: 'Actions', path: `/editor/${chainId}/${powers}/actions` },
     { label: 'Mandates', path: `/editor/${chainId}/${powers}/mandates` },
     { label: 'Roles', path: `/editor/${chainId}/${powers}/roles` },
@@ -86,7 +86,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
   // Check if current page matches nav item
   const isActive = (path: string) => {
     if (!isCollapsed) {
-      return pathname === path
+      return pathname.includes(path)
     }
     return false
   }
@@ -127,7 +127,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
         {/* Resize Handle - positioned on the right edge of navigation bar */}
         {!isCollapsed && (
           <div
-            className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-foreground transition-colors z-20"
+            className="absolute right-0 top-0 h-full w-[2px] cursor-col-resize hover:bg-foreground bg-muted transition-colors z-20"
             onMouseDown={(e) => {
               e.preventDefault()
               setIsResizing(true)
@@ -167,7 +167,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
 
       {/* Panel Content */}
       <div 
-        className={`flex flex-col transition-opacity duration-200 bg-slate-100 overflow-hidden ${
+        className={`flex flex-col transition-opacity duration-200 bg-background overflow-hidden ${
           isCollapsed 
             ? 'opacity-0 delay-0' 
             : 'opacity-100 delay-200'

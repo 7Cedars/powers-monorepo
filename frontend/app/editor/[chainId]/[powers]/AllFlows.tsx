@@ -146,7 +146,7 @@ const FlowContent: React.FC = () => {
     // Set new timeout for 0.5 seconds
     saveTimeoutRef.current = setTimeout(() => {
       saveLayout()
-    }, 500)
+    }, 250)
   }, [saveLayout])
 
   // Cleanup timeout on unmount
@@ -187,7 +187,7 @@ const FlowContent: React.FC = () => {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
     nodes.forEach(node => {
       const nodeWidth = NODE_WIDTH
-      const nodeHeight = 450 // Approximate node height
+      const nodeHeight = NODE_SPACING_Y
       minX = Math.min(minX, node.position.x)
       minY = Math.min(minY, node.position.y)
       maxX = Math.max(maxX, node.position.x + nodeWidth)
@@ -297,10 +297,18 @@ const FlowContent: React.FC = () => {
       powers
     )
     
+    // Determine which mandate should be highlighted based on the selected action
+    const highlightedMandateId = selectedAction && selectedAction.mandateId !== 0n 
+      ? selectedAction.mandateId 
+      : undefined
+    
     ActiveMandates?.forEach((mandate) => {
       const roleColor = DEFAULT_NODE_COLOR
       const mandateId = String(mandate.index)
       const position = positions.get(mandateId) || { x: 0, y: 0 }
+      
+      // Check if this mandate should be highlighted
+      const isHighlighted = highlightedMandateId !== undefined && mandate.index === highlightedMandateId
       
       // Create mandate schema node
       nodes.push({
@@ -317,7 +325,8 @@ const FlowContent: React.FC = () => {
           actionDataTimestamp: Date.now(),
           selectedAction,
           chainActionData,
-          chainId: String(powers?.chainId || 0), 
+          chainId: String(powers?.chainId || 0),
+          isHighlighted,
         },
       })
       
@@ -390,7 +399,8 @@ const FlowContent: React.FC = () => {
     powers,
     handleNodeClick, 
     selectedMandateId, 
-    action.mandateId, 
+    action.mandateId,
+    action.actionId,
     loadSavedLayout
   ])
 
@@ -476,7 +486,7 @@ const FlowContent: React.FC = () => {
         attributionPosition="bottom-left"
         nodesDraggable={true}
         nodesConnectable={false}
-        elementsSelectable={false}
+        elementsSelectable={true}
         maxZoom={2}
         minZoom={0.2}
         panOnDrag
@@ -494,7 +504,7 @@ const FlowContent: React.FC = () => {
           size={1}
           color="hsl(var(--border))"
         />
-        <MiniMap 
+        {/* <MiniMap 
           nodeColor={() => 'hsl(var(--muted-foreground))'}
           nodeStrokeWidth={2}
           nodeStrokeColor="hsl(var(--border))"
@@ -504,7 +514,7 @@ const FlowContent: React.FC = () => {
           pannable={true}
           zoomable={true}
           ariaLabel="Flow diagram minimap"
-        />
+        /> */}
       </ReactFlow>
     </div>
   )

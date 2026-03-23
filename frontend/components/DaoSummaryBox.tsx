@@ -42,7 +42,7 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
     // Determine navigation path based on current pathname
     const getNavigationPath = () => {
         if (pathname?.startsWith('/editor')) {
-            return `/editor/${powers.chainId}/${powers.contractAddress}`;
+            return `/editor/${powers.chainId}/${powers.contractAddress}/home`;
         }
         return `/forum/${powers.chainId}/${powers.contractAddress}`;
     };

@@ -92,7 +92,7 @@ const Page = () => {
   }, [mandate])
 
   return (
-    <main className="w-full h-full flex flex-col justify-start items-center gap-2 pt-12">
+    <main className="w-full h-full flex flex-col justify-start items-center gap-4 pt-[80px]">
         {/* title */}
         <div className="w-full flex flex-col justify-start items-center px-4">
           <TitleText 
@@ -102,36 +102,35 @@ const Page = () => {
           />
         </div>
 
-        {/* Action info - shown only when action is up to date */}
-        
-          <div className="w-full flex flex-row justify-between items-end ps-4 pe-12 py-2 text-sm text-slate-600">
-            <div className="flex flex-col gap-1">
-              <div className="flex flex-row gap-2">
-                <span className="font-semibold">ActionId:</span>
-                <span className="font-mono">
-                  {action?.actionId ? `${action?.actionId.slice(0, 10)}...${action?.actionId.slice(-8)}` : '-'}
-                </span>
-              </div>
-              <div className="flex flex-row gap-2">
-                <span className="font-semibold">Status:</span>
-                <span className={`px-2  ${
-                  populatedAction?.state === undefined ? 'text-slate-500 bg-slate-100' : // NonExistent
-                  populatedAction?.state === 1 ? 'text-blue-600 bg-blue-100' : // Proposed
-                  populatedAction?.state === 2 ? 'text-red-600 bg-red-100' : // Cancelled  
-                  populatedAction?.state === 3 ? 'text-orange-600 bg-orange-100' : // Active
-                  populatedAction?.state === 4 ? 'text-red-600 bg-red-100' : // Defeated
-                  populatedAction?.state === 5 ? 'text-green-600 bg-green-100' : // Succeeded
-                  populatedAction?.state === 6 ? 'text-blue-600 bg-blue-100' : // Requested
-                  populatedAction?.state === 7 ? 'text-green-800 bg-green-200' : // Fulfilled
-                  'text-slate-500 bg-slate-100'
-                }`}>
-                  {getStateLabel(populatedAction?.state)}
-                </span>
-              </div>
+        {/* Action info */}
+        <div className="w-full flex flex-row justify-between items-end ps-4 pe-12">
+          <div className="flex flex-col gap-1 font-mono text-xs">
+            <div className="flex flex-row gap-2">
+              <span className="text-muted-foreground uppercase tracking-wider">ActionId:</span>
+              <span className="text-foreground">
+                {action?.actionId ? `${action?.actionId.slice(0, 10)}...${action?.actionId.slice(-8)}` : '-'}
+              </span>
+            </div>
+            <div className="flex flex-row gap-2">
+              <span className="text-muted-foreground uppercase tracking-wider">Status:</span>
+              <span className={`px-2 ${
+                populatedAction?.state === undefined ? 'text-muted-foreground bg-muted' : // NonExistent
+                populatedAction?.state === 1 ? 'text-blue-600 bg-blue-100' : // Proposed
+                populatedAction?.state === 2 ? 'text-red-600 bg-red-100' : // Cancelled  
+                populatedAction?.state === 3 ? 'text-orange-600 bg-orange-100' : // Active
+                populatedAction?.state === 4 ? 'text-red-600 bg-red-100' : // Defeated
+                populatedAction?.state === 5 ? 'text-green-600 bg-green-100' : // Succeeded
+                populatedAction?.state === 6 ? 'text-blue-600 bg-blue-100' : // Requested
+                populatedAction?.state === 7 ? 'text-green-800 bg-green-200' : // Fulfilled
+                'text-muted-foreground bg-muted'
+              }`}>
+                {getStateLabel(populatedAction?.state)}
+              </span>
             </div>
           </div>
+        </div>
 
-        <div className="w-full flex min-h-fit ps-4 pe-12"> 
+        <div className="w-full flex min-h-fit ps-4 pe-12">
           {  
           mandate && 
           <MandateBox 

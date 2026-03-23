@@ -17,19 +17,8 @@ export default function Page() {
   const description = role?.description;
 
   return (
-    <main className="w-full h-fit flex flex-col justify-start items-center pb-20 pt-16 ps-4 pe-12">
-      <div className="w-full max-w-4xl flex flex-col md:flex-row gap-8 items-center md:items-start mb-8">
-        {powers && (
-            <div className="flex-shrink-0 mt-4">
-                <DynamicThumbnail 
-                    roleId={BigInt(roleId)} 
-                    powers={powers} 
-                    size={120} 
-                    className=" shadow-sm object-cover bg-white border border-slate-200"
-                />
-            </div>
-        )}
-        
+    <main className="min-h-full min-w-full flex flex-col bg-background scanlines pt-[80px] px-4">
+      <div className="w-full flex flex-col md:flex-row gap-8 items-center md:items-start mb-2">        
         <div className="flex flex-col gap-1 w-full">
             <TitleText
                 title={`Role: ${roleName}`}

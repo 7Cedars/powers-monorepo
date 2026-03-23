@@ -27,7 +27,7 @@ import { hashAction } from '@/utils/hashAction'
 // Node dimensions
 export const NODE_WIDTH = 220
 export const NODE_SPACING_X = 280
-export const NODE_SPACING_Y = 160
+export const NODE_SPACING_Y = 240
 
 // Handle styling
 const HANDLE_STYLE = {

@@ -65,37 +65,29 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
 
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden" help-nav-item="latest-executions">
-      <div
-        className="w-full border-b border-slate-300 p-2 bg-slate-100"
-      >
-        <div className="w-full flex flex-row gap-6 items-center justify-between">
-          <div className="text-left text-sm text-slate-600">
-            Latest actions
-          </div> 
-        </div>
+    <div className="w-full flex flex-col max-h-96 border border-border min-h-0" help-nav-item="latest-executions">
+      <div className="px-4 py-2 bg-muted/50 flex items-center justify-between">
+        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base text-sm">LATEST ACTIONS</span>
       </div>
       
     {
         mandateActions && mandateActions?.length > 0 ?  
-          <div className="w-full h-fit lg:max-h-80 max-h-56 flex flex-col justify-start items-center overflow-hidden">
-            <div className="w-full overflow-x-auto overflow-y-auto">
-              <table className="w-full table-auto text-sm">
-                <thead className="w-full border-b border-slate-200 sticky top-0 bg-slate-50">
-                  <tr className="w-full text-xs font-light text-left text-slate-500">
-                    <th className="px-2 py-3 font-light w-32"> Date </th>
-                    <th className="px-2 py-3 font-light w-24"> Executioner </th>
-                    <th className="px-2 py-3 font-light w-24"> Action ID </th>
+          <div className="flex-1 overflow-auto">
+              <table className="w-full font-mono text-xs">
+                <thead className="sticky top-0 bg-background border-b border-border">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider min-w-32">Date</th>
+                    <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Executioner</th>
+                    <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Action ID</th>
                   </tr>
                 </thead>
-                <tbody className="w-full text-sm text-left text-slate-500 divide-y divide-slate-200">
+                <tbody>
                   {sortedActions.map((action, index) => (
                       <tr
                         key={index}
-                        className="text-sm text-left text-slate-800"
+                        className="border-b border-border hover:bg-muted/30 transition-colors"
                       >
-                        {/* Proposed at OR requested at, which ever is bigger */}
-                        <td className="px-2 py-3 w-32">
+                        <td className="px-4 py-3">
                           <a
                             href="#"
                             onClick={e => { 
@@ -106,7 +98,7 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
                               e.preventDefault()
                               router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
                             }}
-                            className="text-xs whitespace-nowrap py-1 px-1 underline text-slate-600 hover:text-blue-800 cursor-pointer"
+                            className="text-foreground hover:text-primary hover:underline cursor-pointer"
                           >
                             {(() => {
                               const timestampToUse = action.requestedAt ? action.requestedAt : action.proposedAt ? action.proposedAt : 0n
@@ -132,28 +124,25 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
                           </a>
                         </td>
                       
-                        {/* Executioner */}
-                        <td className="px-2 py-3 w-24">
-                          <div className="truncate text-slate-500 text-xs font-mono">
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
                             {parseAddress(action.caller)}
-                          </div>
+                          </span>
                         </td>
 
-                        {/* Action ID */}
-                          <td className="px-2 py-3 w-24">
-                          <div className="truncate text-slate-500 text-xs font-mono">
-                            {`${action.actionId.toString().slice(0, 10)}...${action.actionId.toString().slice(-8)}`}
-                          </div>
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
+                            {action.actionId.toString().slice(0, 8)}...{action.actionId.toString().slice(-8)}
+                          </span>
                         </td>
                       </tr>
                     ))
                   }
                 </tbody>
               </table>
-            </div>
           </div>
         :
-        <div className="w-full flex flex-row gap-1 text-sm text-slate-500 justify-center items-center text-center p-3">
+        <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm">
           No actions found
         </div>
       }

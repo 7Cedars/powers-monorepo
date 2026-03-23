@@ -21,7 +21,7 @@ export function RoleList({powers}: RoleListProps) {
 
 
   return (
-    <div className="flex-1 flex flex-col border border-border min-h-0">
+    <div className="flex-1 flex flex-col border border-border border-b-0 min-h-0">
       {roles && roles.length > 0 ? (
         <div className="flex-1 overflow-auto">
           <table className="w-full font-mono text-xs">

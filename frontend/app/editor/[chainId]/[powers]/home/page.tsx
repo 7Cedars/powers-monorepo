@@ -31,8 +31,7 @@ export default function FlowPage() {
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         {/* hero banner */}
         <section className="w-full min-h-32 flex flex-col justify-between items-end text-foreground border border-border relative">
-          {/* Gradient background (always present) */}
-          <div className="absolute inset-0 bg-gradient-to-br to-indigo-500 from-orange-400" />
+          <div className="absolute inset-0 bg-background" />
           
           {/* Banner image (if valid) */}
           {powers?.metadatas?.banner && (

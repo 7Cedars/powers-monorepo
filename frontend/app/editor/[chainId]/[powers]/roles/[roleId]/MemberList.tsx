@@ -87,57 +87,55 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
   }, [powers, roleId, fetchRoleHolders])
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
+    <div className="flex flex-col max-h-96 border border-b-0 border-border min-h-0">
 
       {/* Table content */}
       {status == 'pending' ? 
-        <div className="w-full flex flex-col justify-center items-center p-6">
+        <div className="px-4 py-8 flex justify-center items-center">
           <LoadingBox /> 
         </div>
         : 
         members && members.length > 0 ?
-          <div className="w-full h-fit max-h-full flex flex-col justify-start items-center overflow-hidden">
-            <div className="w-full overflow-x-auto overflow-y-auto">
-              <table className="w-full table-auto text-sm">
-                <thead className="w-full border-b border-slate-200 sticky top-0 bg-slate-50">
-                  <tr className="w-full text-xs font-light text-left text-slate-500">
-                    <th className="ps-4 px-2 py-3 font-light w-16"> # </th>
-                    <th className="px-2 py-3 font-light w-auto"> Address </th>
+          <div className="flex-1 overflow-auto">
+              <table className="w-full font-mono text-xs">
+                <thead className="sticky top-0 bg-background border-b border-border">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider w-16">#</th>
+                    <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Address</th>
                   </tr>
                 </thead>
-                <tbody className="w-full text-sm text-left text-slate-500 divide-y divide-slate-200">
+                <tbody>
                   {members?.map((member, i) =>
-                    <tr key={i} className="text-xs text-left text-slate-800 hover:bg-slate-100 transition-colors">
-                      <td className="ps-4 px-2 py-3 w-16">
-                        <div className="text-slate-500 text-xs">
+                    <tr key={i} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
                           {i + 1}
-                        </div>
+                        </span>
                       </td>
                       
-                      <td className="px-2 py-3 w-auto">
+                      <td className="px-4 py-3">
                         {blockExplorerUrl ? (
                           <a
                             href={`${blockExplorerUrl}/address/${member}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-slate-800 font-mono text-xs hover:text-blue-600 hover:underline transition-colors"
+                            className="text-foreground hover:text-primary hover:underline transition-colors"
                           >
                             {member}
                           </a>
                         ) : (
-                          <div className="text-slate-800 font-mono text-xs">
+                          <span className="text-foreground">
                             {member}
-                          </div>
+                          </span>
                         )}
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
-            </div>
           </div>
         :
-        <div className="w-full flex flex-row gap-1 text-sm text-slate-500 justify-center items-center text-center p-3">
+        <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm">
           No members found
         </div>
       }
