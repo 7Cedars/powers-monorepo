@@ -28,8 +28,8 @@ export function RoleList({powers}: RoleListProps) {
             <thead className="sticky top-0 bg-background border-b border-border">
               <tr>
                 <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Role name</th>
-                <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider w-32">Role ID</th>
-                <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider w-32">No. of holders</th>
+                <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Role ID</th>
+                <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">No. of holders</th>
               </tr>
             </thead>
             <tbody>
@@ -38,19 +38,11 @@ export function RoleList({powers}: RoleListProps) {
                   key={i} 
                   className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
                   onClick={() => {
-                    router.push(`/protocol/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`);
+                    router.push(`/editor/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`);
                   }}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-4">
-                      <div className="flex-shrink-0 w-12 h-12 overflow-hidden">
-                        <DynamicThumbnail
-                          roleId={role.roleId}
-                          powers={powers as Powers}
-                          size={48}
-                          className="object-cover w-12 h-12"
-                        />
-                      </div>
                       <span className="font-semibold text-foreground">
                         {bigintToRole(role.roleId, powers as Powers)}
                       </span>

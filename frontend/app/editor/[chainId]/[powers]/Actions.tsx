@@ -62,11 +62,11 @@ export function Actions({ powers, status}: ActionsProps) {
   }, [sortedActions, chainId, fetchTimestamps])
 
   return ( 
-    <div className="flex flex-col border border-border min-h-0">
+    <div className="flex flex-col max-h-96  border border-border min-h-0">
       <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
-        onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates`)}
+        onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates`)}
       >
-        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">LATEST ACTIONS</span>
+        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base text-sm">LATEST ACTIONS</span>
         <ArrowUpRightIcon className="w-4 h-4 text-muted-foreground" />
       </div>
       {sortedActions.length > 0 ? 
@@ -74,7 +74,7 @@ export function Actions({ powers, status}: ActionsProps) {
           <table className="w-full font-mono text-xs">
             <thead className="sticky top-0 bg-background border-b border-border">
               <tr>
-                <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Date</th>
+                <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider min-w-32">Date</th>
                 <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Mandate</th>
                 <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Action ID</th>
               </tr>
@@ -95,7 +95,7 @@ export function Actions({ powers, status}: ActionsProps) {
                           const paramValues = callDataToActionParams(action, powers)
                           setAction({...action, paramValues: paramValues, upToDate: false})
                           e.preventDefault()
-                          router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
+                          router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
                         }}
                         className="text-foreground hover:text-primary hover:underline cursor-pointer"
                       >

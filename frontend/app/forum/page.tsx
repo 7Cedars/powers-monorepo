@@ -11,7 +11,6 @@ export default function AllDaos() {
   const { savedProtocols, removeProtocol, loadSavedProtocols } = useSavedProtocolsStore();
   const { fetchPowers } = usePowers();
   const [ archiveTarget, setArchiveTarget ] = useState<Powers | null>(null);
-  const [ isLoading, setIsLoading ] = useState(true);
 
   // Load saved protocols and fetch chain data on mount
   useEffect(() => {
@@ -33,9 +32,7 @@ export default function AllDaos() {
         );
         // Reload protocols after fetching to get updated data
         loadSavedProtocols();
-      }
-      
-      setIsLoading(false);
+      } 
     };
     
     loadAndFetchData();

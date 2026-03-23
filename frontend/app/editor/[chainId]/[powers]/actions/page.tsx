@@ -11,15 +11,15 @@ export default function Page() {
   console.log("@actions page rendered:", {powers})
 
   return (
-    <main className="w-full h-fit flex flex-col justify-start items-center pb-20 pt-16 ps-4">
-      <div className="w-full flex flex-row justify-between items-end gap-4 mb-2">
-        <TitleText
-          title="Actions"
-          subtitle="View the actions executed by the organization."
-          size={2}
-        />
+    <main className="w-full min-h-screen flex flex-col bg-background scanlines pt-12">
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+          <TitleText
+            title="Actions"
+            subtitle="View the actions executed by the organization."
+            size={2}
+          />
+        {powers && <ActionsList powers={powers} />}
       </div>
-      {powers && <ActionsList powers={powers} />}
     </main>
   )
-} 
+}

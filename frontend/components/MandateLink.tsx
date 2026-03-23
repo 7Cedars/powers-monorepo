@@ -24,7 +24,7 @@ export const MandateLink = ({mandateId, powers}: {mandateId: bigint, powers: Pow
                   <Button
                       showBorder={true}
                       role={6}
-                      onClick={() => router.push(`/protocol/${chainId}/${powers.contractAddress}/mandates/${mandateId}`)}
+                      onClick={() => router.push(`/editor/${chainId}/${powers.contractAddress}/mandates/${mandateId}`)}
                       align={0}
                       selected={false}
                       >  

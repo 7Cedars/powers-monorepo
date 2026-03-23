@@ -11,7 +11,7 @@ export default function Page() {
   console.log("@mandates page rendered:", {powers})
   
   return (
-    <main className="w-full h-fit flex flex-col justify-start items-center pb-20 pt-16 ps-4">
+    <main className="w-full h-full flex flex-col justify-start bg-background items-center pt-20 ps-4">
       <TitleText
         title="Mandates"
         subtitle="View the mandates of the organization."

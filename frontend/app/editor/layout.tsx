@@ -44,8 +44,29 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
     }, [pathname])
 
     useEffect(() => {
-      loadSavedProtocols()
-    }, [loadSavedProtocols])
+      const loadAndFetchData = async () => {
+        // First load saved protocols from localStorage
+        loadSavedProtocols();
+        
+        // Get protocols that need data (empty mandates array)
+        const protocolsNeedingData = useSavedProtocolsStore.getState().savedProtocols.filter(
+          p => !p.mandates || p.mandates.length === 0
+        );
+        
+        // Fetch chain data for each protocol that needs it
+        if (protocolsNeedingData.length > 0) {
+          await Promise.all(
+            protocolsNeedingData.map(protocol => 
+              fetchPowers(protocol.contractAddress, Number(protocol.chainId) as any)
+            )
+          );
+          // Reload protocols after fetching to get updated data
+          loadSavedProtocols();
+        }
+      };
+      
+      loadAndFetchData();
+    }, []);
 
     useEffect(() => {
         const fetchBlockNumber = async () => {
@@ -84,7 +105,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
 
   return (  
     <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
-      <header className="z-10 border-b border-border px-3 sm:px-4 py-4 bg-background">
+      <header className="z-25 border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a href="/editor" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">

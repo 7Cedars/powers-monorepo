@@ -12,7 +12,7 @@ This page displays all members (holders) of a specific role in a Powers organiza
 
 ## Route Structure
 
-`/protocol/[chainId]/[powers]/roles/[roleId]`
+`/editor/[chainId]/[powers]/roles/[roleId]`
 
 - `chainId`: The blockchain network ID
 - `powers`: The Powers contract address

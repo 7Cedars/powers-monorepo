@@ -5,60 +5,49 @@ import { Powers } from '@/context/types'
 import { DaoSummaryBox } from '@/components/DaoSummaryBox'
 import { AlertDialog } from '@/components/AlertDialog'
 import { defaultPowers101 } from '@/context/defaultProtocols'
+import { useSavedProtocolsStore } from '@/context/store'
+import { usePowers } from '@/hooks/usePowers'
 
 export default function ProtocolPage() {
-  const [savedProtocols, setSavedProtocols] = useState<Powers[]>([])
-  const [protocolToDelete, setProtocolToDelete] = useState<Powers | null>(null)
+  const { savedProtocols, removeProtocol, loadSavedProtocols } = useSavedProtocolsStore();
+  const { fetchPowers } = usePowers();
+  const [ archiveTarget, setArchiveTarget ] = useState<Powers | null>(null);
 
+  // Load saved protocols and fetch chain data on mount
   useEffect(() => {
-    const loadSavedProtocols = () => {
-      try {
-        const localStore = localStorage.getItem('powersProtocols')
-        let protocols: Powers[] = []
-        
-        if (localStore && localStore !== 'undefined') {
-          protocols = JSON.parse(localStore)
-        }
+    const loadAndFetchData = async () => {
+      // First load saved protocols from localStorage
+      loadSavedProtocols();
+      
+      // Get protocols that need data (empty mandates array)
+      const protocolsNeedingData = useSavedProtocolsStore.getState().savedProtocols.filter(
+        p => !p.mandates || p.mandates.length === 0
+      );
+      
+      // Fetch chain data for each protocol that needs it
+      if (protocolsNeedingData.length > 0) {
+        await Promise.all(
+          protocolsNeedingData.map(protocol => 
+            fetchPowers(protocol.contractAddress, Number(protocol.chainId) as any)
+          )
+        );
+        // Reload protocols after fetching to get updated data
+        loadSavedProtocols();
+      } 
+    };
+    
+    loadAndFetchData();
+  }, []);
 
-        // Check if Powers 101 already exists
-        const powers101Exists = protocols.some(p => p.name === 'Powers 101')
-        // const powerLabsExists = protocols.some(p => p.name === 'Power Labs')
-        // const powerLabsChildExists = protocols.some(p => p.name === 'Child Powers')
-        
-        if (!powers101Exists) {
-          // Add Powers 101 to the list
-          protocols.unshift(defaultPowers101) 
-        } 
-        setSavedProtocols(protocols)
-      } catch (error) {
-        console.error('Error loading saved protocols:', error)
-        setSavedProtocols([defaultPowers101])
-      }
+
+  const handleArchiveDao = (contractAddress: `0x${string}`) => {
+    try {
+      removeProtocol(contractAddress);
+      setArchiveTarget(null);
+      console.log('DAO archived successfully')
+    } catch (error) {
+      console.error('Error archiving DAO:', error)
     }
-
-    loadSavedProtocols()
-  }, [])
-
-  const handleArchive = (contractAddress: string) => {
-    const protocol = savedProtocols.find(p => p.contractAddress === contractAddress)
-    if (protocol) {
-      setProtocolToDelete(protocol)
-    }
-  }
-
-  const confirmArchive = () => {
-    if (!protocolToDelete) return
-
-    const updatedProtocols = savedProtocols.filter(
-      p => p.contractAddress !== protocolToDelete.contractAddress
-    )
-
-    localStorage.setItem('powersProtocols', JSON.stringify(updatedProtocols, (key, value) =>
-      typeof value === "bigint" ? value.toString() : value,
-    ))
-
-    setSavedProtocols(updatedProtocols)
-    setProtocolToDelete(null)
   }
 
   return (
@@ -76,7 +65,7 @@ export default function ProtocolPage() {
             <DaoSummaryBox
               key={protocol.contractAddress}
               powers={protocol}
-              onArchive={handleArchive}
+              onArchive={() => handleArchiveDao(protocol.contractAddress)}
               alignment="column"
               showHeader={true}
             />
@@ -84,13 +73,17 @@ export default function ProtocolPage() {
         </div>
 
         <AlertDialog
-          open={!!protocolToDelete}
-          onOpenChange={(open) => !open && setProtocolToDelete(null)}
+          open={!!archiveTarget}
+          onOpenChange={(open) => !open && setArchiveTarget(null)}
           title="ARCHIVE PROTOCOL"
-          description={`Are you sure you want to archive this protocol? To add it again, you will need to visit /forum/${protocolToDelete?.chainId || '[CHAINID]'}/${protocolToDelete?.contractAddress || '[ADDRESS]'}.`}
+          description={`Are you sure you want to archive this protocol? To add it again, you will need to visit /forum/${archiveTarget?.chainId || '[CHAINID]'}/${archiveTarget?.contractAddress || '[ADDRESS]'}.`}
           cancelText="Go back"
           confirmText="Confirm"
-          onConfirm={confirmArchive}
+          onConfirm={() => {
+            if (archiveTarget) {
+              handleArchiveDao(archiveTarget.contractAddress);
+            }
+          }}
         />
       </main>
     </div>

@@ -92,7 +92,7 @@ const Page = () => {
   }, [mandate])
 
   return (
-    <main className="w-full h-full flex flex-col justify-start items-center gap-2 pt-16">
+    <main className="w-full h-full flex flex-col justify-start items-center gap-2 pt-12">
         {/* title */}
         <div className="w-full flex flex-col justify-start items-center px-4">
           <TitleText 

@@ -19,36 +19,44 @@ export default function Page() {
   console.log("@treasury page rendered:", {chains, supportedChain, powers})
    
   return (
-    <main className="w-full h-fit flex flex-col gap-1 justify-start items-center pt-16 ps-4">  
-      <TitleText
-        title="Treasury"
-        subtitle="View and manage the assets held by your Powers."
-        size={2}
-      />
-      {powers.treasury && powers.treasury !== "0x0000000000000000000000000000000000000000" ? (
-        <>
-        <a
-          href={`${supportedChain?.blockExplorers?.default.url}/address/${powers.treasury as `0x${string}`}#code`} target="_blank" rel="noopener noreferrer"
-          className="w-full"
-        >
-        <div className="flex flex-row gap-1 items-center justify-start pb-3">
-          <div className="text-left text-xs text-slate-500 break-all w-fit">
-            {powers.treasury as `0x${string}`}
-          </div> 
-            <ArrowUpRightIcon
-              className="w-3 h-3 text-slate-500"
-              />
-          </div>
-        </a>
-        <AssetList />
-        <AddAsset /> 
-       </>
-      ) : (
-        <div className="text-slate-500 p-6 italic ">
-          No Treasury Address Set
+    <main className="w-full min-h-screen flex flex-col bg-background scanlines pt-12">
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+        <div className="mb-6">
+          <TitleText
+            title="Treasury"
+            subtitle="View and manage the assets held by your Powers."
+            size={2}
+          />
         </div>
-      )}
-
+        
+        {powers.treasury && powers.treasury !== "0x0000000000000000000000000000000000000000" ? (
+          <>
+            <div className="mb-4 border border-border bg-muted/30 px-4 py-3">
+              <a
+                href={`${supportedChain?.blockExplorers?.default.url}/address/${powers.treasury as `0x${string}`}#code`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span className="text-xs font-mono break-all">
+                  {powers.treasury as `0x${string}`}
+                </span>
+                <ArrowUpRightIcon className="w-4 h-4 flex-shrink-0" />
+              </a>
+            </div>
+            
+            <div className="mb-6">
+              <AssetList />
+            </div>
+            
+            <AddAsset /> 
+          </>
+        ) : (
+          <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm border border-border">
+            No Treasury Address Set
+          </div>
+        )}
+      </div>
     </main>
   )
 }

@@ -165,7 +165,7 @@ export function MetadataLinks({
           {validParents.map((parent, index) => (
             <a
               key={index}
-              href={`/protocol/${chainId ? Number(chainId) : ''}/${parent.address}`}
+              href={`/editor/${chainId ? Number(chainId) : ''}/${parent.address}`}
               className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
               title={`Parent: ${parent.title}`}
             >
@@ -182,7 +182,7 @@ export function MetadataLinks({
           {validChildren.map((child, index) => (
             <a
               key={index}
-              href={`/protocol/${chainId ? Number(chainId) : ''}/${child.address}`}
+              href={`/editor/${chainId ? Number(chainId) : ''}/${child.address}`}
               className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
               title={`Child: ${child.title}`}
             >

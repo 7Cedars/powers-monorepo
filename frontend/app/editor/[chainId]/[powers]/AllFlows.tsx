@@ -187,7 +187,7 @@ const FlowContent: React.FC = () => {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
     nodes.forEach(node => {
       const nodeWidth = NODE_WIDTH
-      const nodeHeight = 250 // Approximate node height
+      const nodeHeight = 450 // Approximate node height
       minX = Math.min(minX, node.position.x)
       minY = Math.min(minY, node.position.y)
       maxX = Math.max(maxX, node.position.x + nodeWidth)
@@ -229,7 +229,7 @@ const FlowContent: React.FC = () => {
       mandateId: BigInt(mandateId),
       upToDate: false
     })
-    router.push(`/protocol/${powers?.chainId}/${powers?.contractAddress}/mandates/${mandateId}`)
+    router.push(`/editor/${powers?.chainId}/${powers?.contractAddress}/mandates/${mandateId}`)
     // console.log("@handleNodeClick: waypoint 1", {action})
   }, [router, powers?.contractAddress, action, getViewport])
 

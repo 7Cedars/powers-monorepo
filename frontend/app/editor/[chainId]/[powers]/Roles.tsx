@@ -23,11 +23,11 @@ export function Roles({powers, status}: RolesProps) {
   };
 
   return (
-    <div className="flex flex-col border border-border min-h-0">
-      <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
-        onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/roles`)}
+    <div className="flex flex-col max-h-96 border border-border min-h-0">
+      <div className="px-4 py-2 bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
+        onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/roles`)}
       >
-        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">ROLES</span>
+        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base text-sm">ROLES</span>
         <ArrowUpRightIcon className="w-4 h-4 text-muted-foreground" />
       </div>
       
@@ -50,7 +50,7 @@ export function Roles({powers, status}: RolesProps) {
                 <tr
                   key={i}
                   className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
-                  onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`)}
+                  onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`)}
                 >
                   <td className="px-4 py-3">
                     <span className="text-foreground">

@@ -36,16 +36,16 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
   }
  
   return (
-    <div className="w-full flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
+    <div className="w-full flex flex-col justify-start items-center bg-background border border-border overflow-hidden">
       {/* Status filter bar */}
-      <div className="w-full flex flex-row gap-6 justify-between items-center py-4 overflow-y-scroll border-b border-slate-200 px-4">
+      <div className="w-full flex flex-row gap-6 justify-between items-center py-4 overflow-y-scroll border-b border-border px-4">
       {
         possibleStatus.map((option, i) => {
           return (
             <button 
             key = {i}
             onClick={() => handleStatusSelection(option)}
-            className="w-fit h-full hover:text-slate-400 text-sm aria-selected:text-slate-800 text-slate-300"
+            className="w-fit h-full hover:text-foreground/80 text-sm aria-selected:text-foreground text-foreground/50"
             aria-selected = {!deselectedStatus?.includes(option)}
             >  
               <p className="text-sm text-left"> {parseProposalStatus(option)} </p>
@@ -60,8 +60,8 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
           <div className="w-full h-fit max-h-full flex flex-col justify-start items-center overflow-hidden">
             <div className="w-full overflow-x-auto overflow-y-auto">
               <table className="w-full table-auto text-sm">
-                <thead className="w-full border-b border-slate-200 sticky top-0 bg-slate-50">
-                  <tr className="w-full text-xs font-light text-left text-slate-500">
+                <thead className="w-full border-b border-border sticky top-0 bg-background">
+                  <tr className="w-full text-xs font-light text-left text-muted-foreground">
                     <th className="ps-4 px-2 py-3 font-light w-40"> Date </th>
                     <th className="px-2 py-3 font-light w-32"> Action ID </th>
                     <th className="px-2 py-3 font-light w-auto"> Mandate </th>
@@ -70,7 +70,7 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
 
                   </tr>
                 </thead>
-                <tbody className="w-full text-sm text-left text-slate-500 divide-y divide-slate-200">
+                <tbody className="w-full text-sm text-left text-muted-foreground divide-y divide-border">
                   {
                     allActions
                       ?.filter((action): action is Action => action !== undefined)
@@ -97,7 +97,7 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
                         return (
                           <tr
                             key={action.actionId}
-                            className="text-xs text-left text-slate-800"
+                            className="text-xs text-left text-foreground"
                           >
                             {/* Date */}
                             <td className="ps-4 px-2 py-3 w-40">
@@ -109,9 +109,9 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
                                   const dataTypes = mandate?.params?.map(p => p.dataType)
                                   setAction({...action, paramValues: paramValues, dataTypes: dataTypes, upToDate: false})
                                   e.preventDefault()
-                                  router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
+                                  router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
                                 }}
-                                className="text-xs whitespace-nowrap py-1 px-1 underline text-slate-600 hover:text-slate-800 cursor-pointer"
+                                className="text-xs whitespace-nowrap py-1 px-1 underline text-muted-foreground hover:text-foreground cursor-pointer"
                               >
                                 {(() => {
                                   // Get the earliest non-zero timestamp between proposed and requested
@@ -159,28 +159,28 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
 
                             {/* Action ID */}
                             <td className="px-2 py-3 w-32">
-                              <div className="truncate text-slate-500 text-xs font-mono">
+                              <div className="truncate text-muted-foreground text-xs font-mono">
                                 {`${action.actionId.toString().slice(0, 6)}...${action.actionId.toString().slice(-4)}`}
                               </div>
                             </td>
 
                             {/* Mandate */}
                             <td className="px-2 py-3 w-auto">
-                              <div className="truncate text-slate-500 text-xs">
+                              <div className="truncate text-muted-foreground text-xs">
                                 {shorterDescription(mandates.find(mandate => mandate.index == action.mandateId)?.nameDescription, "short")}
                               </div>
                             </td>
 
                             {/* Description */}
                             <td className="px-2 py-3 w-auto">
-                              <div className="truncate text-slate-500 text-xs">
+                              <div className="truncate text-muted-foreground text-xs">
                                 {action.description ? ` ${action.description.length > 20 ? action.description.slice(0, 20) + '...' : action.description}` : 'No description'}
                               </div>
                             </td>
 
                             {/* Status */}
                             <td className="px-2 py-3 w-24">
-                              <div className="truncate text-slate-500 text-xs">
+                              <div className="truncate text-muted-foreground text-xs">
                                 {parseProposalStatus(String(action.state))}
                               </div>
                             </td>
@@ -193,7 +193,7 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
             </div>
           </div>
         :
-        <div className="w-full flex flex-row gap-1 text-sm text-slate-500 justify-center items-center text-center p-3">
+        <div className="w-full flex flex-row gap-1 text-sm text-muted-foreground justify-center items-center text-center p-3">
           No actions found
         </div>
       }

@@ -18,11 +18,11 @@ export function Mandates({powers, status}: MandatesProps) {
   const activeMandates = powers?.mandates && powers?.mandates?.length > 0 ? powers?.mandates?.filter(mandate => mandate.active) : [];
 
   return (
-    <div className="flex flex-col border border-border min-h-0">
-      <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
-        onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates`)}
+    <div className="flex flex-col max-h-96 border border-border min-h-0">
+      <div className="px-4 py-2 bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
+        onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates`)}
       >
-        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">ACTIVE MANDATES</span>
+        <span className="font-mono text-muted-foreground uppercase tracking-wider text-base text-sm">ACTIVE MANDATES</span>
         <ArrowUpRightIcon className="w-4 h-4 text-muted-foreground" />
       </div>
       
@@ -44,7 +44,7 @@ export function Mandates({powers, status}: MandatesProps) {
             <tbody>
               {activeMandates.map((mandate: Mandate, i) => {
                 const mandateName = mandate.nameDescription || `Mandate #${mandate.index}`;
-                const nameBeforeColon = mandateName.includes('::') ? mandateName.split('::')[0] : mandateName;
+                const nameBeforeColon = mandateName.includes(':') ? mandateName.split(':')[0] : mandateName;
                 const truncatedName = nameBeforeColon.length > 40 ? `${nameBeforeColon.slice(0, 40)}...` : nameBeforeColon;
                 const roleName = mandate.conditions?.allowedRole != undefined 
                   ? bigintToRole(mandate.conditions?.allowedRole, powers as Powers) 
@@ -54,7 +54,7 @@ export function Mandates({powers, status}: MandatesProps) {
                   <tr
                     key={i}
                     className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
-                    onClick={() => router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`)}
+                    onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`)}
                   >
                     <td className="px-4 py-3">
                       <span className="text-muted-foreground">{mandate.index.toString()}</span>

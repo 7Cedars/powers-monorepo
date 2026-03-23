@@ -104,7 +104,7 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
                               const dataTypes = mandate?.params?.map(p => p.dataType)
                               setAction({...action, paramValues: paramValues, dataTypes: dataTypes, upToDate: false})
                               e.preventDefault()
-                              router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
+                              router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
                             }}
                             className="text-xs whitespace-nowrap py-1 px-1 underline text-slate-600 hover:text-blue-800 cursor-pointer"
                           >

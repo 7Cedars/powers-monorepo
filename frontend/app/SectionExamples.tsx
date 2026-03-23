@@ -23,7 +23,7 @@ export function SectionExamples() {
 
   const handleViewExample = () => {
     if (currentExample.address && !isComingSoon) {
-      router.push(`/protocol/${currentExample.chainId}/${currentExample.address}`);
+      router.push(`/editor/${currentExample.chainId}/${currentExample.address}`);
     }
   };
 

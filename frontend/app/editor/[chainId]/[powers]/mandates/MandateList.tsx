@@ -5,7 +5,6 @@ import { useRouter, useParams } from "next/navigation";
 import { Mandate, Powers } from "@/context/types";
 import { bigintToRole } from "@/utils/bigintTo";
 import { LoadingBox } from "@/components/LoadingBox";
-import HeaderMandateSmall from "@/components/HeaderMandateSmall";
 import { useChains } from "wagmi";
 
 export function MandateList({powers, status}: {powers: Powers | undefined, status: string, onRefresh?: () => void}) {
@@ -29,14 +28,14 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
   const blockExplorerUrl = chains.find(chain => chain.id === parseInt(chainId))?.blockExplorers?.default.url;
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
-      {/* Role filter bar - matching ActionsList.tsx structure */}
-      <div className="w-full flex flex-row gap-12 justify-start items-center py-4 overflow-x-auto border-b border-slate-200 p-4 pe-8">
+    <div className="w-full grow flex flex-col justify-start items-center bg-background border border-border overflow-hidden">
+      {/* Role filter bar */}
+      <div className="w-full flex flex-row gap-12 justify-start items-center py-4 overflow-x-auto border-b border-border p-4 pe-8">
         {powers?.roles?.map((role, i) => (
           <button 
             key={i}
             onClick={() => handleRoleSelection(BigInt(role.roleId))}
-            className="w-fit h-full hover:text-slate-400 text-sm aria-selected:text-slate-800 text-slate-300 whitespace-nowrap"
+            className="w-fit h-full hover:text-foreground/80 text-sm aria-selected:text-foreground text-foreground/50 cursor-pointer whitespace-nowrap"
             aria-selected={!deselectedRoles?.includes(BigInt(role.roleId))}
           >  
             <p className="text-sm text-left">{bigintToRole(role.roleId, powers)}</p>
@@ -51,44 +50,78 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
         </div>
         :
         ActiveMandates && ActiveMandates.length > 0 ?
-          <div className="w-full h-fit max-h-full flex flex-col justify-start items-center overflow-hidden">
-            <div className="w-full overflow-x-auto overflow-y-auto">
-              <table className="w-full table-auto text-sm">
-                <tbody className="w-full text-sm text-left text-slate-500 divide-y divide-slate-200">
-                  {ActiveMandates
-                    ?.filter(mandate => mandate.conditions?.allowedRole != undefined && !deselectedRoles?.includes(BigInt(`${mandate.conditions?.allowedRole}`)))
-                    ?.map((mandate: Mandate, i) => {
-                      const roleName = mandate.conditions?.allowedRole != undefined ? bigintToRole(mandate.conditions?.allowedRole, powers as Powers) : "-";
-                      const roleId = mandate.conditions?.allowedRole != undefined ? BigInt(mandate.conditions?.allowedRole) : "";
-                      const numHolders = "-"; // You can add actual holder count if available
-                      
-                      return (
-                        <tr 
-                          key={i}
-                          className="text-xs text-left text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
-                          onClick={() => { router.push(`/protocol/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`); }}
-                        >
-                          <td className="ps-4 px-2 py-3 w-auto">
-                            <HeaderMandateSmall
-                              powers={powers as Powers}
-                              mandateName={mandate.nameDescription || `Mandate #${mandate.index}`}
-                              roleId={roleId}
-                              roleName={roleName}
-                              numHolders={numHolders}
-                              contractAddress={mandate.mandateAddress || ""}
-                              blockExplorerUrl={blockExplorerUrl}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })
-                  }
-                </tbody>
-              </table>
-            </div>
+          <div className="flex-1 overflow-auto w-full">
+            <table className="w-full font-mono text-xs">
+              <thead className="sticky top-0 bg-background border-b border-border">
+                <tr>
+                  <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">ID</th>
+                  <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Name</th>
+                  <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Description</th>
+                  <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Role</th>
+                  <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Contract Address</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ActiveMandates
+                  ?.filter(mandate => mandate.conditions?.allowedRole != undefined && !deselectedRoles?.includes(BigInt(`${mandate.conditions?.allowedRole}`)))
+                  ?.map((mandate: Mandate, i) => {
+                    const roleName = mandate.conditions?.allowedRole != undefined ? bigintToRole(mandate.conditions?.allowedRole, powers as Powers) : "-";
+                    const fullText = mandate.nameDescription || `Mandate #${mandate.index}`;
+                    const [name, ...descParts] = fullText.split(":");
+                    const description = descParts.length > 0 ? descParts.join(":").trim() : "";
+                    
+                    return (
+                      <tr 
+                        key={i}
+                        className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                        onClick={() => { router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`); }}
+                      >
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
+                            {mandate.index}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-foreground">
+                            {name}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-foreground">
+                            {description}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
+                            {roleName}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {blockExplorerUrl && mandate.mandateAddress ? (
+                            <a
+                              href={`${blockExplorerUrl}/address/${mandate.mandateAddress}#code`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-muted-foreground hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {mandate.mandateAddress.slice(0,8)}...{mandate.mandateAddress.slice(-6)}
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              {mandate.mandateAddress ? `${mandate.mandateAddress.slice(0,8)}...${mandate.mandateAddress.slice(-6)}` : '-'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                }
+              </tbody>
+            </table>
           </div>
         :
-        <div className="w-full flex flex-row gap-1 text-sm text-slate-500 justify-center items-center text-center p-3">
+        <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm">
           No active mandates found
         </div>
       }
