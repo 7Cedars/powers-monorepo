@@ -105,6 +105,47 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
 
   return (  
     <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
+      {/* Warning screen for small devices */}
+      <div className="lg:hidden h-screen flex flex-col items-center justify-center p-6 bg-background">
+        <div className="max-w-md text-center space-y-6">
+          <div className="space-y-2">
+            <h1 className="font-mono text-2xl text-foreground tracking-wider">
+              EDITOR
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Not optimized for small screens
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <p className="text-foreground">
+              The Editor is designed for larger screens to provide the best experience when building and managing governance protocols.
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Please visit the Forum to view and interact with existing protocols on mobile devices.
+            </p>
+          </div>
+
+          <button
+            onClick={() => router.push('/forum')}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors rounded"
+          >
+            <span>GO TO FORUM</span>
+            <ChevronRightIcon className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mx-auto"
+          >
+            <ArrowLeftIcon className="h-3 w-3" />
+            <span>BACK TO HOME</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main editor content - hidden on small screens */}
+      <div className="hidden lg:flex lg:flex-col lg:h-screen lg:min-h-0">
       <header className="z-25 border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -163,7 +204,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
       </header>
 
       {children}
-
+      </div>
     </div> 
     )
 }
