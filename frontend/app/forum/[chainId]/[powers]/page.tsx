@@ -62,7 +62,7 @@ import { parseChainId } from '@/utils/parsers';
                </>
              ) : (
                <p className="text-muted-foreground text-center text-sm">
-                 No Powers DAO found at this address and chain. Please check the URL or add this DAO to your saved list.
+                 No Powers organisation found at this address and chain. Please check the URL or add this organisation to your saved list.
                </p>
              )}
            </div>

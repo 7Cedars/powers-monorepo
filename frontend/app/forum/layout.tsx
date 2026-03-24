@@ -3,30 +3,25 @@
 import React from "react";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { usePowersStore, useStatusStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
+import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import { NavigationDropdownMenu } from './NavigationDropdownMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { parseAddress } from '@/utils/addressUtils';
-import { defaultPowers101 } from '@/context/defaultProtocols'
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Powers } from "@/context/types";
 import { usePowers } from "@/hooks/usePowers";
 import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { BlockCounter } from "@/components/BlockCounter";
 
-import { useErrorStore } from "@/context/store";
 import { parseChainId } from "@/utils/parsers";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
     const pathname = usePathname();
     const powers = usePowersStore();
-    const statusPowers = useStatusStore();
     const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
@@ -37,15 +32,13 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const publicClient = usePublicClient();
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
-    const isFetchingRef = useRef(false);
     const action = useActionStore();
     const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
 
     console.log("layout being triggered")
 
     const triggerName =
-      pathname.includes('/profile') ? "Profile" : 
-      pathname.includes('/allDaos') ? "All DAOs" : 
+      pathname.includes('/profile') ? "Profile" :  
       !chainId ? "Navigation" :
       "Main"
 

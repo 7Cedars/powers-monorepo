@@ -4,8 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth";
 import { 
   FingerPrintIcon
-} from '@heroicons/react/24/outline';
-import BlockiesSvg from 'blockies-react-svg'
+} from '@heroicons/react/24/outline'; 
 
 export const ConnectButton = () => {
   const {ready: walletsReady, wallets} = useWallets();
@@ -22,10 +21,10 @@ export const ConnectButton = () => {
     {
     ready && !authenticated ?  
       <button
-        className={`w-fit h-full flex flex-row items-center justify-center text-center  bg-slate-600 border-opacity-0 md:border-opacity-100 border border-slate-400 hover:border-slate-600`}  
+        className={`w-fit h-full flex flex-row items-center justify-center text-center border-opacity-0 md:border-opacity-100 border border-border hover:border-foreground/50`}  
         onClick={ login }
       >
-        <div className={`w-fit h-full flex flex-row items-center justify-center text-center  bg-slate-600 hover:bg-slate-800 text-slate-100 px-3 py-1`}>
+        <div className={`w-fit h-full flex flex-row items-center justify-center text-center bg-foreground hover:bg-foreground/80 text-background px-3 py-1`}>
             <FingerPrintIcon
               className="h-6 w-6 text-bold md:w-0 md:opacity-0 opacity-100" 
             />
@@ -39,10 +38,10 @@ export const ConnectButton = () => {
     :
     ready && authenticated && walletsReady && !wallets[0] ?
       <button
-        className={`w-fit h-full flex flex-row items-center justify-center text-center  bg-slate-100 border-opacity-0 md:border-opacity-100 border border-slate-400 hover:border-slate-600`}  
+        className={`w-fit h-full flex flex-row items-center justify-center text-center border-opacity-0 md:border-opacity-100 border border-border hover:border-foreground/50`}  
         onClick={ connectWallet }
       >
-        <div className={`w-fit h-full flex flex-row items-center justify-center text-center  bg-slate-600 hover:bg-slate-800 text-slate-100 px-3 py-1`}>
+        <div className={`w-fit h-full flex flex-row items-center justify-center text-center bg-foreground hover:bg-foreground/80 text-background px-3 py-1`}>
             <FingerPrintIcon
               className="h-6 w-6 text-bold md:w-0 md:opacity-0 opacity-100" 
             />
@@ -56,26 +55,22 @@ export const ConnectButton = () => {
     :
     ready && authenticated && walletsReady && wallets[0] ?
       <button
-          className={`w-fit h-full flex flex-row items-center justify-center text-center  border-opacity-0 md:border-opacity-100 border border-slate-400 hover:border-slate-600`}  
+          className={`w-fit h-full flex flex-row items-center justify-center text-center border-opacity-0 md:border-opacity-100 border border-border hover:border-foreground/50`}  
           onClick={ logout }
         >
-          <div className={`flex flex-row items-center text-center text-slate-600 md:gap-2 gap-0 w-full h-full w-full md:py-1 px-2 py-0`}>
-            <BlockiesSvg 
-              address={wallets[0].address}
-              className='md:h-6 md:w-6 h-9 w-fit  border border-slate-800'
-              />
+          <div className={`flex flex-row items-center text-center text-muted-foreground md:gap-2 gap-0 w-full h-full md:py-1 px-2 py-0 font-mono`}>
             <div className="md:w-fit w-0 opacity-0 md:opacity-100">
               {`${wallets[0].address.slice(0, 6)}...${wallets[0].address.slice(-6)}`}
             </div>
           </div>
-        </button> 
+        </button>
     :
     <button
-    className={`w-fit h-full flex flex-row items-center justify-center text-center   border-opacity-0 md:border-opacity-100 border border-slate-400 hover:border-slate-600`}  
+    className={`w-fit h-full flex flex-row items-center justify-center text-center border-opacity-0 md:border-opacity-100 border border-border opacity-50 cursor-not-allowed`}  
     disabled={true}
     onClick={ () => {} }
     >
-      <div className={`w-fit h-full flex flex-row items-center justify-center text-center  bg-slate-600 hover:bg-slate-800 text-slate-100 px-3 py-1`}>
+      <div className={`w-fit h-full flex flex-row items-center justify-center text-center bg-foreground text-background px-3 py-1`}>
           <FingerPrintIcon
             className="h-6 w-6 text-bold md:w-0 md:opacity-0 opacity-100" 
           />

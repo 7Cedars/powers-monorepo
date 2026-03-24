@@ -39,7 +39,7 @@ export default function Page() {
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="text-xs font-mono break-all">
-                  {powers.treasury as `0x${string}`}
+                  Treasury: {powers.treasury as `0x${string}`}
                 </span>
                 <ArrowUpRightIcon className="w-4 h-4 flex-shrink-0" />
               </a>

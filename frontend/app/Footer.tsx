@@ -4,50 +4,43 @@ import { HeartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image'
 import { DiscordIcon, TelegramIcon, GithubIcon } from '@/components/MetadataLinks';
 import { useRouter, usePathname } from 'next/navigation';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function Footer() {
   const router = useRouter();
   const pathname = usePathname();
 
-
   return (
-    <section className="w-full flex flex-col justify-between items-center min-h-fit bg-slate-50 snap-end pt-6 md:pt-12 pb-3 md:pb-6 border-t border-slate-300 snap-end">
+    <section className="w-full flex flex-col justify-between items-center min-h-fit bg-background snap-end py-6 border-t border-border snap-end">
         
-        <div className = "max-w-7xl w-full flex md:flex-row flex-col justify-between md:items-start items-center text-slate-800 text-sm px-4 gap-8 md:gap-16"> 
-            <div className="grid md:grid-cols-3 grid-cols-2 gap-8 md:gap-28">
+        <div className="max-w-7xl w-full flex md:flex-row flex-col justify-between items-start text-foreground text-sm px-4 gap-8 md:gap-16 font-mono"> 
+            <div className="grid md:grid-cols-2 grid-cols-2 gap-8 md:gap-28">
                 <div className="flex flex-col gap-3 justify-start items-start">
-                    <div className="font-bold"> 
+                    <div className="font-bold uppercase tracking-wider text-xs"> 
                         DApp
                     </div>
                     <a
                         href={`/`} rel="noopener noreferrer"
-                        className="text-slate-500"
+                        className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                     >
                         Home
-                    </a>                     
-                    <a
-                        href={`/#examples`} rel="noopener noreferrer"
-                        className="text-slate-500"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            if (pathname === '/') {
-                                // Already on home page, just scroll
-                                const examplesSection = document.getElementById('examples');
-                                if (examplesSection) {
-                                    examplesSection.scrollIntoView({ behavior: 'smooth' });
-                                }
-                                window.history.pushState(null, '', '/#examples');
-                            } else {
-                                // Navigate to home page with hash
-                                router.push('/#examples');
-                            }
-                        }}
+                    </a> 
+                       <a
+                        href={`/forum`} rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                     >
-                        Examples
-                    </a>
+                        Forum
+                    </a>  
+                       <a
+                        href={`/editor`} rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground transition-colors text-xs"
+                    >
+                        Editor
+                    </a>                  
+                    
                      <a
                         href={`/#deploy`} rel="noopener noreferrer"
-                        className="text-slate-500"
+                        className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                         onClick={(e) => {
                             e.preventDefault();
                             if (pathname === '/') {
@@ -64,42 +57,36 @@ export function Footer() {
                         }}
                     >
                         Deploy
-                    </a>
-                    <a
-                        href={`/protocol`} rel="noopener noreferrer"
-                        className="text-slate-500"
-                    >
-                        Saved Protocols
-                    </a>
+                    </a> 
 
                 </div>
                 <div className="flex flex-col gap-3 justify-start items-start">
-                    <div className="font-bold"> 
+                    <div className="font-bold uppercase tracking-wider text-xs"> 
                         Protocol
                     </div>
                     <a
                         href={`https://powers-docs.vercel.app/for-developers/litepaper`} target="_blank" rel="noopener noreferrer"
-                        className="text-slate-500"
+                        className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                     >
                         Litepaper
                     </a>
                     <a
                         href={`https://powers-docs.vercel.app/welcome`} target="_blank" rel="noopener noreferrer"
-                        className="text-slate-500"
+                        className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                     >
                         Docs
                     </a>
                     <a
                         href={`https://github.com/7Cedars/powers/tree/main/solidity`} target="_blank" rel="noopener noreferrer"
-                        className="text-slate-500"
+                        className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                     >
                         Github repo
                     </a>
                 </div>
             </div>
-
-        <div className="w-full flex flex-row gap-3 md:justify-end justify-center items-end snap-end">
-            <div className="flex flex-col gap-3 justify-start md:items-end items-center pb-6 md:pb-12">
+                        
+        <div className="flex flex-row gap-3 justify-center items-center">
+            <div className="flex flex-col gap-3 justify-start items-center">
             <Image 
             src='/logo1_notext.png' 
             width={48}
@@ -107,7 +94,7 @@ export function Footer() {
             alt="Logo Separated Powers"
             >
             </Image>
-            <div className="text-md font-bold flex flex-row gap-1 pb-2">
+            <div className="text-sm font-bold flex flex-row gap-1">
                 <p>Made with</p> 
                 <HeartIcon className="w-4 h-4 text-red-700" />
                 <p>by 7Cedars</p>
@@ -115,24 +102,28 @@ export function Footer() {
             <div className="flex flex-row gap-2">
                 <a
                     href={`https://discordapp.com/users/1006928106487021638`} target="_blank" rel="noopener noreferrer"
-                    className="text-slate-700"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                    <DiscordIcon className="w-5 h-5 text-slate-700" /> 
+                    <DiscordIcon className="w-5 h-5" /> 
                 </a>
                 <a
                     href={`https://t.me/thd83`} target="_blank" rel="noopener noreferrer"
-                    className="text-slate-700"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                    <TelegramIcon className="w-5 h-5 text-slate-700" />
+                    <TelegramIcon className="w-5 h-5" />
                 </a>
                 <a
                     href={`https://github.com/7Cedars`} target="_blank" rel="noopener noreferrer"
-                    className="text-slate-700"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                    <GithubIcon className="w-5 h-5 text-slate-700" />
+                    <GithubIcon className="w-5 h-5" />
                 </a>
             </div>
             </div>
+        </div>
+
+        <div className="flex items-center">
+            <ThemeToggle />
         </div>
     </div> 
   </section>

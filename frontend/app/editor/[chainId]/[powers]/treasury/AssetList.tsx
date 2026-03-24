@@ -26,31 +26,27 @@ export function AssetList() {
   }, [powers, fetchTokens, supportedChain])
 
   return (
-    <div className="w-full grow flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
-      {/* Header - matching LogsList.tsx structure */}
-      <div className="w-full flex flex-row gap-3 justify-between items-center pt-3 px-4">
-        <div className="text-slate-800 text-center text-lg">
-          Assets
-        </div>
-        <div className="flex flex-row gap-2 items-center">
-          {supportedChain && powers && (
-            <div className="w-8 h-8">
-              <button
-                onClick={() => {
-                  if (powers) {
-                    fetchTokens(powers)
-                  }
-                }}
-                className={`w-full h-full flex justify-center items-center  border border-slate-400 py-1 px-2`}  
-              >
-                <ArrowPathIcon 
-                  className="w-5 h-5 text-slate-500 aria-selected:animate-spin"
-                  aria-selected={status == "pending"}
-                />
-              </button>
-            </div>
-          )}
-        </div>
+    <div className="w-full grow flex flex-col justify-start items-center border border-border overflow-hidden">
+      {/* Header */}
+      <div className="w-full px-4 py-2 bg-muted/50 flex items-center justify-between">
+        <span className="font-mono text-muted-foreground uppercase tracking-wider text-sm">
+          ASSETS
+        </span>
+        {supportedChain && powers && (
+          <button
+            onClick={() => {
+              if (powers) {
+                fetchTokens(powers)
+              }
+            }}
+            className="flex items-center justify-center p-1.5 hover:bg-muted/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh Assets"
+          >
+            <ArrowPathIcon 
+              className={`w-4 h-4 text-muted-foreground ${status == "pending" ? 'animate-spin' : ''}`}
+            />
+          </button>
+        )}
       </div>
 
       {/* Table content - matching LogsList.tsx structure */}
@@ -62,114 +58,111 @@ export function AssetList() {
         (native || (tokens && tokens.length > 0)) ?
           <div className="w-full h-fit max-h-full flex flex-col justify-start items-center overflow-hidden">
             <div className="w-full overflow-x-auto overflow-y-auto">
-              <table className="w-full table-auto text-sm">
-                <thead className="w-full border-b border-slate-200 sticky top-0 bg-slate-50">
-                  <tr className="w-full text-xs font-light text-left text-slate-500">
-                    <th className="ps-4 px-2 py-3 font-light w-auto"> Asset </th>
-                    <th className="px-2 py-3 font-light w-20"> Symbol </th>
-                    <th className="px-2 py-3 font-light w-32"> Address </th>
-                    <th className="px-2 py-3 font-light w-24"> Quantity </th>
-                    <th className="px-2 py-3 font-light w-24"> {`Value (${native?.symbol})`} </th>
-                    <th className="px-2 py-3 font-light w-20"> Value </th>
+              <table className="w-full table-auto font-mono text-xs">
+                <thead className="w-full border-b border-border sticky top-0 bg-background">
+                  <tr className="w-full text-[10px] text-left text-muted-foreground uppercase tracking-wider">
+                    <th className="px-4 py-2 w-auto">Asset</th>
+                    <th className="px-4 py-2">Symbol</th>
+                    <th className="px-4 py-2">Address</th>
+                    <th className="px-4 py-2">Quantity</th>
+                    <th className="px-4 py-2">{`Value (${native?.symbol})`}</th>
+                    <th className="px-4 py-2">Value</th>
                   </tr>
                 </thead>
-                <tbody className="w-full text-sm text-left text-slate-500 divide-y divide-slate-200">
+                <tbody className="w-full text-left divide-y divide-border">
                   {native && (
-                    <tr className="text-xs text-left text-slate-800">
+                    <tr className="border-b border-border hover:bg-muted/30 transition-colors">
                       {/* Asset */}
-                      <td className="ps-4 px-2 py-3 w-auto">
-                        <div className="text-slate-500 text-xs">
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
                           {supportedChain?.nativeCurrency?.name}
-                        </div>
+                        </span>
                       </td>
                       
                       {/* Symbol */}
-                      <td className="px-2 py-3 w-20">
-                        <div className="text-slate-500 text-xs">
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
                           {native?.symbol}
-                        </div>
+                        </span>
                       </td>
                       
                       {/* Address */}
-                      <td className="px-2 py-3 w-32">
-                        <div className="text-slate-500 text-xs">
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
                           -
-                        </div>
+                        </span>
                       </td>
                       
                       {/* Quantity */}
-                      <td className="px-2 py-3 w-24">
-                        <div className="text-slate-500 text-xs">
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
                           {String((Number(native?.value)/ 10 ** Number(native?.decimals)).toFixed(4))}
-                        </div>
+                        </span>
                       </td>
                       
                       {/* Value (Native) */}
-                      <td className="px-2 py-3 w-24">
-                        <div className="text-slate-500 text-xs">
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
                           {String((Number(native?.value)/ 10 ** Number(native?.decimals)).toFixed(4))}
-                        </div>
+                        </span>
                       </td>
                       
                       {/* Value */}
-                      <td className="px-2 py-3 w-20">
-                        <div className="text-slate-500 text-xs">
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
                           -
-                        </div>
+                        </span>
                       </td>
                     </tr>
                   )}
                   {
                     tokens?.map((token: Token, i) => 
-                      <tr className="text-xs text-left text-slate-800" key={i}>
+                      <tr className="border-b border-border hover:bg-muted/30 transition-colors" key={i}>
                         {/* Asset */}
-                        <td className="ps-4 px-2 py-3 w-auto">
-                          <div className="truncate text-slate-500 text-xs">
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
                             {token.name}
-                          </div>
+                          </span>
                         </td>
                         
                         {/* Symbol */}
-                        <td className="px-2 py-3 w-20">
-                          <div className="truncate text-slate-500 text-xs">
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
                             {token.symbol}
-                          </div>
+                          </span>
                         </td>
                         
                         {/* Address */}
-                        <td className="px-2 py-3 w-32">
-                          <div className="truncate text-slate-500 text-xs">
-                            <a
-                              href={`${supportedChain?.blockExplorers?.default.url}/address/${token.address}#code`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="flex flex-row items-center gap-1 hover:text-slate-700 transition-colors"
-                            >
-                              <span>{token.address?.slice(0, 6)}...{token.address?.slice(-4)}</span>
-                              <ArrowUpRightIcon className="w-3 h-3" />
-                            </a>
-                          </div>
+                        <td className="px-4 py-3">
+                          <a
+                            href={`${supportedChain?.blockExplorers?.default.url}/address/${token.address}#code`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground underline"
+                          >
+                            {token.address?.slice(0, 6)}...{token.address?.slice(-4)}
+                          </a>
                         </td>
                         
                         {/* Quantity */}
-                        <td className="px-2 py-3 w-24">
-                          <div className="text-slate-500 text-xs">
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
                             {String((Number(token.balance)/ 10 ** Number(token.decimals)).toFixed(4))}
-                          </div>
+                          </span>
                         </td>
                         
                         {/* Value (Native) */}
-                        <td className="px-2 py-3 w-24">
-                          <div className="text-slate-500 text-xs">
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
                             {token.valueNative ? token.valueNative : '-'}
-                          </div>
+                          </span>
                         </td>
                         
                         {/* Value */}
-                        <td className="px-2 py-3 w-20">
-                          <div className="text-slate-500 text-xs">
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground">
                             -
-                          </div>
+                          </span>
                         </td>
                       </tr>
                     )
@@ -179,7 +172,7 @@ export function AssetList() {
             </div>
           </div>
         :
-        <div className="w-full flex flex-row gap-1 text-sm text-slate-500 justify-center items-center text-center p-3">
+        <div className="w-full px-4 py-8 text-center text-muted-foreground font-mono text-sm">
           No assets found
         </div>
       }

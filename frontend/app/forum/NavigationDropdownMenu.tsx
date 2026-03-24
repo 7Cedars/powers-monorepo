@@ -81,7 +81,7 @@ export function NavigationDropdownMenu({
           style={{ top: `calc(100% + ${sideOffset}px)` }}
         >
           <div className="p-1">
-            {/* All DAOs */}
+            {/* All Organisations */}
             <button
               onClick={() => handleNavigation("/forum")}
               className={cn(
@@ -90,7 +90,7 @@ export function NavigationDropdownMenu({
                 "text-left"
               )}
             >
-              All DAOs
+              All Organisations
             </button>
 
             {/* Profile */}

@@ -465,7 +465,7 @@ const FlowContent: React.FC = () => {
   const ActiveMandates = powers?.mandates?.filter(mandate => mandate.active)
   if (!ActiveMandates || ActiveMandates.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center bg-background border border-border">
         <span className="text-xs font-mono text-muted-foreground">No active mandates found</span>
       </div>
     )

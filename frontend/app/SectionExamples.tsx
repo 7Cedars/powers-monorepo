@@ -21,9 +21,15 @@ export function SectionExamples() {
   const currentExample = exampleOrganizations[currentExampleIndex];
   const isComingSoon = currentExample.address === '0x0000000000000000000000000000000000000000';
 
-  const handleViewExample = () => {
+  const handleViewForum = () => {
     if (currentExample.address && !isComingSoon) {
-      router.push(`/editor/${currentExample.chainId}/${currentExample.address}`);
+      router.push(`/forum/${currentExample.chainId}/${currentExample.address}`);
+    }
+  };
+
+  const handleViewEditor = () => {
+    if (currentExample.address && !isComingSoon) {
+      router.push(`/editor/${currentExample.chainId}/${currentExample.address}/home`);
     }
   };
 
@@ -36,40 +42,40 @@ export function SectionExamples() {
   };
 
   return (
-    <section id="examples" className="min-h-screen flex flex-col justify-start items-center px-4 snap-start snap-always bg-gradient-to-b from-blue-300 to-slate-100 sm:pt-16 pt-4">
+    <section id="examples" className="min-h-screen flex flex-col justify-start items-center px-4 snap-start snap-always bg-gradient-to-b from-slate-400 via-slate-300 to-slate-200 sm:pt-16 pt-4">
       <div className="w-full flex flex-col gap-4 justify-between items-center min-h-[calc(100vh-4rem)]">
         <div className="w-full h-full flex flex-col justify-start items-center">
           {/* Title and subtitle */}
           <section className="flex flex-col justify-start items-center">
-            <div className="w-full flex flex-row justify-center items-center md:text-4xl text-2xl text-slate-600 text-center max-w-4xl text-pretty font-bold px-4">
+            <div className="w-full flex flex-row justify-center items-center md:text-4xl text-2xl text-slate-900 text-center max-w-4xl text-pretty font-mono font-bold px-4 uppercase tracking-wider">
               Examples
             </div>
-            <div className="w-full flex flex-row justify-center items-center md:text-2xl text-xl text-slate-600 max-w-3xl text-center text-pretty py-2 px-4 pb-12">
+            <div className="w-full flex flex-row justify-center items-center md:text-xl text-lg text-slate-700 max-w-3xl text-center text-pretty py-2 px-4 pb-12 font-mono">
               Explore live implementations of the Powers protocol
             </div>
           </section>
 
 
           {/* Example Display */}
-          <section className="w-full sm:max-h-[80vh] flex flex-col justify-start items-center bg-white border border-slate-200  overflow-hidden max-w-4xl shadow-sm">
+          <section className="w-full sm:max-h-[80vh] flex flex-col justify-start items-center bg-background border border-border overflow-hidden max-w-4xl shadow-sm">
             {/* Carousel Header */}
-            <div className="w-full flex flex-row justify-between items-center py-4 px-6 border-b border-slate-200 flex-shrink-0">
+            <div className="w-full flex flex-row justify-between items-center py-4 px-6 border-b border-border flex-shrink-0 bg-muted/50">
               <button
                 onClick={prevExample}
-                className="p-2  hover:bg-slate-100 transition-colors"
+                className="p-2 hover:bg-muted transition-colors"
                 disabled={exampleOrganizations.length <= 1}
               >
-                <ChevronLeftIcon className="w-6 h-6 text-slate-600" />
+                <ChevronLeftIcon className="w-6 h-6 text-foreground" />
               </button>
               
               <div className="flex flex-col items-center">
-                <h3 className="text-xl font-semibold text-slate-800 text-center">{currentExample.title}</h3>
+                <h3 className="text-xl font-mono font-semibold text-foreground text-center uppercase tracking-wider">{currentExample.title}</h3>
                 <div className="flex gap-1 mt-2">
                   {exampleOrganizations.map((_, index) => (
                     <div
                       key={index}
-                      className={`w-2 h-2  ${
-                        index === currentExampleIndex ? 'bg-slate-600' : 'bg-slate-300'
+                      className={`w-2 h-2 ${
+                        index === currentExampleIndex ? 'bg-foreground' : 'bg-muted-foreground/30'
                       }`}
                     />
                   ))}
@@ -78,10 +84,10 @@ export function SectionExamples() {
 
               <button
                 onClick={nextExample}
-                className="p-2  hover:bg-slate-100 transition-colors"
+                className="p-2 hover:bg-muted transition-colors"
                 disabled={exampleOrganizations.length <= 1}
               >
-                <ChevronRightIcon className="w-6 h-6 text-slate-600" />
+                <ChevronRightIcon className="w-6 h-6 text-foreground" />
               </button>
             </div>
 
@@ -95,7 +101,7 @@ export function SectionExamples() {
                       src={currentExample.banner} 
                       alt={`${currentExample.title} example`}
                       fill
-                      className=" object-cover"
+                      className="object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
@@ -105,23 +111,34 @@ export function SectionExamples() {
               )}
               
               <div className="mb-4">
-                <p className="text-slate-600 text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed font-mono">
                   {currentExample.description}
                 </p>
               </div>
 
-              {/* View Example Button */}
-              <div className="w-full grow mt-4 flex justify-center items-center">
+              {/* View Forum and Editor Buttons */}
+              <div className="w-full grow mt-4 flex justify-center items-center gap-4">
                 <button
-                  className={`w-full sm:min-w-[400px] sm:w-auto h-12 px-12 font-medium  transition-colors duration-200 flex items-center justify-center ${
+                  className={`flex-1 sm:min-w-[180px] sm:flex-none h-12 px-8 font-mono font-medium uppercase tracking-wider text-sm transition-colors duration-200 flex items-center justify-center ${
                     isComingSoon
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border'
+                      : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                   }`}
-                  onClick={handleViewExample}
+                  onClick={handleViewForum}
                   disabled={isComingSoon}
                 >
-                  {isComingSoon ? 'Coming Soon' : 'View Example'}
+                  {isComingSoon ? 'Coming Soon' : 'View Forum'}
+                </button>
+                <button
+                  className={`flex-1 sm:min-w-[180px] sm:flex-none h-12 px-8 font-mono font-medium uppercase tracking-wider text-sm transition-colors duration-200 flex items-center justify-center ${
+                    isComingSoon
+                      ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border'
+                      : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                  }`}
+                  onClick={handleViewEditor}
+                  disabled={isComingSoon}
+                >
+                  {isComingSoon ? 'Coming Soon' : 'View Editor'}
                 </button>
               </div>
             </div>
@@ -130,7 +147,7 @@ export function SectionExamples() {
 
         {/* Arrow down */}
         <div className="flex flex-col align-center justify-center pb-8">
-          <ChevronDownIcon className="w-16 h-16 text-slate-400" />
+          <ChevronDownIcon className="w-16 h-16 text-muted-foreground" />
         </div>
       </div>
     </section>
