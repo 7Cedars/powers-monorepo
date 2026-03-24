@@ -2,11 +2,25 @@
 
 import Image from 'next/image'
 import { ArrowUpRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
   
 
 export function SectionIntro() { 
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  return (    
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Determine which image to use based on theme
+  const imageSrc = mounted && theme === 'dark' 
+    ? "/powers101_dark.png" 
+    : "/powers101_light.png";
+
+  return (
     <section id="intro" className="w-full min-h-screen flex flex-col justify-between items-center bg-gradient-to-b from-slate-800 via-slate-700 to-slate-600 snap-start snap-always p-4">
         {/* title  */}
           <section className="w-full flex flex-col justify-center items-center pt-12">
@@ -21,7 +35,7 @@ export function SectionIntro() {
           {/* Image  */}
           <section className="w-full max-w-6xl flex flex-col justify-center items-center relative aspect-video my-8"> 
             <Image 
-                src={"/powers101.png"} 
+                src={imageSrc} 
                 className="p-2" 
                 style={{objectFit: "contain"}}
                 fill={true}

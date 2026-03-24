@@ -10,7 +10,7 @@ import { Mandate, Powers, Action, Status } from '@/context/types'
 import { toFullDateFormat, toEurTimeFormat } from '@/utils/toDates'
 import { useBlocks } from '@/hooks/useBlocks'
 import { parseChainId } from '@/utils/parsers'
-import { fromFutureBlockToDateTime } from '@/organisations/helpers'
+import { fromFutureBlockToDateTime } from '@/public/organisations/helpers'
 import { useBlockNumber } from 'wagmi'
 import {
   CalendarDaysIcon,

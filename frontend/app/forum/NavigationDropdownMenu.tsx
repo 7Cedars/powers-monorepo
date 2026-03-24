@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Powers } from "@/context/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { usePowersStore } from "@/context/store";
 
 interface NavigationDropdownMenuProps {

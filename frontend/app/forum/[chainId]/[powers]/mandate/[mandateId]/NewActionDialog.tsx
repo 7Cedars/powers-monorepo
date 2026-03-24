@@ -14,7 +14,7 @@ import { hashAction } from "@/utils/hashAction";
 import { useWallets } from "@privy-io/react-auth";
 import { useMandate } from "@/hooks/useMandate";
 import { useChecks } from "@/hooks/useChecks";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { useRouter, useParams } from "next/navigation";
 
 interface NewActionDialogProps {

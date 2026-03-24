@@ -12,8 +12,8 @@ import { wagmiConfig } from "@/context/wagmiConfig";
 import { deployContract, waitForTransactionReceipt, writeContract } from "@wagmi/core";
 import { usePrivy } from "@privy-io/react-auth";
 import { TwoSeventyRingWithBg } from "react-svg-spinners";
-import { getEnabledOrganizations } from "@/organisations";
-import { isDeployableContract, isFunctionCallDependency } from "@/organisations/types";
+import { getEnabledOrganizations } from "@/public/organisations";
+import { isDeployableContract, isFunctionCallDependency } from "@/public/organisations/types";
 import Image from "next/image";
 import { sepolia, arbitrumSepolia, optimismSepolia, mantleSepoliaTestnet, foundry } from "@wagmi/core/chains";
 
