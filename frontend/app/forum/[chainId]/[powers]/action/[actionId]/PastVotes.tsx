@@ -172,7 +172,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
         <button
           onClick={fetchVotes}
           disabled={loading}
-          className="flex items-center justify-center rounded-md p-1.5 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center  p-1.5 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Refresh Votes"
         >
           <ArrowPathIcon

@@ -140,7 +140,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
 
       {/* Copy Success Toast */}
       {copied && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50 text-xs font-mono animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2  shadow-lg z-50 text-xs font-mono animate-in fade-in slide-in-from-top-2 duration-200">
           Action ID copied to clipboard!
         </div>
       )}
@@ -164,7 +164,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
                     ({param.dataType})
                   </span>
                 </div>
-                <div className="bg-muted/30 p-2 rounded border border-border">
+                <div className="bg-muted/30 p-2  border border-border">
                   <p className="text-xs text-foreground font-mono break-all">
                     {decodedParams[idx] !== undefined 
                       ? formatParamValue(decodedParams[idx], param.dataType)

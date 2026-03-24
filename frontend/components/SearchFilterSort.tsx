@@ -91,7 +91,7 @@ export function SearchFilterSort({
         </button>
 
         {showSearchMenu && (
-          <div className="absolute top-full right-0 mt-1 w-64 bg-background border border-border rounded shadow-lg z-50 animate-in fade-in duration-200">
+          <div className="absolute top-full right-0 mt-1 w-64 bg-background border border-border  shadow-lg z-50 animate-in fade-in duration-200">
             <div className="px-3 py-2 border-b border-border">
               <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
                 Search
@@ -104,7 +104,7 @@ export function SearchFilterSort({
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Type to search..."
-                className="w-full bg-transparent border border-border px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground rounded"
+                className="w-full bg-transparent border border-border px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground "
                 autoFocus
               />
             </div>
@@ -139,7 +139,7 @@ export function SearchFilterSort({
         </button>
 
         {showFilterMenu && (
-          <div className="absolute top-full right-0 mt-1 w-44 bg-background border border-border rounded shadow-lg z-50 animate-in fade-in duration-200">
+          <div className="absolute top-full right-0 mt-1 w-44 bg-background border border-border  shadow-lg z-50 animate-in fade-in duration-200">
             <div className="px-3 py-2 border-b border-border">
               <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
                 Filter by Status
@@ -231,7 +231,7 @@ export function SearchFilterSort({
         </button>
 
         {showSortMenu && (
-          <div className="absolute top-full right-0 mt-1 w-44 bg-background border border-border rounded shadow-lg z-50 animate-in fade-in duration-200">
+          <div className="absolute top-full right-0 mt-1 w-44 bg-background border border-border  shadow-lg z-50 animate-in fade-in duration-200">
             <div className="px-3 py-2 border-b border-border">
               <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
                 Sort By

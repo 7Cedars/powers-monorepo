@@ -68,7 +68,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
         <button
           onClick={handleCancel}
           className={cn(
-            "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium",
+            "inline-flex items-center justify-center gap-2 whitespace-nowrap  text-xs font-medium",
             "ring-offset-background transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:pointer-events-none disabled:opacity-50",
@@ -81,7 +81,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
         <button
           onClick={handleConfirm}
           className={cn(
-            "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-xs font-medium",
+            "inline-flex items-center justify-center gap-2 whitespace-nowrap  text-xs font-medium",
             "ring-offset-background transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:pointer-events-none disabled:opacity-50",

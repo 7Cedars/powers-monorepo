@@ -39,11 +39,19 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
         return "Loading...";
     };
 
+    // Determine navigation path based on current pathname
+    const getNavigationPath = () => {
+        if (pathname?.startsWith('/editor')) {
+            return `/editor/${powers.chainId}/${powers.contractAddress}/home`;
+        }
+        return `/forum/${powers.chainId}/${powers.contractAddress}`;
+    };
+
     return ( 
         <div
         key={powers.contractAddress}
         className={`border border-border transition-colors relative cursor-pointer hover:bg-muted/50`}
-        onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)}>
+        onClick={() => router.push(getNavigationPath())}>
         
             {/* Banner - always the same layout */}
             <div 
@@ -72,7 +80,7 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                     )}
                 </div>
             )}
-            <div className={`px-4 py-3 flex gap-4 ${alignment === "column" ? "flex-col" : "flex-row"}`}>
+            <div className={`px-4 py-3 flex gap-4 ${alignment === "column" ? "flex-col" : "flex-col lg:flex-row"}`}>
             {/* Description section - on top in narrow spaces, left side in wide spaces */}
             <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs text-muted-foreground leading-relaxed">
@@ -81,8 +89,8 @@ export const DaoSummaryBox = ({ powers, onArchive, alignment, showHeader = false
             </div>
             
             {/* Info grid section - below description in narrow spaces, right side in wide spaces */}
-            <div className="xl:flex-shrink-0">
-                <div className="grid grid-cols-3 gap-x-6 gap-y-2">
+            <div className="lg:flex-shrink-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-2">
                 <div className="space-y-0.5">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">Founded</span>
                     <p className="font-mono text-sm text-foreground">

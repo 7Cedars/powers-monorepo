@@ -16,12 +16,12 @@ import build from "next/dist/build";
 
 // Simple Input Component matching project style (light theme)
 const SimpleInput = ({ value, onChange, placeholder, className = "" }: { value: string, onChange: (v: string) => void, placeholder?: string, className?: string }) => (
-  <div className={`w-full flex text-sm items-center rounded-md bg-white border border-slate-300 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent ${className}`}>
+  <div className={`w-full flex text-sm items-center  bg-white border border-slate-300 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent ${className}`}>
     <input
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full h-10 px-3 text-sm text-slate-700 placeholder:text-slate-400 bg-transparent focus:outline-none rounded-md"
+      className="w-full h-10 px-3 text-sm text-slate-700 placeholder:text-slate-400 bg-transparent focus:outline-none "
       placeholder={placeholder}
     />
   </div>
@@ -234,7 +234,7 @@ export default function VerificationPage() {
         </div>
 
         {/* Main Content Card */}
-        <div className="w-full bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden max-w-6xl">
+        <div className="w-full bg-white border border-slate-200  shadow-sm overflow-hidden max-w-6xl">
           
           {/* Card Header */}
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
@@ -245,7 +245,7 @@ export default function VerificationPage() {
                         {address.slice(0, 6)}...{address.slice(-4)}
                     </span>
                 )}
-                <span className={`h-2.5 w-2.5 rounded-full ${isConnected ? 'bg-green-500' : 'bg-slate-300'}`}></span>
+                <span className={`h-2.5 w-2.5  ${isConnected ? 'bg-green-500' : 'bg-slate-300'}`}></span>
                 <span className="text-sm text-slate-600 hidden sm:inline">
                     {isConnected ? 'Wallet Connected' : 'Wallet Not Connected'}
                 </span>
@@ -257,7 +257,7 @@ export default function VerificationPage() {
             
             {!isConnected ? (
               <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-                <div className="p-4 bg-slate-100 rounded-full">
+                <div className="p-4 bg-slate-100 ">
                    <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                    </svg>
@@ -270,7 +270,7 @@ export default function VerificationPage() {
               </div>
             ) : chainId !== targetChainId ? (
               <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-                <div className="p-4 bg-yellow-50 rounded-full">
+                <div className="p-4 bg-yellow-50 ">
                    <ExclamationCircleIcon className="w-8 h-8 text-yellow-600" />
                 </div>
                 <h3 className="text-lg font-medium text-slate-700">Wrong Network</h3>
@@ -287,7 +287,7 @@ export default function VerificationPage() {
                   {/* Step 1: Configuration */}
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">1</div>
+                      <div className="flex h-8 w-8 items-center justify-center  bg-indigo-100 text-indigo-600 font-bold text-sm">1</div>
                       <h3 className="text-lg font-medium text-slate-800">Select Data to Disclose</h3>
                     </div>
                     
@@ -296,11 +296,11 @@ export default function VerificationPage() {
                           Select the information you want to verify and disclose on-chain. The zero-knowledge proof ensures only this data is revealed.
                       </p>
                       
-                      <div className="bg-slate-50 p-4 rounded-md border border-slate-200 space-y-4 h-full">
+                      <div className="bg-slate-50 p-4  border border-slate-200 space-y-4 h-full">
                         <div className="grid gap-3 grid-cols-1 h-full content-start">
                           {/* Always selected Proof of Uniqueness button */}
                           <button 
-                            className="p-3 rounded-md border text-sm font-medium transition-colors text-left flex items-center justify-between bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-default"
+                            className="p-3  border text-sm font-medium transition-colors text-left flex items-center justify-between bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-default"
                             title="This field is required for verification"
                           >
                             Proof of Uniqueness
@@ -311,7 +311,7 @@ export default function VerificationPage() {
                             <button 
                               key={field.id}
                               onClick={() => handleFieldToggle(field.id)}
-                              className={`p-3 rounded-md border text-sm font-medium transition-colors text-left flex items-center justify-between group ${
+                              className={`p-3  border text-sm font-medium transition-colors text-left flex items-center justify-between group ${
                                 selectedFields.includes(field.id) 
                                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
                                   : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
@@ -334,7 +334,7 @@ export default function VerificationPage() {
                   {/* Step 2: Proof Generation */}
                   <div className="flex-1 flex flex-col space-y-4">
                     <div className="flex items-center gap-3 mb-2 shrink-0">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">2</div>
+                      <div className="flex h-8 w-8 items-center justify-center  bg-indigo-100 text-indigo-600 font-bold text-sm">2</div>
                       <h3 className="text-lg font-medium text-slate-800">Generate Proof</h3>
                     </div>
                     
@@ -348,9 +348,9 @@ export default function VerificationPage() {
                         {!queryUrl && !isGeneratingProof && !proof && !isRequestReceived && (
                            <button 
                              onClick={generateProof}
-                             className="group relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed rounded-xl transition-all duration-200 border-indigo-300 bg-indigo-50/30 hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer"
+                             className="group relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed  transition-all duration-200 border-indigo-300 bg-indigo-50/30 hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer"
                            >
-                              <div className="p-4 bg-white rounded-full shadow-sm mb-3 group-hover:scale-105 transition-transform duration-200">
+                              <div className="p-4 bg-white  shadow-sm mb-3 group-hover:scale-105 transition-transform duration-200">
                                 <QrCodeIcon className="w-8 h-8 text-indigo-600" />
                               </div>
                               <span className="text-sm font-semibold text-indigo-600">
@@ -363,7 +363,7 @@ export default function VerificationPage() {
                         )}
 
                         {queryUrl && !proof && !isRequestReceived && !isGeneratingProof && (
-                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] p-6 bg-white rounded-xl">
+                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] p-6 bg-white ">
                                 <QRCode value={queryUrl} size={300} />
                                 <div className="mt-4 flex items-center gap-2">
                                   <p className="text-slate-600 text-sm font-medium">Scan with ZKPassport App</p>
@@ -372,8 +372,8 @@ export default function VerificationPage() {
                         )}
 
                         {isRequestReceived && !isGeneratingProof && !proof && (
-                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm text-center p-6 animate-in fade-in zoom-in duration-300">
-                                <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-yellow-50 border border-yellow-200  shadow-sm text-center p-6 animate-in fade-in zoom-in duration-300">
+                                <div className="p-4 bg-white  shadow-sm mb-4">
                                    <TwoSeventyRingWithBg className="w-8 h-8 text-yellow-600 animate-spin" />
                                 </div>
                                 <h4 className="text-lg font-semibold text-yellow-900 mb-1">Request Received</h4>
@@ -382,8 +382,8 @@ export default function VerificationPage() {
                         )}
 
                         {isGeneratingProof && !proof && (
-                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm text-center p-6 animate-in fade-in zoom-in duration-300">
-                                <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+                            <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-yellow-50 border border-yellow-200  shadow-sm text-center p-6 animate-in fade-in zoom-in duration-300">
+                                <div className="p-4 bg-white  shadow-sm mb-4">
                                    <TwoSeventyRingWithBg className="w-8 h-8 text-yellow-600 animate-spin" />
                                 </div>
                                 <h4 className="text-lg font-semibold text-yellow-900 mb-1">Generating Proof</h4>
@@ -392,8 +392,8 @@ export default function VerificationPage() {
                         )}
 
                         {proof && (
-                            <div className="w-full h-full min-h-[300px] p-6 bg-green-50 border border-green-200 rounded-xl flex flex-col items-center justify-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                <div className="p-3 bg-white rounded-full shadow-sm mb-3">
+                            <div className="w-full h-full min-h-[300px] p-6 bg-green-50 border border-green-200  flex flex-col items-center justify-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                <div className="p-3 bg-white  shadow-sm mb-3">
                                   <CheckCircleIcon className="w-8 h-8 text-green-500" />
                                 </div>
                                 <h4 className="text-lg font-semibold text-green-900 mb-1">Proof Generated!</h4>
@@ -408,27 +408,27 @@ export default function VerificationPage() {
                 {/* Step 3: Submission Status */}
                 <div className="space-y-4 pt-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">3</div>
+                    <div className="flex h-8 w-8 items-center justify-center  bg-indigo-100 text-indigo-600 font-bold text-sm">3</div>
                     <h3 className="text-lg font-medium text-slate-800">Registry Submission</h3>
                   </div>
                   
                   <div className="ml-11 space-y-3">
                     {!isPending && !isConfirming && !hash && !isConfirmed && !writeError && (
-                       <div className="p-4 bg-slate-50 border border-slate-200 rounded-md flex items-center">
-                           <div className="w-5 h-5 mr-3 flex-shrink-0 rounded-full border-2 border-slate-300"></div>
+                       <div className="p-4 bg-slate-50 border border-slate-200  flex items-center">
+                           <div className="w-5 h-5 mr-3 flex-shrink-0  border-2 border-slate-300"></div>
                            <span className="text-slate-500 text-sm">Waiting for proof generation...</span>
                        </div>
                     )}
 
                     {isPending && (
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center gap-2">
+                        <div className="p-4 bg-yellow-50 border border-yellow-200  flex items-center gap-2">
                             <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
                             <span className="text-yellow-800">Please confirm the transaction in your wallet...</span>
                         </div>
                     )}
 
                     {isConfirming && (
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center gap-2">
+                        <div className="p-4 bg-yellow-50 border border-yellow-200  flex items-center gap-2">
                             <TwoSeventyRingWithBg className="w-5 h-5 text-yellow-600 mr-3 animate-spin" />
                             <span className="text-yellow-800">Your zero-knowledge proof is being submitted...</span>
                         </div>
@@ -451,7 +451,7 @@ export default function VerificationPage() {
                     )}
                     
                     {isConfirmed && (
-                        <div className="p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
+                        <div className="p-4 bg-green-50 border border-green-200  flex items-center">
                             <CheckCircleIcon className="w-6 h-6 text-green-600 mr-3 flex-shrink-0" />
                             <div>
                               <p className="text-green-800 font-medium">Verified & Registered!</p>
@@ -461,7 +461,7 @@ export default function VerificationPage() {
                     )}
                     
                     {writeError && (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-md flex items-start overflow-hidden">
+                        <div className="p-4 bg-red-50 border border-red-200  flex items-start overflow-hidden">
                             <XCircleIcon className="w-6 h-6 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
                             <div className="min-w-0 flex-1">
                               <p className="text-red-800 font-medium">Transaction Failed</p>
@@ -476,7 +476,7 @@ export default function VerificationPage() {
           </div>
 
           <div className="bg-red-50 border-t border-red-100 p-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-            <div className="flex-shrink-0 bg-red-100 p-2 rounded-full">
+            <div className="flex-shrink-0 bg-red-100 p-2 ">
               <ExclamationCircleIcon className="w-6 h-6 text-red-600" />
             </div>
             <div className="space-y-1">

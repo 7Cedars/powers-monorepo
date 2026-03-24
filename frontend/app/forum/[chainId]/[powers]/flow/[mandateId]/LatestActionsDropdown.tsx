@@ -145,7 +145,7 @@ export function LatestActionsDropdown({
                   key={action.actionId}
                   onClick={() => handleActionClick(action.actionId, action.highestBlockNumber, action.description)}
                   className={cn(
-                    "relative flex w-full cursor-pointer select-none flex-col gap-1 rounded-sm px-2 py-2 text-sm outline-none transition-colors",
+                    "relative flex w-full cursor-pointer select-none flex-col gap-1  px-2 py-2 text-sm outline-none transition-colors",
                     "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                     "text-left border-b border-border last:border-b-0"
                   )}

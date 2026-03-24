@@ -245,9 +245,9 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
         ].map((v) => (
           <div key={v.label} className="flex items-center gap-2 text-xs">
             <span className={`${v.color} w-20`}>{v.label}</span>
-            <div className="flex-1 h-2 bg-muted/20 rounded overflow-hidden">
+            <div className="flex-1 h-2 bg-muted/20  overflow-hidden">
               <div
-                className={`h-full ${v.bg} rounded`}
+                className={`h-full ${v.bg} `}
                 style={{ width: `${allVotes > 0 ? (v.value / allVotes) * 100 : 0}%` }}
               />
             </div>
@@ -304,21 +304,21 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
               <button
                 onClick={() => handleVoteClick(1n)}
                 disabled={status.status === "pending"}
-                className="w-full border rounded px-4 py-3 text-xs transition-colors bg-green-500/20 border-green-500 text-green-500 hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
+                className="w-full border  px-4 py-3 text-xs transition-colors bg-green-500/20 border-green-500 text-green-500 hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
               >
                 {status.status === "pending" && logSupport === 1n ? "VOTING..." : "FOR"}
               </button>
               <button
                 onClick={() => handleVoteClick(0n)}
                 disabled={status.status === "pending"}
-                className="w-full border rounded px-4 py-3 text-xs transition-colors bg-red-500/20 border-red-500 text-red-500 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
+                className="w-full border  px-4 py-3 text-xs transition-colors bg-red-500/20 border-red-500 text-red-500 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
               >
                 {status.status === "pending" && logSupport === 0n ? "VOTING..." : "AGAINST"}
               </button>
               <button
                 onClick={() => handleVoteClick(2n)}
                 disabled={status.status === "pending"}
-                className="w-full border rounded px-4 py-3 text-xs transition-colors bg-muted/30 border-border text-muted-foreground hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
+                className="w-full border  px-4 py-3 text-xs transition-colors bg-muted/30 border-border text-muted-foreground hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
               >
                 {status.status === "pending" && logSupport === 2n ? "VOTING..." : "ABSTAIN"}
               </button>
@@ -389,13 +389,13 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setPendingVote(null)}
-              className="px-4 py-2 text-xs border border-border rounded hover:bg-muted transition-colors font-mono uppercase tracking-wider"
+              className="px-4 py-2 text-xs border border-border  hover:bg-muted transition-colors font-mono uppercase tracking-wider"
             >
               Cancel
             </button>
             <button
               onClick={confirmVote}
-              className="px-4 py-2 text-xs bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity font-mono uppercase tracking-wider"
+              className="px-4 py-2 text-xs bg-primary text-primary-foreground  hover:opacity-90 transition-opacity font-mono uppercase tracking-wider"
             >
               Confirm Vote
             </button>

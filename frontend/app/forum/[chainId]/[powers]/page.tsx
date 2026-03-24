@@ -9,6 +9,8 @@
  import { ArrowPathIcon } from '@heroicons/react/24/outline';
  import { useErrorStore } from '@/context/store';
 import { parseChainId } from '@/utils/parsers';
+import { CommunicationChannels } from '@/context/types';
+import { MetadataLinks } from '@/components/MetadataLinks';
 
  export default function OverviewPage() {
     const powers = usePowersStore();
@@ -62,7 +64,7 @@ import { parseChainId } from '@/utils/parsers';
                </>
              ) : (
                <p className="text-muted-foreground text-center text-sm">
-                 No Powers DAO found at this address and chain. Please check the URL or add this DAO to your saved list.
+                 No Powers organisation found at this address and chain. Please check the URL or add this organisation to your saved list.
                </p>
              )}
            </div>
@@ -79,6 +81,16 @@ import { parseChainId } from '@/utils/parsers';
         
             {/* DAO Summary - full width top */}
             <DaoSummaryBox powers={powers} alignment='row' showHeader={false} /> 
+
+            <MetadataLinks 
+                      website={powers?.metadatas?.website}
+                      codeOfConduct={powers?.metadatas?.codeOfConduct}
+                      disputeResolution={powers?.metadatas?.disputeResolution}
+                      communicationChannels={powers?.metadatas?.communicationChannels as CommunicationChannels}
+                      parentContracts={powers?.metadatas?.parentContracts}
+                      childContracts={powers?.metadatas?.childContracts}
+                      chainId={powers?.chainId}
+                    />
 
             {/* THE ACTIVITY OF THE ORG - Unified mandates + actions */}
             <ActivityOverview powers={powers} />

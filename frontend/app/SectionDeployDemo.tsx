@@ -105,7 +105,7 @@ export function SectionDeployDemo() {
     if (selectedChainId) {
       getPowered(selectedChainId);
     }
-  }, [selectedChainId, chain?.id, switchChain]);
+  }, [chain?.id]);
 
   const handleInputChange = (fieldName: string, value: string) => {
     // console.log("@SectionDeployDemo: handleInputChange", { fieldName, value });
@@ -468,7 +468,7 @@ export function SectionDeployDemo() {
 
   const handleSeeYourPowers = () => {
     if (deployedPowersAddress && selectedChainId) {
-      router.push(`/protocol/${selectedChainId}/${deployedPowersAddress}`);
+      router.push(`/editor/${selectedChainId}/${deployedPowersAddress}`);
     }
   };
 
@@ -497,35 +497,35 @@ export function SectionDeployDemo() {
   };
 
   return (
-    <section id="deploy" className="min-h-screen grow flex flex-col justify-start items-center pb-20 px-4 snap-start snap-always bg-gradient-to-b from-slate-100 to-slate-50 sm:pt-16 pt-4">
+    <section id="deploy" className="min-h-screen grow flex flex-col justify-start items-center pb-20 px-4 snap-start snap-always bg-gradient-to-b from-slate-200 via-slate-100 to-slate-50 sm:pt-16 pt-4">
       <div className="w-full flex flex-col gap-4 justify-start items-center">
         <section className="flex flex-col justify-center items-center"> 
-          <div className="w-full flex flex-row justify-center items-center md:text-4xl text-2xl text-slate-600 text-center max-w-4xl text-pretty font-bold px-4">
+          <div className="w-full flex flex-row justify-center items-center md:text-4xl text-2xl text-slate-900 text-center max-w-4xl text-pretty font-mono font-bold px-4 uppercase tracking-wider">
             Deploy a Demo
           </div>
-          <div className="w-full flex flex-row justify-center items-center md:text-2xl text-xl text-slate-600 max-w-3xl text-center text-pretty py-2 px-4">
+          <div className="w-full flex flex-row justify-center items-center md:text-xl text-lg text-slate-700 max-w-3xl text-center text-pretty py-2 px-4 font-mono">
             Choose a template to try out the Powers protocol
           </div>
         </section>
 
-        <section className="w-full grow sm:max-h-[80vh] flex flex-col justify-start items-center bg-white border border-slate-200 rounded-md overflow-hidden max-w-4xl shadow-sm">
+        <section className="w-full grow sm:max-h-[80vh] flex flex-col justify-start items-center bg-background border border-border overflow-hidden max-w-4xl shadow-sm">
           {/* Carousel Header */}
-          <div className="w-full flex flex-row justify-between items-center py-4 px-6 border-b border-slate-200 flex-shrink-0">
+          <div className="w-full flex flex-row justify-between items-center py-4 px-6 border-b border-border flex-shrink-0 bg-muted/50">
             <button
               onClick={prevOrg}
-              className="p-2 rounded-md hover:bg-slate-100 transition-colors"
+              className="p-2 hover:bg-muted transition-colors"
             >
-              <ChevronLeftIcon className="w-6 h-6 text-slate-600" />
+              <ChevronLeftIcon className="w-6 h-6 text-foreground" />
             </button>
             
             <div className="flex flex-col items-center">
-              <h3 className="text-xl font-semibold text-slate-800 text-center">{currentOrg.metadata.title}</h3>
+              <h3 className="text-xl font-mono font-semibold text-foreground text-center uppercase tracking-wider">{currentOrg.metadata.title}</h3>
               <div className="flex gap-1 mt-2">
                 {availableOrganizations.map((_, index) => (
                   <div
                     key={index}
-                    className={`w-2 h-2 rounded-full ${
-                      index === currentOrgIndex ? 'bg-slate-600' : 'bg-slate-300'
+                    className={`w-2 h-2 ${
+                      index === currentOrgIndex ? 'bg-foreground' : 'bg-muted-foreground/30'
                     }`}
                   />
                 ))}
@@ -534,9 +534,9 @@ export function SectionDeployDemo() {
 
             <button
               onClick={nextOrg}
-              className="p-2 rounded-md hover:bg-slate-100 transition-colors"
+              className="p-2 hover:bg-muted transition-colors"
             >
-              <ChevronRightIcon className="w-6 h-6 text-slate-600" />
+              <ChevronRightIcon className="w-6 h-6 text-foreground" />
             </button>
           </div>
 
@@ -550,7 +550,7 @@ export function SectionDeployDemo() {
                     src={currentOrg.metadata.banner} 
                     alt={`${currentOrg.metadata.title} template`}
                     fill
-                    className="rounded-lg object-cover"
+                    className=" object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
@@ -560,7 +560,7 @@ export function SectionDeployDemo() {
             )}
             
             <div className="mb-4">
-              <p className="text-slate-600 text-sm leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed font-mono">
                 {currentOrg.metadata.description}
               </p>
             </div>
@@ -568,7 +568,7 @@ export function SectionDeployDemo() {
             <div className="space-y-3">
               {currentOrg.fields.map((field) => (
                 <div key={field.name} className="flex flex-col">
-                  <label className="text-sm font-medium text-slate-700 mb-1">
+                  <label className="text-xs font-mono font-medium text-foreground mb-1 uppercase tracking-wider">
                     {field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1')}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
                   </label>
@@ -576,7 +576,7 @@ export function SectionDeployDemo() {
                     type={field.type}
                     name={field.name}
                     placeholder={field.placeholder}
-                    className="w-full h-12 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent border border-slate-300"
+                    className="w-full h-12 px-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent border border-border bg-background text-foreground font-mono text-sm"
                     value={formData[field.name] || ''}
                     onChange={(e) => handleInputChange(field.name, e.target.value)}
                     required={field.required}
@@ -587,7 +587,7 @@ export function SectionDeployDemo() {
 
             {/* Required fields indicator */}
             {hasRequiredFields && (
-              <div className="text-red-500 text-sm font-medium pt-2">
+              <div className="text-red-500 text-xs font-mono font-medium pt-2">
                 * Required
               </div>
             )}
@@ -597,19 +597,19 @@ export function SectionDeployDemo() {
               <div className="w-full sm:w-fit h-12 order-2 sm:order-1">
                 {constituteCompleted && deployedPowersAddress ? (
                   <button 
-                    className="w-full sm:w-fit h-12 px-6 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors duration-200 flex items-center justify-center"
+                    className="w-full sm:w-fit h-12 px-6 bg-green-600 hover:bg-green-700 text-white font-mono font-medium uppercase tracking-wider text-sm transition-colors duration-200 flex items-center justify-center"
                     onClick={handleSeeYourPowers}
                   > 
                     See Your New Powers
                   </button>
                 ) : (
                   <button 
-                    className={`w-full sm:w-fit h-12 px-6 font-medium rounded-md transition-colors duration-200 flex items-center justify-center ${
+                    className={`w-full sm:w-fit h-12 px-6 font-mono font-medium uppercase tracking-wider text-sm transition-colors duration-200 flex items-center justify-center ${
                       status === 'error'
                         ? 'bg-red-600 hover:bg-red-700 text-white border border-red-700'
                         : !ready || !authenticated || currentOrg.metadata.disabled || !areRequiredFieldsFilled()
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                          : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                          ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border' 
+                          : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                     }`}
                     onClick={() => {
                       if (ready && authenticated && !currentOrg.metadata.disabled && areRequiredFieldsFilled() && bytecodePowers) {
@@ -624,7 +624,7 @@ export function SectionDeployDemo() {
                       'Coming soon!'
                     ) : status === 'pending' ? (
                       <div className="flex items-center gap-2">
-                        <TwoSeventyRingWithBg className="w-5 h-5 animate-spin" color="text-slate-200" />
+                        <TwoSeventyRingWithBg className="w-5 h-5 animate-spin" />
                         Deploying...
                       </div>
                     ) : (
@@ -637,13 +637,13 @@ export function SectionDeployDemo() {
               {/* Chain and Connect buttons - positioned above deploy button on small screens, right on large screens */}
               <div className="flex items-center gap-4 h-12 w-full sm:w-fit order-1 sm:order-2">
                 {/* Chain Selection Button */}
-                <div className="relative h-full w-full sm:w-fit">
+                <div className="relative h-12 w-full sm:w-fit">
                   <Button
                     size={1}
-                    role={2}
+                    role={6}
                     onClick={() => setIsChainMenuOpen(!isChainMenuOpen)}
                   >
-                    <div className="flex items-center gap-2 text-slate-600 font-medium">
+                    <div className="flex items-center gap-2 text-foreground font-mono font-medium text-sm">
                       {selectedChain}
                       <ChevronUpIcon 
                         className={`w-4 h-4 transition-transform duration-200 ${
@@ -655,12 +655,12 @@ export function SectionDeployDemo() {
 
                   {/* Drop-up Menu */}
                   {isChainMenuOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                    <div className="absolute bottom-full left-0 mb-2 bg-background border border-border shadow-lg z-10">
                       {chains.map((chain) => (
                         <button
                           key={chain.id}
-                          className={`w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors ${
-                            selectedChain === chain.name ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                          className={`w-full px-4 py-2 text-left font-mono text-sm hover:bg-muted transition-colors ${
+                            selectedChain === chain.name ? 'bg-muted text-foreground font-semibold' : 'text-muted-foreground'
                           }`}
                           onClick={() => {
                             setSelectedChain(chain.name);
@@ -675,7 +675,7 @@ export function SectionDeployDemo() {
                 </div>
 
                 {/* Connect Button */}
-                <div className="sm:w-fit h-full">
+                <div className="w-full sm:w-fit h-12">
                   <ConnectButton />
                 </div>
               </div>
@@ -685,14 +685,14 @@ export function SectionDeployDemo() {
 
         {/* Deployment Status Display */}
         {(status === 'pending' || status === 'error' || status === 'success') && (
-          <section className="w-full flex flex-col justify-start items-start bg-white border border-slate-200 rounded-md max-w-4xl shadow-sm p-6">
-            <h4 className="text-lg font-semibold text-slate-800 mb-4">Deployment Status</h4>
+          <section className="w-full flex flex-col justify-start items-start bg-background border border-border max-w-4xl shadow-sm p-6">
+            <h4 className="text-lg font-mono font-semibold text-foreground mb-4 uppercase tracking-wider">Deployment Status</h4>
             
             <div className="w-full space-y-3">
               {/* Step 1: Powers Contract */}
               <div className="flex items-center gap-3">
                 {deployStatus.powersCreate === 'success' ? (
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6  bg-green-500 flex items-center justify-center flex-shrink-0">
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -702,15 +702,15 @@ export function SectionDeployDemo() {
                     <TwoSeventyRingWithBg className="w-6 h-6" />
                   </div>
                 ) : deployStatus.powersCreate === 'error' ? (
-                  <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 bg-red-500 flex items-center justify-center flex-shrink-0">
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </div>
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-slate-300 flex-shrink-0" />
+                  <div className="w-6 h-6 bg-muted flex-shrink-0" />
                 )}
-                <span className={`text-sm ${deployStatus.powersCreate === 'success' ? 'text-green-600 font-medium' : deployStatus.powersCreate === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
+                <span className={`text-sm font-mono ${deployStatus.powersCreate === 'success' ? 'text-green-600 font-medium' : deployStatus.powersCreate === 'error' ? 'text-red-600' : 'text-muted-foreground'}`}>
                   Deploy Powers Contract
                 </span>
               </div>
@@ -721,7 +721,7 @@ export function SectionDeployDemo() {
                 return (
                   <div key={idx} className="flex items-center gap-3">
                     {mockStatus === 'success' ? (
-                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6  bg-green-500 flex items-center justify-center flex-shrink-0">
                         <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -731,15 +731,15 @@ export function SectionDeployDemo() {
                         <TwoSeventyRingWithBg className="w-6 h-6" />
                       </div>
                     ) : mockStatus === 'error' ? (
-                      <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6  bg-red-500 flex items-center justify-center flex-shrink-0">
                         <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </div>
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-slate-300 flex-shrink-0" />
+                      <div className="w-6 h-6 bg-muted flex-shrink-0" />
                     )}
-                    <span className={`text-sm ${mockStatus === 'success' ? 'text-green-600 font-medium' : mockStatus === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
+                    <span className={`text-sm font-mono ${mockStatus === 'success' ? 'text-green-600 font-medium' : mockStatus === 'error' ? 'text-red-600' : 'text-muted-foreground'}`}>
                       Deploy {dep.name}
                     </span>
                   </div>
@@ -750,7 +750,7 @@ export function SectionDeployDemo() {
               {deployStatus.finalTransactions.map((tx, idx) => (
                 <div key={idx} className="flex items-center gap-3">
                   {tx.status === 'success' ? (
-                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6  bg-green-500 flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -760,15 +760,15 @@ export function SectionDeployDemo() {
                       <TwoSeventyRingWithBg className="w-6 h-6" />
                     </div>
                   ) : tx.status === 'error' ? (
-                    <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6  bg-red-500 flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-slate-300 flex-shrink-0" />
+                    <div className="w-6 h-6 bg-muted flex-shrink-0" />
                   )}
-                  <span className={`text-sm ${tx.status === 'success' ? 'text-green-600 font-medium' : tx.status === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
+                  <span className={`text-sm font-mono ${tx.status === 'success' ? 'text-green-600 font-medium' : tx.status === 'error' ? 'text-red-600' : 'text-muted-foreground'}`}>
                     {tx.name}
                   </span>
                 </div>
@@ -776,8 +776,8 @@ export function SectionDeployDemo() {
             </div>
 
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md max-h-64 h-full overflow-y-auto">
-                <p className="text-sm text-red-600 break-words break-all whitespace-pre-wrap">
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 max-h-64 h-full overflow-y-auto">
+                <p className="text-sm font-mono text-red-600 break-words break-all whitespace-pre-wrap">
                   <strong>Error:</strong> {error.message}
                 </p>
               </div>
@@ -786,7 +786,7 @@ export function SectionDeployDemo() {
         )}
 
         <div className="text-center">
-          <p className="text-sm text-slate-500 max-w-2xl">
+          <p className="text-xs font-mono text-muted-foreground max-w-2xl">
             <strong>Important:</strong> These deployments are for testing purposes only. 
             The Powers protocol has not been audited and should not be used for production environments. 
             Many of the examples lack basic security mechanisms and are for demo purposes only.

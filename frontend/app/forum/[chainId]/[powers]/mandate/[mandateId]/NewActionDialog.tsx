@@ -369,7 +369,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
             name="nonce"
             id="nonce"
             value={action.nonce}
-            className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
+            className="flex-1 bg-background border border-border  px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
             placeholder="Enter random number..."
             onChange={(e) => {
               e.preventDefault();
@@ -378,7 +378,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           />
           <button
             type="button"
-            className="h-9 w-9 flex items-center justify-center rounded bg-background border border-border hover:bg-muted transition-colors"
+            className="h-9 w-9 flex items-center justify-center  bg-background border border-border hover:bg-muted transition-colors"
             onClick={(e) => {
               e.preventDefault();
               setAction({
@@ -428,7 +428,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           onClick={handleSubmit}
           disabled={status.status === "pending" && isSubmitting}
           className={cn(
-            "w-full mt-4 border rounded px-4 py-2.5 text-xs font-mono",
+            "w-full mt-4 border  px-4 py-2.5 text-xs font-mono",
             "uppercase tracking-wider transition-colors",
             "flex items-center justify-center gap-2",
             status.status === "pending" && isSubmitting && "opacity-70 cursor-not-allowed",

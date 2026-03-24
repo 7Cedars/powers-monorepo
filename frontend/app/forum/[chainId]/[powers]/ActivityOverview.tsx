@@ -177,10 +177,10 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
               <th className="max-w-28 px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Mandates</th>
-              <th className="w-fit max-w-18 px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Roles</th>
-              <th className="w-[80px] px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Actions</th>
-              <th className="px-2 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider max-w-48">Latest</th>
-              <th className="px-2 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Status</th>
+              <th className="hidden md:table-cell w-fit max-w-18 px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Roles</th>
+              <th className="w-[50px] md:w-[80px] px-2 md:px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Actions</th>
+              <th className="hidden md:table-cell px-2 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider max-w-48">Latest</th>
+              <th className="hidden md:table-cell px-2 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -236,26 +236,62 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                                 {`${mandate.nameDescription?.split(':')[0]}`}
                               </span>
                             </div>
+                            
+                            {/* Description - hidden on small screens */}
                             {mandate.nameDescription && (
-                              <div className="text-muted-foreground leading-relaxed max-w-md">
+                              <div className="hidden md:block text-muted-foreground leading-relaxed max-w-md">
                                 {mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}
+                              </div>
+                            )}
+                            
+                            {/* Roles - shown on small screens only */}
+                            <div className="md:hidden text-xs text-muted-foreground mt-1">
+                              <span className="font-semibold">Role: </span>
+                              {bigintToRole(BigInt(roleId), powers)}
+                            </div>
+                            
+                            {/* Latest Actions - shown on small screens only */}
+                            {latestActions.length > 0 && (
+                              <div className="md:hidden mt-2 flex flex-col gap-1">
+                                <span className="text-[10px] uppercase text-muted-foreground">Latest:</span>
+                                {latestActions.map((action, idx) => {
+                                  const status = getActionStatus(action, mandate);
+                                  return (
+                                    <div key={`mobile-action-${action.actionId}-${idx}`} className="flex items-start gap-2">
+                                      <span
+                                        className="text-foreground text-xs cursor-pointer hover:text-primary hover:underline transition-colors flex-1 truncate"
+                                        onClick={() => router.push(`/forum/${chainId}/${powersAddress}/action/${action.actionId}`)}
+                                      >
+                                        {action.description || 'No description'}
+                                      </span>
+                                      <div className="flex items-center gap-1 flex-shrink-0">
+                                        {status.isActive && (
+                                          <span className="w-2 h-2 bg-green-500" />
+                                        )}
+                                        <span className={`${status.color} text-[10px]`}>
+                                          {status.text}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
                         </td>
 
-                        {/* Roles Column */}
-                        <td className="px-4 py-3 text-muted-foreground">
+                        {/* Roles Column - hidden on small screens */}
+                        <td className="hidden md:table-cell px-4 py-3 text-muted-foreground">
                           {bigintToRole(BigInt(roleId), powers)}
                         </td>
 
                         {/* Actions Column */}
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-2 md:px-4 py-3 text-muted-foreground">
                           {actions.length}
                         </td>
 
-                        {/* Latest Column */}
-                        <td className="px-4 py-3 max-w-48">
+                        {/* Latest Column - hidden on small screens */}
+                        <td className="hidden md:table-cell px-4 py-3 max-w-48">
                           {latestActions.length > 0 ? (
                             <div className="flex flex-col gap-1.5">
                               {latestActions.map((action, idx) => (
@@ -273,8 +309,8 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                           )}
                         </td>
 
-                        {/* Status Column */}
-                        <td className="px-4 py-3">
+                        {/* Status Column - hidden on small screens */}
+                        <td className="hidden md:table-cell px-4 py-3">
                           {latestActions.length > 0 ? (
                             <div className="flex flex-col gap-1.5">
                               {latestActions.map((action, idx) => {
@@ -285,7 +321,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                                     className="flex items-center gap-1.5"
                                   >
                                     {status.isActive && (
-                                      <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                                      <span className="w-2 h-2  bg-green-500 flex-shrink-0" />
                                     )}
                                     <span className={`${status.color} text-xs`}>
                                       {status.text}

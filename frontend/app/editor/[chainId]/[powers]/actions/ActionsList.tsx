@@ -1,0 +1,202 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Action, Powers } from "@/context/types";
+import { parseProposalStatus, shorterDescription } from "@/utils/parsers";
+import { toEurTimeFormat, toFullDateFormat } from "@/utils/toDates";
+import { LoadingBox } from "@/components/LoadingBox";
+import { useBlocks } from "@/hooks/useBlocks";
+import { callDataToActionParams } from "@/utils/callDataToActionParams";
+import { setAction } from "@/context/store";
+
+export function ActionsList({powers}: {powers: Powers | undefined}) { 
+  const { chainId } = useParams<{ chainId: string }>()
+  const router = useRouter()
+  const { timestamps, fetchTimestamps } = useBlocks()
+  const possibleStatus: string[] = ['0', '1', '2', '3', '4', '5']
+  const [ deselectedStatus, setDeselectedStatus] = useState<string[]>([])
+  const allActions = powers?.mandates && powers?.mandates?.length > 0 ? powers?.mandates?.flatMap(mandate => mandate.actions) : []
+  const mandates = powers?.mandates && powers?.mandates?.length > 0 ? powers?.mandates : []
+ 
+  useEffect(() => {
+    if (allActions) {
+      fetchTimestamps(allActions.flatMap(action => [action?.requestedAt, action?.proposedAt, action?.fulfilledAt, action?.cancelledAt].filter((timestamp): timestamp is bigint => timestamp !== undefined && timestamp !== null)), chainId)
+    }
+  }, [allActions, chainId, fetchTimestamps])
+
+  const handleStatusSelection = (actionStatus: string) => {
+    let newDeselection: string[] = []
+    if (deselectedStatus.includes(actionStatus)) {
+      newDeselection = deselectedStatus.filter(option => option !== actionStatus)
+    } else {
+      newDeselection = [...deselectedStatus, actionStatus]
+    }
+    setDeselectedStatus(newDeselection)
+  }
+ 
+  return (
+    <div className="w-full flex flex-col justify-start items-center bg-background border border-border overflow-hidden">
+      {/* Status filter bar */}
+      <div className="w-full flex flex-row gap-6 justify-between items-center py-4 overflow-y-scroll border-b border-border px-4">
+      {
+        possibleStatus.map((option, i) => {
+          return (
+            <button 
+            key = {i}
+            onClick={() => handleStatusSelection(option)}
+            className="w-fit h-full hover:text-foreground/80 text-sm aria-selected:text-foreground text-foreground/50"
+            aria-selected = {!deselectedStatus?.includes(option)}
+            >  
+              <p className="text-sm text-left"> {parseProposalStatus(option)} </p>
+          </button>
+          )
+        })
+      }
+      </div>
+
+      {/* Table content */}
+      {allActions && allActions.length > 0 ? 
+          <div className="w-full h-fit max-h-full flex flex-col justify-start items-center overflow-hidden">
+            <div className="w-full overflow-x-auto overflow-y-auto">
+              <table className="w-full table-auto text-sm">
+                <thead className="w-full border-b border-border sticky top-0 bg-background">
+                  <tr className="w-full text-xs font-light text-left text-muted-foreground">
+                    <th className="ps-4 px-2 py-3 font-light w-40"> Date </th>
+                    <th className="px-2 py-3 font-light w-32"> Action ID </th>
+                    <th className="px-2 py-3 font-light w-auto"> Mandate </th>
+                    <th className="px-2 py-3 font-light w-24"> Description </th>
+                    <th className="px-2 py-3 font-light w-24"> Status </th> 
+
+                  </tr>
+                </thead>
+                <tbody className="w-full text-sm text-left text-muted-foreground divide-y divide-border">
+                  {
+                    allActions
+                      ?.filter((action): action is Action => action !== undefined)
+                      .sort((a, b) => {
+                        // Get block numbers, prioritizing proposedAt over requestedAt
+                        const getBlockNumber = (action: Action): bigint => {
+                          const proposed = typeof action.proposedAt === 'bigint' 
+                            ? action.proposedAt 
+                            : (action.proposedAt ? BigInt(action.proposedAt as unknown as string) : 0n);
+                          const requested = typeof action.requestedAt === 'bigint'
+                            ? action.requestedAt
+                            : (action.requestedAt ? BigInt(action.requestedAt as unknown as string) : 0n);
+                          
+                          return proposed > 0n ? proposed : requested;
+                        };
+                        
+                        const blockA = getBlockNumber(a);
+                        const blockB = getBlockNumber(b);
+                        
+                        // Sort descending (newer/higher block numbers first)
+                        return blockB > blockA ? 1 : blockB < blockA ? -1 : 0;
+                      })
+                      .map((action: Action) => {
+                        return (
+                          <tr
+                            key={action.actionId}
+                            className="text-xs text-left text-foreground"
+                          >
+                            {/* Date */}
+                            <td className="ps-4 px-2 py-3 w-40">
+                              <a
+                                href="#"
+                                onClick={(e) => {
+                                  const paramValues = callDataToActionParams(action, powers)
+                                  const mandate = powers?.mandates?.find(l => l.index === action.mandateId)
+                                  const dataTypes = mandate?.params?.map(p => p.dataType)
+                                  setAction({...action, paramValues: paramValues, dataTypes: dataTypes, upToDate: false})
+                                  e.preventDefault()
+                                  router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
+                                }}
+                                className="text-xs whitespace-nowrap py-1 px-1 underline text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                {(() => {
+                                  // Get the earliest non-zero timestamp between proposed and requested
+                                  let targetBlock: bigint | undefined;
+                                  const proposedAt = typeof action.proposedAt === 'bigint' 
+                                    ? action.proposedAt 
+                                    : (action.proposedAt ? BigInt(action.proposedAt as unknown as string) : 0n);
+                                  const requestedAt = typeof action.requestedAt === 'bigint'
+                                    ? action.requestedAt
+                                    : (action.requestedAt ? BigInt(action.requestedAt as unknown as string) : 0n);
+
+                                  if (proposedAt > 0n && requestedAt > 0n) {
+                                    targetBlock = proposedAt < requestedAt ? proposedAt : requestedAt;
+                                  } else if (proposedAt > 0n) {
+                                    targetBlock = proposedAt;
+                                  } else if (requestedAt > 0n) {
+                                    targetBlock = requestedAt;
+                                  }
+
+                                  if (!targetBlock) {
+                                    return 'No timestamp';
+                                  }
+
+                                  const timestampData = timestamps.get(`${chainId}:${targetBlock}`)
+                                  const timestamp = timestampData?.timestamp
+                                  
+                                  if (!timestamp || timestamp <= 0n) {
+                                    return 'Loading...'
+                                  }
+                                  
+                                  const timestampNumber = Number(timestamp)
+                                  if (isNaN(timestampNumber) || timestampNumber <= 0) {
+                                    return 'Invalid date'
+                                  }
+                                  
+                                  try {
+                                    return `${toFullDateFormat(timestampNumber)}: ${toEurTimeFormat(timestampNumber)}`
+                                  } catch (error) {
+                                    console.error('Date formatting error:', error, { timestamp, timestampNumber })
+                                    return 'Date error'
+                                  }
+                                })()}
+                              </a>
+                            </td>
+
+                            {/* Action ID */}
+                            <td className="px-2 py-3 w-32">
+                              <div className="truncate text-muted-foreground text-xs font-mono">
+                                {`${action.actionId.toString().slice(0, 6)}...${action.actionId.toString().slice(-4)}`}
+                              </div>
+                            </td>
+
+                            {/* Mandate */}
+                            <td className="px-2 py-3 w-auto">
+                              <div className="truncate text-muted-foreground text-xs">
+                                {shorterDescription(mandates.find(mandate => mandate.index == action.mandateId)?.nameDescription, "short")}
+                              </div>
+                            </td>
+
+                            {/* Description */}
+                            <td className="px-2 py-3 w-auto">
+                              <div className="truncate text-muted-foreground text-xs">
+                                {action.description ? ` ${action.description.length > 20 ? action.description.slice(0, 20) + '...' : action.description}` : 'No description'}
+                              </div>
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-2 py-3 w-24">
+                              <div className="truncate text-muted-foreground text-xs">
+                                {parseProposalStatus(String(action.state))}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        :
+        <div className="w-full flex flex-row gap-1 text-sm text-muted-foreground justify-center items-center text-center p-3">
+          No actions found
+        </div>
+      }
+    </div>
+  );
+}

@@ -3,30 +3,25 @@
 import React from "react";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { usePowersStore, useStatusStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
+import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import { NavigationDropdownMenu } from './NavigationDropdownMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { parseAddress } from '@/utils/addressUtils';
-import { defaultPowers101 } from '@/context/defaultProtocols'
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Powers } from "@/context/types";
 import { usePowers } from "@/hooks/usePowers";
 import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { BlockCounter } from "@/components/BlockCounter";
 
-import { useErrorStore } from "@/context/store";
 import { parseChainId } from "@/utils/parsers";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
     const pathname = usePathname();
     const powers = usePowersStore();
-    const statusPowers = useStatusStore();
     const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
@@ -37,15 +32,13 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const publicClient = usePublicClient();
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
-    const isFetchingRef = useRef(false);
     const action = useActionStore();
     const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
 
     console.log("layout being triggered")
 
     const triggerName =
-      pathname.includes('/profile') ? "Profile" : 
-      pathname.includes('/allDaos') ? "All DAOs" : 
+      pathname.includes('/profile') ? "Profile" :  
       !chainId ? "Navigation" :
       "Main"
 
@@ -98,8 +91,8 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
 
   return (  
     <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
-      <header className="border-b border-border px-3 sm:px-4 py-4 bg-background">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+      <header className="w-full flex flex-col items-center  border-b border-border px-3 sm:px-4 py-4 bg-background">
+        <div className="w-full flex flex-wrap items-center justify-between max-w-6xl gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">{
                 powers.name ? powers.name : "FORUM"

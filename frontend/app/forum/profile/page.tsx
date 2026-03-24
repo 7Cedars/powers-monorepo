@@ -138,7 +138,7 @@ export default function UserProfile() {
                   </h4>
                   <div className="space-y-3 p-4">
                     {DEFAULT_TOP_MESSAGES.map((msg, index) =>
-                    <div key={msg.id} className="border border-border/50 rounded p-3 space-y-2 hover:border-border transition-colors">
+                    <div key={msg.id} className="border border-border/50  p-3 space-y-2 hover:border-border transition-colors">
                         <div className="flex items-center justify-between">
                           <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">#{index + 1} — {msg.dao}</span>
                           <span className="font-mono text-xs text-foreground font-medium flex items-center gap-1">
@@ -148,7 +148,7 @@ export default function UserProfile() {
                         <p className="font-mono text-xs text-muted-foreground leading-relaxed line-clamp-2">"{msg.content}"</p>
                         <button
                         onClick={() => router.push(`/view/${msg.daoSlug}/mandate/${msg.mandateId}`)}
-                        className="w-full font-mono text-[10px] uppercase tracking-wider text-center py-1.5 border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors">
+                        className="w-full font-mono text-[10px] uppercase tracking-wider text-center py-1.5 border border-border  text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors">
                         
                           View in Chatroom →
                         </button>

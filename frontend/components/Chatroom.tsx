@@ -544,7 +544,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
             <button
               onClick={removeAllInstallations}
               disabled={isLoading}
-              className="ml-2 px-3 py-1 bg-destructive text-destructive-foreground rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+              className="ml-2 px-3 py-1 bg-destructive text-destructive-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
             >
               Remove All Installations
             </button>
@@ -568,7 +568,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
                 disabled={isAddingMember || groupChat.memberAddresses.some(
                   (memberAddr) => memberAddr.toLowerCase() === address.toLowerCase()
                 )}
-                className="px-3 py-1 bg-primary text-primary-foreground rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+                className="px-3 py-1 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
                 title={groupChat.memberAddresses.some(
                   (memberAddr) => memberAddr.toLowerCase() === address.toLowerCase()
                 ) ? 'Already a member' : 'Add your wallet to group'}
@@ -608,7 +608,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
             <button
               onClick={initializeClient}
               disabled={isLoading}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+              className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
             >
               {isLoading ? 'Connecting to XMTP...' : 'Connect to XMTP'}
             </button>
@@ -632,7 +632,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
           <button
             onClick={handleCreateGroupChat}
             disabled={isCreatingGroup}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+            className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
           >
             {isCreatingGroup ? 'Creating Group Chat...' : 'Create Group Chat'}
           </button>
@@ -685,12 +685,12 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
           {/* Message Input */}
           <div className="px-6 py-3 border-t border-border">
             {sendError && (
-              <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive font-mono">
+              <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20  text-xs text-destructive font-mono">
                 Failed to send: {sendError}
               </div>
             )}
             {addMemberError && (
-              <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive font-mono">
+              <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20  text-xs text-destructive font-mono">
                 {addMemberError}
               </div>
             )}
@@ -701,13 +701,13 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-background border border-border rounded px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
+                className="flex-1 bg-background border border-border  px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
                 disabled={isSending}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!messageInput.trim() || isSending}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? 'Sending...' : 'Send'}
               </button>
