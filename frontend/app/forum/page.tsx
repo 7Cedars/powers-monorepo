@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { DaoSummaryBox } from '@/components/DaoSummaryBox'; 
+import { OrgSummaryBox } from '@/components/OrgSummaryBox'; 
 import { AlertDialog } from '@/components/AlertDialog';
 import { Powers } from '@/context/types';
 import { useSavedProtocolsStore } from '@/context/store';
@@ -61,7 +61,7 @@ export default function AllDaos() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {
             savedProtocols.map((protocol) => (
-              <DaoSummaryBox
+              <OrgSummaryBox
                 key={protocol.contractAddress}
                 powers={protocol}
                 onArchive={() => setArchiveTarget(protocol)}

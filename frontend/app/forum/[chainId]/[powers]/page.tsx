@@ -1,7 +1,7 @@
 'use client'
  import { useState, useEffect } from 'react'; 
  import { usePowersStore, useStatusStore } from "@/context/store";  
- import { DaoSummaryBox } from '@/components/DaoSummaryBox';
+ import { OrgSummaryBox } from '@/components/OrgSummaryBox';
  import { ActivityOverview } from './ActivityOverview';
  import { identifyFlows } from '@/utils/identifyFlows';
  import { usePowers } from '@/hooks/usePowers';
@@ -80,7 +80,7 @@ import { MetadataLinks } from '@/components/MetadataLinks';
         <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 h-0">
         
             {/* DAO Summary - full width top */}
-            <DaoSummaryBox powers={powers} alignment='row' showHeader={false} /> 
+            <OrgSummaryBox powers={powers} alignment='row' showHeader={false} /> 
 
             <MetadataLinks 
                       website={powers?.metadatas?.website}

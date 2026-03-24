@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Powers } from '@/context/types'
-import { DaoSummaryBox } from '@/components/DaoSummaryBox'
+import { OrgSummaryBox } from '@/components/OrgSummaryBox'
 import { AlertDialog } from '@/components/AlertDialog'
 import { defaultPowers101 } from '@/context/defaultProtocols'
 import { useSavedProtocolsStore } from '@/context/store'
@@ -62,7 +62,7 @@ export default function ProtocolPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {savedProtocols.map((protocol) => (
-            <DaoSummaryBox
+            <OrgSummaryBox
               key={protocol.contractAddress}
               powers={protocol}
               onArchive={() => handleArchiveDao(protocol.contractAddress)}
