@@ -26,7 +26,7 @@ import { hashAction } from '@/utils/hashAction'
 import { useBlocks } from '@/hooks/useBlocks'
 import { parseChainId } from '@/utils/parsers'
 import { toFullDateFormat, toEurTimeFormat } from '@/utils/toDates'
-import { fromFutureBlockToDateTime } from '@/organisations/helpers'
+import { fromFutureBlockToDateTime } from '@/public/organisations/helpers'
 import { useBlockNumber } from 'wagmi'
 import {
   CalendarDaysIcon,

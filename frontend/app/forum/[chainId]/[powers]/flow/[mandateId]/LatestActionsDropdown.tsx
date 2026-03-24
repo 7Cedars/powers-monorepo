@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { useLatestActions, ActionWithBlockNumber } from "@/hooks/useLatestActions";
 import { useBlocks } from "@/hooks/useBlocks";
 import { toFullDateAndTimeFormat } from "@/utils/toDates";

@@ -6,7 +6,7 @@ import { ZKPassport, ProofResult } from "@zkpassport/sdk";
 import { parseEther, keccak256, toHex, encodeAbiParameters, parseAbiParameters, encodeFunctionData } from "viem";
 import { Button } from "../../components/Button";
 import { LoadingBox } from "../../components/LoadingBox";
-import { getInitialisedAddress } from "../../organisations/helpers";
+import { getInitialisedAddress } from "../../public/organisations/helpers";
 import { CheckCircleIcon, XCircleIcon, ExclamationCircleIcon, QrCodeIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import ZKPassportPowersRegistry from "../../context/builds/ZKPassport_PowersRegistry.json";
 import QRCode from "react-qr-code";

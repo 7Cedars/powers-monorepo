@@ -3,7 +3,7 @@
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DeployedExamples } from "@/organisations/DeployedExamples";
+import { DeployedExamples } from "@/public/organisations/DeployedExamples";
 import Image from "next/image";
 
 export function SectionExamples() {

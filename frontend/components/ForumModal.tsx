@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 
 interface ForumModalProps {
   open: boolean;

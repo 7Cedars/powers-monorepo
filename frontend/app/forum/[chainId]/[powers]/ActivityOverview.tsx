@@ -7,7 +7,7 @@ import { identifyFlows } from '@/utils/identifyFlows';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useBlockNumber } from 'wagmi';
 import { parseChainId } from '@/utils/parsers';
-import { calculateVoteTimeRemaining } from '@/organisations/helpers';
+import { calculateVoteTimeRemaining } from '@/public/organisations/helpers';
 import { SearchFilterSort } from '@/components/SearchFilterSort';
 
 interface ActivityOverviewProps {
