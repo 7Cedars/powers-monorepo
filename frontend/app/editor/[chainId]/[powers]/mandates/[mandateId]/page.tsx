@@ -154,7 +154,7 @@ const Page = () => {
 
           {/* Go to Forum button in case there is a vote */}
           {Number(mandate?.conditions?.quorum) > 0 && populatedAction?.state != 0 && populatedAction?.state != 8 && (
-          <section className="w-full flex justify-center items-center py-4 text-slate-800 opacity-75 hover:opacity-100">
+          <section className="w-full flex justify-center items-center py-4 text-foreground opacity-75 hover:opacity-100">
                <div className="w-full">
                  <Button 
                    size={0} 

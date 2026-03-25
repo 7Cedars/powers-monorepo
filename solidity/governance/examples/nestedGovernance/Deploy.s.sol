@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { DeployHelpers } from "../../DeployHelpers.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -52,7 +52,7 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         powersParent = new Powers(
             "Nested Governance Parent", 
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreian4g4wbuollclyml5xyao3hvnbxxduuoyjdiucdmau3t62rj46am",
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibkvco2wy5aflglgynmlfp4p26ogctumtuppvwc2b6mazqwk7l24q//parent.json",
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid) 
@@ -65,7 +65,7 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         powersChildFactory = new PowersFactory(
             "Nested Governance Child",
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreig4aaje57wiv3rfboadft5pp2kgwzfurwgbjwleugc3ddbnjlc6um", 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibkvco2wy5aflglgynmlfp4p26ogctumtuppvwc2b6mazqwk7l24q/child.json", 
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid),
@@ -144,10 +144,10 @@ contract Deploy is DeployHelpers {
         }
         targets[5] = treasury; 
 
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Executive", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Child", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibgdw6nknrwg25sdbslhqn3ismroaoxhl5pdcrvintz7jncja6f4a");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Executive", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Child", "");
         calldatas[4] = abi.encodeWithSelector(IPowers.setTreasury.selector, treasury);
         calldatas[5] = abi.encodeWithSelector( 
             Safe.execTransaction.selector,
@@ -345,10 +345,10 @@ contract Deploy is DeployHelpers {
 
         // Mandate 1: Setup
         calldatas = new bytes[](6);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Parent DAO", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifwvrlo3jsu2i4trkgfu4vy6v5tk2y5iiu5hf3d6fez34d43y5yn4");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Parent DAO", "");
         calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, address(powersParent)); // No treasury for child, but could be set to own Safe if desired
         calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 

@@ -145,9 +145,9 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
       </div>
 
       {/* Main editor content - hidden on small screens */}
-      <div className="hidden lg:flex lg:flex-col lg:h-screen lg:min-h-0">
+      <div className="hidden lg:flex lg:flex-col lg:h-screen lg:min-h-0 bg-background">
       <header className="z-25 border-b border-border px-3 sm:px-4 py-4 bg-background">
-        <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+        <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-background">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a href="/editor" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
               {powers.name ? powers.name : "EDITOR"} 
@@ -202,8 +202,10 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
           </div>
         </div>
       </header>
-
+      
       {children}
+            
+      
       </div>
     </div> 
     )

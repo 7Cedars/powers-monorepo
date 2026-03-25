@@ -215,10 +215,10 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
   }, [pathname, action])
 
   return (  
-    <div className="min-h-screen bg-slate-100 relative">
+    <div className="min-h-screen bg-background relative">
       {/* Background PowersFlow - fills entire screen as ground layer */}
       <div 
-        className="fixed top-0 left-0 w-full h-full bg-slate-100 z-0" 
+        className="fixed top-0 left-0 w-full h-full bg-background z-0" 
         style={{ boxShadow: 'inset 8px 0 16px -8px rgba(0, 0, 0, 0.1)' }}
       >
         { chainId && powersAddress &&

@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { DeployHelpers } from "../../DeployHelpers.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -41,7 +41,7 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         powers = new Powers(
             "Optimistic Execution", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibzf5td4orxnfknmrz5giiifw4ltsbzciaam7izm6dok5pkm6aqqa", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifvxdsvacp3h36drv5ggj5bft7pl6jx3cotsdb4zvrzwfn2l3gu7m", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
@@ -71,10 +71,10 @@ contract Deploy is DeployHelpers {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreic7kg7g35ww2jv2kxpfmedept4z44ztt4zd54uiqojyqwcqunrrjy");
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreifke7bfkxxs45unssm6hdr6s6464yrkwds3nw3jkn74cblf5oziea");
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Executives", "");
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;

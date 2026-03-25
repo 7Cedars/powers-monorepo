@@ -23,7 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html suppressHydrationWarning lang="en">
       <head />
      
-      <body className="h-dvh w-screen relative bg-slate-100 overflow-hidden">
+      <body className="h-dvh w-screen relative bg-background overflow-hidden">
         <ThemeProvider attribute="class">
           <Providers>
             {children}

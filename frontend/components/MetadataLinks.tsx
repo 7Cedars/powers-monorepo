@@ -113,85 +113,69 @@ export function MetadataLinks({
   }
 
   return (
-    <section className="w-full flex flex-col gap-3 border border-border bg-muted/30 p-4">
-      {/* Main Links */}
-      {mainLinks.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {mainLinks.map((link, index) => {
-            const Icon = link.icon
-            return (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
-                title={link.label}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="text-xs font-mono uppercase tracking-wider">{link.label}</span>
-              </a>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Communication channels */}
-      {socialLinks.length > 0 && (
-        <div className="w-full">
-          <div className="flex flex-wrap gap-2 items-center">
-            {socialLinks.map((link, index) => {
-              const Icon = link.icon
-              return (
-                <a
-                  key={index}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-background border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-primary"
-                  title={link.label}
-                >
-                  <Icon className="w-4 h-4" />
-                </a>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Parent Contracts */}
-      {validParents.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {validParents.map((parent, index) => (
+    <section className="w-full border border-border bg-muted/30 p-4">
+      <div className="flex flex-wrap gap-3 items-center">
+        {/* Main Links */}
+        {mainLinks.map((link, index) => {
+          const Icon = link.icon
+          return (
             <a
-              key={index}
-              href={`/editor/${chainId ? Number(chainId) : ''}/${parent.address}`}
+              key={`main-${index}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
-              title={`Parent: ${parent.title}`}
+              title={link.label}
             >
-              <ArrowUpIcon className="w-4 h-4" />
-              <span className="text-xs font-mono uppercase tracking-wider">{parent.title}</span>
+              <Icon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{link.label}</span>
             </a>
-          ))}
-        </div>
-      )}
+          )
+        })}
 
-      {/* Child Contracts */}
-      {validChildren.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {validChildren.map((child, index) => (
+        {/* Communication channels */}
+        {socialLinks.map((link, index) => {
+          const Icon = link.icon
+          return (
             <a
-              key={index}
-              href={`/editor/${chainId ? Number(chainId) : ''}/${child.address}`}
-              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
-              title={`Child: ${child.title}`}
+              key={`social-${index}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-background border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-primary"
+              title={link.label}
             >
-              <ArrowDownIcon className="w-4 h-4" />
-              <span className="text-xs font-mono uppercase tracking-wider">{child.title}</span>
+              <Icon className="w-4 h-4" />
             </a>
-          ))}
-        </div>
-      )}
+          )
+        })}
+
+        {/* Parent Contracts */}
+        {validParents.map((parent, index) => (
+          <a
+            key={`parent-${index}`}
+            href={`/editor/${chainId ? Number(chainId) : ''}/${parent.address}`}
+            className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+            title={`Parent: ${parent.title}`}
+          >
+            <ArrowUpIcon className="w-4 h-4" />
+            <span className="text-xs font-mono uppercase tracking-wider">{parent.title}</span>
+          </a>
+        ))}
+
+        {/* Child Contracts */}
+        {validChildren.map((child, index) => (
+          <a
+            key={`child-${index}`}
+            href={`/editor/${chainId ? Number(chainId) : ''}/${child.address}`}
+            className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+            title={`Child: ${child.title}`}
+          >
+            <ArrowDownIcon className="w-4 h-4" />
+            <span className="text-xs font-mono uppercase tracking-wider">{child.title}</span>
+          </a>
+        ))}
+      </div>
     </section>
   )
 }

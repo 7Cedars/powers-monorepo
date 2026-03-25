@@ -52,8 +52,8 @@ export default function AllDaos() {
   // const displayName = ensName || (walletAddress ? parseAddress(walletAddress) : ''); // Needs to be implemented through asap.
 
   return (
-    <div className="min-h-full min-w-full flex flex-col bg-background scanlines"> 
-      <main className="flex-1 max-w-6xl mx-auto w-full min-h-full px-4 py-8">
+    <div className="min-h-screen flex flex-col scanlines"> 
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         <h1 className="font-mono text-foreground tracking-wider mb-2 text-center uppercase text-lg">All organisations</h1>
         <p className="font-mono text-xs text-muted-foreground text-center mb-6">Here is an overview of all organisations saved in your browser.</p>
 

@@ -308,11 +308,11 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 organisation-deploy : 
 	@echo "Deploying organisation..."
-	forge script script/organisations/culturalStewardsDAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)  
+	forge script governance/culturalStewardsDAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)  
 
 example-deploy : 
 	@echo "Deploying example contracts..."
-	forge script script/organisations/examples/Powers101.s.sol $(SEPOLIA_DEPLOY_ARGS)
+	forge script governance/examples/bicameralism/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
 
 
 powers-initialise :

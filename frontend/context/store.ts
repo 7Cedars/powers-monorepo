@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Action, CommunicationChannels, Powers, Status } from '../context/types'
 import { Governed721DAO, CulturalStewardsDAO, defaultPowers101 } from './defaultProtocols';
+import { stringifyWithBigInt, parseWithBigInt } from '../utils/localStorage';
 
 // Action Store
 type PowersStore = Powers;
@@ -112,7 +113,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
       let protocols: Powers[] = []
       
       if (localStore && localStore !== 'undefined') {
-        protocols = JSON.parse(localStore)
+        protocols = parseWithBigInt<Powers[]>(localStore)
       }
 
       // Check if default protocols already exist by contract address
@@ -154,7 +155,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
     
     if (!exists) {
       const updated = [...savedProtocols, protocol]
-      localStorage.setItem('powersProtocols', JSON.stringify(updated))
+      localStorage.setItem('powersProtocols', stringifyWithBigInt(updated))
       set({ savedProtocols: updated })
       console.log('Protocol added to localStorage:', protocol.contractAddress)
     }
@@ -165,7 +166,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
     const updated = savedProtocols.filter(
       p => p.contractAddress.toLowerCase() !== contractAddress.toLowerCase()
     )
-    localStorage.setItem('powersProtocols', JSON.stringify(updated))
+    localStorage.setItem('powersProtocols', stringifyWithBigInt(updated))
     set({ savedProtocols: updated })
     console.log('Protocol removed from localStorage:', contractAddress)
     console.log('Remaining protocols:', updated.length)
@@ -176,7 +177,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
     const updated = savedProtocols.map(p => 
       p.contractAddress === contractAddress ? { ...p, ...updates } : p
     )
-    localStorage.setItem('powersProtocols', JSON.stringify(updated))
+    localStorage.setItem('powersProtocols', stringifyWithBigInt(updated))
     set({ savedProtocols: updated })
   }
 }))

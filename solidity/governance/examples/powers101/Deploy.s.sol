@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { DeployHelpers } from "../../DeployHelpers.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -55,7 +55,7 @@ contract Deploy is DeployHelpers {
         nominees = new Nominees();
         powers = new Powers(
             "Powers 101", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicbh6txnypkoy6ivngl3l2k6m646hruupqspyo7naf2jpiumn2jqe", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibwlnpe5id2fhheua3uqczppn3saxu543e4uckjjbwn76sl3jtamq", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -94,9 +94,9 @@ contract Deploy is DeployHelpers {
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreihndmtjkldqnw6ae2cj43hlizc5yschvekqxo22we4yc3fqfzet7q");  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreib76t4iaj2ggytk2goeig4lkp36nzp3qrz6huhntgmg6jorvyf52y"); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreigyjqthpltw7crvqm3omqplelatqt6yd52qgwlret7nl4jptlfjhq"); 
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", ""); 
         calldatas[3] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 

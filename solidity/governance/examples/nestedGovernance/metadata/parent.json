@@ -1,8 +1,8 @@
 {
   "icon": "",
-  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeihnlv5j7z5c2kx3afitiijlwg7u65snepooxtczt4biwr7t5gltoi",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeid3vmrhp6lazuiylctjz4rzddchuzy6uxjqusirgkxqnqgme3qjzi/parent.png",
   "description": 
-    "UPDATED: Nested Governance demonstrates how the Powers protocol can be used to layer governance within each other to create complex decision-making hierarchies. This example is a parent organisation that governs a child, but any type of complex structure can be created. The notion of sub-DAOs is similar to nested governance.",
+    "Nested Governance demonstrates how the Powers protocol can be used to layer governance within each other to create complex decision-making hierarchies. This example is a parent organisation that governs a child, but any type of complex structure can be created. The notion of sub-DAOs is similar to nested governance.",
   "website": "",
   "codeOfConduct": "", 
   "disputeResolution": "", 

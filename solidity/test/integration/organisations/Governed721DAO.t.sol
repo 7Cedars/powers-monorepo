@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import { Test, console } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
 import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
-import { Deploy } from "@script/organisations/governed721DAO/Deploy.s.sol";
+import { Deploy } from "@governance/examples/governed721DAO/Deploy.s.sol";
 import { Mandate } from "@src/Mandate.sol";
 
 contract Governed721DAO_IntegrationTest is Test {

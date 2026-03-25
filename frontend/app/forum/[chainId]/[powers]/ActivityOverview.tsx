@@ -176,9 +176,9 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
         <table className="w-full font-mono text-xs">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
-              <th className="max-w-28 px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Mandates</th>
+              <th className="w-auto md:max-w-none px-2 md:px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Mandates</th>
               <th className="hidden md:table-cell w-fit max-w-18 px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Roles</th>
-              <th className="w-[50px] md:w-[80px] px-2 md:px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Actions</th>
+              <th className="w-[40px] md:w-[60px] px-1 md:px-4 py-2 text-center md:text-left text-muted-foreground uppercase text-[10px] tracking-wider">Actions</th>
               <th className="hidden md:table-cell px-2 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider max-w-48">Latest</th>
               <th className="hidden md:table-cell px-2 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Status</th>
             </tr>
@@ -191,7 +191,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                 <React.Fragment key={`flow-${flowKey}`}>
                   {/* Flow Header Row */}
                   <tr className="bg-muted/20 border-b border-border">
-                    <td className="px-4 py-2.5 text-foreground">
+                    <td className="px-2 md:px-4 py-2.5 text-foreground">
                       <div className="flex items-center gap-2">
                         {mandates.length > 1 ?  
                         <span className="text-xs text-muted-foreground  cursor-pointer hover:underline"
@@ -206,11 +206,11 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                         }
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground text-[10px]" >
+                    <td className="hidden md:table-cell px-4 py-2.5 text-muted-foreground text-[10px]" >
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground text-[10px]" />
-                    <td className="px-4 py-2.5" />
-                    <td className="px-4 py-2.5" />
+                    <td className="px-1 md:px-4 py-2.5 text-muted-foreground text-[10px]" />
+                    <td className="hidden md:table-cell px-4 py-2.5" />
+                    <td className="hidden md:table-cell px-4 py-2.5" />
                   </tr>
 
                   {/* Mandate Rows */}
@@ -225,8 +225,8 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                         className="border-b border-border hover:bg-muted/30 transition-colors align-top"
                       >
                         {/* Mandates Column */}
-                        <td className="max-w-28 px-4 py-3 text-foreground">
-                          <div className="flex flex-col gap-1 pl-4">
+                        <td className="w-auto md:max-w-none px-2 md:px-4 py-3 text-foreground">
+                          <div className="flex flex-col gap-1 pl-2 md:pl-4">
                             <div>
                               <span className="text-muted-foreground mr-1.5">#{mandate.index.toString()}</span>
                               <span 
@@ -286,7 +286,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                         </td>
 
                         {/* Actions Column */}
-                        <td className="px-2 md:px-4 py-3 text-muted-foreground">
+                        <td className="px-1 md:px-4 py-3 text-muted-foreground text-center md:text-left">
                           {actions.length}
                         </td>
 

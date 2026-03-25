@@ -90,10 +90,10 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     }, [powers, powers.contractAddress, savedProtocols, addProtocol])
 
   return (  
-    <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
-      <header className="w-full flex flex-col items-center  border-b border-border px-3 sm:px-4 py-4 bg-background">
-        <div className="w-full flex flex-wrap items-center justify-between max-w-6xl gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+    <div className="h-screen w-screen flex flex-col bg-background scanlines overflow-hidden">
+      <header className="w-full flex flex-col items-center border-b border-border px-3 sm:px-4 py-4 flex-shrink-0">
+        <div className="w-full flex flex-wrap md:flex-nowrap items-center justify-center md:justify-between max-w-6xl gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 md:flex-1">
             <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">{
                 powers.name ? powers.name : "FORUM"
             } 
@@ -105,7 +105,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                   }
                 }} blockNumber={blockNumber} />
               }
-          </div>
+          </div> 
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {ready && authenticated && walletsReady && wallets[0] &&
             <>
@@ -151,7 +151,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         </div>
       </header>
 
-      <div className="border-b border-border px-4 py-1.5 bg-muted/5">
+      <div className="border-b border-border px-4 py-1.5 bg-muted/5 flex-shrink-0">
         <div className="max-w-6xl mx-auto flex items-center gap-2">
       
           { pathname.includes('/action') || pathname.includes('/mandate') || pathname.includes('/flow') ?
@@ -171,8 +171,10 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           }
         </div>
       </div>
-
-      {children}
+      
+      <main className="flex-1 overflow-y-auto min-h-0">
+        {children}
+      </main>
 
     </div> 
     )
