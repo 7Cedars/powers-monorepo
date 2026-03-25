@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Providers } from "../context/Providers"
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import { ThemeColorMeta } from "../components/ThemeColorMeta";
 
 export const metadata: Metadata = {
   title: "Powers Protocol",
@@ -10,7 +11,6 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#475569",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -23,8 +23,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html suppressHydrationWarning lang="en">
       <head />
      
-      <body className="h-dvh w-screen relative bg-slate-100 overflow-hidden">
+      <body className="h-dvh w-screen relative bg-background overflow-hidden">
         <ThemeProvider attribute="class">
+          <ThemeColorMeta />
           <Providers>
             {children}
           </Providers>

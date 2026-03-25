@@ -21,9 +21,9 @@ import { PowersMock } from "@mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 
 // organisations
-import { Powers101 } from "../script/organisations/examples/Powers101.s.sol";
-import { ElectionListsDAO } from "../script/organisations/examples/ElectionListsDAO.s.sol";
-// import { Deploy } from "../script/organisations/CulturalStewardsDAO/Deploy.s.sol";
+import { Deploy as Powers101 } from "@governance/examples/powers101/Deploy.s.sol";
+import { Deploy as ElectionListsDAO } from "@governance/examples/electionListsDao/Deploy.s.sol";
+// import { Deploy } from "@governance/examples/CulturalStewardsDAO/Deploy.s.sol";
 
 // helpers
 import { Nominees } from "@src/helpers/Nominees.sol";

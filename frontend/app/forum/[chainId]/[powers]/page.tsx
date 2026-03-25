@@ -74,10 +74,7 @@ import { MetadataLinks } from '@/components/MetadataLinks';
    }
  
    return (
-        // <div className="min-h-full min-w-full flex flex-col bg-background scanlines">
-        <>
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 h-0">
+        <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full overflow-y-auto px-2 sm:px-4 py-4 gap-4 min-h-0">
         
             {/* DAO Summary - full width top */}
             <OrgSummaryBox powers={powers} alignment='row' showHeader={false} /> 
@@ -102,9 +99,7 @@ import { MetadataLinks } from '@/components/MetadataLinks';
             {/* Treasury */}
             {/* Removed for now, can add this later again.  */}
  
-       </main> 
-       </>
+       </main>
    )
-    //  </div>);
  
  }

@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { InitialisePowers } from "@script/InitialisePowers.s.sol";
-import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { DeployHelpers } from "../../DeployHelpers.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
