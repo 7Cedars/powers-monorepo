@@ -11,9 +11,9 @@ export function Footer() {
   const pathname = usePathname();
 
   return (
-    <section className="w-full flex flex-col justify-between items-center min-h-fit bg-background snap-end py-6 border-t border-border snap-end">
+    <section className="w-full flex flex-col justify-between items-center sm:items-start min-h-fit bg-background snap-end py-6 border-t border-border snap-end">
         
-        <div className="max-w-7xl w-full flex md:flex-row flex-col justify-between items-center md:items-start text-foreground text-sm px-4 gap-8 md:gap-16 font-mono">
+        <div className="max-w-7xl w-full flex md:flex-row flex-col justify-between items-center sm:items-start md:items-start text-foreground text-sm px-4 gap-8 md:gap-16 font-mono">
             <div className="grid md:grid-cols-2 grid-cols-2 gap-8 md:gap-28">
                 <div className="flex flex-col gap-3 justify-start items-start">
                     <div className="font-bold uppercase tracking-wider text-xs"> 
