@@ -253,7 +253,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
                             {/* Latest Actions - shown on small screens only */}
                             {latestActions.length > 0 && (
                               <div className="md:hidden mt-2 flex flex-col gap-1">
-                                <span className="text-[10px] uppercase text-muted-foreground">Latest:</span>
+                                <span className="text-[10px] uppercase text-muted-foreground">Latest actions:</span>
                                 {latestActions.map((action, idx) => {
                                   const status = getActionStatus(action, mandate);
                                   return (

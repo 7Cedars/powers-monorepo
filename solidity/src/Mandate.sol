@@ -160,6 +160,10 @@ abstract contract Mandate is ERC165, IMandate {
         return mandates[MandateUtilities.hashMandate(powers, mandateId)].config;
     }
 
+    function version() public pure returns (string memory) {
+        return "v0.5.1";
+    }
+
     // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate. 
     // this function would then be virtual, so that when not overridden, it returns an empty string or a default uri. 
 

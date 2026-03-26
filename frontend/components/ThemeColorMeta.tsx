@@ -16,12 +16,12 @@ export function ThemeColorMeta() {
     // Create new meta tag with the appropriate color
     const meta = document.createElement("meta");
     meta.name = "theme-color";
-    meta.content = resolvedTheme === "dark" ? "#09090b" : "#FFFFFF";
+    meta.content = resolvedTheme === "dark" ? "#09090b" : "rgb(255, 255, 254)";
     document.head.appendChild(meta);
 
     return () => {
       meta.remove();
-    };
+    }; 
   }, [resolvedTheme]);
 
   return null;
