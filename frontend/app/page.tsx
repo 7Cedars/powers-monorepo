@@ -12,7 +12,7 @@ import { SectionIntro } from "./SectionIntro";
 import { SectionApplications } from "./SectionApplications";
 import { SectionExamples } from "./SectionExamples";
 import { SectionDeployDemo } from "./SectionDeployDemo";
-import { Footer } from "./Footer";
+import { Footer } from "../components/Footer";
 
 import { 
     ArrowUpRightIcon,

@@ -68,17 +68,17 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
       loadAndFetchData();
     }, []);
 
+    const fetchBlockNumber = async () => {
+      if (!publicClient) return;
+      try {
+        const number = await publicClient.getBlockNumber();
+        setBlockNumber(number);
+      } catch (error) {
+        console.error('Failed to fetch block number:', error);
+      }
+    };
+
     useEffect(() => {
-        const fetchBlockNumber = async () => {
-          if (powers)  
-          try {
-            const number = await publicClient?.getBlockNumber() ?? null;
-            setBlockNumber(number as bigint);
-          } catch (error) {
-            console.error('Failed to fetch block number:', error);
-            return null;
-          }
-        }
         fetchBlockNumber();
     }, [ publicClient ])
 
@@ -145,7 +145,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
       </div>
 
       {/* Main editor content - hidden on small screens */}
-      <div className="hidden lg:flex lg:flex-col lg:h-screen lg:min-h-0 bg-background">
+      <div className="hidden lg:flex lg:flex-col lg:h-full lg:min-h-0 bg-background">
       <header className="z-25 border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-background">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -155,6 +155,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
             {!isEditorPage && powersAddress && chainId &&
               <BlockCounter onRefresh={() => {
                 fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
+                fetchBlockNumber();
               }} blockNumber={blockNumber} />
             }
           </div>

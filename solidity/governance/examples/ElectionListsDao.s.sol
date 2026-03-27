@@ -45,7 +45,7 @@ contract Deploy is DeployHelpers {
         openElection = new ElectionList();
         powers = new Powers(
             "Open Election", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/openElection.png", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiaoijr2kvvs3jzjz3dmwstbh2kco4bkdsqmvlyjyqvoh46nts5v2m", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length

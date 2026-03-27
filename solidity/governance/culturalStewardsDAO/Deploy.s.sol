@@ -23,8 +23,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 // helpers
 import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
 import { Soulbound1155, Soulbound1155Factory } from "@src/helpers/Soulbound1155.sol";
-import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { PowersFactory } from "@src/helpers/PowersFactory.sol"; 
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { Governed721 } from "@src/helpers/Governed721.sol";
 import { Nominees } from "@src/helpers/Nominees.sol";
@@ -47,7 +46,6 @@ contract Deploy is DeployHelpers {
     Powers ideasSubDAO;
     Powers physicalSubDAO;
 
-    PowersDeployer powersDeployer;
     PowersFactory ideasDaoFactory;
     PowersFactory physicalDaoFactory;
     Soulbound1155 actvityToken;
@@ -122,14 +120,7 @@ contract Deploy is DeployHelpers {
         console2.log("Digital sub-DAO deployed at:", address(digitalSubDAO));
         console2.log("Activity Token deployed at:", address(actvityToken));
         console2.log("Merit Badges deployed at:", address(meritBadges));
-
-        // Deploy PowersDeployer
-        vm.startBroadcast();
-        console2.log("Deploying PowersDeployer...");
-        powersDeployer = new PowersDeployer();
-        vm.stopBroadcast();
-        console2.log("PowersDeployer deployed at:", address(powersDeployer));
-
+ 
         // setup Safe treasury.
         address[] memory owners = new address[](1);
         owners[0] = address(primaryDAO);
@@ -165,8 +156,7 @@ contract Deploy is DeployHelpers {
             string.concat(baseURI, "physicalSubDao.json"), // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
-            address(powersDeployer) // deployer
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
         );
         vm.stopBroadcast();
         console2.log("Physical sub-DAO factory deployed at:", address(physicalDaoFactory));
@@ -178,8 +168,7 @@ contract Deploy is DeployHelpers {
             string.concat(baseURI, "ideasSubDao.json"),
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
-            address(powersDeployer) // deployer
+            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
         vm.stopBroadcast();
         console2.log("Ideas sub-DAO factory deployed at:", address(ideasDaoFactory));
@@ -506,43 +495,43 @@ contract Deploy is DeployHelpers {
 
         // Executive: deploy a soulbound1155 instance by calling the factory
         // using bespokeAction_advance to be able to keep the admin field as input.  
-        mandateCount++;
-        conditions.allowedRole = 2; // = Any executive 
-        conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
-        primaryConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Deploy Merit Badge Contract: Deploy a Soulbound1155 contract to be used as merit badges for the Physical sub-DAO",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
-                config: abi.encode(
-                    initialisePowers.getInitialisedAddress("Soulbound1155Factory"), 
-                    Soulbound1155Factory.createSoulbound1155.selector,
-                    abi.encode("https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreighx6axdemwbjara3xhhfn5yaiktidgljykzx3vsrqtymicxxtgvi"), 
-                    inputParams, // these dynamic params will be ignored by the factory, but are needed to link the mandate to its chain. 
-                    abi.encode() 
-                ),
-                conditions: conditions
-            })
-        ); 
+        // mandateCount++;
+        // conditions.allowedRole = 2; // = Any executive 
+        // conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
+        // primaryConstitution.push(
+        //     PowersTypes.MandateInitData({
+        //         nameDescription: "Deploy Merit Badge Contract: Deploy a Soulbound1155 contract to be used as merit badges for the Physical sub-DAO",
+        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+        //         config: abi.encode(
+        //             initialisePowers.getInitialisedAddress("Soulbound1155Factory"), 
+        //             Soulbound1155Factory.createSoulbound1155.selector,
+        //             abi.encode("https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreighx6axdemwbjara3xhhfn5yaiktidgljykzx3vsrqtymicxxtgvi"), 
+        //             inputParams, // these dynamic params will be ignored by the factory, but are needed to link the mandate to its chain. 
+        //             abi.encode() 
+        //         ),
+        //         conditions: conditions
+        //     })
+        // ); 
 
         // Executive update the dependencies of the create Physical sub-DAO mandate to include the newly deployed Soulbound1155 as a dependency, so that it can be used in the config of the execute Physical sub-DAO creation mandate.
-        mandateCount++;
-        conditions.allowedRole = 2; // = Any executive
-        conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled. 
-        primaryConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Add dependency: Add the deployed Soulbound1155 as a dependency to the create Physical sub-DAO mandate",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
-                config: abi.encode(
-                    address(physicalDaoFactory), // target contract
-                    PowersFactory.addDependency.selector,
-                    abi.encode(), 
-                    inputParams, // these dynamic params will be ignored by the factory, but are needed to link the mandate to its chain. 
-                    mandateCount - 1, // the return value of the deployment needs to be added as dependency.
-                    abi.encode() 
-                ),
-                conditions: conditions
-            })
-        ); 
+        // mandateCount++;
+        // conditions.allowedRole = 2; // = Any executive
+        // conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled. 
+        // primaryConstitution.push(
+        //     PowersTypes.MandateInitData({
+        //         nameDescription: "Add dependency: Add the deployed Soulbound1155 as a dependency to the create Physical sub-DAO mandate",
+        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+        //         config: abi.encode(
+        //             address(physicalDaoFactory), // target contract
+        //             PowersFactory.addDependency.selector,
+        //             abi.encode(), 
+        //             inputParams, // these dynamic params will be ignored by the factory, but are needed to link the mandate to its chain. 
+        //             mandateCount - 1, // the return value of the deployment needs to be added as dependency.
+        //             abi.encode() 
+        //         ),
+        //         conditions: conditions
+        //     })
+        // ); 
 
         // Executives: Execute Physical sub-DAO creation
         mandateCount++;
@@ -556,9 +545,9 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Create Physical sub-DAO: Execute Physical sub-DAO creation",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
-                    physicalDaoFactory, // calling the Physical factory 
+                    address(physicalDaoFactory), // calling the Physical factory 
                     bytes4(keccak256("createPowers(address)")), // function selector for createPowers (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
-                    inputParams // no params 
+                    inputParams // address as input param 
                 ),
                 conditions: conditions
             })
@@ -2717,27 +2706,31 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Attendees: vote on the proposal to mint 'Merit' NFTs. If the proposal passes, the specified attendees receive their 'Merit' NFTs as recognition for their contributions.
-        mandateCount++;
-        conditions.allowedRole = 1; // = Attendees
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
-        conditions.succeedAt = 51; // = 51% majority
-        conditions.quorum = 77; // = Note: high threshold to ensure active participation in the voting process.
-        physicalConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Vote on 'Merit' NFT proposals: Attendees can vote on proposals to mint 'Merit' NFTs. If a proposal passes, the specified attendees receive their 'Merit' NFTs.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
-                config: abi.encode(
-                    createPlaceholderAddress("Dependency0"), // the actvityToken contract where 'Merit' NFTs are minted
-                    bytes4(keccak256("mint(address,uint256)")), // Soulbound1155.mint.selector, // function selector to call
-                    abi.encode(), // params before (role id 1 = Attendees) // the static params
-                    inputParams, // the dynamic params (== address to)
-                    abi.encode(block.number, address(0)) // We simply mint the id of the block number of the mint, the address input is that of artist, here not used.  
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
+        ///////////////////////////////////////// IMPORTANT NOTE /////////////////////////////////////////
+        // NB, TODO: The problem of deploying bespoke merit tokens should be solved through a single 1155 token contract. Encoding the address where they are minted. 
+        ///////////////////////////////////////// IMPORTANT NOTE /////////////////////////////////////////
+        
+        // // Attendees: vote on the proposal to mint 'Merit' NFTs. If the proposal passes, the specified attendees receive their 'Merit' NFTs as recognition for their contributions.
+        // mandateCount++;
+        // conditions.allowedRole = 1; // = Attendees
+        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
+        // conditions.succeedAt = 51; // = 51% majority
+        // conditions.quorum = 77; // = Note: high threshold to ensure active participation in the voting process.
+        // physicalConstitution.push(
+        //     PowersTypes.MandateInitData({
+        //         nameDescription: "Vote on 'Merit' NFT proposals: Attendees can vote on proposals to mint 'Merit' NFTs. If a proposal passes, the specified attendees receive their 'Merit' NFTs.",
+        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+        //         config: abi.encode(
+        //             createPlaceholderAddress("Dependency0"), // the actvityToken contract where 'Merit' NFTs are minted
+        //             bytes4(keccak256("mint(address,uint256)")), // Soulbound1155.mint.selector, // function selector to call
+        //             abi.encode(), // params before (role id 1 = Attendees) // the static params
+        //             inputParams, // the dynamic params (== address to)
+        //             abi.encode(block.number, address(0)) // We simply mint the id of the block number of the mint, the address input is that of artist, here not used.  
+        //         ),
+        //         conditions: conditions
+        //     })
+        // );
+        // delete conditions;
 
         // The following to mandates I still have to think through. Don't know if they are a good idea. 
         // I do think the Artist one is a nice example of voting on range fo actions. A common use case and not implemented yet. 
@@ -2747,23 +2740,23 @@ contract Deploy is DeployHelpers {
         // £todo Still need some type of payment for conveners. - not solved yet. 
 
         // REDEEM MERIT NFTS FOR REWARD  //
-        inputParams = new string[](1);
-        inputParams[0] = "address PayableTo"; // the address of the participant redeeming the 'Merit' NFT
+        // inputParams = new string[](1);
+        // inputParams[0] = "address PayableTo"; // the address of the participant redeeming the 'Merit' NFT
 
-        mandateCount++;
-        conditions.allowedRole = type(uint256).max; // = anyone
-        physicalConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Redeem 'Merit' NFTs for a rewards: Anyone with a 'Merit' NFT can redeem for a reward.",
-                targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_BurnToAccess"),
-                config: abi.encode(
-                    inputParams,
-                    createPlaceholderAddress("Dependency0") // the actvityToken contract where 'Merit' NFTs are minted
-                    ), // input params can include details about the redemption process, such as the rewards available and the criteria for redeeming 'Merit' NFTs.
-                conditions: conditions
-            })
-        );
-        delete conditions;
+        // mandateCount++;
+        // conditions.allowedRole = type(uint256).max; // = anyone
+        // physicalConstitution.push(
+        //     PowersTypes.MandateInitData({
+        //         nameDescription: "Redeem 'Merit' NFTs for a rewards: Anyone with a 'Merit' NFT can redeem for a reward.",
+        //         targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_BurnToAccess"),
+        //         config: abi.encode(
+        //             inputParams,
+        //             createPlaceholderAddress("Dependency0") // the actvityToken contract where 'Merit' NFTs are minted
+        //             ), // input params can include details about the redemption process, such as the rewards available and the criteria for redeeming 'Merit' NFTs.
+        //         conditions: conditions
+        //     })
+        // );
+        // delete conditions;
 
         // public: claim preset payment. 
         // Note that this can be changed / update by adopting new mandate. 

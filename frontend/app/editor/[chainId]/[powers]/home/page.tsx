@@ -80,6 +80,7 @@ export default function FlowPage() {
             parentContracts={powers?.metadatas?.parentContracts}
             childContracts={powers?.metadatas?.childContracts}
             chainId={powers?.chainId}
+            isEditorView={true}
           />
         </div>
         

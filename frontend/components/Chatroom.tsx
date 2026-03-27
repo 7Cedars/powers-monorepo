@@ -534,7 +534,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden min-h-[600px]">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-1 border-b border-border bg-muted/10">
         <div className="flex items-center gap-2">
@@ -639,7 +639,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         </div>
       ) : (
         // Chat loaded - Show messages
-        <>
+        <div className="flex-1 min-h-0 flex flex-col">
           <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2 scrollbar-thin flex flex-col">
             <div className="mt-auto space-y-3">
               {messages.length === 0 ? (
@@ -683,7 +683,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
           </div>
 
           {/* Message Input */}
-          <div className="px-6 py-3 border-t border-border">
+          <div className="flex-shrink-0 px-6 py-3 border-t border-border">
             {sendError && (
               <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20  text-xs text-destructive font-mono">
                 Failed to send: {sendError}
@@ -713,7 +713,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   )

@@ -2209,8 +2209,7 @@ contract PowersFactoryTest is TestSetupPowers {
             "https://factory.dao", // uri
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
-            MAX_EXECUTIONS, 
-            address(powersDeployer)
+            MAX_EXECUTIONS
             );
         factory.addMandates(mandateInitDataArray);
         vm.stopPrank();
@@ -2273,8 +2272,8 @@ contract PowersFactoryTest is TestSetupPowers {
             "ipfs://QmHash", // uri
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
-            MAX_EXECUTIONS,
-            address(powersDeployer));
+            MAX_EXECUTIONS
+            );
         factory.addMandates(mandateInitDataArray);
         address deployedAddress = factory.createPowers();
         vm.stopPrank();
@@ -2287,6 +2286,30 @@ contract PowersFactoryTest is TestSetupPowers {
         // assertEq(deployedPowers.hasRoleSince(deployedAddress, deployedPowers.ADMIN_ROLE()), 0);
         // assertEq(deployedPowers.hasRoleSince(address(factory), deployedPowers.ADMIN_ROLE()), 0);
         // assertNotEq(deployedPowers.hasRoleSince(address(daoMockChild1), deployedPowers.ADMIN_ROLE()), 0);
+    }
+
+    function testLastMandateDeployment() public {
+        vm.prank(address(daoMock)); 
+        address deployedAddress = factory.createPowers();
+
+        (PowersTypes.MandateInitData[] memory mandateInitDataArray) =
+            testConstitutions.powersTestConstitution(address(daoMock));
+
+        Powers deployedPowers = Powers(payable(deployedAddress));
+        
+        // Get the total number of mandates deployed
+        // mandateCounter returns the next ID to assign, so the last mandate ID is mandateCounter - 1
+        uint16 mandateCount = deployedPowers.mandateCounter();
+        uint16 expectedMandateCount = uint16(mandateInitDataArray.length) + 1; // +1 because mandateCounter starts at 1
+        assertTrue(mandateCount > 1, "No mandates were deployed");
+        assertTrue(mandateCount == expectedMandateCount, "Mandate count does not match initialization data length");
+        
+        uint16 lastMandateId = mandateCount - 1;
+
+        // Verify the last mandate is active and has a valid address
+        (address mandateAddress,, bool active) = deployedPowers.getAdoptedMandate(lastMandateId);
+        assertTrue(active, "Last mandate is not active");
+        assertTrue(mandateAddress != address(0), "Last mandate has zero address");
     }
 }
 

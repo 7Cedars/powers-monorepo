@@ -65,6 +65,7 @@ type MetadataLinksProps = {
   parentContracts?: familyMember[];
   childContracts?: familyMember[];
   chainId?: bigint | number;
+  isEditorView?: boolean;
 }
 
 export function MetadataLinks({ 
@@ -74,7 +75,8 @@ export function MetadataLinks({
   communicationChannels,
   parentContracts,
   childContracts,
-  chainId
+  chainId,
+  isEditorView = false
 }: MetadataLinksProps) {
   // Extract the first communication communicationChannels object (if it exists)
 
@@ -151,30 +153,42 @@ export function MetadataLinks({
         })}
 
         {/* Parent Contracts */}
-        {validParents.map((parent, index) => (
-          <a
-            key={`parent-${index}`}
-            href={`/editor/${chainId ? Number(chainId) : ''}/${parent.address}`}
-            className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
-            title={`Parent: ${parent.title}`}
-          >
-            <ArrowUpIcon className="w-4 h-4" />
-            <span className="text-xs font-mono uppercase tracking-wider">{parent.title}</span>
-          </a>
-        ))}
+        {validParents.map((parent, index) => {
+          const basePath = isEditorView ? '/editor' : '/forum'
+          const suffix = isEditorView ? '/home' : ''
+          const href = `${basePath}/${chainId ? Number(chainId) : ''}/${parent.address}${suffix}`
+          
+          return (
+            <a
+              key={`parent-${index}`}
+              href={href}
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+              title={`Parent: ${parent.title}`}
+            >
+              <ArrowUpIcon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{parent.title}</span>
+            </a>
+          )
+        })}
 
         {/* Child Contracts */}
-        {validChildren.map((child, index) => (
-          <a
-            key={`child-${index}`}
-            href={`/editor/${chainId ? Number(chainId) : ''}/${child.address}`}
-            className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
-            title={`Child: ${child.title}`}
-          >
-            <ArrowDownIcon className="w-4 h-4" />
-            <span className="text-xs font-mono uppercase tracking-wider">{child.title}</span>
-          </a>
-        ))}
+        {validChildren.map((child, index) => {
+          const basePath = isEditorView ? '/editor' : '/forum'
+          const suffix = isEditorView ? '/home' : ''
+          const href = `${basePath}/${chainId ? Number(chainId) : ''}/${child.address}${suffix}`
+          
+          return (
+            <a
+              key={`child-${index}`}
+              href={href}
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+              title={`Child: ${child.title}`}
+            >
+              <ArrowDownIcon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{child.title}</span>
+            </a>
+          )
+        })}
       </div>
     </section>
   )

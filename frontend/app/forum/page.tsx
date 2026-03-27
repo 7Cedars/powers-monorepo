@@ -6,7 +6,7 @@ import { AlertDialog } from '@/components/AlertDialog';
 import { Powers } from '@/context/types';
 import { useSavedProtocolsStore } from '@/context/store';
 import { usePowers } from '@/hooks/usePowers';
-import { Footer } from '../Footer';
+import { Footer } from '@/components/Footer';
 
 export default function AllDaos() {
   const { savedProtocols, removeProtocol, loadSavedProtocols } = useSavedProtocolsStore();

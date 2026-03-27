@@ -42,17 +42,17 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       !chainId ? "Navigation" :
       "Main"
 
+    const fetchBlockNumber = async () => {
+      if (!publicClient) return;
+      try {
+        const number = await publicClient.getBlockNumber();
+        setBlockNumber(number);
+      } catch (error) {
+        console.error('Failed to fetch block number:', error);
+      }
+    };
+
     useEffect(() => {
-        const fetchBlockNumber = async () => {
-          if (powers)  
-          try {
-            const number = await publicClient?.getBlockNumber() ?? null;
-            setBlockNumber(number as bigint);
-          } catch (error) {
-            console.error('Failed to fetch block number:', error);
-            return null;
-          }
-        }
         fetchBlockNumber();
     }, [publicClient, powers])
 
@@ -102,6 +102,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 <BlockCounter onRefresh={() => {
                   if (powersAddress && chainId) {
                     fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
+                    fetchBlockNumber();
                   }
                 }} blockNumber={blockNumber} />
               }

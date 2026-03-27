@@ -73,12 +73,12 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         totalSplitPayment = totalSplitPayment + percentage - currentPercentage; // we update the total split payment based on the change in percentage for the role.
     }
 
-    function setWhitelist(address token, bool isWhitelisted) external onlyOwner {
-        whitelist[token] = isWhitelisted;
+    function setWhitelist(address token, bool isWhite) external onlyOwner {
+        whitelist[token] = isWhite;
     }
 
-    function setBlacklist(address account, bool isBlacklisted) external onlyOwner {
-        blacklist[account] = isBlacklisted;
+    function setBlacklist(address account, bool isBlack) external onlyOwner {
+        blacklist[account] = isBlack;
     }
 
     function burn(uint256 tokenId) external onlyOwner {

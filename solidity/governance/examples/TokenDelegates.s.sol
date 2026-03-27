@@ -47,7 +47,7 @@ contract Deploy is DeployHelpers {
         simpleErc20Votes = new SimpleErc20Votes();
         powers = new Powers(
             "Token Delegates", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/tokenDelegates.json", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/tokenDelegates.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -71,9 +71,9 @@ contract Deploy is DeployHelpers {
     function createConstitution() internal returns (uint256 constitutionLength) {
         uint16 mandateCount = 0;
         // Mandate 1: Initial Setup
-        targets = new address[](5);
-        values = new uint256[](5);
-        calldatas = new bytes[](5);
+        targets = new address[](6);
+        values = new uint256[](6);
+        calldatas = new bytes[](6);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
@@ -81,7 +81,8 @@ contract Deploy is DeployHelpers {
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Voters", ""); 
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegates", ""); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
+        calldatas[4] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
+        calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
         conditions.allowedRole = 0; // = admin.

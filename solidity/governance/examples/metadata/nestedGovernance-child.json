@@ -17,10 +17,10 @@
       "forum": "",
       "documentation": "https://powers-docs.vercel.app/"
   },
-  "parentContracts": [ 
+  "parentContracts": [
     {
-      "title": "Nested Parent",
-      "address": "0x3F8a05F88e7074253a270aA03a0D90155150514C"
+      "title": "Parent organisation",
+      "address": "0xA5601fCCDB25E3Df889A3e547427F8b860A1e2f5"
     }
   ],
   "childContracts": [ ],

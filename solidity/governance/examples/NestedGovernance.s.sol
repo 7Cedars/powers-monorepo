@@ -41,6 +41,7 @@ contract Deploy is DeployHelpers {
     string[] dynamicParams;
 
     uint16 requestAllowanceMandateId; 
+    address cedars = vm.envAddress("DEV2_ADDRESS");
 
     function run() external {
         // step 0, setup.
@@ -52,7 +53,7 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         powersParent = new Powers(
             "Nested Governance Parent", 
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/nestedGovernance-parent.json",
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/nestedGovernance-parent.json",
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid) 
@@ -65,11 +66,10 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         powersChildFactory = new PowersFactory(
             "Nested Governance Child",
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/nestedGovernance-child.json", 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/nestedGovernance-child.json", 
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid),
-            address(0)  
+            helperConfig.getMaxExecutionsLength(block.chainid) 
         );
         vm.stopBroadcast();
         console2.log("Powers Child Factory deployed at:", address(powersChildFactory));
@@ -179,49 +179,6 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-
-        // Mandate: Child can request allowance
-        inputParams = new string[](5);
-        inputParams[0] = "address Sub-DAO";
-        inputParams[1] = "address Token";
-        inputParams[2] = "uint96 allowanceAmount";
-        inputParams[3] = "uint16 resetTimeMin";
-        inputParams[4] = "uint32 resetBaseMin";
-
-        mandateCount++;
-        conditions.allowedRole = 2; // Child
-        parentConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Request Allowance: Child DAO can request allowance.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
-                config: abi.encode(inputParams),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-        requestAllowanceMandateId = mandateCount;
-
-        // Mandate: Executive can set allowance (fulfilling request)
-        mandateCount++;
-        conditions.allowedRole = 1; // Executive
-        conditions.needFulfilled = mandateCount - 1; // Need request
-        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
-        conditions.succeedAt = 51; // >50% to pass
-        parentConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Set Allowance: Executive can set allowance for Child DAO.",
-                targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Action"),
-                config: abi.encode(
-                    inputParams,
-                    bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector 
-                    helperConfig.getSafeAllowanceModule(block.chainid)
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
         // Mandate: Initiate Child DAO Creation
         inputParams = new string[](1);
         inputParams[0] = "address Admin";
@@ -234,7 +191,7 @@ contract Deploy is DeployHelpers {
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
                     address(powersChildFactory), 
-                    bytes4(keccak256("createPowers(address)")), 
+                    bytes4(0x62b9a9b5), // = keccak256("createPowers(address)")), 
                     inputParams
                 ),
                 conditions: conditions
@@ -278,6 +235,48 @@ contract Deploy is DeployHelpers {
                     inputParams, 
                     mandateCount - 2, // parent mandate id (create child)
                     abi.encode() 
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Child can request allowance
+        inputParams = new string[](5);
+        inputParams[0] = "address Sub-DAO";
+        inputParams[1] = "address Token";
+        inputParams[2] = "uint96 allowanceAmount";
+        inputParams[3] = "uint16 resetTimeMin";
+        inputParams[4] = "uint32 resetBaseMin";
+
+        mandateCount++;
+        conditions.allowedRole = 2; // Child
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Request Allowance: Child DAO can request allowance.",
+                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                config: abi.encode(inputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+        requestAllowanceMandateId = mandateCount;
+
+        // Mandate: Executive can set allowance (fulfilling request)
+        mandateCount++;
+        conditions.allowedRole = 1; // Executive
+        conditions.needFulfilled = mandateCount - 1; // Need request
+        conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.succeedAt = 51; // >50% to pass
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Set Allowance: Executive can set allowance for Child DAO.",
+                targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_Action"),
+                config: abi.encode(
+                    inputParams,
+                    bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector 
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions
             })
@@ -333,6 +332,22 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Executive can revoke role: Executive can revoke a role.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
                 config: abi.encode(IPowers.revokeRole.selector, dynamicParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Admin: update uri 
+        inputParams = new string[](1);
+        inputParams[0] = "string newUri";
+
+        mandateCount++;
+        conditions.allowedRole = 0; // Admin
+        parentConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Admin can update URI: Admin can update the URI of the contract.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                config: abi.encode(IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })
         );
@@ -469,6 +484,22 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Members can revoke role: Members can revoke a role.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
                 config: abi.encode(IPowers.revokeRole.selector, dynamicParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Admin: update uri 
+        inputParams = new string[](1);
+        inputParams[0] = "string newUri";
+
+        mandateCount++;
+        conditions.allowedRole = 0; // Admin
+        childConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Admin can update URI: Admin can update the URI of the contract.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                config: abi.encode(IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })
         );

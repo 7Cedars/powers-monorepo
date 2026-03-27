@@ -114,8 +114,8 @@ contract Deploy is DeployHelpers {
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", string.concat(baseURI, "/admin.json"));  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", string.concat(baseURI, "/public.json")); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", string.concat(baseURI, "/artist.json"));
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Operator", string.concat(baseURI, "/operator.json")); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Owner", string.concat(baseURI, "/owner.json")); 
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Owner", string.concat(baseURI, "/owner.json")); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Operator", string.concat(baseURI, "/operator.json")); 
         calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", string.concat(baseURI, "/voter.json")); 
         calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", string.concat(baseURI, "/executive.json"));
         // Assign roles to msg.sender for initial setup (will be revoked later or kept for testing)
@@ -214,7 +214,7 @@ contract Deploy is DeployHelpers {
 
         // Intermediary Veto
         mandateCount++;
-        conditions.allowedRole = 3; // Intermediary
+        conditions.allowedRole = 3; // Operator
         conditions.needFulfilled = proposeSplitId;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
@@ -565,7 +565,7 @@ contract Deploy is DeployHelpers {
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
                 config: abi.encode(
                     IPowers.revokeRole.selector,
-                    abi.encode(3), // Intermediary role
+                    abi.encode(3), // Operator role
                     inputParams,
                     mandateCount - 2, // the mandate from which the return data will be fetched (the ownership check mandate)
                     abi.encode()
@@ -574,6 +574,26 @@ contract Deploy is DeployHelpers {
             })
         );
         delete conditions;
+
+        // Set URI 
+        inputParams = new string[](1);
+        inputParams[0] = "string newUri";
+
+        mandateCount++;
+        conditions.allowedRole = 5; // Executives
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.succeedAt = 51;
+        conditions.quorum = 10;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Executives can update URI: Executives can update the URI of the contract.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                config: abi.encode(IPowers.setUri.selector, inputParams),
+                conditions: conditions
+            })
+        ); 
+        delete conditions;
+
  
         // ASSIGNING VOTER ROLE: 
         uint256[] memory voterRoleCriteria = new uint256[](3);
