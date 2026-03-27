@@ -8,13 +8,13 @@ import { Powers } from './types'
  * for understanding the Powers protocol.
  */
 export const defaultPowers101: Powers = {
-  contractAddress: '0x1571A0F747c1E93889bbDfe7b44A60cC56a83cBA' as `0x${string}`,
+  contractAddress: '0x49cf94fc23ba8f6dffea883b7a260ce3cf97bf91' as `0x${string}`,
   chainId: 11155111n,
   name: 'Powers 101',
-  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicbh6txnypkoy6ivngl3l2k6m646hruupqspyo7naf2jpiumn2jqe",
+  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/powers101.json",
   metadatas: {
     icon: '/logo1_notext.png',
-    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeickdiqcdmjjwx6ah6ckuveufjw6n2g6qdvatuhxcsbmkub3pvshnm",
+    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/powers101.png",
     description: "A simple DAO with basic governance based on a separation of powers between delegates, an executive council and an admin. It is a good starting point for understanding the Powers protocol.",
     attributes: []
   },
@@ -31,7 +31,7 @@ export const defaultPowers101: Powers = {
  * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
 export const Governed721DAO: Powers = {
-  contractAddress: '0xd320992f831495a339ba432953688bdd6179a949' as `0x${string}`,
+  contractAddress: '0x3C9BdC75Fb5b89Ef2d80AC2A21b06aFC80726EEC' as `0x${string}`,
   chainId: 11155111n,
   name: 'Governed 721 DAO',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidklnn4b7heysrhr5pqtiabvcl5aldnzuv2mdybotdtx5vvq44nqi",
@@ -54,14 +54,14 @@ export const Governed721DAO: Powers = {
  * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
 export const CulturalStewardsDAO: Powers = {
-  contractAddress: '0x83D2a716e6881a2364E7e05EAfA75fd47B9589A3' as `0x${string}`,
+  contractAddress: '0x35f9418b033ab695AAC48793b1E011187b521Ca7' as `0x${string}`,
   chainId: 11155111n,
   name: 'Primary DAO',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifpvurtqfawksmflqgm342fdsvmmtme2pjzzlvdr7vippeygfy3au/primaryDao.json",
   metadatas: {
     icon: '/logo1_notext.png',
     banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeigawgiso7mndeswvhxgmkad2dg4fduwyojsk5zl5cz2lyyxc7jvae/primaryDao.png",
-    description: "The Cultural Stewardship DAO is a multi-layered ecosystem designed to foster an interplay between  ideational concepts, physical spaces, and digital manifestations.",
+    description: "The Cultural Stewardship Experiment is a multi-layered ecosystem designed to foster an interplay between ideational concepts, physical spaces, and digital manifestations. It is an example of the type of complex ecosystems that can be governed through the Powers Protocol.",
     attributes: []
   },
   mandateCount: 0n,

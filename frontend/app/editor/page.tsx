@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { Powers } from '@/context/types'
 import { OrgSummaryBox } from '@/components/OrgSummaryBox'
-import { AlertDialog } from '@/components/AlertDialog'
-import { defaultPowers101 } from '@/context/defaultProtocols'
+import { AlertDialog } from '@/components/AlertDialog' 
 import { useSavedProtocolsStore } from '@/context/store'
 import { usePowers } from '@/hooks/usePowers'
+import { Footer } from '@/components/Footer'
 
 export default function ProtocolPage() {
   const { savedProtocols, removeProtocol, loadSavedProtocols } = useSavedProtocolsStore();
@@ -86,6 +86,9 @@ export default function ProtocolPage() {
           }}
         />
       </main>
+
+      <Footer />
+
     </div>
   )
 }

@@ -669,7 +669,7 @@ contract Powers is EIP712, IPowers, Context {
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
-        return "0.5";
+        return "v0.5.1";
     }
 
     /// @inheritdoc IPowers

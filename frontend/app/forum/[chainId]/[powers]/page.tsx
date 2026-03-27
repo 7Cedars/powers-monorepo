@@ -87,6 +87,7 @@ import { MetadataLinks } from '@/components/MetadataLinks';
                       parentContracts={powers?.metadatas?.parentContracts}
                       childContracts={powers?.metadatas?.childContracts}
                       chainId={powers?.chainId}
+                      isEditorView={false}
                     />
 
             {/* THE ACTIVITY OF THE ORG - Unified mandates + actions */}

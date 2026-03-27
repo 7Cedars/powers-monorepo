@@ -215,7 +215,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
   }, [pathname, action])
 
   return (  
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-full bg-background relative z-0">
       {/* Background PowersFlow - fills entire screen as ground layer */}
       <div 
         className="fixed top-0 left-0 w-full h-full bg-background z-0" 

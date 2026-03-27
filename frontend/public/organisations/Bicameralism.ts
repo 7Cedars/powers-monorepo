@@ -46,7 +46,7 @@ export const Bicameralism: Organization = {
   dependencies:  [ ],
   exampleDeployment: {
     chainId: sepolia.id,
-    address: `0xC80B17A47734EAdEd90CcF41C961e09095F7b0B6`
+    address: `0x30f6d89bfaa26ddc9da641162fcbeda3da65ffeb`
   },
   allowedChains: [
     sepolia.id, 

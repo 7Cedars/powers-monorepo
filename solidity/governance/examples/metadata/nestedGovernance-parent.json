@@ -1,0 +1,32 @@
+{
+  "icon": "",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/nestedGovernance-parent.png",
+  "description": 
+    "Nested Governance demonstrates how the Powers protocol can be used to layer governance within each other to create complex decision-making hierarchies. This example is a parent organisation that governs a child, but any type of complex structure can be created. The notion of sub-DAOs is similar to nested governance.",
+  "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",
+  "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md", 
+  "disputeResolution": "",
+  "communicationChannels": {
+      "discord": "https://discordapp.com/users/1006928106487021638",
+      "telegram": "https://t.me/thd83",
+      "x": "https://x.com/7__Cedars",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo",
+      "forum": "",
+      "documentation": "https://powers-docs.vercel.app/"
+  },
+  "parentContracts": [ ],
+  "childContracts": [ 
+       {
+      "title": "Child 1",
+      "address": "0xA806a26cb1AE292a2D2553F29e2949B0e6087AFD"
+    },
+    {
+      "title": "Child 2",
+      "address": "0xA50C9c71793af4F93520956d9Aaf258F6aBEA17D"
+    }
+  ],
+  "attributes": [ ]
+}
