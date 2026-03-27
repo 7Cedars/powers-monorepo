@@ -31,7 +31,7 @@ export const defaultPowers101: Powers = {
  * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
 export const Governed721DAO: Powers = {
-  contractAddress: '0x3C9BdC75Fb5b89Ef2d80AC2A21b06aFC80726EEC' as `0x${string}`,
+  contractAddress: '0xA3f2227957Af05D35bE1cCc7d3152FbDee8e1f52' as `0x${string}`,
   chainId: 11155111n,
   name: 'Governed 721 DAO',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidklnn4b7heysrhr5pqtiabvcl5aldnzuv2mdybotdtx5vvq44nqi",

@@ -159,8 +159,8 @@ contract Deploy is DeployHelpers {
         // SET SPLIT PAYMENT
         // single executive: propose new split and vote. Input should be the new split between minter, intermediary and owner.
         inputParams = new string[](2);
-        inputParams[1] = "uint8 Role"; // 1 = Artist, 2 = Intermediary. The Old Owner gets the remainder after Artist and Intermediary split, so we only need to input the splits for Artist and Intermediary.
-        inputParams[0] = "uint8 Percentage";
+        inputParams[0] = "uint8 Role"; // 1 = Artist, 2 = Intermediary. The Old Owner gets the remainder after Artist and Intermediary split, so we only need to input the splits for Artist and Intermediary.
+        inputParams[1] = "uint8 Percentage";
 
         mandateCount++;
         conditions.allowedRole = 5; // Executive
