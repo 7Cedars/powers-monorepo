@@ -25,7 +25,7 @@ export function StaticInput({dataType, varName, values}: InputProps) {
 
             {
               <>
-                <div className="w-full h-fit flex items-center text-md justify-center rounded-md ps-2 outline outline-1 outline-slate-300">  
+                <div className="w-full h-fit flex items-center text-md justify-center  ps-2 outline outline-1 outline-slate-300">  
                   <input 
                     type={"string"}
                     name={`input${item}`} 

@@ -103,7 +103,7 @@ export function StaticForm({ mandate, staticDescription = true, onCheck }: Stati
       {/* nonce */}
       <div className="w-full mt-4 flex flex-row justify-center items-center ps-3 pe-6 gap-3">
         <label htmlFor="nonce" className="text-xs text-slate-600 ps-3 min-w-28">Nonce</label>
-        <div className="w-full h-fit flex items-center text-md justify-center rounded-md ps-2 outline outline-1 outline-slate-300">
+        <div className="w-full h-fit flex items-center text-md justify-center  ps-2 outline outline-1 outline-slate-300">
           <input 
             type="text" 
             name="nonce"
@@ -119,7 +119,7 @@ export function StaticForm({ mandate, staticDescription = true, onCheck }: Stati
       {staticDescription && 
       <div className="w-full mt-4 flex flex-row justify-center items-start ps-3 pe-6 gap-3 min-h-24">
         <label htmlFor="reason" className="text-xs text-slate-600 ps-3 min-w-28 pt-1">Description</label>
-        <div className="w-full flex items-center rounded-md outline outline-1 outline-slate-300">
+        <div className="w-full flex items-center  outline outline-1 outline-slate-300">
           <textarea 
             name="reason" 
             id="reason" 

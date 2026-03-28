@@ -6,8 +6,8 @@ import { Powers } from "@src/Powers.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { Deploy } from "@script/organisations/culturalStewardsDAO/Deploy.s.sol";
-import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
+import { Deploy } from "@governance/culturalStewardsDAO/Deploy.s.sol";
+import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol";
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol"; 
@@ -570,13 +570,13 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         mem.applyMembershipId = findMandateIdInOrg("Apply for Membership: Anyone can apply for membership to the DAO by submitting an application.", Powers(payable(mem.ideasSubDAOAddress)));
         mem.appParams = abi.encode(mem.member, "ipfs://application");
         vm.prank(mem.member);
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.applyMembershipId, mem.appParams, 1, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.applyMembershipId, mem.appParams, 1, "Apply for Ideas Sub-DAO Membership");
 
         // Assign (Moderator - Cedars)
         // Note: Cedars is assigned Role 3 (Moderator) in createIdeasConstitution
         mem.assignMembershipId = findMandateIdInOrg("Assess and Assign Membership: Moderators can assess applications and assign membership to applicants.", Powers(payable(mem.ideasSubDAOAddress)));
         vm.prank(cedars);
-        Powers(payable(mem.ideasSubDAOAddress)).request(mem.assignMembershipId, mem.appParams, 1, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(mem.assignMembershipId, mem.appParams, 1, "Assess and Assign Ideas Sub-DAO Membership");
 
         // Verify Membership
         assertTrue(Powers(payable(mem.ideasSubDAOAddress)).hasRoleSince(mem.member, 1) > 0, "Member should have Ideas Role 1");
@@ -595,7 +595,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         bytes memory mintCalldata = abi.encode(mem.member, address(0), "");
         
         vm.prank(cedars);
-        Powers(payable(mem.physicalSubDAOAddress)).request(mem.mintPoapPrimaryId, mintCalldata, 1, "");
+        Powers(payable(mem.physicalSubDAOAddress)).request(mem.mintPoapPrimaryId, mintCalldata, 1, "Mint POAP 1");
         
         // Token ID calculation logic from GovernedToken_MintEncodedToken
         // id = (uint256(uint160(caller)) << 48) | uint256(block.number);
@@ -605,7 +605,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         vm.roll(block.number + 1); // Advance block to get unique ID
         
         vm.prank(cedars);
-        Powers(payable(mem.physicalSubDAOAddress)).request(mem.mintPoapPrimaryId, mintCalldata, 2, "");
+        Powers(payable(mem.physicalSubDAOAddress)).request(mem.mintPoapPrimaryId, mintCalldata, 2, "Mint POAP 2");
         uint256 tokenId2 = (uint256(uint160(mem.physicalSubDAOAddress)) << 48) | uint256(block.number);
 
         // --- Step 3: Request Membership at Ideas DAO ---
@@ -617,13 +617,25 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         // Member applies at Ideas DAO
         uint16 applyPrimaryId = findMandateIdInOrg("Apply for Membership of Primary DAO: Members can apply for membership of the Primary DAO by submitting a request with their POAPs.", Powers(payable(mem.ideasSubDAOAddress)));
         vm.prank(mem.member);
-        Powers(payable(mem.ideasSubDAOAddress)).request(applyPrimaryId, mem.params, 1, "");
+        Powers(payable(mem.ideasSubDAOAddress)).request(applyPrimaryId, mem.params, 1, "Apply for Ideas Sub-DAO Membership");
         
         // Moderator (Cedars) approves and sends request to Primary DAO
         uint16 requestPrimaryId = findMandateIdInOrg("Request Membership of Primary DAO: Moderators can ok requests for membership of the Primary DAO and send them to the Primary DAO for assessment.", Powers(payable(mem.ideasSubDAOAddress)));
-        vm.prank(cedars);
-        Powers(payable(mem.ideasSubDAOAddress)).request(requestPrimaryId, mem.params, 1, "");
+
+        // need to vote on the application
+        vm.startPrank(cedars);
+        Powers(payable(mem.ideasSubDAOAddress)).propose(requestPrimaryId, mem.params, 1, "Assess and Assign Ideas Sub-DAO Membership - propose");
+        vm.stopPrank();
+
+        vm.roll(block.number + 1);  
         
+        vm.startPrank(cedars);
+        Powers(payable(mem.ideasSubDAOAddress)).castVote(requestPrimaryId, 1);
+        vm.roll(block.number + Powers(payable(mem.ideasSubDAOAddress)).getConditions(requestPrimaryId).votingPeriod + 1);
+        Powers(payable(mem.ideasSubDAOAddress)).request(requestPrimaryId, mem.params, 1, "Assess and Assign Ideas Sub-DAO Membership - request");
+
+        vm.stopPrank();
+
         // This triggers "Request Membership Step 1" in Primary DAO.
         // We can verify that Step 1 is fulfilled if we want, but we'll see if Step 2 works.
 
@@ -631,7 +643,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         mem.claimStep2Id = findMandateIdInOrg("Request Membership Step 2: 2 POAPS from physical DAO are needed that are not older than 6 months.", primaryDAO);
         
         vm.prank(mem.member);
-        primaryDAO.request(mem.claimStep2Id, mem.params, 1, "");
+        primaryDAO.request(mem.claimStep2Id, mem.params, 1, "Claim Membership Step 2");
         
         // Verify Role 1 in Primary DAO
         assertTrue(primaryDAO.hasRoleSince(mem.member, 1) > 0, "Member should have Primary Role 1");
@@ -643,12 +655,12 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         bytes memory revokeParams = abi.encode(mem.member);
         
         vm.startPrank(cedars); // Cedars is Executive (Role 2)
-        mem.actionId = primaryDAO.propose(mem.revokeMembershipId, revokeParams, 1, "");
+        mem.actionId = primaryDAO.propose(mem.revokeMembershipId, revokeParams, 1, "Revoke Membership - Proposal");
         primaryDAO.castVote(mem.actionId, 1);
         
         vm.roll(block.number + primaryDAO.getConditions(mem.revokeMembershipId).votingPeriod + primaryDAO.getConditions(mem.revokeMembershipId).timelock + 1);
         
-        primaryDAO.request(mem.revokeMembershipId, revokeParams, 1, "");
+        primaryDAO.request(mem.revokeMembershipId, revokeParams, 1, "Revoke Membership - Request");
         vm.stopPrank();
         
         // Verify Revocation
@@ -890,6 +902,10 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         // --- Store Address ---
         mem.returnData = primaryDAO.getActionReturnData(mem.actionId, 0);
         mem.ideasSubDAOAddress = abi.decode(mem.returnData, (address));
+
+        vm.prank(mem.admin);
+        Powers(payable(mem.ideasSubDAOAddress)).request(1, "", 0, ""); // Ping to initialize
+
         console.log("Ideas sub-DAO deployed at: %s", mem.ideasSubDAOAddress);
     }
 
@@ -944,6 +960,11 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         // (Necessary for Allowance Module)
         primaryDAO.request(mem.assignDelegateId, mem.params, mem.nonce, "Assign Delegate Status");
         
+        // step 5: Ping sub-DAO to initialize (so that it can receive the role assignment and delegate status)
+        Powers(payable(mem.physicalSubDAOAddress)).request(1, "", 0, ""); // Ping to initialize
+        
         vm.stopPrank();
     }
+
+
 }

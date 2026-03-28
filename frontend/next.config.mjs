@@ -33,6 +33,18 @@ const nextConfig = {
             tls: false,
         };
         
+        // Ignore react-native dependencies
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            '@react-native-async-storage/async-storage': false,
+        };
+        
+        // Enable WASM support for XMTP SDK
+        config.experiments = {
+            ...config.experiments,
+            asyncWebAssembly: true,
+        };
+        
         return config;
     }
 };

@@ -28,11 +28,11 @@ export const useMandate = () => {
   useEffect(() => {
     if (statusReceipt === "pending") {
       setStatus({status: "pending"})
-      fetchPowers(addressPowers)
+      fetchPowers(addressPowers, parseChainId(chainId))
     }
     if (statusReceipt === "success") {
       setStatus({status: "success"})
-      fetchPowers(addressPowers)
+      fetchPowers(addressPowers, parseChainId(chainId))
     }
     if (statusReceipt === "error") {
       setStatus({status: "error"})
@@ -224,7 +224,7 @@ export const useMandate = () => {
       nonce: bigint,
       description: string
     ): Promise<boolean> => {
-        // console.log("@execute: waypoint 1", {mandate, mandateCalldata, nonce, description})
+        console.log("@execute: waypoint 1", {mandate, mandateCalldata, nonce, description})
         setError({error: null})
         setStatus({status: "pending"})
         try {
@@ -237,16 +237,16 @@ export const useMandate = () => {
           })
           
           if (simulatedRequest) {
-            // console.log("@execute: waypoint 3", {request})
+            console.log("@execute: waypoint 3", {request})
             const result = await writeContract(wagmiConfig, simulatedRequest)
             setTransactionHash(result)
-            // console.log("@execute: waypoint 4", {result})
+            console.log("@execute: waypoint 4", {result})
             return true
           }
         } catch (error) {
-          // setStatus({status: "error"}) 
+          setStatus({status: "error"}) 
           setError({error: error as Error})
-          // console.log("@execute: waypoint 5", {error}) 
+          console.log("@execute: waypoint 5", {error}) 
           return false
         }
         setStatus({status: "idle"})

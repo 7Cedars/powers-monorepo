@@ -65,6 +65,7 @@ type MetadataLinksProps = {
   parentContracts?: familyMember[];
   childContracts?: familyMember[];
   chainId?: bigint | number;
+  isEditorView?: boolean;
 }
 
 export function MetadataLinks({ 
@@ -74,7 +75,8 @@ export function MetadataLinks({
   communicationChannels,
   parentContracts,
   childContracts,
-  chainId
+  chainId,
+  isEditorView = false
 }: MetadataLinksProps) {
   // Extract the first communication communicationChannels object (if it exists)
 
@@ -113,88 +115,81 @@ export function MetadataLinks({
   }
 
   return (
-    <section className="w-full h-fit flex flex-col gap-3 justify-left items-start border border-slate-300 rounded-md bg-slate-50 lg:max-w-full max-w-3xl p-4">
-      {/* Main Links */}
-      {mainLinks.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {mainLinks.map((link, index) => {
-            const Icon = link.icon
-            return (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
-                title={link.label}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm font-medium">{link.label}</span>
-              </a>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Communication communicationChannels */}
-      {socialLinks.length > 0 && (
-        <div className="w-full">
-          {/* <div className="text-sm font-medium text-slate-600 mb-2">
-            Communication communicationChannels
-          </div> */}
-          <div className="flex flex-wrap gap-2 items-center">
-            {socialLinks.map((link, index) => {
-              const Icon = link.icon
-              return (
-                <a
-                  key={index}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-600 hover:text-slate-900"
-                  title={link.label}
-                >
-                  <Icon className="w-5 h-5" />
-                </a>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Parent Contracts */}
-      {validParents.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {validParents.map((parent, index) => (
+    <section className="w-full border border-border bg-muted/30 p-4">
+      <div className="flex flex-wrap gap-3 items-center">
+        {/* Main Links */}
+        {mainLinks.map((link, index) => {
+          const Icon = link.icon
+          return (
             <a
-              key={index}
-              href={`/protocol/${chainId ? Number(chainId) : ''}/${parent.address}`}
-              className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
+              key={`main-${index}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+              title={link.label}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{link.label}</span>
+            </a>
+          )
+        })}
+
+        {/* Communication channels */}
+        {socialLinks.map((link, index) => {
+          const Icon = link.icon
+          return (
+            <a
+              key={`social-${index}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-background border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-primary"
+              title={link.label}
+            >
+              <Icon className="w-4 h-4" />
+            </a>
+          )
+        })}
+
+        {/* Parent Contracts */}
+        {validParents.map((parent, index) => {
+          const basePath = isEditorView ? '/editor' : '/forum'
+          const suffix = isEditorView ? '/home' : ''
+          const href = `${basePath}/${chainId ? Number(chainId) : ''}/${parent.address}${suffix}`
+          
+          return (
+            <a
+              key={`parent-${index}`}
+              href={href}
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
               title={`Parent: ${parent.title}`}
             >
-              <ArrowUpIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">{parent.title}</span>
+              <ArrowUpIcon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{parent.title}</span>
             </a>
-          ))}
-        </div>
-      )}
+          )
+        })}
 
-      {/* Child Contracts */}
-      {validChildren.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {validChildren.map((child, index) => (
+        {/* Child Contracts */}
+        {validChildren.map((child, index) => {
+          const basePath = isEditorView ? '/editor' : '/forum'
+          const suffix = isEditorView ? '/home' : ''
+          const href = `${basePath}/${chainId ? Number(chainId) : ''}/${child.address}${suffix}`
+          
+          return (
             <a
-              key={index}
-              href={`/protocol/${chainId ? Number(chainId) : ''}/${child.address}`}
-              className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
+              key={`child-${index}`}
+              href={href}
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
               title={`Child: ${child.title}`}
             >
-              <ArrowDownIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">{child.title}</span>
+              <ArrowDownIcon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{child.title}</span>
             </a>
-          ))}
-        </div>
-      )}
+          )
+        })}
+      </div>
     </section>
   )
 }

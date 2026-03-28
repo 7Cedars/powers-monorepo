@@ -45,7 +45,7 @@ contract BespokeAction_Simple is Mandate {
         override
         returns (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
-        (address targetContract, bytes4 targetFunction,) =
+        (address targetContract, bytes4 targetFunction, ) =
             abi.decode(getConfig(powers, mandateId), (address, bytes4, string[]));
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 

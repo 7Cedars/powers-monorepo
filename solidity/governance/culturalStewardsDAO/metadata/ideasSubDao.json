@@ -1,0 +1,28 @@
+{
+  "icon": "",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeigawgiso7mndeswvhxgmkad2dg4fduwyojsk5zl5cz2lyyxc7jvae/ideasSubDao.png",
+  "description": 
+    "Manages concepts, digital interfaces, and its own legislative frameworks. It acts as a gate keeper to forum group chats and has the power to initiate the creation of a Physical sub-DAO. It does not have an allowance at the parent DAO.",
+  "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",
+  "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md", 
+  "disputeResolution": "",
+  "communicationChannels": {
+      "discord": "https://discordapp.com/users/1006928106487021638",
+      "telegram": "https://t.me/thd83",
+      "x": "https://x.com/7__Cedars",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo",
+      "forum": "",
+      "documentation": "https://powers-docs.vercel.app/"
+  },
+  "parentContracts": [ 
+    {
+      "title": "Primary DAO",
+      "address": "0xD7c83ba6665EEb7b7360f617e49a3f6D616600C6"
+    }
+  ],
+  "childContracts": [ ],
+  "attributes": [ ]
+}

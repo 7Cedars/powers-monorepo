@@ -8,13 +8,13 @@ import { Powers } from './types'
  * for understanding the Powers protocol.
  */
 export const defaultPowers101: Powers = {
-  contractAddress: '0x4479D77f2F5E29813DABb289f26C68b9Ee9E0ff6' as `0x${string}`,
-  chainId: 11155420n,
+  contractAddress: '0x49cf94fc23ba8f6dffea883b7a260ce3cf97bf91' as `0x${string}`,
+  chainId: 11155111n,
   name: 'Powers 101',
-  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicbh6txnypkoy6ivngl3l2k6m646hruupqspyo7naf2jpiumn2jqe",
+  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/powers101.json",
   metadatas: {
     icon: '/logo1_notext.png',
-    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeickdiqcdmjjwx6ah6ckuveufjw6n2g6qdvatuhxcsbmkub3pvshnm",
+    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/powers101.png",
     description: "A simple DAO with basic governance based on a separation of powers between delegates, an executive council and an admin. It is a good starting point for understanding the Powers protocol.",
     attributes: []
   },
@@ -24,22 +24,21 @@ export const defaultPowers101: Powers = {
 }
 
 /**
- * Default Power Labs protocol
+ * Default Governed 721 DAO protocol
  * 
- * Power Labs is the on-chain organization that shepherds the development 
- * of the Powers protocol. It uses Safes (and its allowance modules) for asset management.
- * It is governed by contributors that are verified via EVM signatures posted 
- * in github commits.
+ * An example of an organisation that governs specific functionality in a Protocol. 
+ * In this case: setting payment split for royalties of NFT sales. 
+ * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
-export const defaultPowerLabs: Powers = {
-  contractAddress: '0x08b4220e5e67152ee5c40658711035b4ca86ba60' as `0x${string}`,
+export const Governed721DAO: Powers = {
+  contractAddress: '0xA3f2227957Af05D35bE1cCc7d3152FbDee8e1f52' as `0x${string}`,
   chainId: 11155111n,
-  name: 'Power Labs',
-  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibnvjwah2wdgd3fhak3sedriwt5xemjlacmrabt6mrht7f24m5w3i",
+  name: 'Governed 721 DAO',
+  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidklnn4b7heysrhr5pqtiabvcl5aldnzuv2mdybotdtx5vvq44nqi",
   metadatas: {
     icon: '/logo1_notext.png',
-    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeideomrrzq4goct7we74barpvwte7qvbaljrj3azlwiyzzjku6wsou",
-    description: "Power Labs is the on-chain organization that shepherds the development of the Powers protocol. It uses Safes (and its allowance modules) for asset management.",
+    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiboosk4qnbeazftgdjppcuwunlxvatph5aobajj6txbcgcy3p33cu/organisation.png",
+    description: "An example of an organisation that governs specific functionality in a Protocol. In this case: setting payment split for royalties of NFT sales. It has a policy setting (the split) and enforcement (blacklisting of addresses).",
     attributes: []
   },
   mandateCount: 0n,
@@ -48,20 +47,21 @@ export const defaultPowerLabs: Powers = {
 }
 
 /**
- * Default Power Labs Child protocol
+ * Default Cultural Stewards DAO protocol
  * 
- * Power Labs Child is the on-chain organization that manages one specific field of development of the Powers protocol.
- * of the Powers protocol. It uses Safes (and its allowance modules) for asset management.
+ * An example of an organisation that governs specific functionality in a Protocol. 
+ * In this case: setting payment split for royalties of NFT sales. 
+ * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
-export const defaultPowerLabsChild: Powers = {
-  contractAddress: '0xc74504061fb47c1a3aec36d0ac4d199d3364a321' as `0x${string}`,
+export const CulturalStewardsDAO: Powers = {
+  contractAddress: '0xD7c83ba6665EEb7b7360f617e49a3f6D616600C6' as `0x${string}`,
   chainId: 11155111n,
-  name: 'Power Labs Child: Docs',
-  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreichqvnlmfgkw2jeqgerae2torhgbcgdomxzqxiymx77yhflpnniii",
+  name: 'Primary DAO',
+  uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifpvurtqfawksmflqgm342fdsvmmtme2pjzzlvdr7vippeygfy3au/primaryDao.json",
   metadatas: {
     icon: '/logo1_notext.png',
-    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaxdinbxkpv5xa5od5yjho3bshpvzaacuxcnfgi6ie3galmwkggvi",
-    description: "Power Labs Child: Docs is the on-chain organization that shepherds the development of documentation for the Powers protocol.",
+    banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeigawgiso7mndeswvhxgmkad2dg4fduwyojsk5zl5cz2lyyxc7jvae/primaryDao.png",
+    description: "The Cultural Stewardship Experiment is a multi-layered ecosystem designed to foster an interplay between ideational concepts, physical spaces, and digital manifestations. It is an example of the type of complex ecosystems that can be governed through the Powers Protocol.",
     attributes: []
   },
   mandateCount: 0n,
@@ -69,3 +69,7 @@ export const defaultPowerLabsChild: Powers = {
   roles: [],
 }
 
+
+
+
+// £TODO: adding new Powers Labs governance demo protocol here once deployed.

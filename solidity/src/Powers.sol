@@ -71,6 +71,8 @@ contract Powers is EIP712, IPowers, Context {
     uint256 public immutable MAX_RETURN_DATA_LENGTH;
     /// @notice Maximum number of execution targets per action
     uint256 public immutable MAX_EXECUTIONS_LENGTH;
+    /// @notice block number at which the Powers contract was deployed.
+    uint256 public immutable FOUNDED_AT;
 
     /// @notice Name of the DAO
     string public name;
@@ -139,6 +141,7 @@ contract Powers is EIP712, IPowers, Context {
         MAX_CALLDATA_LENGTH = maxCallDataLength_;
         MAX_RETURN_DATA_LENGTH = maxReturnDataLength_;
         MAX_EXECUTIONS_LENGTH = maxExecutionsLength_;
+        FOUNDED_AT = block.number;
 
         emit Powers__Initialized(address(this), name, uri);
     }
@@ -186,7 +189,6 @@ contract Powers is EIP712, IPowers, Context {
             _setRole(ADMIN_ROLE, _msgSender(), false);
             _setRole(ADMIN_ROLE, newAdmin, true);
         }
-
         _constituteClosed = true;
     }
 
@@ -667,7 +669,7 @@ contract Powers is EIP712, IPowers, Context {
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
-        return "0.5";
+        return "v0.5.1";
     }
 
     /// @inheritdoc IPowers

@@ -7,7 +7,7 @@ import { readContract } from "wagmi/actions";
 import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
 import { hashAction } from "@/utils/hashAction";
-import { getBlockNumber } from '@wagmi/core'
+import { getBlockNumber } from '@wagmi/core' 
 
 export const useChecks = () => {
   const { chainId } = useParams<{ chainId: string }>() 
@@ -89,37 +89,38 @@ export const useChecks = () => {
   const checkDelayedExecution = async (mandateId: bigint, nonce: bigint, calldata: `0x${string}`, powers: Powers) => {
     // console.log("CheckDelayedExecution triggered:", {mandateId, nonce, calldata, powers})
     const actionId = hashAction(mandateId, calldata, nonce)
-    // console.log("Deadline ActionId:", actionId)
     const mandate = powers.mandates?.find(mandate => mandate.index === mandateId)
+    
     try {
       const blockNumber = await getBlockNumber(wagmiConfig, {
         chainId: parseChainId(chainId),
       })
-      // console.log("BlockNumber:", blockNumber)
 
-      const voteData = await readContract(wagmiConfig, {
+      // Get action data to retrieve proposedAt timestamp
+      const actionData = await readContract(wagmiConfig, {
         abi: powersAbi,
         address: powers.contractAddress as `0x${string}`,
-        functionName: 'getActionVoteData',
+        functionName: 'getActionData',
         args: [actionId],
         chainId: parseChainId(chainId)
       })
 
-      const [voteStart, voteDuration, voteEnd, againstVotes, forVotes, abstainVotes] = voteData as unknown as [
-        bigint, bigint, bigint, bigint, bigint, bigint
+      const [, proposedAt, , , , ,] = actionData as unknown as [
+        bigint, bigint, bigint, bigint, bigint, string, bigint
       ]
 
-      // console.log("Deadline:", voteEnd, "BlockNumber:", blockNumber)
-      // console.log("Deadline + Delay:", Number(voteEnd) + Number(mandate?.conditions?.timelock), "BlockNumber:", blockNumber)
-      if (voteEnd && blockNumber) {
-        const result = Number(voteEnd) > 0 ? Number(voteEnd) + Number(mandate?.conditions?.timelock) < Number(blockNumber) : false  
-        // console.log("Deadline Result:", result) 
+      // Check if delay has passed: proposedAt + timelock < blockNumber
+      if (proposedAt && blockNumber) {
+        // If proposedAt is 0, no proposal exists yet, so delay check fails
+        const result = Number(proposedAt) > 0 
+          ? Number(proposedAt) + Number(mandate?.conditions?.timelock) < Number(blockNumber) 
+          : false  
         return result as boolean
       } else {
         return false
       }
     } catch (error) {
-      console.log("Error fetching deadline:", error)
+      console.log("Error checking delay:", error)
       return false
     }
   }
@@ -180,7 +181,7 @@ export const useChecks = () => {
           newChecks.voteActive = mandate.conditions.quorum == 0n ? true : actionState == 1n
           newChecks.hasVoted = hasVoted
 
-          // console.log("fetchChecks triggered, waypoint 2", {newChecks})
+          console.log("fetchChecks triggered, waypoint 2", {newChecks})
           setChecks(newChecks)
           setStatus("success") //NB note: after checking status, sets the status back to idle! 
           return newChecks
