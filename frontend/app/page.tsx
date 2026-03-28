@@ -55,7 +55,7 @@ export default function Page() {
             < SectionIntro /> 
             < SectionApplications /> 
             < SectionExamples /> 
-            < SectionDeployDemo />
+            {/* < SectionDeployDemo /> */}
             < Footer />
            
         </main>

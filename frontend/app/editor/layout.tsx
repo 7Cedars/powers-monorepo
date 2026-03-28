@@ -104,9 +104,9 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
     }, [powers.contractAddress, addProtocol])
 
   return (  
-    <div className="h-screen min-w-screen flex-1 flex flex-col bg-background scanlines min-h-0">
+    <div className="h-screen w-screen flex flex-col bg-background scanlines overflow-hidden min-h-0">
       {/* Warning screen for small devices */}
-      <div className="lg:hidden h-screen flex flex-col items-center justify-center p-6 bg-background">
+      <div className="lg:hidden h-full flex flex-col items-center justify-center p-6 bg-background">
         <div className="max-w-md text-center space-y-6">
           <div className="space-y-2">
             <h1 className="font-mono text-2xl text-foreground tracking-wider">
@@ -145,7 +145,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
       </div>
 
       {/* Main editor content - hidden on small screens */}
-      <div className="hidden lg:flex lg:flex-col lg:h-full lg:min-h-0 bg-background">
+      <div className="hidden lg:flex lg:flex-col lg:h-full bg-background">
       <header className="z-25 border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-background">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">

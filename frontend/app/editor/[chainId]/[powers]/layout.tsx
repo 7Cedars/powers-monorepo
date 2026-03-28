@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { setStatus, setError, setAction, useActionStore, usePowersStore, useSavedProtocolsStore } from "@/context/store";
-import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 import { AllFlows } from './AllFlows'; 
 import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { usePowers } from "@/hooks/usePowers";
@@ -117,13 +117,15 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
     >
       {/* Vertical Navigation Buttons - always visible on the left edge of the panel */}
       <div 
-        className="h-full flex-shrink-0 bg-background border-border flex flex-col items-center justify-start py-[123px] relative"
+        className="h-full flex-shrink-0 bg-background border-border flex flex-col items-center justify-start py-6 relative"
         style={{
           width: '36px',
           minWidth: '36px',
           gap: '88px'
         }}
       >
+        {/* Collapse/Expand Button */}
+
         {/* Resize Handle - positioned on the right edge of navigation bar */}
         {!isCollapsed && (
           <div
@@ -138,7 +140,25 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
             <div className="absolute inset-y-0 -left-1 -right-1 w-3" />
           </div>
         )}
-        {navItems.map((item) => {
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="relative transition-all bg-foreground/10 text-foreground hover:bg-foreground hover:text-background border border-foreground/30 hover:border-foreground flex items-center justify-center z-30"
+          style={{
+            width: '36px',
+            height: '36px',
+            flexShrink: 0,
+          }}
+          title={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+        >
+          <ChevronDoubleRightIcon 
+            className="w-5 h-5 transition-colors font-mono text-[10px] uppercase tracking-wider border border-border transition-transform duration-300"
+            style={{
+              transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)'
+            }}
+          />
+        </button>
+        {
+        navItems.map((item) => {
           const active = isActive(item.path)
           return (
             <button
@@ -187,15 +207,10 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
 
 export default function EditorLayout({ children }: EditorLayoutProps) {
   const pathname = usePathname(); 
-  const { fetchPowers } = usePowers();
-  const publicClient = usePublicClient();
-  const switchChain = useSwitchChain();
-  const { chain } = useConnection();
+  const { fetchPowers } = usePowers(); 
   const action = useActionStore();
-  const powers = usePowersStore();
-  const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
-  const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>();
-  const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
+  const powers = usePowersStore(); 
+  const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>(); 
 
     // Load powers instance if not loaded yet
   useEffect(() => {
