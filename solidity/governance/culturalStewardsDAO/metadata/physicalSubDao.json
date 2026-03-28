@@ -2,7 +2,7 @@
   "icon": "",
   "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeigawgiso7mndeswvhxgmkad2dg4fduwyojsk5zl5cz2lyyxc7jvae/physicalSubDao.png",
   "description": 
-    "Manages physical manifestations (e.g., access to spaces, rent, legal logs). It has an allowance at the parent DAO.",
+    "Manages physical manifestations (e.g., access to spaces, rent, legal logs). It is initiated by an Ideas sub-DAO. It has an allowance at the parent DAO.",
   "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",
   "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md", 
   "disputeResolution": "",
@@ -17,7 +17,12 @@
       "forum": "",
       "documentation": "https://powers-docs.vercel.app/"
   },
-  "parentContracts": [ ],
+  "parentContracts": [ 
+    {
+      "title": "Primary DAO",
+      "address": "0xD7c83ba6665EEb7b7360f617e49a3f6D616600C6"
+    }
+  ],
   "childContracts": [ ],
   "attributes": [ ]
 }

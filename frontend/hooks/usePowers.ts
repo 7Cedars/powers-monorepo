@@ -99,8 +99,7 @@ export const usePowers = () => {
           return updatedMetaData
       } catch (error) {
           // console.log("@fetchMetaData, waypoint 3", {error})
-        setStatus({status: "error"}) 
-        setError({error: error as Error})
+          console.warn("Failed to fetch metadata from URI, treating as empty:", error)
       }
     }
     return undefined
@@ -628,7 +627,7 @@ export const usePowers = () => {
 
         // console.log("@refetchPowers, waypoint 4", {metaData, mandates})
 
-        if (data != undefined && metaData != undefined && mandates != undefined) {
+        if (data != undefined && mandates != undefined) {
           // console.log("@refetchPowers, waypoint 7", {data, metaData, mandates})
           const newPowers: Powers = {
             contractAddress: powersToBeUpdated.contractAddress as `0x${string}`,

@@ -17,7 +17,12 @@
       "forum": "",
       "documentation": "https://powers-docs.vercel.app/"
   },
-  "parentContracts": [ ],
+  "parentContracts": [ 
+    {
+      "title": "Primary DAO",
+      "address": "0xD7c83ba6665EEb7b7360f617e49a3f6D616600C6"
+    }
+  ],
   "childContracts": [ ],
   "attributes": [ ]
 }

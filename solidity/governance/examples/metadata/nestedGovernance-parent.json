@@ -19,7 +19,7 @@
   },
   "parentContracts": [ ],
   "childContracts": [ 
-       {
+    {
       "title": "Child 1",
       "address": "0xA806a26cb1AE292a2D2553F29e2949B0e6087AFD"
     },

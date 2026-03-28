@@ -54,7 +54,7 @@ export const Governed721DAO: Powers = {
  * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
 export const CulturalStewardsDAO: Powers = {
-  contractAddress: '0x35f9418b033ab695AAC48793b1E011187b521Ca7' as `0x${string}`,
+  contractAddress: '0xD7c83ba6665EEb7b7360f617e49a3f6D616600C6' as `0x${string}`,
   chainId: 11155111n,
   name: 'Primary DAO',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifpvurtqfawksmflqgm342fdsvmmtme2pjzzlvdr7vippeygfy3au/primaryDao.json",

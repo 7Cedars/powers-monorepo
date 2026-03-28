@@ -179,7 +179,8 @@ contract Deploy is DeployHelpers {
         console2.log("Primary Constitution, length:", primaryConstitution.length);
 
         console2.log("Creating Physical constitution...");
-        createPhysicalConstitution();
+        createPhysicalConstitution(); // package size and starting mandate ID for physical constitution mandates.
+        PowersTypes.MandateInitData[] memory physicalConstitutionPacked = packageInitData(physicalConstitution, PACKAGE_SIZE, 1); // package size and starting mandate ID for physical constitution mandates.
         console2.log("Physical Constitution, length:", physicalConstitution.length); 
 
         console2.log("Creating Digital constitution...");
@@ -189,38 +190,21 @@ contract Deploy is DeployHelpers {
         // Deploying Ideas and Physical sub-DAO factories (after primary constitution to reference mandate IDs)
         console2.log("Creating Ideas constitution...");
         createIdeasConstitution();
+        PowersTypes.MandateInitData[] memory ideasConstitutionPacked = packageInitData(ideasConstitution, PACKAGE_SIZE, 1); // package size and starting mandate ID for ideas constitution mandates.
         console2.log("Ideas Constitution, length:", ideasConstitution.length);
 
         // Populate factories with mandates
         console2.log("Adding mandates to Physical sub-DAO factory...");
-        for (uint256 i = 0; i < physicalConstitution.length; i += PACKAGE_SIZE) {
-            uint256 size = PACKAGE_SIZE;
-            if (i + size > physicalConstitution.length) {
-                size = physicalConstitution.length - i;
-            }
-            PowersTypes.MandateInitData[] memory batch = new PowersTypes.MandateInitData[](size);
-            for (uint256 j = 0; j < size; j++) {
-                batch[j] = physicalConstitution[i + j];
-            }
-            vm.startBroadcast();
-            physicalDaoFactory.addMandates(batch); // set msg.sender as admin
-            vm.stopBroadcast();
-        } 
+        vm.startBroadcast();
+        physicalDaoFactory.addMandates(physicalConstitutionPacked); // set msg.sender as admin
+        vm.stopBroadcast();
+     
 
         console2.log("Adding mandates to Ideas sub-DAO factory...");
-        for (uint256 i = 0; i < ideasConstitution.length; i += PACKAGE_SIZE) {
-            uint256 size = PACKAGE_SIZE;
-            if (i + size > ideasConstitution.length) {
-                size = ideasConstitution.length - i;
-            }
-            PowersTypes.MandateInitData[] memory batch = new PowersTypes.MandateInitData[](size);
-            for (uint256 j = 0; j < size; j++) {
-                batch[j] = ideasConstitution[i + j];
-            }
-            vm.startBroadcast();
-            ideasDaoFactory.addMandates(batch); // set msg.sender as admin
-            vm.stopBroadcast();
-        } 
+        vm.startBroadcast();
+        ideasDaoFactory.addMandates(ideasConstitutionPacked); // set msg.sender as admin
+        vm.stopBroadcast();
+        
 
         // Step 4: run constitute on vanilla DAOs.  
         console2.log("Constituting Primary DAO...");
@@ -256,7 +240,8 @@ contract Deploy is DeployHelpers {
             digitalSubDAO.constitute(batch); // set msg.sender as admin
             vm.stopBroadcast();
         } 
-        vm.startBroadcast();
+
+        vm.startBroadcast(); 
         digitalSubDAO.closeConstitute(address(primaryDAO)); // set primary DAO as admin
         vm.stopBroadcast();
 
@@ -386,7 +371,7 @@ contract Deploy is DeployHelpers {
         delete conditions;
 
         // Executives: Execute Ideas sub-DAO creation
-        mandateCount++;
+        mandateCount++;  
         conditions.allowedRole = 2; // = Executives
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
@@ -534,7 +519,7 @@ contract Deploy is DeployHelpers {
         // ); 
 
         // Executives: Execute Physical sub-DAO creation
-        mandateCount++;
+        mandateCount++; 
         conditions.allowedRole = 2; // = Executives
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
@@ -1985,7 +1970,7 @@ contract Deploy is DeployHelpers {
     ////////////////////////////////////////////////////////////////////////////
     // NB! I NEED INITIAL MODERATOR ASSIGNMENT 
     function createIdeasConstitution() internal {
-        mandateCount = 0; // resetting mandate count.
+        mandateCount = 6; // resetting mandate count.
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
@@ -2581,7 +2566,7 @@ contract Deploy is DeployHelpers {
     ////////////////////////////////////////////////////////////////////////////
 
     function createPhysicalConstitution() internal {
-        mandateCount = 0; // resetting mandate count. 
+        mandateCount = 4; // resetting mandate count. 
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
@@ -2590,8 +2575,8 @@ contract Deploy is DeployHelpers {
         calldatas = new bytes[](10);
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", string.concat(baseURI, "admin.json"));  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", string.concat(baseURI, "public.json")); 
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Attendee", string.concat(baseURI, "attendee.json"));
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Convener", string.concat(baseURI, "convener.json")); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Attendee", string.concat(baseURI, "attendee.json"));
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Convener", string.concat(baseURI, "convener.json")); 
         calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Legal Representative", string.concat(baseURI, "legalRep.json"));
         calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 6, "Primary DAO", string.concat(baseURI, "primaryDao_role.json"));
         calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
@@ -2710,27 +2695,27 @@ contract Deploy is DeployHelpers {
         // NB, TODO: The problem of deploying bespoke merit tokens should be solved through a single 1155 token contract. Encoding the address where they are minted. 
         ///////////////////////////////////////// IMPORTANT NOTE /////////////////////////////////////////
         
-        // // Attendees: vote on the proposal to mint 'Merit' NFTs. If the proposal passes, the specified attendees receive their 'Merit' NFTs as recognition for their contributions.
-        // mandateCount++;
-        // conditions.allowedRole = 1; // = Attendees
-        // conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
-        // conditions.succeedAt = 51; // = 51% majority
-        // conditions.quorum = 77; // = Note: high threshold to ensure active participation in the voting process.
-        // physicalConstitution.push(
-        //     PowersTypes.MandateInitData({
-        //         nameDescription: "Vote on 'Merit' NFT proposals: Attendees can vote on proposals to mint 'Merit' NFTs. If a proposal passes, the specified attendees receive their 'Merit' NFTs.",
-        //         targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
-        //         config: abi.encode(
-        //             createPlaceholderAddress("Dependency0"), // the actvityToken contract where 'Merit' NFTs are minted
-        //             bytes4(keccak256("mint(address,uint256)")), // Soulbound1155.mint.selector, // function selector to call
-        //             abi.encode(), // params before (role id 1 = Attendees) // the static params
-        //             inputParams, // the dynamic params (== address to)
-        //             abi.encode(block.number, address(0)) // We simply mint the id of the block number of the mint, the address input is that of artist, here not used.  
-        //         ),
-        //         conditions: conditions
-        //     })
-        // );
-        // delete conditions;
+        // Attendees: vote on the proposal to mint 'Merit' NFTs. If the proposal passes, the specified attendees receive their 'Merit' NFTs as recognition for their contributions.
+        mandateCount++;
+        conditions.allowedRole = 1; // = Attendees
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
+        conditions.succeedAt = 51; // = 51% majority
+        conditions.quorum = 77; // = Note: high threshold to ensure active participation in the voting process.
+        physicalConstitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Vote on 'Merit' NFT proposals: Attendees can vote on proposals to mint 'Merit' NFTs. If a proposal passes, the specified attendees receive their 'Merit' NFTs.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                config: abi.encode(
+                    createPlaceholderAddress("Dependency0"), // the actvityToken contract where 'Merit' NFTs are minted
+                    bytes4(keccak256("mint(address,uint256)")), // Soulbound1155.mint.selector, // function selector to call
+                    abi.encode(), // params before (role id 1 = Attendees) // the static params
+                    inputParams, // the dynamic params (== address to)
+                    abi.encode(block.number, address(0)) // We simply mint the id of the block number of the mint, the address input is that of artist, here not used.  
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
 
         // The following to mandates I still have to think through. Don't know if they are a good idea. 
         // I do think the Artist one is a nice example of voting on range fo actions. A common use case and not implemented yet. 
@@ -2758,25 +2743,25 @@ contract Deploy is DeployHelpers {
         // );
         // delete conditions;
 
-        // public: claim preset payment. 
-        // Note that this can be changed / update by adopting new mandate. 
-        mandateCount++;
-        conditions.allowedRole = type(uint256).max;
-        conditions.needFulfilled = mandateCount - 1; // need the previous redeem 'Merit' NFTs for rewards mandate to be fulfilled.  
-        physicalConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Claim payment: Anyone can claim a preset payment for redeeming 'Merit' NFTs.",
-                targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_PresetTransfer"),
-                config: abi.encode(
-                    initialisePowers.getInitialisedAddress("Erc20Taxed"), 
-                    1 * 10 ** 18, // amount to be paid out for redeeming 'Merit' NFTs. For example, 100 tokens with 18 decimals.
-                    helperConfig.getSafeAllowanceModule(block.chainid), 
-                    treasury
-                    ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
+        // // public: claim preset payment. 
+        // // Note that this can be changed / update by adopting new mandate. 
+        // mandateCount++;
+        // conditions.allowedRole = type(uint256).max;
+        // conditions.needFulfilled = mandateCount - 1; // need the previous redeem 'Merit' NFTs for rewards mandate to be fulfilled.  
+        // physicalConstitution.push(
+        //     PowersTypes.MandateInitData({
+        //         nameDescription: "Claim payment: Anyone can claim a preset payment for redeeming 'Merit' NFTs.",
+        //         targetMandate: initialisePowers.getInitialisedAddress("SafeAllowance_PresetTransfer"),
+        //         config: abi.encode(
+        //             initialisePowers.getInitialisedAddress("Erc20Taxed"), 
+        //             1 * 10 ** 18, // amount to be paid out for redeeming 'Merit' NFTs. For example, 100 tokens with 18 decimals.
+        //             helperConfig.getSafeAllowanceModule(block.chainid), 
+        //             treasury
+        //             ),
+        //         conditions: conditions
+        //     })
+        // );
+        // delete conditions;
 
         // UPDATE URI //
         inputParams = new string[](1);
@@ -2959,9 +2944,9 @@ contract Deploy is DeployHelpers {
         // -- should have a specific related governance flow to select these. + ZKP check.  
         
 
-        //////////////////////////////////////////////////////////////////////
-        //                        REFORM MANDATES                           //
-        //////////////////////////////////////////////////////////////////////
+        // //////////////////////////////////////////////////////////////////////
+        // //                        REFORM MANDATES                           //
+        // //////////////////////////////////////////////////////////////////////
 
         // ADOPT MANDATES //
         string[] memory adoptMandatesParams = new string[](2);

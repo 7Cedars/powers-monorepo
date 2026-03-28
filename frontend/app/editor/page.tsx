@@ -51,8 +51,8 @@ export default function ProtocolPage() {
   }
 
   return (
-    <div className="min-h-full min-w-full flex flex-col bg-background scanlines">
-      <main className="flex-1 max-w-4/5 mx-auto bg-background w-full px-4 py-8">
+    <div className="h-full w-full flex flex-col bg-background scanlines">
+      <main className="h-full max-w-4/5 mx-auto overflow-y-auto bg-background w-full px-4 py-8 min-h-0">
         <h1 className="font-mono text-foreground tracking-wider mb-2 text-center uppercase text-lg">
           SAVED ORGANISATIONS
         </h1>
