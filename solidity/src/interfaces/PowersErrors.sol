@@ -62,6 +62,9 @@ interface PowersErrors {
     /// @notice Emitted when a zero address is added.
     error Powers__CannotAddZeroAddress();
 
+    /// @notice Emitted when the Powers contract itself is added as a member of a role.
+    error Powers__CannotAddPowersAddressAsMember();
+
     /// @notice Emitted when a name is invalid.
     error Powers__InvalidName();
 

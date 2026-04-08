@@ -45,6 +45,7 @@ interface PowersTypes {
         uint48 requestedAt;
         uint48 fulfilledAt;
         uint48 cancelledAt;
+        uint48 failedAt;
         uint48 voteStart;
         uint16 mandateId;
         // --- Packed Slot 2 (128 bits used) ---
@@ -73,8 +74,9 @@ interface PowersTypes {
         Active, // - 3: calculate this
         Defeated, // - 4: calculate this
         Succeeded, // - 5: calculate this
-        Requested, // - 6: log this
-        Fulfilled // - 7: log this
+        Requested, // - 6: log this 
+        Fulfilled, // - 7: log this
+        Failed // - 8: log this
     }
 
     /// @notice Supported vote types. Matches Governor Bravo ordering.

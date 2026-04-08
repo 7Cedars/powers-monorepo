@@ -7,11 +7,11 @@ pragma solidity ^0.8.26;
 
 // // Note: Data validation is hardly present at this stage. It's a PoC..
 
-// import { Mandate } from "../../Mandate.sol";
-// import { IMandate } from "../../interfaces/IMandate.sol";
+// import { Mandate } from "@src/Mandate.sol";
+// import { IMandate } from "@src/interfaces/IMandate.sol";
 // import { Powers } from "../../Powers.sol";
-// import { IPowers } from "../../interfaces/IPowers.sol";
-// import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+// import { IPowers } from "@src/interfaces/IPowers.sol";
+// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 // import { Client } from "@chainlink/contracts-ccip/libraries/Client.sol";
 // import { CCIPReceiver } from "@chainlink/contracts-ccip/applications/CCIPReceiver.sol";
 // import { IRouterClient } from "@chainlink/contracts-ccip/interfaces/IRouterClient.sol";

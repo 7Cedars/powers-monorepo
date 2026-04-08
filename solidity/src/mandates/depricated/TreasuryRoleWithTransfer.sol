@@ -4,10 +4,10 @@
 /// @author 7Cedars
 pragma solidity ^0.8.26;
 
-// import { Mandate } from "../../Mandate.sol";
+// import { Mandate } from "@src/Mandate.sol";
 // import { Powers } from "../../Powers.sol";
-// import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
-// import { TreasurySimple } from "../../helpers/TreasurySimple.sol";
+// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+// import { TreasurySimple } from "@src/helpers/TreasurySimple.sol";
 
 // // import "forge-std/Test.sol"; // only for testing
 

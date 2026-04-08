@@ -199,60 +199,59 @@ export function DynamicForm({mandate, params, status, checks, onCheck}: DynamicF
             // console.log("@dynamic form", {param, index, paramValues: action.paramValues, values: action.paramValues && action.paramValues[index] !== undefined ? action.paramValues[index] : []})
             
             return (
-              <DynamicInput 
-                  dataType = {param.dataType} 
-                  varName = {param.varName} 
-                  index = {index}
-                  values = {action.paramValues && action.paramValues[index] !== undefined ? action.paramValues[index] : ""}
-                  onChange = {(input)=> {handleChange(input, index)}}
-                  key = {index}
-                  />
+              <div className="w-full flex items-center gap-2 mt-2 px-6">
+                <DynamicInput 
+                    dataType = {param.dataType} 
+                    varName = {param.varName} 
+                    index = {index}
+                    values = {action.paramValues && action.paramValues[index] !== undefined ? action.paramValues[index] : ""}
+                    onChange = {(input)=> {handleChange(input, index)}}
+                    key = {index}
+                    />
+              </div>
             )
           })
         }
-      <div className="w-full mt-4 flex flex-row justify-center items-center ps-3 pe-6 gap-3">
-        <label htmlFor="nonce" className="text-xs text-slate-600 ps-3 min-w-28 ">Nonce</label>
-        <div className="w-full h-fit flex items-center text-md justify-center rounded-md bg-white ps-2 outline outline-1 outline-slate-300">
-            <input 
-              type="number"   
-              name={`nonce`} 
-              id={`nonce`}
-              value = {action.nonce}
-              className="w-full h-8 pe-2 text-xs font-mono text-slate-500 placeholder:text-gray-400 focus:outline focus:outline-0" 
-              placeholder={`Enter random number.`}
-              onChange={(event) => {
-                event.preventDefault()
-                setAction({...action, nonce: event.target.value, upToDate: false})
-              }}
-            />
-          </div>
-          <button 
-              className = "h-8 min-w-8 py-2 grow flex flex-row items-center justify-center  rounded-md bg-white outline outline-1 outline-gray-300"
-              onClick = {(event) => {
-                event.preventDefault()
-                setAction({...action, nonce: BigInt(Math.floor(Math.random() * 1000000000000000000000000)).toString(), upToDate: false})
-              }}
-              > 
-              <SparklesIcon className = "h-5 w-5"/> 
-          </button>    
-        </div>
+      <div className="w-full flex items-center gap-2 mt-2 px-6">
+        <label htmlFor="nonce" className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">Nonce</label>
+        <input 
+          type="number"   
+          name={`nonce`} 
+          id={`nonce`}
+          value = {action.nonce}
+          className="flex-1 bg-background border border-border px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono" 
+          placeholder={`Enter random number.`}
+          onChange={(event) => {
+            event.preventDefault()
+            setAction({...action, nonce: event.target.value, upToDate: false})
+          }}
+        />
+        <button 
+          type="button"
+          className="h-9 w-9 flex items-center justify-center bg-background border border-border hover:bg-muted transition-colors"
+          onClick = {(event) => {
+            event.preventDefault()
+            setAction({...action, nonce: BigInt(Math.floor(Math.random() * 1000000000000000000000000)).toString(), upToDate: false})
+          }}
+        > 
+          <SparklesIcon className="h-4 w-4"/> 
+        </button>    
+      </div>
 
-        <div className="w-full mt-4 flex flex-row justify-center items-center ps-3 pe-6 gap-3">
-        <label htmlFor="uri" className="text-xs text-slate-600 ps-3 min-w-28 ">Description</label>
-          <div className="w-full h-fit flex items-center text-md justify-center rounded-md bg-white ps-2 outline outline-1 outline-slate-300">
-              <input 
-                type="text"
-                name="uri" 
-                id="uri"
-                value={action.description}
-                className="w-full h-8 pe-2 text-xs font-mono text-slate-500 placeholder:text-gray-400 focus:outline focus:outline-0" 
-                placeholder="Enter URI to file with notes on the action here."
-                onChange={(event) => {  
-                  event.preventDefault()
-                  setAction({...action, description: event.target.value, upToDate: false}); 
-                }} />
-            </div>
-        </div>
+      <div className="w-full flex items-center gap-2 mt-2 px-6">
+        <label htmlFor="uri" className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">Description</label>
+        <input 
+          type="text"
+          name="uri" 
+          id="uri"
+          value={action.description}
+          className="flex-1 bg-background border border-border px-3 py-2 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono" 
+          placeholder="Enter URI to file with notes on the action here."
+          onChange={(event) => {  
+            event.preventDefault()
+            setAction({...action, description: event.target.value, upToDate: false}); 
+          }} />
+      </div>
 
       {/* Errors */}
       { error.error &&
@@ -284,7 +283,10 @@ export function DynamicForm({mandate, params, status, checks, onCheck}: DynamicF
       }
       
       { 
-        simulation && action?.upToDate && <SimulationBox mandate = {mandate} simulation = {simulation} />
+        simulation && action?.upToDate && 
+        <div className="w-full flex items-center gap-2 mt-6 px-6"> 
+          <SimulationBox mandate = {mandate} simulation = {simulation} />
+        </div>
       } 
 
     </>

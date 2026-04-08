@@ -10,7 +10,7 @@ export const MandateLink = ({mandateId, powers}: {mandateId: bigint, powers: Pow
   // console.log("@MandateLink: waypoint 0", {mandateId, powers})
 
   return (
-  <main className="w-full min-h-fit flex flex-col justify-start items-center bg-slate-50 border border-slate-300 rounded-md overflow-hidden">
+  <main className="w-full min-h-fit flex flex-col justify-start items-center bg-slate-50 border border-slate-300  overflow-hidden">
     <section className="w-full flex flex-col divide-y divide-slate-300 text-sm text-slate-600" > 
         <div className="w-full flex flex-row items-center justify-between bg-slate-100 text-slate-900">
           <div className="text-left w-full px-4 py-2">
@@ -24,7 +24,7 @@ export const MandateLink = ({mandateId, powers}: {mandateId: bigint, powers: Pow
                   <Button
                       showBorder={true}
                       role={6}
-                      onClick={() => router.push(`/protocol/${chainId}/${powers.contractAddress}/mandates/${mandateId}`)}
+                      onClick={() => router.push(`/editor/${chainId}/${powers.contractAddress}/mandates/${mandateId}`)}
                       align={0}
                       selected={false}
                       >  

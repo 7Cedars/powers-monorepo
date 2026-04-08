@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { Action, CommunicationChannels, Powers, Status } from '../context/types'
+import { Governed721DAO, CulturalStewardsDAO, defaultPowers101 } from './defaultProtocols';
+import { stringifyWithBigInt, parseWithBigInt } from '../utils/localStorage';
 
 // Action Store
 type PowersStore = Powers;
@@ -75,7 +77,7 @@ export const deleteError: typeof useErrorStore.setState = () => {
 }
 
 
-// Error Store
+// Status Store
 type StatusStore = {
   status: Status
 }
@@ -92,3 +94,90 @@ export const setStatus: typeof useStatusStore.setState = (status) => {
 export const deleteStatus: typeof useStatusStore.setState = () => {
   useStatusStore.setState(initialStateStatus)
 }
+
+// Saved Protocols Store
+type SavedProtocolsStore = {
+  savedProtocols: Powers[]
+  loadSavedProtocols: () => void
+  addProtocol: (protocol: Powers) => void
+  removeProtocol: (contractAddress: `0x${string}`) => void
+  updateProtocol: (contractAddress: `0x${string}`, updates: Partial<Powers>) => void
+}
+
+export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => ({
+  savedProtocols: [],
+  
+  loadSavedProtocols: () => {
+    try {
+      const localStore = localStorage.getItem('powersProtocols')
+      let protocols: Powers[] = []
+      
+      if (localStore && localStore !== 'undefined') {
+        protocols = parseWithBigInt<Powers[]>(localStore)
+      }
+
+      // Check if default protocols already exist by contract address
+      const powers101Exists = protocols.some(
+        p => p.contractAddress.toLowerCase() === defaultPowers101.contractAddress.toLowerCase()
+      )
+      const powersGoverned721Exists = protocols.some(
+        p => p.contractAddress.toLowerCase() === Governed721DAO.contractAddress.toLowerCase()
+      )
+      const culturalStewardsDAOExists = protocols.some(
+        p => p.contractAddress.toLowerCase() === CulturalStewardsDAO.contractAddress.toLowerCase()
+      )
+
+      if (!powersGoverned721Exists) {
+        // Add Governed 721 DAO to the list
+        protocols.unshift(Governed721DAO)
+      }
+      if (!culturalStewardsDAOExists) {
+        // Add Cultural Stewards DAO to the list
+        protocols.unshift(CulturalStewardsDAO)
+      }
+      if (!powers101Exists) {
+        // Add Powers 101 to the list
+        protocols.unshift(defaultPowers101)
+      }
+
+      set({ savedProtocols: protocols })
+    } catch (error) {
+      console.error('Error loading saved protocols:', error)
+      set({ savedProtocols: [defaultPowers101] })
+    }
+  },
+  
+  addProtocol: (protocol: Powers) => {
+    const { savedProtocols } = get()
+    const exists = savedProtocols.some(
+      p => p.contractAddress.toLowerCase() === protocol.contractAddress.toLowerCase()
+    )
+    
+    if (!exists) {
+      const updated = [...savedProtocols, protocol]
+      localStorage.setItem('powersProtocols', stringifyWithBigInt(updated))
+      set({ savedProtocols: updated })
+      console.log('Protocol added to localStorage:', protocol.contractAddress)
+    }
+  },
+  
+  removeProtocol: (contractAddress: `0x${string}`) => {
+    const { savedProtocols } = get()
+    const updated = savedProtocols.filter(
+      p => p.contractAddress.toLowerCase() !== contractAddress.toLowerCase()
+    )
+    localStorage.setItem('powersProtocols', stringifyWithBigInt(updated))
+    set({ savedProtocols: updated })
+    console.log('Protocol removed from localStorage:', contractAddress)
+    console.log('Remaining protocols:', updated.length)
+  },
+  
+  updateProtocol: (contractAddress: `0x${string}`, updates: Partial<Powers>) => {
+    const { savedProtocols } = get()
+    const updated = savedProtocols.map(p => 
+      p.contractAddress === contractAddress ? { ...p, ...updates } : p
+    )
+    localStorage.setItem('powersProtocols', stringifyWithBigInt(updated))
+    set({ savedProtocols: updated })
+  }
+}))

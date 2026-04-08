@@ -21,9 +21,9 @@ import { PowersMock } from "@mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 
 // organisations
-import { Powers101 } from "../script/organisations/examples/Powers101.s.sol";
-import { ElectionListsDAO } from "../script/organisations/examples/ElectionListsDAO.s.sol";
-// import { Deploy } from "../script/organisations/CulturalStewardsDAO/Deploy.s.sol";
+import { Deploy as Powers101 } from "@governance/examples/Powers101.s.sol";
+import { Deploy as ElectionListsDAO } from "@governance/examples/ElectionListsDao.s.sol";
+// import { Deploy } from "@governance/examples/CulturalStewardsDAO/Deploy.s.sol";
 
 // helpers
 import { Nominees } from "@src/helpers/Nominees.sol";
@@ -39,8 +39,7 @@ import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
 import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { ElectionList } from "@src/helpers/ElectionList.sol"; 
 import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
@@ -51,8 +50,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     PowersMock daoMockChild1;
     PowersMock daoMockChild2;
     ElectionListsDAO openElections;
-    InitialisePowers initialisePowers;
-    PowersDeployer powersDeployer;
+    InitialisePowers initialisePowers; 
     string[] mandateNames;
     address[] mandateAddresses;
     TestConstitutions testConstitutions; 
@@ -350,7 +348,7 @@ abstract contract TestHelperFunctions is Test, TestVariables {
                 return i;
             }
         }
-        revert("Mandate not found");
+        revert(string.concat("Mandate not found: ", description));
     }
 }
 
@@ -451,9 +449,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         // deploy mock powers
         daoMock = new PowersMock();
         daoMockChild1 = new PowersMock();
-        daoMockChild2 = new PowersMock();
-        powersDeployer = new PowersDeployer();
-        powersDeployer.transferOwnership(address(daoMock));  
+        daoMockChild2 = new PowersMock(); 
 
         // deploy external contracts
         initialisePowers = new InitialisePowers();
@@ -627,8 +623,7 @@ abstract contract TestSetupIntegrations is BaseSetup {
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid),
-            address(0) // admin
+            helperConfig.getMaxExecutionsLength(block.chainid)
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();
@@ -725,27 +720,6 @@ abstract contract TestSetupElectionListFlow is BaseSetup {
         daoMock.assignRole(ROLE_ONE, frank);
         daoMock.assignRole(ROLE_ONE, gary);
         daoMock.assignRole(ROLE_ONE, helen);
-        daoMock.assignRole(ROLE_TWO, charlotte);
-        daoMock.assignRole(ROLE_TWO, david);
-        vm.stopPrank();
-    }
-}
-
-abstract contract TestSetupRoleByTransactionFlow is BaseSetup {
-    function setUpVariables() public override {
-        super.setUpVariables();
-
-        // initiate multi constitution
-        (PowersTypes.MandateInitData[] memory mandateInitData_) =
-            testConstitutions.roleByTransaction_IntegrationTestConstitution(address(daoMock));
-
-        // constitute daoMock.
-        daoMock.constitute(mandateInitData_);
-        daoMock.closeConstitute();
-
-        vm.startPrank(address(daoMock));
-        daoMock.assignRole(ROLE_ONE, alice);
-        daoMock.assignRole(ROLE_ONE, bob);
         daoMock.assignRole(ROLE_TWO, charlotte);
         daoMock.assignRole(ROLE_TWO, david);
         vm.stopPrank();

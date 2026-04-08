@@ -26,7 +26,7 @@ export function MandateBoxStatic({powers, mandate, selectedExecution }: MandateB
   
   return (
     <main className="w-full" help-nav-item="mandate-input">
-      <section className={`w-full bg-slate-50 border-2 rounded-md overflow-hidden border-slate-600 pb-4`} >
+      <section className={`w-full bg-slate-50 border-2  overflow-hidden border-slate-600 pb-4`} >
       {/* title - replaced with HeaderMandate */}
       <div className="w-full border-b border-slate-300 bg-slate-100 py-4 ps-6 pe-2">
         <HeaderMandate

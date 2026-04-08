@@ -10,9 +10,9 @@
 
 pragma solidity ^0.8.26;
 
-// import { Mandate } from "../../Mandate.sol";
-// import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
-// import { TreasuryPools } from "../../helpers/TreasuryPools.sol";
+// import { Mandate } from "@src/Mandate.sol";
+// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+// import { TreasuryPools } from "@src/helpers/TreasuryPools.sol";
 
 // contract TreasuryPoolTransfer is Mandate {
 //     /// @dev Mapping from mandate hash to target contract address for each mandate instance
