@@ -4,14 +4,14 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { ChatBubbleBottomCenterTextIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useXmtpClient } from '@/hooks/useXmtpClient'
 import { useConnection } from 'wagmi'
+import { getAddress, isAddress } from 'viem'
 import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk'
 import { ConsentState, IdentifierKind } from '@xmtp/browser-sdk'
 import { SearchFilterSort } from './SearchFilterSort'
 
 // Hardcoded addresses for group chat creation - for demo purposes only
 const HARDCODED_ADDRESSES = [
-  '0xEA223f81D7E74321370a77f1e44067bE8738B627',
-  '0x328735d26e5Ada93610F0006c32abE2278c46211'
+  '0x71B17aABB5007b903c057CcCE2A29F055f64a211'
 ]
 
 interface GroupChatInfo {
@@ -43,6 +43,9 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
   const [sendError, setSendError] = useState<string | null>(null)
   const [isAddingMember, setIsAddingMember] = useState(false)
   const [addMemberError, setAddMemberError] = useState<string | null>(null)
+  const [showMembersList, setShowMembersList] = useState(false)
+  const [newMemberAddress, setNewMemberAddress] = useState('')
+  const [addNewMemberError, setAddNewMemberError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
   // Generate unique chatroom identifier
@@ -56,31 +59,6 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
   }
   
   const chatroomId = getChatroomId()
-  
-  // localStorage key for conversation mapping
-  const CHAT_MAPPING_KEY = 'xmtp-chat-mapping'
-  
-  // Helper to get/set localStorage mapping
-  const getChatMapping = (): Record<string, string> => {
-    try {
-      const stored = localStorage.getItem(CHAT_MAPPING_KEY)
-      return stored ? JSON.parse(stored) : {}
-    } catch (err) {
-      console.error('Failed to parse chat mapping from localStorage:', err)
-      return {}
-    }
-  }
-  
-  const saveChatMapping = (conversationId: string, roomId: string) => {
-    try {
-      const mapping = getChatMapping()
-      mapping[conversationId] = roomId
-      localStorage.setItem(CHAT_MAPPING_KEY, JSON.stringify(mapping))
-      console.log('Saved chat mapping:', conversationId, '->', roomId)
-    } catch (err) {
-      console.error('Failed to save chat mapping:', err)
-    }
-  }
  
   console.log('NB: XMTP Chatroom render:', { client, address, isConnected, groupChat, messages, error, chatroomId })
 
@@ -141,25 +119,17 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         })
 
         // Find the specific chatroom matching our identifier
-        // Check both name field and localStorage mapping
-        const chatMapping = getChatMapping()
-        
+        // Check both name and description fields (network-persisted, cross-browser compatible)
         const matchingConvo = groupConvos.find((convo: any) => {
           // Priority 1: Check name field (most reliable)
           if (convo.name && convo.name === chatroomId) {
-            console.log('Found chat by name match:', convo.id)
+            console.log('Found chat by name match:', convo.id, 'name:', convo.name)
             return true
           }
           
-          // Priority 2: Check description field
+          // Priority 2: Check description field (backup identifier)
           if (convo.description && convo.description === chatroomId) {
-            console.log('Found chat by description match:', convo.id)
-            return true
-          }
-          
-          // Priority 3: Check localStorage mapping
-          if (chatMapping[convo.id] === chatroomId) {
-            console.log('Found chat by localStorage mapping:', convo.id)
+            console.log('Found chat by description match:', convo.id, 'description:', convo.description)
             return true
           }
           
@@ -313,23 +283,25 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
   }, [client, isConnected, groupChat])
 
   const handleCreateGroupChat = async () => {
-    console.log('@handleCreateGroupChat: Creating group chat with addresses 1:', HARDCODED_ADDRESSES)
+    console.log('@handleCreateGroupChat: Creating group chat with addresses:', HARDCODED_ADDRESSES)
     if (!client || !chatroomId) return
 
     console.log('@handleCreateGroupChat: Creating group chat with ID:', chatroomId)
 
     setIsCreatingGroup(true)
     try {
-      // Create optimistic group chat (stays local until members are added)
+      // Create optimistic group chat with chatroomId in BOTH name and description
+      // This ensures cross-browser recognition via network-persisted metadata
       const newGroup = await (client.conversations as any).createGroupOptimistic({
-        name: chatroomId,  // Use the unique ID as the name for reliable filtering
-        description: `Powers Protocol ${chatroomType} Chat`
+        name: chatroomId,         // Primary identifier
+        description: chatroomId   // Backup identifier (stored on network)
       })
 
-      console.log('@handleCreateGroupChat: Created new group chat:', {newGroup})
-      
-      // Save the mapping to localStorage immediately
-      saveChatMapping(newGroup.id, chatroomId)
+      console.log('@handleCreateGroupChat: Created optimistic group:', {
+        id: newGroup.id,
+        name: newGroup.name,
+        description: newGroup.description
+      })
 
       // Create group info
       const groupInfo: GroupChatInfo = {
@@ -365,26 +337,54 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
           groupInfo.uninitializedMembers = uninitializedAddresses
           
           // Sync the group to the network
-          if (validInboxes.length > 0) {
-            // Add valid members (this syncs the group to the network)
-            await newGroup.addMembers(validInboxes)
-            groupInfo.isOptimistic = false
-          } else {
-            // If no valid members, sync the group using publishMessages
-            await newGroup.publishMessages()
-            groupInfo.isOptimistic = false
+          // Note: Browser SDK cannot add members by Ethereum address during creation
+          // Members must be added after they have inbox IDs
+          console.log('@handleCreateGroupChat: Publishing group (members will join manually)')
+          await newGroup.publishMessages()
+          groupInfo.isOptimistic = false
+          
+          // Wait for sync to complete
+          await newGroup.sync()
+          console.log('@handleCreateGroupChat: Group synced to network')
+          
+          // Update metadata with retry logic to ensure cross-browser persistence
+          let metadataUpdateSuccess = false
+          for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+              console.log(`@handleCreateGroupChat: Updating metadata (attempt ${attempt + 1}/3)`)
+              await newGroup.updateName(chatroomId)
+              await newGroup.updateDescription(chatroomId)
+              
+              // Verify the update succeeded
+              await newGroup.sync()
+              const updatedName = newGroup.name
+              const updatedDescription = newGroup.description
+              
+              if (updatedName === chatroomId && updatedDescription === chatroomId) {
+                console.log('@handleCreateGroupChat: Metadata verified:', {
+                  name: updatedName,
+                  description: updatedDescription
+                })
+                metadataUpdateSuccess = true
+                break
+              } else {
+                console.warn('@handleCreateGroupChat: Metadata mismatch:', {
+                  expected: chatroomId,
+                  actualName: updatedName,
+                  actualDescription: updatedDescription
+                })
+              }
+            } catch (err) {
+              console.error(`@handleCreateGroupChat: Metadata update attempt ${attempt + 1} failed:`, err)
+              if (attempt < 2) {
+                // Wait before retry
+                await new Promise(resolve => setTimeout(resolve, 1000))
+              }
+            }
           }
           
-          // Re-save the mapping after sync (in case ID changed)
-          saveChatMapping(newGroup.id, chatroomId)
-          
-          // Update metadata after the group has been synced to the network
-          try {
-            await newGroup.updateName(chatroomId)
-            await newGroup.updateDescription(`Powers Protocol ${chatroomType} Chat`)
-            console.log('Successfully updated group metadata:', chatroomId)
-          } catch (err) {
-            console.error('Failed to update group metadata:', err)
+          if (!metadataUpdateSuccess) {
+            console.error('@handleCreateGroupChat: Failed to update metadata after 3 attempts')
           }
           
           // Update the group chat info
@@ -503,31 +503,184 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         return
       }
 
-      // Add the address to the group
-      await (groupChat.conversation as any).addMembers([address])
+      // Get the inbox ID by creating a DM with this address
+      try {
+        console.log('Attempting to create DM to get inbox ID for:', address)
+        
+        // First, check if we can message this address
+        const dmIdentifier = await client.conversations.fetchDmByIdentifier({
+          identifier: address,
+          identifierKind: IdentifierKind.Ethereum
+        })
+        
+        console.log('fetchDmByIdentifier result:', dmIdentifier)
+        
+        if (!dmIdentifier) {
+          setAddMemberError('Could not create DM with this address - address may not be on XMTP')
+          setTimeout(() => setAddMemberError(null), 5000)
+          return
+        }
+        
+        // Get peer inbox ID from the DM
+        const members = await (dmIdentifier as any).members()
+        console.log('DM members:', members)
+        
+        const peerMember = members.find((m: any) => m.inboxId !== client.inboxId)
+        
+        if (!peerMember || !peerMember.inboxId) {
+          setAddMemberError('Could not extract inbox ID from DM')
+          setTimeout(() => setAddMemberError(null), 5000)
+          return
+        }
+        
+        console.log('Found peer inbox ID:', peerMember.inboxId)
+        
+        // Add member to group using inbox ID
+        await (groupChat.conversation as any).addMembers([peerMember.inboxId])
+        
+        // Update the group chat info
+        const updatedMemberAddresses = [...groupChat.memberAddresses, address]
+        const updatedUninitializedMembers = groupChat.uninitializedMembers.filter(
+          (addr) => addr.toLowerCase() !== address.toLowerCase()
+        )
 
-      // Update the group chat info
-      const updatedMemberAddresses = [...groupChat.memberAddresses, address]
-      const updatedUninitializedMembers = groupChat.uninitializedMembers.filter(
-        (addr) => addr.toLowerCase() !== address.toLowerCase()
-      )
+        setGroupChat({
+          ...groupChat,
+          memberAddresses: updatedMemberAddresses,
+          uninitializedMembers: updatedUninitializedMembers,
+          isOptimistic: false
+        })
 
-      setGroupChat({
-        ...groupChat,
-        memberAddresses: updatedMemberAddresses,
-        uninitializedMembers: updatedUninitializedMembers,
-        isOptimistic: false
-      })
+        // Sync the conversation
+        await groupChat.conversation.sync()
 
-      // Sync the conversation
-      await groupChat.conversation.sync()
-
-      console.log('Successfully added connected address to group:', address)
+        console.log('Successfully added connected address to group:', address)
+      } catch (dmErr) {
+        console.error('Failed to get inbox ID via DM:', dmErr)
+        setAddMemberError('Failed to resolve address to inbox ID')
+        setTimeout(() => setAddMemberError(null), 5000)
+        return
+      }
     } catch (err) {
       console.error('Failed to add connected address to group:', err)
       const errorMessage = err instanceof Error ? err.message : 'Failed to add member'
       setAddMemberError(errorMessage)
       setTimeout(() => setAddMemberError(null), 5000)
+    } finally {
+      setIsAddingMember(false)
+    }
+  }
+
+  const handleAddNewMember = async () => {
+    if (!client || !groupChat || !newMemberAddress.trim()) return
+
+    const trimmedAddress = newMemberAddress.trim()
+
+    // Validate address format using viem
+    if (!isAddress(trimmedAddress)) {
+      setAddNewMemberError('Invalid Ethereum address format')
+      setTimeout(() => setAddNewMemberError(null), 3000)
+      return
+    }
+
+    // Check if address is already a member
+    const isAlreadyMember = groupChat.memberAddresses.some(
+      (memberAddr) => memberAddr.toLowerCase() === trimmedAddress.toLowerCase()
+    )
+    
+    if (isAlreadyMember) {
+      setAddNewMemberError('Address is already a member of this group')
+      setTimeout(() => setAddNewMemberError(null), 3000)
+      return
+    }
+
+    setIsAddingMember(true)
+    setAddNewMemberError(null)
+
+    try {
+      // Check if the address can message on XMTP using trimmed address
+      const identifier: Identifier = {
+        identifier: trimmedAddress,
+        identifierKind: IdentifierKind.Ethereum
+      }
+      
+      const canMessageMap = await client.canMessage([identifier])
+      const canMessage = canMessageMap.get(trimmedAddress)
+
+      if (!canMessage) {
+        console.log('Address not found in canMessage map or not initialized')
+        setAddNewMemberError('Address is not initialized with XMTP')
+        setTimeout(() => setAddNewMemberError(null), 5000)
+        return
+      }
+
+      // Get the inbox ID by creating a DM with this address
+      console.log('Attempting to add member:', trimmedAddress)
+      
+      try {
+        console.log('Attempting to create DM to get inbox ID for:', trimmedAddress)
+        
+        const dmIdentifier = await client.conversations.fetchDmByIdentifier({
+          identifier: trimmedAddress,
+          identifierKind: IdentifierKind.Ethereum
+        })
+        
+        console.log('fetchDmByIdentifier result:', dmIdentifier)
+        
+        if (!dmIdentifier) {
+          setAddNewMemberError('Could not create DM with this address - address may not be on XMTP')
+          setTimeout(() => setAddNewMemberError(null), 5000)
+          return
+        }
+        
+        // Get peer inbox ID from the DM
+        const members = await (dmIdentifier as any).members()
+        console.log('DM members:', members)
+        
+        const peerMember = members.find((m: any) => m.inboxId !== client.inboxId)
+        
+        if (!peerMember || !peerMember.inboxId) {
+          setAddNewMemberError('Could not extract inbox ID from DM')
+          setTimeout(() => setAddNewMemberError(null), 5000)
+          return
+        }
+        
+        console.log('Found peer inbox ID:', peerMember.inboxId)
+        
+        // Add member to group using inbox ID
+        await (groupChat.conversation as any).addMembers([peerMember.inboxId])
+        
+        // Update the group chat info
+        const updatedMemberAddresses = [...groupChat.memberAddresses, trimmedAddress]
+        const updatedUninitializedMembers = groupChat.uninitializedMembers.filter(
+          (addr) => addr.toLowerCase() === trimmedAddress.toLowerCase()
+        )
+
+        setGroupChat({
+          ...groupChat,
+          memberAddresses: updatedMemberAddresses,
+          uninitializedMembers: updatedUninitializedMembers,
+          isOptimistic: false
+        })
+
+        // Sync the conversation
+        await groupChat.conversation.sync()
+
+        // Clear the input on success
+        setNewMemberAddress('')
+
+        console.log('Successfully added new member to group:', trimmedAddress)
+      } catch (dmErr) {
+        console.error('Failed to get inbox ID via DM:', dmErr)
+        setAddNewMemberError('Failed to resolve address to inbox ID')
+        setTimeout(() => setAddNewMemberError(null), 5000)
+        return
+      }
+    } catch (err) {
+      console.error('Failed to add new member to group:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add member'
+      setAddNewMemberError(errorMessage)
+      setTimeout(() => setAddNewMemberError(null), 5000)
     } finally {
       setIsAddingMember(false)
     }
@@ -558,35 +711,88 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
               onSortChange={(sort) => console.log('Sort:', sort)}
             />
           
-            <span className="text-sm text-muted-foreground">
-              | {groupChat.memberAddresses.length}/250 members 
-            </span>
-            
-            {address && (
-              <button
-                onClick={handleAddConnectedAddress}
-                disabled={isAddingMember || groupChat.memberAddresses.some(
-                  (memberAddr) => memberAddr.toLowerCase() === address.toLowerCase()
-                )}
-                className="px-3 py-1 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
-                title={groupChat.memberAddresses.some(
-                  (memberAddr) => memberAddr.toLowerCase() === address.toLowerCase()
-                ) ? 'Already a member' : 'Add your wallet to group'}
-              >
-                {isAddingMember ? 'Adding...' : 'Add Me'}
-              </button>
-            )}
-            
-            {/* <button
-              onClick={removeAllInstallations}
-              disabled={isLoading}
-              className="px-4 py-1 bg-primary text-primary-foreground text-[10px] hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+            <button
+              onClick={() => setShowMembersList(!showMembersList)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              {isLoading ? 'Logging out...' : 'Logout'}
-            </button> */}
+              | {groupChat.memberAddresses.length}/250 members
+            </button>
         </div>
         )}
       </div>
+
+      {/* Members List Modal */}
+      {showMembersList && groupChat && (
+        <div className="px-6 py-3 border-b border-border bg-muted/5">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="text-xs font-mono uppercase tracking-wider text-foreground">
+              Group Members ({groupChat.memberAddresses.length})
+            </h5>
+            <button
+              onClick={() => setShowMembersList(false)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="max-h-48 overflow-y-auto scrollbar-thin space-y-1">
+            {groupChat.memberAddresses.map((memberAddr, index) => (
+              <div
+                key={index}
+                className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors py-1"
+              >
+                {memberAddr}
+              </div>
+            ))}
+          </div>
+          {groupChat.uninitializedMembers.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <h6 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1">
+                Uninitialized ({groupChat.uninitializedMembers.length})
+              </h6>
+              <div className="max-h-24 overflow-y-auto scrollbar-thin space-y-1">
+                {groupChat.uninitializedMembers.map((memberAddr, index) => (
+                  <div
+                    key={index}
+                    className="text-xs font-mono text-muted-foreground/60 py-1"
+                  >
+                    {memberAddr}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Add New Member Section */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <h6 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">
+              Add Member
+            </h6>
+            {addNewMemberError && (
+              <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20 text-xs text-destructive font-mono">
+                {addNewMemberError}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="0x..."
+                value={newMemberAddress}
+                onChange={(e) => setNewMemberAddress(e.target.value)}
+                className="flex-1 bg-background border border-border px-2 py-1 text-xs focus:outline-none focus:border-foreground/50 transition-colors font-mono"
+                disabled={isAddingMember}
+              />
+              <button
+                onClick={handleAddNewMember}
+                disabled={isAddingMember || !newMemberAddress.trim()}
+                className="px-3 py-1 bg-primary text-primary-foreground text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+              >
+                {isAddingMember ? 'Adding...' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content Area */}
       {!hasRole ? (
