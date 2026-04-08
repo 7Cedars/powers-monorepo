@@ -78,7 +78,7 @@ contract PowersFactory is IPowersFactory, Ownable {
         Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
 
         powers.constitute(mandateInitData); // set the Powers address as the initial deployer and set as the admin!
-        powers.closeConstitute(address(powers)); // admin set to the address that called the factory.
+        powers.closeConstitute(msg.sender); // admin set to the address that called the factory.
         latestDeployment = address(powers);
 
         return address(powers);

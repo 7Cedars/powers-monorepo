@@ -124,10 +124,6 @@ export default defineConfig({
               link: '/mandates/electoral/RoleByRoles', 
             },
             { 
-              text: 'RoleByTransaction', 
-              link: '/mandates/electoral/RoleByTransaction', 
-            },
-            { 
               text: 'SelfSelect', 
               link: '/mandates/electoral/SelfSelect', 
             },
@@ -178,12 +174,12 @@ export default defineConfig({
               link: '/mandates/executive/OpenAction', 
             },
             { 
-              text: 'PowersAction_Flexible', 
-              link: '/mandates/executive/PowersAction_Flexible', 
+              text: 'ExternalAction_Flexible', 
+              link: '/mandates/executive/ExternalAction_Flexible', 
             },
             { 
-              text: 'PowersAction_Simple', 
-              link: '/mandates/executive/PowersAction_Simple', 
+              text: 'ExternalAction_Simple', 
+              link: '/mandates/executive/ExternalAction_Simple', 
             },
             { 
               text: 'PresetActions_Multiple', 

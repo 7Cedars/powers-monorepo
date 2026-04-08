@@ -57,7 +57,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @dev Mapping from account to blacklisted status
     mapping(address account => bool blacklisted) internal _blacklist;
 
-    // two roles are preset: ADMIN_ROLE == 0 and PUBLIC_ROLE == type(uint256).max.
+    // two roles are preset: ADMIN_ROLE == 0 and PUBLIC_ROLE == type(uint256).max. These values should be avoided in any arythmetic operations with roleIds, to avoid overflow/underflow issues.
     /// @notice Role identifier for the admin role
     uint256 public constant ADMIN_ROLE = type(uint256).min;
     /// @notice Role identifier for the public role (everyone)
@@ -225,16 +225,16 @@ contract Powers is EIP712, IPowers, Context {
 
         // check 5: do we have an action with the same targetMandate and mandateCalldata?
         Action storage action = _actions[actionId];
-        if (action.voteStart != 0) revert Powers__UnexpectedActionState();
+        if (action.mandateId != 0) revert Powers__ActionAlreadyInitiated();
 
         // register actionId at mandate.
-        if (action.mandateId == 0) mandate.actionIds.push(actionId);
+        mandate.actionIds.push(actionId);
 
         // if checks pass: create proposedAction
         action.mandateCalldata = mandateCalldata;
         action.proposedAt = uint48(block.number);
         action.mandateId = mandateId;
-        action.voteStart = quorum > 0 ? uint48(block.number) : 0; // note that the moment proposedAction is made, voting start. Delay functionality has to be implemeted at the mandate level.
+        action.voteStart = quorum > 0 ? uint48(block.number) : 0; 
         action.voteDuration = votingPeriod;
         action.caller = _msgSender();
         action.uri = uriAction;
@@ -351,6 +351,8 @@ contract Powers is EIP712, IPowers, Context {
 
             (bool success, bytes memory returndata) = targets[i].call{ value: values[i] }(calldatas[i]);
             if (!success) {
+                // logging block number of failed action. 
+                action.failedAt = uint48(block.number); // log time of failure. 
                 // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
                 if (returndata.length > 0) {
                     assembly {
@@ -545,6 +547,8 @@ contract Powers is EIP712, IPowers, Context {
         if (roleId == PUBLIC_ROLE) revert Powers__CannotSetPublicRole();
         // check 2: Zero address is not allowed.
         if (account == address(0)) revert Powers__CannotAddZeroAddress();
+        // check 3: The organisation itself cannot be assigned a role. This to avoid re-entrancy attacks. 
+        if (account == address(this)) revert Powers__CannotAddPowersAddressAsMember();
 
         Role storage role = roles[roleId];
         uint256 index = role.members[account];
@@ -669,7 +673,7 @@ contract Powers is EIP712, IPowers, Context {
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
-        return "v0.5.1";
+        return "v0.6.0";
     }
 
     /// @inheritdoc IPowers
@@ -721,6 +725,9 @@ contract Powers is EIP712, IPowers, Context {
 
         if (action.proposedAt == 0 && action.requestedAt == 0 && action.fulfilledAt == 0 && action.cancelledAt == 0) {
             return ActionState.NonExistent;
+        }
+        if (action.failedAt > 0) {
+            return ActionState.Failed;
         }
         if (action.fulfilledAt > 0) {
             return ActionState.Fulfilled;

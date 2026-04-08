@@ -28,8 +28,20 @@ interface IMandate is IERC165 {
     /// @param index Index of the mandate
     /// @param nameDescription Name of the mandate
     /// @param inputParams Input parameters for the mandate
+    /// @param config Configurations parameters for the mandate
     event Mandate__Initialized(
         address indexed powers, uint16 indexed index, string nameDescription, bytes inputParams, bytes config
+    );
+
+    /// @notice Emitted when an async mandate is initialized
+    /// @param powers Address of the Powers protocol
+    /// @param index Index of the mandate
+    /// @param nameDescription Name of the mandate
+    /// @param inputParams Input parameters for the mandate
+    /// @param config Configurations parameters for the mandate
+    /// @param oracle Address of the oracle for the async mandate
+    event AsyncMandate__Initialized(
+        address indexed powers, uint16 indexed index, string nameDescription, bytes inputParams, bytes config, address oracle
     );
 
     //////////////////////////////////////////////////////////////

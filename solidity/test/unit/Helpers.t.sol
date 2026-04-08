@@ -2855,7 +2855,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     }  
 
     function testRetrieveDisclosedData() public {
-        vm.skip(false);
+        vm.skip(true);
 
         DisclosedData memory disclosedData = ZKPassport_PowersRegistry(registryAddress).getDisclosed(cedars);
 

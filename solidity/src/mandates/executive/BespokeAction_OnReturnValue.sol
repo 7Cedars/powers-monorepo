@@ -5,9 +5,9 @@ pragma solidity ^0.8.26;
 /// parameters set before and after the return data can be specified.
 /// @author 7Cedars,
 
-import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
-import { IPowers } from "../../interfaces/IPowers.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 contract BespokeAction_OnReturnValue is Mandate {
     /// @notice Constructor of the BespokeAction_Simple mandate
@@ -62,7 +62,8 @@ contract BespokeAction_OnReturnValue is Mandate {
 
         // Send the calldata to the target function
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
-        targets[0] = targetContract;
+        // if no target contract specified, call the function on the Powers contract
+        targets[0] = targetContract == address(0) ? address(powers) : targetContract; 
         calldatas[0] = abi.encodePacked(targetFunction, paramsBefore, returnData, paramsAfter);
 
         return (actionId, targets, values, calldatas);
