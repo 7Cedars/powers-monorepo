@@ -1,0 +1,62 @@
+---
+title: "SafeAllowance_Action"
+description: "Documentation for the SafeAllowance_Action integration mandate, which allows the Powers contract to execute specific functions on the Safe Allowance Module, acting as an authorized delegate."
+---
+
+SafeAllowance_Action is an integration mandate that allows the Powers contract to execute specific functions on the Safe Allowance Module, acting as an authorized delegate.
+
+## Overview
+
+The Gnosis Safe Allowance Module allows designated delegates to execute transactions on behalf of the Safe, within certain limits. This mandate enables the Powers contract itself to act as one of these delegates. By executing this mandate, the Powers contract triggers a specific action on the Allowance Module (e.g., updating allowance parameters, adding other delegates) through the Safe.
+
+It constructs the necessary `execTransaction` call to route the action correctly.
+
+## Configuration
+
+When adopting a SafeAllowance_Action instance, the following parameters are required:
+
+1.  `inputParams` (string[]): A description of the input parameters required for the function call (e.g., `["uint256 newLimit"]`).
+2.  `functionSelector` (bytes4): The function selector of the call to be executed on the Allowance Module.
+3.  `allowanceModule` (address): The address of the Allowance Module.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the input data (`mandateCalldata`) must correspond to the parameters expected by the configured function selector.
+
+### Execution Flow
+
+1.  **Preparation**
+    *   Identifies the Safe Treasury address.
+    *   Constructs a signature (`v=1`) authorizing the transaction. In this context, the signature indicates that the `msg.sender` (Powers) is the delegate approving the action.
+
+2.  **Safe Execution**
+    *   Generates a call to `Safe.execTransaction`.
+    *   The internal transaction targets the `allowanceModule`.
+    *   The data payload is `functionSelector + mandateCalldata`.
+    *   The operation type is set to `Call`.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Initializes the mandate configuration.
+-   Sets the input parameter descriptions.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Constructs the call to the Allowance Module via the Safe.
+-   Encodes the delegate signature.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

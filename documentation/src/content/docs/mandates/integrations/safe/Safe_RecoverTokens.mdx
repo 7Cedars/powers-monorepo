@@ -1,0 +1,57 @@
+---
+title: "Safe_RecoverTokens"
+description: "Documentation for the Safe_RecoverTokens integration mandate, which recovers ERC20 tokens held by the Powers contract and transfers them to the designated Safe Treasury."
+---
+
+Safe_RecoverTokens is a maintenance mandate that recovers ERC20 tokens held by the Powers contract itself and transfers them to the designated Safe Treasury.
+
+## Overview
+
+Sometimes, tokens may be accidentally sent to the Powers contract address instead of the Treasury, or accumulate there due to other operations. This mandate provides a mechanism to sweep these assets into the secure Treasury.
+
+It leverages the Safe Allowance Module to identify which tokens are "known" or relevant to the organization and checks the Powers contract's balance for each.
+
+## Configuration
+
+When adopting a Safe_RecoverTokens instance, the following parameters are required:
+
+1.  `safeTreasury` (address): The address of the Gnosis Safe Treasury where tokens should be sent.
+2.  `allowanceModule` (address): The address of the Allowance Module, used as a source of truth for which tokens to check.
+
+## Usage
+
+### Proposing an Action
+
+This mandate does not require any input parameters (`mandateCalldata` is unused for logic). It automatically scans for balances.
+
+### Execution Flow
+
+1.  **Token Discovery**
+    *   Queries the `allowanceModule` to get the list of allowed tokens for the Powers contract (acting as a delegate).
+    *   This acts as a filter to check only relevant tokens.
+
+2.  **Balance Check**
+    *   Iterates through the list of tokens.
+    *   Checks the balance of each token held by the Powers contract.
+
+3.  **Recovery**
+    *   For every token with a positive balance, generates a call to `IERC20.transfer`.
+    *   Transfers the entire balance to the `safeTreasury`.
+    *   Returns the batch of transfer calls for execution.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Scans allowed tokens.
+-   Constructs transfer calls for positive balances.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |
