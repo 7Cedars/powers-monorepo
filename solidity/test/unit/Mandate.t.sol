@@ -10,7 +10,7 @@ import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import { PowersEvents } from "../../src/interfaces/PowersEvents.sol";
 import { TestSetupMandate } from "../TestSetup.t.sol";
 import { OpenAction } from "../../src/mandates/executive/OpenAction.sol";
-import { PresetActions_Single } from "../../src/mandates/executive/PresetActions_Single.sol";
+import { PresetActions } from "../../src/mandates/executive/PresetActions.sol";
 import { EmptyTargetsMandate, MockTargetsMandate } from "../mocks/MandateMocks.sol";
 
 /// @notice Comprehensive unit tests for Mandate.sol contract

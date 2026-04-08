@@ -59,7 +59,7 @@ export function useXmtpClient() {
 
       // Create XMTP client
       const xmtpClient = await Client.create(signer, {
-        env: 'dev', // Use 'production' for mainnet
+        // env: 'dev', // Use 'production' for mainnet
       })
 
       setClient(xmtpClient)

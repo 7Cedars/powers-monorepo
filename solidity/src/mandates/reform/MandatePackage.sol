@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 /// @notice An example implementation of a Mandate Package that adopts multiple mandates into the Powers protocol.
-/// @dev It is meant to be adopted through the Mandates_Adopt mandate, and then be executed to adopt multiple mandates in a single transaction.
+/// @dev It is meant to be adopted through the Adopt_Mandates mandate, and then be executed to adopt multiple mandates in a single transaction.
 /// @dev The mandate self-destructs after execution.
 ///
 /// @author 7Cedars
@@ -13,11 +13,11 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
-import { IPowers } from "../../interfaces/IPowers.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 import { Powers } from "../../Powers.sol";
-import { PowersTypes } from "../../interfaces/PowersTypes.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 contract MandatePackage is Mandate {
     address[] private sMandateAddresses;

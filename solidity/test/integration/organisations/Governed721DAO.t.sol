@@ -78,7 +78,7 @@ contract Governed721DAO_IntegrationTest is Test {
                 return i;
             }
         }
-        revert("Mandate not found");
+        revert(string.concat("Mandate not found: ", description));
     }
 
     function test_SplitGovernanceFlow() public {

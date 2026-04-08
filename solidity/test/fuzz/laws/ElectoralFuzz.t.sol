@@ -30,7 +30,7 @@ pragma solidity ^0.8.26;
 // ///      mandateId 7: RenounceRole (roles=[1,2])
 // ///      mandateId 8: NStrikesRevokesRoles (roleId=3, strikes=2, FlagActions)
 // ///      mandateId 9: RoleByRoles (targetRole=4, neededRoles=[1,2])
-// ///      mandateId 10: PresetActions_Single (label roles)
+// ///      mandateId 10: PresetActions (label roles)
 // contract ElectoralFuzzTest is TestSetupElectoral {
 //     // Mandate instances for testing
 //     ElectionList_Tally openElectionEnd;

@@ -82,7 +82,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels (Members, Executives) and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })

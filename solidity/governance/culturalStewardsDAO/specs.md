@@ -171,7 +171,7 @@ Process for vetting and assigning legal representatives to Physical Sub-DAOs.
 | Public | ZKP Check Age | ZKPassport_Check.sol | "address PhysicalSubDAO, uint16 assignRepMandateId" | Verifies age > 18 | Anyone can execute. |
 | Public | ZKP Check Country | ZKPassport_Check.sol | (same as above) | Verifies country is GBR | Must have passed age check. |
 | Ideas Sub-DAO | Propose Legal Representative | StatementOfIntent.sol | "address PhysicalSubDAO, uint16 assignRepMandateId, address ProposedLegalRep" | None | Proposal from Ideas Sub-DAO. |
-| Executives | Assign Legal Representative Role | PowersAction_Flexible.sol | "address ProposedLegalRep" | Assigns role 3 in Physical DAO | Proposal must exist. |
+| Executives | Assign Legal Representative Role | ExternalAction_Flexible.sol | "address ProposedLegalRep" | Assigns role 3 in Physical DAO | Proposal must exist. |
 
 #### Assign additional allowances to Physical Sub-DAO or Digital Sub-DAO
 
@@ -191,7 +191,7 @@ The Primary DAO can block mandate reforms at Digital and Physical DAOs. It does 
 
 | Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| Executives | Veto Call to sub-Dao | PowersAction_Flexible.sol | "Address PowersTarget, uint16 MandateIdTarget,  uint16[] MandateId, uint256[] roleIds" | Calls to sub-DAOs | Executioners can veto calls to Powers instances in other sub-DAOs. |
+| Executives | Veto Call to sub-Dao | ExternalAction_Flexible.sol | "Address PowersTarget, uint16 MandateIdTarget,  uint16[] MandateId, uint256[] roleIds" | Calls to sub-DAOs | Executioners can veto calls to Powers instances in other sub-DAOs. |
 
 #### Update uri
 
@@ -324,7 +324,7 @@ The Digital Sub-DAO can request additional allowances from the Primary DAO Safe 
 | Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Veto request allowance | StatementOfIntent.sol | "address Sub-DAO, address Token, uint96 allowanceAmount, uint16 resetTimeMin, uint32 resetBaseMin" | none | Vote. |
-| Repository Admins | Request allowance | PowersAction_Simple.sol | (same as above) | Calls Primary DAO | Vote, high threshold. Proposal must exist, no veto. |
+| Repository Admins | Request allowance | ExternalAction_Simple.sol | (same as above) | Calls Primary DAO | Vote, high threshold. Proposal must exist, no veto. |
 
 #### Payment of receipts
 
@@ -487,7 +487,7 @@ Gives the Ideas Sub-DAO the power to incubate new physical 'pop-up' initiatives.
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Initiate request for new Physical sub-DAO | StatementOfIntent.sol | "address Admin" | None | Vote, simple majority. |
 | Moderators | Veto request for new Physical sub-DAO | StatementOfIntent.sol | (same as above) | None | Vote. |
-| Conveners | Request new Physical sub-DAO | PowersAction_Simple.sol | (same as above) | Requests mandate at Parent DAO | Vote, simple majority. Proposal must exist, no veto. |
+| Conveners | Request new Physical sub-DAO | ExternalAction_Simple.sol | (same as above) | Requests mandate at Parent DAO | Vote, simple majority. Proposal must exist, no veto. |
 
 #### 
 
@@ -538,7 +538,7 @@ Members can apply for membership of the Primary DAO, which Moderators can then f
 | Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | Members | Apply for Membership of Primary DAO | StatementOfIntent.sol | "uint256[] TokenIds" | None | None. |
-| Moderators | Request Membership of Primary DAO | PowersAction_Simple.sol | (same as above) | Calls Primary DAO | Vote. Proposal must exist. |
+| Moderators | Request Membership of Primary DAO | ExternalAction_Simple.sol | (same as above) | Calls Primary DAO | Vote. Proposal must exist. |
 
 #### Assign and Revoke Moderators
 
@@ -668,7 +668,7 @@ Enables Conveners to issue Proof of Attendance (POAP) tokens via the Primary DAO
 
 | Role | Name | Base contract | User Input | Executable Output | Conditions |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| Convener | Mint POAP | PowersAction_Simple.sol | "address To" | Calls Primary DAO to mint | Vote. |
+| Convener | Mint POAP | ExternalAction_Simple.sol | "address To" | Calls Primary DAO to mint | Vote. |
 
 #### Merit NFTs for Attendees
 

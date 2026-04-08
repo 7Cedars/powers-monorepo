@@ -105,7 +105,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Setup:  assigns labels to roles and set the treasury. It self-destructs after execution.",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
