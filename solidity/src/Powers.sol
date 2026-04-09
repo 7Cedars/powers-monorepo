@@ -155,6 +155,7 @@ contract Powers is EIP712, IPowers, Context {
     //////////////////////////////////////////////////////////////
     //                  CONSTITUTE LOGIC                        //
     //////////////////////////////////////////////////////////////
+    /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation.
     /// @inheritdoc IPowers
     function constitute(MandateInitData[] memory constituentMandates) external onlyAdmin {
         if (_constituteClosed) revert Powers__ConstituteClosed();
@@ -485,6 +486,7 @@ contract Powers is EIP712, IPowers, Context {
         return mandateId;
     }
 
+    /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation. 
     /// @dev Internal helper to store mandate data and initialize it.
     function _storeMandate(uint16 mandateId, MandateInitData memory mandateInitData) internal {
         // check if added address is indeed a mandate. Note that this will also revert with address(0).
