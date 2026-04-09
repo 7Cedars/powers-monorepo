@@ -13,8 +13,19 @@ Unlike token-weighted Governor patterns, Powers uses role-based, mandate-driven 
 That said, the flexibility that makes Powers powerful is also its main risk surface. Every mandate is a custom policy engine. The security of any deployment is only as strong as the weakest mandate in its constitution.
 
 #### Reply 7Cedars
-Thank you for noting that this is a genuinely new governance protocol. I would like to push back a little on the statement that "The security of any deployment is only as strong as the weakest mandate in its constitution". 
- 
+Thank you for noting that this is a genuinely new governance protocol and highlighting its design strengths. 
+
+I would like to push back slightly on the statement that "The security of any deployment is only as strong as the weakest mandate in its constitution". 
+- It is true that the strength of mandates used reflects in the overall strength of a governance system. Mandates need to be properly audited—obviously.  
+- Having said this, because mandates are used in sandboxed governance flows, one weak mandate only impacts its specific flow and the functionality it controls. It does not impact other flows. 
+- Also, because of the ability to create checks and balances *within* flows, the exploitation of a vulnerability in one mandate can be blocked through, for instance, a veto call by another mandate. 
+- Finally, a single flow can be paused by removing its final mandate. This means that, instead of pausing an entire protocol, a single functionality can be paused. It lowers the bar for intervention and heightens security. 
+
+However, as mentioned in this review, all of this depends on proper implementation of governance structures. Powers Protocol introduces a generic, rule-based layer to crypto governance. When implemented properly, its checks and balances result in an immensely strong security layer for governance. It can provide a type of governance that is far safer than most crypto governance currently used. 
+
+If implemented poorly, it simply does not. 
+
+Please note that changes to the code have already been synced to the `develop` branch of the `publius-projects/powers-monorepo` repository.
 
 ---
 
@@ -40,10 +51,14 @@ This turns a trust assumption into a cryptographic guarantee.
 
 #### Reply 7Cedars 
 Notes: 
-- The support for async calls in the standard `Mandate.sol` contract is the fundamental cause of this vulnerability. It is a feature of async calls that you cannot know the return value in advance and hence the check is not implemented - even though it is implied (which makes the vulnerability worse). 
+- The support for async calls in the standard `Mandate.sol` contract is the fundamental cause of this vulnerability. It is a feature of async calls that you cannot know the return value in advance, and hence the check is not implemented—even though it is implied (which makes the vulnerability worse). 
 - Although I like the proposed solution, the actual fix is to separate async support from the standard `Mandate.sol` contract. 
-- It means three core functions are left in `Mandate.sol`: `initializeMandate()`, `handleRequest()` and `executeMandate()`. The internal functions have been removed and `executeMandate()` simply executes the output of `handleRequest()` directly, and can only be called by its Powers instance. There is no opportunity to alter the output of `handleRequest()` before its execution by `executeMandate()`. It seems the simplest and most efficient solution to me. 
-- I will create a new `AsyncMandate.sol` that takes an oracle address at initalisation, allowing access restrictions, and that supports callback functionality. I will make sure that the handleRequest returns a very clear signal that it is an async call - and hence the return data cannot be predicted. 
+- This means three core functions are left in `Mandate.sol`: `initializeMandate()`, `handleRequest()`, and `executeMandate()`. 
+    - The internal functions have been removed. 
+    - `executeMandate()` executes the output of `handleRequest()` directly and can only be called by its Powers instance. 
+    - There is no opportunity to alter the output of `handleRequest()` before its execution by `executeMandate()`. 
+    - This seemed the simplest and most efficient solution. 
+- I created a new `AsyncMandate.sol` that takes an oracle address at initialization, allowing access restrictions, and that supports callback functionality. I will make sure that `handleRequest` returns a very clear signal that it is an async call—and hence the return data cannot be predicted.
 
 ---
 
@@ -54,23 +69,23 @@ Notes:
 **Suggestion**: Add `nonReentrant` to `fulfill()` and document that mandates must not call back into the same Powers instance mid-execution. Consider also guarding `request()`.
 
 #### Reply 7Cedars 
-The Powers instance should *never* be assigned a role ID in its own organisation. If it is not, reentrancy attacks are impossible.   
+The Powers instance should *never* be assigned a role ID in its own organization. If it is not, reentrancy attacks are impossible.   
 
-Note line 279 in `request()` makes it impossible for anyone without the correct role Id to create a request.  
+Note that line 279 in `request()` makes it impossible for anyone without the correct role ID to create a request:
 
 ```solidity
 if (!canCallMandate(_msgSender(), mandateId)) revert Powers__CannotCallMandate();
 ```
 
-Note line 327 in `fulfill()` makes it impossible for a non-active mandate to fulfill a request.  
+Note that line 327 in `fulfill()` makes it impossible for a non-active mandate to fulfill a request:
 
 ```solidity
 if (mandate.targetMandate != _msgSender()) revert Powers__CallerNotTargetMandate();
 ```
 
-Please correct me if I am wrong, but these checks should make a re-entrancy impossible as long as the organisation does not have a role assigned to itself.
+Please correct me if I am wrong, but these checks should make reentrancy impossible as long as the organization does not have a role assigned to itself.
 
-I added a check at `_setRole` that makes it impossible to assign a role to the organisation itself. 
+I added a check at `_setRole` that makes it impossible to assign a role to the organization itself:
 ```solidity 
 if (account == address(this)) revert Powers__CannotAddPowersAddressAsMember();
 ```
@@ -87,10 +102,9 @@ When a proposal passes and enters timelock, roles can be revoked or reassigned b
 Neither is wrong, but the choice has significant governance implications.
 
 #### Reply 7Cedars  
-Completely correct. Because the protocol does not use tokens to assign voting weights but role designations, I thought it would be simplest - and still secure - to use 
-the At-time-of-fulfill model. 
+Completely correct. Because the protocol does not use tokens to assign voting weights but role designations, I thought it would be simplest—and still secure—to use the at-time-of-fulfill model. 
 
-I completely agree that this should be made very clear in the documentation. Will do. 
+I completely agree that this should be made very clear in the documentation. Will do.
 
 ---
 
@@ -101,7 +115,7 @@ During `constitute()`, mandates are initialized via `mandate.initializeMandate()
 **Suggestion**: Add a prominent warning in docs (and ideally in a comment in `Powers.sol`) that every mandate contract must be fully audited before it is passed to `constitute()`. Consider whether a mandate registry or verification step is feasible in a future version.
 
 #### Reply 7Cedars  
-Completely agree. I added the note and a repository of 'blessed' mandates will be created. The auditing and addition of mandates will be governed through a Powers instance. 
+Completely agree. I added the note, and a repository of audited "blessed" mandates will be created. The auditing and addition of mandates will be governed through a Powers organization.
 
 
 ---
@@ -117,17 +131,17 @@ require(_actions[actionId].actionState == ActionState.Null, "Powers: action alre
 ```
 
 #### Reply 7Cedars  
-Adapted the check at `propose()` to now check if a mandateId has been linked to an action Id. This indicates if the action has already been proposed. 
+Adapted the check at `propose()` to now check if a mandateId has been linked to an actionId. This indicates whether the action has already been proposed:
 ```solidity
 if (action.mandateId != 0) revert Powers__ActionAlreadyInitiated();
 ``` 
 
-The `request()` function should not block actions in the PROPOSED state but should, indeed, block actions in the REQUESTED state. The following existing check in `request()` should effectively do this: 
+The `request()` function should not block actions in the PROPOSED state but should indeed block actions in the REQUESTED state. The following existing check in `request()` should effectively do this: 
 ```solidity
 if (action.requestedAt > 0 || action.fulfilledAt > 0) revert Powers__ActionAlreadyInitiated();
 ``` 
 
-For gas efficiency it checks the blocknumber directly on `action.requestedAt` instead of calling `getActionState()` but it should have the same functionality. Correct me if I am wrong.  
+For gas efficiency, it checks the block number directly on `action.requestedAt` instead of calling `getActionState()`, but it should have the same functionality. Please correct me if I am wrong.
 
 ---
 
@@ -149,9 +163,11 @@ This works as intended. Adding an address to the blacklist is also not possible 
 **Suggestion**: Either enforce a check at `adoptMandate()` time that quorum ≤ current role size, or support percentage-based thresholds as an alternative to absolute counts. At minimum, document the behavior clearly.
 
 #### Reply 7Cedars
-As far as I can see `Conditions.quorum` and `Conditions.succeedAt` are stored as uint8 and handled as relative values to the amount of members in a role. With the DENOMINATOR set at 100, `Conditions.quorum` and `Conditions.succeedAt` values should be handled as percentages of the amount of members in a role. See `_quorumReached()` and `_voteSucceeded()` functions.  
+This might have been an issue with viewing a different version of the repository. 
 
-Please let me know if this is not the case. 
+As far as I can see, `Conditions.quorum` and `Conditions.succeedAt` (I do not see a `successThreshold` anywhere) are stored as uint8 and handled as relative values to the number of members in a role. With the DENOMINATOR set at 100, `Conditions.quorum` and `Conditions.succeedAt` values should be handled as percentages of the number of members in a role. See the `_quorumReached()` and `_voteSucceeded()` functions.  
+
+Please let me know if this is not the case.
 
 ---
 
@@ -163,11 +179,11 @@ It is not obvious from the architecture what the action state becomes if `execut
 
 
 #### Reply 7Cedars
-Agreed that there should be an explicit FAILED state to actions. I opted to disallow retries. 
+Agreed that there should be an explicit FAILED state for actions. I opted to disallow retries. 
 
-Added a `failedAt` to the `Action` struct and added a `Failed` state to the `ActionState` enum. 
+I added a `failedAt` field to the `Action` struct and added a `Failed` state to the `ActionState` enum. 
 
-Then, in `fulfill()` added logging for failed calls:  
+Then, in `fulfill()`, I added logging for failed calls:  
 
 ```solidity 
  if (!success) {
@@ -176,7 +192,7 @@ Then, in `fulfill()` added logging for failed calls:
 ... 
 ```
 
-And at `getActionState()` we check this to return the correct action state: 
+And at `getActionState()`, we check this to return the correct action state: 
 ```solidity 
 if (action.failedAt > 0) {
     return ActionState.Failed;
@@ -193,7 +209,7 @@ When a mandate is revoked and a new one is adopted with the same `mandateId`, hi
 **Suggestion**: Include a mandate version or adoption timestamp in the actionId computation, or document that `mandateId` should never be reused after revocation.
 
 #### Reply 7Cedars
-MandateIds only increment. Old mandateIds can never be reused. Please let me know if this is not the case. In this case, it should really be fixed.  
+MandateIds only increment. Old mandateIds should never be able to be reused—exactly for the reasons mentioned here. Please let me know if this invariant is breached, and how.
 
 ---
 
@@ -204,8 +220,8 @@ MandateIds only increment. Old mandateIds can never be reused. Please let me kno
 **Suggestion**: Define it as a named constant with a clear comment explaining it is intentionally max uint256 and must never be used in arithmetic. Add a check in `assignRole()` that rejects explicit assignments of PUBLIC_ROLE (since everyone implicitly has it).
 
 #### Reply 7Cedars
-This might be a versioning issue. In my version `PUBLIC_ROLE` is a named constant and there is a check in `_setRole()` that disallows setting of Public Role. 
-I did add an extra comment noting that `type(uint256).max` should be avoided in any kind of arythmatic. 
+This might be a versioning issue. In my version, `PUBLIC_ROLE` is a named constant, and there is a check in `_setRole()` that disallows setting of Public Role. 
+I did add an extra comment noting that `type(uint256).max` should be avoided in any kind of arithmetic.
 
 ---
 
@@ -214,7 +230,7 @@ I did add an extra comment noting that `type(uint256).max` should be avoided in 
 Confirm the domain separator includes `block.chainid` to prevent cross-chain replay of off-chain signatures.
 
 #### Reply 7Cedars 
-Yes, OpenZeppelin Contracts (last updated v5.0.0) (utils/cryptography/EIP712.sol) uses block.chainid. 
+Yes, OpenZeppelin Contracts (last updated v5.0.0) (utils/cryptography/EIP712.sol) uses `block.chainid`.
 
 ---
 
@@ -227,6 +243,9 @@ Yes, OpenZeppelin Contracts (last updated v5.0.0) (utils/cryptography/EIP712.sol
 3. **Mandate audit expectations** — will the team publish a set of "blessed" or audited mandates that deployers can use safely, vs. mandates that require their own independent audit?
 
 4. **Is `executeMandate()` expected to be called only by Powers, or can it be called directly?** If directly callable, role/condition checks could be bypassed.
+
+#### Reply 7Cedars 
+I replied to these questions in my earlier answer. 
 
 ---
 
