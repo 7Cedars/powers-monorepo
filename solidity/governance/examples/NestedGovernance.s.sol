@@ -10,9 +10,9 @@ import { DeployHelpers } from "../DeployHelpers.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
-import { SafeProxyFactory } from "lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
-import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
-import { ModuleManager } from "lib/safe-smart-account/contracts/base/ModuleManager.sol";
+import { SafeProxyFactory } from "@lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
+import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol";
+import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -172,7 +172,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels, set treasury and enable allowance module.",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -297,7 +297,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Transfer at Child: A parent organisation can veto a transfer at a child.",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Flexible"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Flexible"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })  
@@ -330,8 +330,12 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Executive can revoke role: Executive can revoke a role.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
-                config: abi.encode(IPowers.revokeRole.selector, dynamicParams),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(
+                    address(0), // target is its own powers contract
+                    IPowers.revokeRole.selector, 
+                    dynamicParams
+                    ),
                 conditions: conditions
             })
         );
@@ -346,8 +350,8 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can update URI: Admin can update the URI of the contract.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
-                config: abi.encode(IPowers.setUri.selector, inputParams),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })
         );
@@ -444,7 +448,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Additional Allowance: Members can request additional allowance from Parent.",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Simple"),
                 config: abi.encode(
                     address(powersParent),
                     requestAllowanceMandateId, // ID from Parent Constitution
@@ -468,8 +472,8 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: The admin can assign any role to an account.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
-                config: abi.encode(IPowers.assignRole.selector, dynamicParams),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(address(0), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
         );
@@ -482,8 +486,8 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Members can revoke role: Members can revoke a role.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
-                config: abi.encode(IPowers.revokeRole.selector, dynamicParams),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(address(0), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })
         );
@@ -498,8 +502,8 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can update URI: Admin can update the URI of the contract.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
-                config: abi.encode(IPowers.setUri.selector, inputParams),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })
         );

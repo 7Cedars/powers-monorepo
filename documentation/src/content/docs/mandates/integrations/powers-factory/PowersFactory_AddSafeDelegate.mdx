@@ -1,0 +1,70 @@
+---
+title: "PowersFactory_AddSafeDelegate"
+description: "Documentation for the PowersFactory_AddSafeDelegate integration mandate, which adds a delegate to a Gnosis Safe via the Allowance Module based on the result of a parent Factory mandate action."
+---
+
+PowersFactory_AddSafeDelegate is a factory integration mandate that adds a delegate to a Gnosis Safe via the Allowance Module, using the result of a parent action.
+
+## Overview
+
+This mandate serves as a bridge between a "Factory" mandate (which produces a result, such as a newly deployed contract or a selected address) and a Safe's Allowance Module. It allows an organization to automatically appoint a delegate based on the outcome of a previous action.
+
+Specifically, it:
+1.  Verifies the successful execution of a parent action.
+2.  Retrieves the return data (an address) from that parent action.
+3.  Adds that address as a delegate in the Safe's Allowance Module.
+
+## Configuration
+
+When adopting a PowersFactory_AddSafeDelegate instance, the following parameters are required:
+
+1.  `factoryMandateId` (uint16): The ID of the parent mandate that generates the delegate address.
+2.  `allowanceModule` (address): The address of the Gnosis Safe Allowance Module.
+3.  `inputParams` (string[]): The description of input parameters required by the parent mandate (used to compute the parent's Action ID).
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the inputs provided must match the inputs expected by the parent `factoryMandateId`. These inputs are used to re-compute the parent's Action ID to look up its result.
+
+### Execution Flow
+
+1.  **Parent Validation**
+    *   Computes the `parentActionId` using the provided calldata.
+    *   Verifies that the parent action state is `Fulfilled`.
+    *   Retrieves the return data from the parent action.
+
+2.  **Delegate Extraction**
+    *   Decodes the return data to obtain the `decodedAddress` (the new delegate).
+
+3.  **Safe Interaction**
+    *   Identifies the Safe Treasury address from the Powers contract.
+    *   Constructs a signature (`v=1`) authorizing the transaction as the Powers contract (owner).
+    *   Generates a call to `Safe.execTransaction`.
+    *   The Safe executes a call to `allowanceModule.addDelegate(decodedAddress)`.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Initializes the mandate configuration.
+-   Sets the input parameter descriptions to match those provided in the configuration.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Validates parent action fulfillment.
+-   Decodes the new delegate address.
+-   Constructs the Safe transaction to add the delegate.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

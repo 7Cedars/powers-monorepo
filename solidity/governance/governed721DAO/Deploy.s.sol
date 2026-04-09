@@ -9,10 +9,10 @@ import { InitialisePowers } from "@script/InitialisePowers.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";
 
 // external protocols
-import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
-import { SafeProxyFactory } from "lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
-import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
-import { ModuleManager } from "lib/safe-smart-account/contracts/base/ModuleManager.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol"; 
+import { SafeProxyFactory } from "@lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
+import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol"; 
+import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 // powers contracts
@@ -347,8 +347,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Add account to blacklist: Blacklist an account. They will not be able to transfer or mint NFTs.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode(
+                    address(0),
                     IPowers.blacklistAddress.selector,
                     abi.encode(), 
                     inputParams,
@@ -368,8 +369,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Remove account from blacklist: Remove an account from the blacklist. They will be able to transfer or mint NFTs again.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode(
+                    address(0),
                     IPowers.blacklistAddress.selector,
                     abi.encode(), 
                     inputParams,
@@ -411,8 +413,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Owner Role: Assigns Owner role to the owner of the NFT.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
+                    address(0),
                     IPowers.assignRole.selector,
                     abi.encode(2), // Owner role
                     inputParams,
@@ -434,8 +437,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Owner Role: Revokes Owner role. In case of inactivity or lapsed ownership. Executives can revoke the owner role based on the same ownership check if needed.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
+                    address(0),
                     IPowers.revokeRole.selector,
                     abi.encode(2), // Owner role
                     inputParams,
@@ -475,8 +479,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Artist Role: Assigns Artist role to the artist of the NFT.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
+                    address(0),
                     IPowers.assignRole.selector,
                     abi.encode(1), // Artist role
                     inputParams,
@@ -498,8 +503,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Artist Role: Revokes Artist role. In case of inactivity or lapsed ownership. Executives can revoke the artist role based on the same artist check if needed.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
+                    address(0),
                     IPowers.revokeRole.selector,
                     abi.encode(1), // Artist role
                     inputParams,
@@ -539,8 +545,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Intermediary Role: Assigns Intermediary role to the approved address of the NFT.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
+                    address(0),
                     IPowers.assignRole.selector,
                     abi.encode(3), // Intermediary role
                     inputParams,
@@ -562,8 +569,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Intermediary Role: Revokes Intermediary role. In case of inactivity or lapsed ownership. Executives can revoke the intermediary role based on the same ownership check if needed.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode(
+                    address(0),
                     IPowers.revokeRole.selector,
                     abi.encode(3), // Operator role
                     inputParams,
@@ -587,8 +595,8 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Executives can update URI: Executives can update the URI of the contract.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
-                config: abi.encode(IPowers.setUri.selector, inputParams),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })
         ); 

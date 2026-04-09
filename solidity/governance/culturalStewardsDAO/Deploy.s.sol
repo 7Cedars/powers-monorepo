@@ -10,10 +10,10 @@ import { DeployHelpers } from "../DeployHelpers.s.sol";
 
 // external protocols
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
-import { SafeProxyFactory } from "lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
-import { Safe } from "lib/safe-smart-account/contracts/Safe.sol";
-import { ModuleManager } from "lib/safe-smart-account/contracts/base/ModuleManager.sol";
-import { ZKPassportHelper } from "lib/circuits/src/solidity/src/ZKPassportHelper.sol";
+import { SafeProxyFactory } from "@lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
+import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol";
+import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
+import { ZKPassportHelper } from "@lib/circuits/src/solidity/src/ZKPassportHelper.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -339,7 +339,7 @@ contract Deploy is DeployHelpers {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assigns role labels, sets up the allowance module, the treasury and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
                 config: abi.encode(
                     targets,
                     values,
@@ -656,7 +656,7 @@ contract Deploy is DeployHelpers {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Legal Representative Role: Assign the legal representative role at the Physical sub-DAO to the proposed address",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Flexible"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Flexible"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -838,7 +838,7 @@ contract Deploy is DeployHelpers {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Call to sub-Dao: Executioners can veto updating the Primary DAO URI",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Flexible"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Flexible"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -1375,12 +1375,14 @@ contract Deploy is DeployHelpers {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt new Mandates: Executives can adopt new mandates into the organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Mandates"),
                 config: abi.encode(),
                 conditions: conditions
             })
         );
         delete conditions;
+
+        
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1453,7 +1455,7 @@ contract Deploy is DeployHelpers {
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request allowance: Repository admins can request an allowance from the Primary DAO Safe Treasury.",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Simple"),
                 config: abi.encode(
                     address(primaryDAO), // target contract
                     requestAllowanceDigitalDAOId, // parent mandate id (the request allowance at primary DAO mandate)
@@ -1567,8 +1569,9 @@ contract Deploy is DeployHelpers {
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Update URI: Set allowed token for Physical sub-DAO",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
+                    address(0), // target address is its own powers contract
                     Powers.setUri.selector, // function selector to call
                     inputParams
                 ),
@@ -1675,8 +1678,9 @@ contract Deploy is DeployHelpers {
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Membership: Executives can revoke membership from members.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode(
+                    address(0), 
                     IPowers.revokeRole.selector, // function selector to call
                     abi.encode(1), // params before (role id 1 = Members) // the static params
                     inputParams, // the dynamic params (the input params of the parent mandate)
@@ -1955,7 +1959,7 @@ contract Deploy is DeployHelpers {
         digitalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt new Mandates: Repository admins can adopt new mandates into the organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Mandates"),
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -2049,7 +2053,7 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request new Physical sub-DAO: Conveners can create a new Physical sub-DAO.",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Simple"),
                 config: abi.encode( 
                     address(primaryDAO),
                     requestNewPhysicalDaoId, // parent mandate id (the create new physical sub-DAO at primary DAO mandate)
@@ -2075,8 +2079,9 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Update URI: Set allowed token for Physical sub-DAO",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
+                    address(0), // target address is its own powers contract
                     Powers.setUri.selector, // function selector to call
                     inputParams
                 ),
@@ -2132,8 +2137,9 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assess and Assign Membership: Moderators can assess applications and assign membership to applicants.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode( 
+                    address(0),
                     IPowers.assignRole.selector, // function selector to call
                     abi.encode(1), // params before (role id 1 = Members) // the static params
                     inputParams, // the dynamic params (the input params of the parent mandate) -- NB: not that any excess data at the END OF CALLDATA is ignored. hence we can add the uri - it will not be taken into consideration. 
@@ -2175,8 +2181,9 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Membership: Moderators can revoke membership from members.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode( 
+                    address(0), // target is its own powers contract
                     IPowers.revokeRole.selector, // function selector to call
                     abi.encode(1), // params before (role id 1 = Members) // the static params
                     inputParams, // the dynamic params (the input params of the parent mandate)
@@ -2214,7 +2221,7 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Membership of Primary DAO: Moderators can ok requests for membership of the Primary DAO and send them to the Primary DAO for assessment.",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Simple"),
                 config: abi.encode( 
                     address(primaryDAO),
                     requestMembershipPrimaryDaoId, // parent mandate id (the request membership of primary DAO mandate)
@@ -2256,8 +2263,9 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Moderator Role: Conveners can assign the Moderator role to an account.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode( 
+                    address(0), // target is its own powers contract
                     IPowers.assignRole.selector, // function selector to call
                     abi.encode(3), // params before (role id 3 = Moderators) // the static params
                     inputParams, // the dynamic params (the input params of the parent mandate)
@@ -2296,8 +2304,9 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Moderator Role: Conveners can revoke the Moderator role from an account.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
                 config: abi.encode( 
+                    address(0), // target is its own powers contract
                     IPowers.revokeRole.selector, // function selector to call
                     abi.encode(3), // params before (role id 3 = Moderators) // the static params
                     inputParams, // the dynamic params (the input params of the parent mandate)
@@ -2471,8 +2480,9 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Clean up Convener election: After a convener election has finished, clean up related mandates.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_OnReturnValue"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
                 config: abi.encode( 
+                    address(0), // target is its own powers contract
                     IPowers.revokeMandate.selector, // function selector to call
                     abi.encode(), // params before
                     inputParams, // dynamic params (the input params of the parent mandate)
@@ -2551,7 +2561,7 @@ contract Deploy is DeployHelpers {
         ideasConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt new Mandates: Conveners can adopt new mandates into the organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Mandates"),
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -2662,7 +2672,7 @@ contract Deploy is DeployHelpers {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Mint POAP: Any Convener can mint a POAP.",
-                targetMandate: initialisePowers.getInitialisedAddress("PowersAction_Simple"),
+                targetMandate: initialisePowers.getInitialisedAddress("ExternalAction_Simple"),
                 config: abi.encode(
                     address(primaryDAO),
                     mintPoapTokenId, // parent mandate id (the mint POAP token at primary DAO mandate)
@@ -2776,8 +2786,9 @@ contract Deploy is DeployHelpers {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Update URI: Set allowed token for Physical sub-DAO",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers"),
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(
+                    address(0), // target address is its own powers contract
                     Powers.setUri.selector, // function selector to call
                     inputParams
                 ),
@@ -2910,7 +2921,7 @@ contract Deploy is DeployHelpers {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Peer Select Mandate: Legal Representatives can adopt the Peer Select mandate to select conveners from the pool of nominees.",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt_Prepackaged"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Preset_Mandates"),
                 config: abi.encode(
                     initData // the peer select mandate init data. 
                 ),
@@ -2928,8 +2939,9 @@ contract Deploy is DeployHelpers {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Legal Representatives: Primary DAO can assign legal representatives, who have the power to adopt and revoke executive mandates.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnOwnPowers_Advanced"),
-                config: abi.encode(  
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                config: abi.encode(
+                    address(0), // target is its own powers contract
                     IPowers.assignRole.selector,
                     abi.encode(3), // roleId of Legal Representative role
                     inputParams,
@@ -2994,7 +3006,7 @@ contract Deploy is DeployHelpers {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt new Mandates: Conveners can adopt new mandates into the organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Mandates"),
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -3016,7 +3028,7 @@ contract Deploy is DeployHelpers {
         initData = new PowersTypes.MandateInitData[](1);
         initData[0] = PowersTypes.MandateInitData({ 
             nameDescription: "Deploy actvityToken Merit token: This mandate sets up a sub-DAO specific actvityToken token to be used for merit badges and other internal uses. The mandate self-destructs after execution.",
-            targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+            targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
             config: abi.encode(targets, values, calldatas),
             conditions: conditions
         }); 
@@ -3030,7 +3042,7 @@ contract Deploy is DeployHelpers {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Executive Mandates: The Legal Representatives adopt executive mandates, enabling the physical DAO to function.",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt_Prepackaged"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Preset_Mandates"),
                 config: abi.encode(initData), // The mandates that will be adopted. 
                 conditions: conditions
             })
@@ -3047,7 +3059,7 @@ contract Deploy is DeployHelpers {
         physicalConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Executive Mandates: The Legal Representatives can revoke executive mandates, effectively pausing the physical DAO.",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Revoke_Prepackaged"),
+                targetMandate: initialisePowers.getInitialisedAddress("Revoke_Mandates_Prepackaged"),
                 config: abi.encode(), // The mandates that will be revoked. 
                 conditions: conditions
             })

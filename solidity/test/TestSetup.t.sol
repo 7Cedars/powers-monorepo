@@ -348,7 +348,7 @@ abstract contract TestHelperFunctions is Test, TestVariables {
                 return i;
             }
         }
-        revert("Mandate not found");
+        revert(string.concat("Mandate not found: ", description));
     }
 }
 
@@ -720,27 +720,6 @@ abstract contract TestSetupElectionListFlow is BaseSetup {
         daoMock.assignRole(ROLE_ONE, frank);
         daoMock.assignRole(ROLE_ONE, gary);
         daoMock.assignRole(ROLE_ONE, helen);
-        daoMock.assignRole(ROLE_TWO, charlotte);
-        daoMock.assignRole(ROLE_TWO, david);
-        vm.stopPrank();
-    }
-}
-
-abstract contract TestSetupRoleByTransactionFlow is BaseSetup {
-    function setUpVariables() public override {
-        super.setUpVariables();
-
-        // initiate multi constitution
-        (PowersTypes.MandateInitData[] memory mandateInitData_) =
-            testConstitutions.roleByTransaction_IntegrationTestConstitution(address(daoMock));
-
-        // constitute daoMock.
-        daoMock.constitute(mandateInitData_);
-        daoMock.closeConstitute();
-
-        vm.startPrank(address(daoMock));
-        daoMock.assignRole(ROLE_ONE, alice);
-        daoMock.assignRole(ROLE_ONE, bob);
         daoMock.assignRole(ROLE_TWO, charlotte);
         daoMock.assignRole(ROLE_TWO, david);
         vm.stopPrank();

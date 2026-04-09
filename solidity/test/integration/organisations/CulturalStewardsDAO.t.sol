@@ -11,7 +11,7 @@ import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol";
 import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol"; 
-import { PresetActions_Single } from "@src/mandates/executive/PresetActions_Single.sol";
+import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
 
 interface IAllowanceModule {
     function delegates(address safe, uint48 index) external view returns (address delegate, uint48 prev, uint48 next);
@@ -178,8 +178,8 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         mem.revokeIdeasMandateId = findMandateIdInOrg("Revoke role Id: Revoke role id 4 (Ideas sub-DAO) from the DAO", primaryDAO);
 
         mem.initiatePhysicalId = findMandateIdInOrg("Initiate Physical sub-DAO: Initiate creation of Physical sub-DAO", primaryDAO);
-        mem.deployMeritBadgeId = findMandateIdInOrg("Deploy Merit Badge Contract: Deploy a Soulbound1155 contract to be used as merit badges for the Physical sub-DAO", primaryDAO);
-        mem.addDependencyId = findMandateIdInOrg("Add dependency: Add the deployed Soulbound1155 as a dependency to the create Physical sub-DAO mandate", primaryDAO);
+        // mem.deployMeritBadgeId = findMandateIdInOrg("Deploy Merit Badge Contract: Deploy a Soulbound1155 contract to be used as merit badges for the Physical sub-DAO", primaryDAO);
+        // mem.addDependencyId = findMandateIdInOrg("Add dependency: Add the deployed Soulbound1155 as a dependency to the create Physical sub-DAO mandate", primaryDAO);
         
         mem.createPhysicalId = findMandateIdInOrg("Create Physical sub-DAO: Execute Physical sub-DAO creation", primaryDAO);
         mem.assignRoleId = findMandateIdInOrg("Assign role Id: Assign role Id 3 to Physical sub-DAO", primaryDAO);
@@ -498,7 +498,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         _deployPhysicalSubDAO();
 
         // 1. Prepare Mandate Data
-        PresetActions_Single newMandate = new PresetActions_Single();
+        PresetActions newMandate = new PresetActions();
         
         address[] memory mandates = new address[](1);
         mandates[0] = address(newMandate);
@@ -585,7 +585,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
         // Note: Cedars is assigned Role 2 (Convener) in createPhysicalConstitution
         // Mandate: "Mint POAP: Any Convener can mint a POAP." calling Primary DAO
         // The Primary DAO mandate (GovernedToken_MintEncodedToken) expects (to, artist, uri)
-        // But the Physical DAO PowersAction_Simple has inputParams="address To".
+        // But the Physical DAO ExternalAction_Simple has inputParams="address To".
         // However, we pass the full encoded data that matches the target mandate signature.
         
         mem.mintPoapPrimaryId = findMandateIdInOrg("Mint POAP: Any Convener can mint a POAP.", Powers(payable(mem.physicalSubDAOAddress)));
@@ -844,7 +844,7 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
                 return i;
             }
         }
-        revert("Mandate not found");
+        revert(string.concat("Mandate not found: ", description));
     }
 
     function _deployIdeasSubDAO() internal {
@@ -922,12 +922,12 @@ contract CulturalStewardsDAO_IntegrationTest is Test {
 
         // --- Step 2: Deploy & Register Merit Badge Contract ---
         // deploy Merit Badge Contract (Cedars/Exec)
-        vm.prank(cedars);
-        primaryDAO.request(mem.deployMeritBadgeId, mem.params, mem.nonce, "Deploy Merit Badge Contract");
+        // vm.prank(cedars);
+        // primaryDAO.request(mem.deployMeritBadgeId, mem.params, mem.nonce, "Deploy Merit Badge Contract");
 
-        // Add dependency to Create Physical sub-DAO mandate (Cedars/Exec)
-        vm.prank(cedars);
-        primaryDAO.request(mem.addDependencyId, mem.params, mem.nonce, "Add dependency: Merit Badge Contract");
+        // // Add dependency to Create Physical sub-DAO mandate (Cedars/Exec)
+        // vm.prank(cedars);
+        // primaryDAO.request(mem.addDependencyId, mem.params, mem.nonce, "Add dependency: Merit Badge Contract");
 
         // --- Step 3: Create Physical sub-DAO ---
         console.log("Creating Physical sub-DAO...");

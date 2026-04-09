@@ -154,7 +154,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // PresetActions_Single
+        // PresetActions
         // Set config
         targets = new address[](4);
         values = new uint256[](4);
@@ -172,7 +172,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A Single Action: to assign labels to roles. It self-destructs after execution.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                targetMandate: getInitialisedAddress("PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -221,8 +221,8 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Needs Parent Completed to pass",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Needs Parent Completed to pass",
+                targetMandate: getInitialisedAddress("PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -235,8 +235,8 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Parent can block a mandate, making it impossible to pass",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Parent can block a mandate, making it impossible to pass",
+                targetMandate: getInitialisedAddress("PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -252,8 +252,8 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Delay execution of a mandate, by a preset number of blocks",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Delay execution of a mandate, by a preset number of blocks",
+                targetMandate: getInitialisedAddress("PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -266,15 +266,15 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Throttle the number of executions of a mandate.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Throttle the number of executions of a mandate.",
+                targetMandate: getInitialisedAddress("PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // PresetActions_Single
+        // PresetActions
         // Set config
         targets = new address[](3);
         values = new uint256[](3);
@@ -291,7 +291,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A Single Action: to assign labels to roles. It self-destructs after execution.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                targetMandate: getInitialisedAddress("PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -360,22 +360,6 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
- 
-        // TaxSelect - for tax-based role assignment
-        conditions.allowedRole = type(uint256).max;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "TaxSelect: A mandate to assign roles based on tax payments.",
-                targetMandate: getInitialisedAddress("TaxSelect"), // TaxSelect (electoral mandate)
-                config: abi.encode(
-                    erc20Taxed, // Erc20Taxed mock
-                    1000, // threshold tax paid
-                    4 // roleId to be assigned
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
 
         // SelfSelect - for self-assignment
         conditions.allowedRole = type(uint256).max;
@@ -404,21 +388,6 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        conditions.allowedRole = type(uint256).max;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "NStrikesRevokesRoles: A mandate to revoke roles after N strikes.",
-                targetMandate: getInitialisedAddress("NStrikesRevokesRoles"), // NStrikesRevokesRoles (electoral mandate)
-                config: abi.encode(
-                    3, // roleId to be revoked.
-                    2, // number of strikes needed to be revoked.
-                    flagActions // FlagActions contract
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
         // RoleByRoles - for role-based role assignment
         roleIdsNeeded = new uint256[](2);
         roleIdsNeeded[0] = 1;
@@ -437,7 +406,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // PresetActions_Single
+        // PresetActions
         // Set config
         targets = new address[](3);
         values = new uint256[](3);
@@ -454,7 +423,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A Single Action: to assign labels to roles. It self-destructs after execution.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                targetMandate: getInitialisedAddress("PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -552,7 +521,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // PresetActions_Single - for executing preset actions
+        // PresetActions - for executing preset actions
         targets = new address[](2);
         values = new uint256[](2);
         calldatas = new bytes[](2);
@@ -567,25 +536,9 @@ contract TestConstitutions is Test {
         conditions.allowedRole = 1;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Single: A mandate to execute preset actions.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // PresetActions_Single (multi mandate)
+                nameDescription: "PresetActions: A mandate to execute preset actions.",
+                targetMandate: getInitialisedAddress("PresetActions"), // PresetActions (multi mandate)
                 config: abi.encode(targets, values, calldatas),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // PresetActions_Multiple - for executing multiple preset actions
-        descriptions = new string[](2);
-        descriptions[0] = "Assign Member Role";
-        descriptions[1] = "Assign Delegate Role";
-
-        conditions.allowedRole = 1;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Multiple: A mandate to execute multiple preset actions.",
-                targetMandate: getInitialisedAddress("PresetActions_Multiple"), // PresetActions_Multiple (multi mandate)
-                config: abi.encode(descriptions, targets, values, calldatas),
                 conditions: conditions
             })
         );
@@ -612,14 +565,14 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // Mandates_Adopt - for adopting new mandates
+        // Adopt_Mandates - for adopting new mandates
         mandatesToAdopt = new address[](1);
         mandateInitDatas = new bytes[](1);
 
         // Create a simple mandate init data for adoption
         PowersTypes.MandateInitData({
             nameDescription: "Test Adopted Mandate",
-            targetMandate: getInitialisedAddress("PresetActions_Single"), // PresetActions_Single
+            targetMandate: getInitialisedAddress("PresetActions"), // PresetActions
             config: abi.encode(
                 new address[](1), // empty targets
                 new uint256[](1), // empty values
@@ -640,8 +593,8 @@ contract TestConstitutions is Test {
         conditions.allowedRole = type(uint256).max; // public role can adopt mandates
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Mandates_Adopt: A mandate to adopt new mandates into the DAO.",
-                targetMandate: getInitialisedAddress("Mandates_Adopt"), // Mandates_Adopt (executive mandate)
+                nameDescription: "Adopt_Mandates: A mandate to adopt new mandates into the DAO.",
+                targetMandate: getInitialisedAddress("Adopt_Mandates"), // Adopt_Mandates (executive mandate)
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -722,24 +675,6 @@ contract TestConstitutions is Test {
                 nameDescription: "Governor_ExecuteProposal: A mandate to execute governance proposals on a Governor contract.",
                 targetMandate: getInitialisedAddress("Governor_ExecuteProposal"), // Governor_ExecuteProposal (executive mandate)
                 config: abi.encode(simpleGovernor), // SimpleGovernor mock address
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // Safe Allowance Integration //
-        // Safe_Setup
-        mandateCounter++;
-        conditions.allowedRole = type(uint256).max; // Public
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Setup Safe: Create a SafeProxy and register it as treasury.",
-                targetMandate: getInitialisedAddress("Safe_Setup"),
-                config: abi.encode(
-                    helperConfig.getSafeProxyFactory(block.chainid),
-                    helperConfig.getSafeL2Canonical(block.chainid), 
-                    helperConfig.getSafeAllowanceModule(block.chainid)
-                    ),
                 conditions: conditions
             })
         );
@@ -1218,32 +1153,6 @@ contract TestConstitutions is Test {
         return constitution;
     }
 
-    // Role By Transaction flow
-    function roleByTransaction_IntegrationTestConstitution(
-        address /*daoMock*/
-    )
-        external
-        returns (PowersTypes.MandateInitData[] memory mandateInitData)
-    {
-        delete constitution; // restart constitution array.
-
-        // RoleByTransaction
-        // conditions.allowedRole = type(uint256).max; // == PUBLIC_ROLE: anyone can call this mandate.
-        // mandateInitData = PowersTypes.MandateInitData({
-        //     nameDescription: "Buy Funder Role: Make a contribution of more than 0.1 ether (written in its smallest denomination) in TAX token (0x93d94e8D5DC29C6610946C3226e5Be4e4FB503Ce) to be granted a funder role.",
-        //     targetMandate: mandateAddresses[4], // RoleByTransaction
-        //     config: abi.encode(
-        //         0x93d94e8D5DC29C6610946C3226e5Be4e4FB503Ce, // token = TAX token
-        //         1 ether / 10, // amount = 0.1 Ether minimum
-        //         1, // newRoleId = Funder role
-        //         mem.safeProxy // safeProxy == treasury
-        //     ),
-        //     conditions: conditions
-        // });
-
-        return constitution;
-    }
-
     // Assign external role flow (= 2 constitutions, parent & child)
     function assignExternalRole_parent_IntegrationTestConstitution(address daoMock)
         external
@@ -1449,22 +1358,6 @@ contract TestConstitutions is Test {
     {
         delete primaryConstitution; // restart primaryConstitution array.
 
-        // Safe_Setup
-        conditions.allowedRole = type(uint256).max; // Public
-        primaryConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Setup Safe: Create a SafeProxy and register it as treasury.",
-                targetMandate: getInitialisedAddress("Safe_Setup"),
-                config: abi.encode(
-                    helperConfig.getSafeProxyFactory(block.chainid),
-                    helperConfig.getSafeL2Canonical(block.chainid), 
-                    allowanceModule
-                ), 
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
         // Allow for child to be set as delegate
         inputParams = new string[](1);
         inputParams[0] = "address NewChildPowers";
@@ -1573,6 +1466,6 @@ contract TestConstitutions is Test {
                 return mandateAddresses[i];
             }
         }
-        revert("Mandate not found");
+        revert(string.concat("Mandate not found: ", name));
     }
 }

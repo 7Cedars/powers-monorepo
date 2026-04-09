@@ -126,7 +126,7 @@ contract PowerLabs is DeployHelpers {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign role labels.",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -489,7 +489,7 @@ contract PowerLabs is DeployHelpers {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Mandates: Admin adopts new mandates into the organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Mandates"),
                 config: abi.encode(), // empty 0x
                 conditions: conditions
             })
@@ -540,11 +540,11 @@ contract PowerLabs is DeployHelpers {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Mandates: Admin revokes mandates from the organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Revoke"),
-                config: abi.encode(abi.encode(0x00)), // "0x00" in TS (encoded bytes?) -> actually likely just empty bytes? TS says "0x00" as `0x${string}` which is 1 byte '00'. But Mandates_Revoke expects... let's check config. Usually Mandates_Revoke takes no config or specific config. TS says config is "0x00". Let's assume default encoding of "0x00".
+                targetMandate: initialisePowers.getInitialisedAddress("Revoke_Mandates"),
+                config: abi.encode(abi.encode(0x00)), // "0x00" in TS (encoded bytes?) -> actually likely just empty bytes? TS says "0x00" as `0x${string}` which is 1 byte '00'. But Revoke_Mandates expects... let's check config. Usually Revoke_Mandates takes no config or specific config. TS says config is "0x00". Let's assume default encoding of "0x00".
                 // Actually, "0x00" as `0x${string}` in viem is just `0x00`.
-                // Mandates_Revoke usually takes nothing or is bespoke.
-                // If I look at Mandates_Adopt above, TS said `0x`.
+                // Revoke_Mandates usually takes nothing or is bespoke.
+                // If I look at Adopt_Mandates above, TS said `0x`.
                 // Here `0x00`.
                 // I'll stick to abi.encode("0x00")? No, config is bytes. "0x00" bytes.
                 conditions: conditions
@@ -630,7 +630,7 @@ contract PowerLabs is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels (Members, Delegates) and revoke itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_Single"),
+                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -715,7 +715,7 @@ contract PowerLabs is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Mandates: Anyone can adopt new mandates ok-ed by the parent organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Adopt"),
+                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Mandates"),
                 config: abi.encode(parent, adoptChildMandateId, adoptMandatesParams),
                 conditions: conditions
             })
@@ -732,7 +732,7 @@ contract PowerLabs is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Mandates: Admin can revoke mandates from the organization",
-                targetMandate: initialisePowers.getInitialisedAddress("Mandates_Revoke"),
+                targetMandate: initialisePowers.getInitialisedAddress("Revoke_Mandates"),
                 config: abi.encode(abi.encode(0x00)),
                 conditions: conditions
             })

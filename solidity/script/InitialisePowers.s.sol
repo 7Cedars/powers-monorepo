@@ -13,68 +13,81 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 // --- Mandate Contract Imports ---
 // async mandates
-import { Github_ClaimRoleWithSig } from "@src/mandates/async/Github_ClaimRoleWithSig.sol";
-import { Github_AssignRoleWithSig } from "@src/mandates/async/Github_AssignRoleWithSig.sol";
 
-// Electoral mandates
-import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
-import { NStrikesRevokesRoles } from "@src/mandates/electoral/NStrikesRevokesRoles.sol";
-import { TaxSelect } from "@src/mandates/electoral/TaxSelect.sol";
+
+// ELECTORAL MANDATES
+import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol"; 
 import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
 import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
 import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
-import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol";
-import { RoleByTransaction } from "@src/mandates/electoral/RoleByTransaction.sol";
+import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol"; 
 import { DelegateTokenSelect } from "@src/mandates/electoral/DelegateTokenSelect.sol";
 import { Nominate } from "@src/mandates/electoral/Nominate.sol";
 import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
 import { RevokeAccountsRoleId } from "@src/mandates/electoral/RevokeAccountsRoleId.sol";
 
-// Executive mandates
-import { PresetActions_Single } from "@src/mandates/executive/PresetActions_Single.sol";
-import { PresetActions_Multiple } from "@src/mandates/executive/PresetActions_Multiple.sol";
+// EXECUTIVE MANDATES
+import { PresetActions } from "@src/mandates/executive/PresetActions.sol"; 
 import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
 import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
-import { Mandates_Adopt } from "@src/mandates/executive/Mandates_Adopt.sol";
-import { Mandates_Revoke } from "@src/mandates/executive/Mandates_Revoke.sol";
+
 import { CheckExternalActionState } from "@src/mandates/executive/CheckExternalActionState.sol";
-import { BespokeAction_OnReturnValue } from "@src/mandates/executive/BespokeAction_OnReturnValue.sol";
-import { BespokeAction_OnOwnPowers } from "@src/mandates/executive/BespokeAction_OnOwnPowers.sol";
+import { BespokeAction_OnReturnValue } from "@src/mandates/executive/BespokeAction_OnReturnValue.sol"; 
 import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Advanced.sol";
 import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
-import { PowersAction_Simple } from "@src/mandates/executive/PowersAction_Simple.sol";
-import { PowersAction_Flexible } from "@src/mandates/executive/PowersAction_Flexible.sol";
-import { Mandates_Adopt_Prepackaged } from "@src/mandates/executive/Mandates_Adopt_Prepackaged.sol";
-import { Mandates_Revoke_Prepackaged } from "@src/mandates/executive/Mandates_Revoke_Prepackaged.sol";
+import { ExternalAction_Simple } from "@src/mandates/executive/ExternalAction_Simple.sol";
+import { ExternalAction_Flexible } from "@src/mandates/executive/ExternalAction_Flexible.sol";
 import { PresetActions_OnOwnPowers } from "@src/mandates/executive/PresetActions_OnOwnPowers.sol";
-import { BespokeAction_OnOwnPowers_Advanced } from "@src/mandates/executive/BespokeAction_OnOwnPowers_Advanced.sol";
-import { BespokeAction_OnOwnPowers_OnReturnValue } from "@src/mandates/executive/BespokeAction_OnOwnPowers_OnReturnValue.sol";
 
-// Integration Mandates
-import { Governor_CreateProposal } from "@src/mandates/integrations/Governor_CreateProposal.sol";
-import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor_ExecuteProposal.sol";
-import { Safe_Setup } from "@src/mandates/integrations/Safe_Setup.sol";
-import { Safe_ExecTransaction } from "@src/mandates/integrations/Safe_ExecTransaction.sol";
-import { Safe_RecoverTokens } from "@src/mandates/integrations/Safe_RecoverTokens.sol";
-import { SafeAllowance_Transfer } from "@src/mandates/integrations/SafeAllowance_Transfer.sol";
-import { SafeAllowance_PresetTransfer } from "@src/mandates/integrations/SafeAllowance_PresetTransfer.sol";
-import { SafeAllowance_Action } from "@src/mandates/integrations/SafeAllowance_Action.sol";
-import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory_AssignRole.sol";
-import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory_AddSafeDelegate.sol";
-import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken_GatedAccess.sol";
-import { GovernedToken_MintEncodedToken } from "@src/mandates/integrations/GovernedToken_MintEncodedToken.sol";
-import { GovernedToken_CollectSplitPayment } from "@src/mandates/integrations/GovernedToken_CollectSplitPayment.sol";
-import { GovernedToken_BurnToAccess } from "@src/mandates/integrations/GovernedToken_BurnToAccess.sol";
-import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721_GatedAccess.sol";
-import { Safe_ExecTransaction_OnReturnValue } from "@src/mandates/integrations/Safe_ExecTransaction_OnReturnValue.sol";
-import { ElectionList_Nominate } from "@src/mandates/integrations/ElectionList_Nominate.sol";
-import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList_Tally.sol";
-import { ElectionList_Vote } from "@src/mandates/integrations/ElectionList_Vote.sol";
-import { ElectionList_CreateVoteMandate } from "@src/mandates/integrations/ElectionList_CreateVoteMandate.sol";
-import { ElectionList_CleanUpVoteMandate } from "@src/mandates/integrations/ElectionList_CleanUpVoteMandate.sol";
-import { ZKPassport_Check } from "@src/mandates/integrations/ZKPassport_Check.sol";
+// INTEGRATION MANDATES
+// Election List 
+import { ElectionList_Nominate } from "@src/mandates/integrations/ElectionList/ElectionList_Nominate.sol";
+import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList/ElectionList_Tally.sol";
+import { ElectionList_Vote } from "@src/mandates/integrations/ElectionList/ElectionList_Vote.sol";
+import { ElectionList_CreateVoteMandate } from "@src/mandates/integrations/ElectionList/ElectionList_CreateVoteMandate.sol";
+import { ElectionList_CleanUpVoteMandate } from "@src/mandates/integrations/ElectionList/ElectionList_CleanUpVoteMandate.sol";
+// ERC721 
+import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
 
-// singleton Helper contracts
+// GitHub
+import { Github_ClaimRoleWithSig } from "@src/mandates/integrations/Github/Github_ClaimRoleWithSig.sol";
+import { Github_AssignRoleWithSig } from "@src/mandates/integrations/Github/Github_AssignRoleWithSig.sol";
+
+// GovernedToken
+import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
+import { GovernedToken_MintEncodedToken } from "@src/mandates/integrations/GovernedToken/GovernedToken_MintEncodedToken.sol";
+import { GovernedToken_CollectSplitPayment } from "@src/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol";
+import { GovernedToken_BurnToAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_BurnToAccess.sol";
+
+// Governor
+import { Governor_CreateProposal } from "@src/mandates/integrations/Governor/Governor_CreateProposal.sol";
+import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
+
+
+// PowersFactory
+import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
+import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
+
+// Safe 
+import { Safe_ExecTransaction } from "@src/mandates/integrations/Safe/Safe_ExecTransaction.sol";
+import { Safe_RecoverTokens } from "@src/mandates/integrations/Safe/Safe_RecoverTokens.sol";
+import { Safe_ExecTransaction_OnReturnValue } from "@src/mandates/integrations/Safe/Safe_ExecTransaction_OnReturnValue.sol";
+import { SafeAllowance_Transfer } from "@src/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
+import { SafeAllowance_PresetTransfer } from "@src/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
+import { SafeAllowance_Action } from "@src/mandates/integrations/Safe/SafeAllowance_Action.sol";
+// Snapshot
+// Will be reintegrated soon. 
+
+// ZKPassport
+import { ZKPassport_Check } from "@src/mandates/integrations/ZKPassport/ZKPassport_Check.sol";
+
+// REFORM MANDATES
+import { Adopt_Mandates } from "@src/mandates/reform/Adopt_Mandates.sol";
+import { Revoke_Mandates } from "@src/mandates/reform/Revoke_Mandates.sol";
+import { Adopt_Preset_Mandates } from "@src/mandates/reform/Adopt_Preset_Mandates.sol";
+import { Revoke_Preset_Mandates } from "@src/mandates/reform/Revoke_Preset_Mandates.sol";
+
+// HELPER CONTRACTS 
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { Nominees } from "@src/helpers/Nominees.sol";
 import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";  
@@ -162,15 +175,7 @@ contract InitialisePowers is Script {
         //////////////////////////////////////////////////////////////////////////
         names.push("PeerSelect");
         creationCodes.push(type(PeerSelect).creationCode);
-        constructorArgs.push(abi.encode("PeerSelect"));
-
-        names.push("NStrikesRevokesRoles");
-        creationCodes.push(type(NStrikesRevokesRoles).creationCode);
-        constructorArgs.push(abi.encode("NStrikesRevokesRoles"));
-
-        names.push("TaxSelect");
-        creationCodes.push(type(TaxSelect).creationCode);
-        constructorArgs.push(abi.encode("TaxSelect"));
+        constructorArgs.push(abi.encode("PeerSelect")); 
 
         names.push("RoleByRoles");
         creationCodes.push(type(RoleByRoles).creationCode);
@@ -183,11 +188,7 @@ contract InitialisePowers is Script {
         names.push("RenounceRole");
         creationCodes.push(type(RenounceRole).creationCode);
         constructorArgs.push(abi.encode("RenounceRole"));
-
-        names.push("RoleByTransaction");
-        creationCodes.push(type(RoleByTransaction).creationCode);
-        constructorArgs.push(abi.encode("RoleByTransaction"));
-
+ 
         names.push("AssignExternalRole");
         creationCodes.push(type(AssignExternalRole).creationCode);
         constructorArgs.push(abi.encode("AssignExternalRole"));
@@ -211,13 +212,13 @@ contract InitialisePowers is Script {
         //////////////////////////////////////////////////////////////////////////
         //                       Executive Mandates                             //
         //////////////////////////////////////////////////////////////////////////
-        names.push("PresetActions_Single");
-        creationCodes.push(type(PresetActions_Single).creationCode);
-        constructorArgs.push(abi.encode("PresetActions_Single"));
+        names.push("PresetActions");
+        creationCodes.push(type(PresetActions).creationCode);
+        constructorArgs.push(abi.encode("PresetActions"));
 
-        names.push("PresetActions_Multiple");
-        creationCodes.push(type(PresetActions_Multiple).creationCode);
-        constructorArgs.push(abi.encode("PresetActions_Multiple"));
+        names.push("PresetActions_OnOwnPowers");
+        creationCodes.push(type(PresetActions_OnOwnPowers).creationCode);
+        constructorArgs.push(abi.encode("PresetActions_OnOwnPowers"));
 
         names.push("OpenAction");
         creationCodes.push(type(OpenAction).creationCode);
@@ -231,57 +232,25 @@ contract InitialisePowers is Script {
         creationCodes.push(type(BespokeAction_Advanced).creationCode);
         constructorArgs.push(abi.encode("BespokeAction_Advanced"));
 
-        names.push("PowersAction_Simple");
-        creationCodes.push(type(PowersAction_Simple).creationCode);
-        constructorArgs.push(abi.encode("PowersAction_Simple"));
+        names.push("BespokeAction_OnReturnValue");
+        creationCodes.push(type(BespokeAction_OnReturnValue).creationCode);
+        constructorArgs.push(abi.encode("BespokeAction_OnReturnValue"));
 
         names.push("BespokeAction_Simple");
         creationCodes.push(type(BespokeAction_Simple).creationCode);
         constructorArgs.push(abi.encode("BespokeAction_Simple"));
 
-        names.push("Mandates_Adopt");
-        creationCodes.push(type(Mandates_Adopt).creationCode);
-        constructorArgs.push(abi.encode("Mandates_Adopt"));
-
-        names.push("Mandates_Revoke");
-        creationCodes.push(type(Mandates_Revoke).creationCode);
-        constructorArgs.push(abi.encode("Mandates_Revoke"));
-
-        names.push("Mandates_Adopt_Prepackaged");
-        creationCodes.push(type(Mandates_Adopt_Prepackaged).creationCode);
-        constructorArgs.push(abi.encode("Mandates_Adopt_Prepackaged"));
-
-        names.push("Mandates_Revoke_Prepackaged");
-        creationCodes.push(type(Mandates_Revoke_Prepackaged).creationCode);
-        constructorArgs.push(abi.encode("Mandates_Revoke_Prepackaged"));
-
         names.push("CheckExternalActionState");
         creationCodes.push(type(CheckExternalActionState).creationCode);
         constructorArgs.push(abi.encode("CheckExternalActionState"));
 
-        names.push("BespokeAction_OnReturnValue");
-        creationCodes.push(type(BespokeAction_OnReturnValue).creationCode);
-        constructorArgs.push(abi.encode("BespokeAction_OnReturnValue"));
+        names.push("ExternalAction_Simple");
+        creationCodes.push(type(ExternalAction_Simple).creationCode);
+        constructorArgs.push(abi.encode("ExternalAction_Simple"));
 
-        names.push("BespokeAction_OnOwnPowers");
-        creationCodes.push(type(BespokeAction_OnOwnPowers).creationCode);
-        constructorArgs.push(abi.encode("BespokeAction_OnOwnPowers"));
-
-        names.push("PowersAction_Flexible");
-        creationCodes.push(type(PowersAction_Flexible).creationCode);
-        constructorArgs.push(abi.encode("PowersAction_Flexible"));
-
-        names.push("PresetActions_OnOwnPowers");
-        creationCodes.push(type(PresetActions_OnOwnPowers).creationCode);
-        constructorArgs.push(abi.encode("PresetActions_OnOwnPowers"));
-
-        names.push("BespokeAction_OnOwnPowers_Advanced");
-        creationCodes.push(type(BespokeAction_OnOwnPowers_Advanced).creationCode);
-        constructorArgs.push(abi.encode("BespokeAction_OnOwnPowers_Advanced"));
-
-        names.push("BespokeAction_OnOwnPowers_OnReturnValue");
-        creationCodes.push(type(BespokeAction_OnOwnPowers_OnReturnValue).creationCode);
-        constructorArgs.push(abi.encode("BespokeAction_OnOwnPowers_OnReturnValue"));
+        names.push("ExternalAction_Flexible");
+        creationCodes.push(type(ExternalAction_Flexible).creationCode);
+        constructorArgs.push(abi.encode("ExternalAction_Flexible"));
 
         //////////////////////////////////////////////////////////////////////////
         //                      Integrations Mandates                           //
@@ -293,10 +262,6 @@ contract InitialisePowers is Script {
         names.push("Governor_ExecuteProposal");
         creationCodes.push(type(Governor_ExecuteProposal).creationCode);
         constructorArgs.push(abi.encode("Governor_ExecuteProposal"));
-
-        names.push("Safe_Setup");
-        creationCodes.push(type(Safe_Setup).creationCode);
-        constructorArgs.push(abi.encode("Safe_Setup"));
 
         names.push("Safe_ExecTransaction");
         creationCodes.push(type(Safe_ExecTransaction).creationCode);
@@ -373,6 +338,25 @@ contract InitialisePowers is Script {
         names.push("ZKPassport_Check");
         creationCodes.push(type(ZKPassport_Check).creationCode);
         constructorArgs.push(abi.encode());
+
+        //////////////////////////////////////////////////////////////////////////
+        //                          Reform Mandates                             //
+        //////////////////////////////////////////////////////////////////////////
+        names.push("Adopt_Mandates");
+        creationCodes.push(type(Adopt_Mandates).creationCode);
+        constructorArgs.push(abi.encode("Adopt_Mandates"));
+
+        names.push("Adopt_Preset_Mandates");
+        creationCodes.push(type(Adopt_Preset_Mandates).creationCode);
+        constructorArgs.push(abi.encode("Adopt_Preset_Mandates"));
+
+        names.push("Revoke_Mandates");
+        creationCodes.push(type(Revoke_Mandates).creationCode);
+        constructorArgs.push(abi.encode("Revoke_Mandates"));
+
+        names.push("Revoke_Preset_Mandates");
+        creationCodes.push(type(Revoke_Preset_Mandates).creationCode);
+        constructorArgs.push(abi.encode("Revoke_Preset_Mandates"));
 
         //////////////////////////////////////////////////////////////////////////
         //                  Singleton Helper Contracts                          //
@@ -466,7 +450,7 @@ contract InitialisePowers is Script {
                 return addresses[i];
             }
         }
-        revert("Mandate not found");
+        revert(string.concat("Mandate not found: ", mandateName));
     }
 
     function getInitialisedAddressNoRevert(string memory mandateName) public view returns (address) {

@@ -6,7 +6,7 @@ pragma solidity ^0.8.26;
 // import { OpenAction } from "../../../src/mandates/executive/OpenAction.sol";
 // import { StatementOfIntent } from "../../../src/mandates/executive/StatementOfIntent.sol";
 // import { BespokeAction_Simple } from "../../../src/mandates/executive/BespokeAction_Simple.sol";
-// import { PresetActions_Single } from "../../../src/mandates/executive/PresetActions_Single.sol";
+// import { PresetActions } from "../../../src/mandates/executive/PresetActions.sol";
 // import { PresetActions_Multiple } from "../../../src/mandates/executive/PresetActions_Multiple.sol";
 // import { BespokeAction_Advanced } from "../../../src/mandates/executive/BespokeAction_Advanced.sol";
 
@@ -17,15 +17,15 @@ pragma solidity ^0.8.26;
 // ///      mandateId 2: StatementOfIntent
 // ///      mandateId 3: BespokeAction_Simple (mint)
 // ///      mandateId 4: BespokeAction_Advanced (assignRole)
-// ///      mandateId 5: PresetActions_Single (label roles)
+// ///      mandateId 5: PresetActions (label roles)
 // ///      mandateId 6: PresetActions_Multiple (multiple label actions)
-// ///      mandateId 7: PresetActions_Single (another preset action)
+// ///      mandateId 7: PresetActions (another preset action)
 // contract MultiFuzzTest is TestSetupMulti {
 //     // Mandate instances for testing
 //     OpenAction openAction;
 //     StatementOfIntent statementOfIntent;
 //     BespokeAction_Simple bespokeActionSimple;
-//     PresetActions_Single presetSingleAction;
+//     PresetActions presetSingleAction;
 //     PresetActions_Multiple presetMultipleActions;
 //     BespokeAction_Advanced bespokeActionAdvanced;
 
@@ -39,14 +39,14 @@ pragma solidity ^0.8.26;
 //     uint256 expectedCount;
 //     uint256 quantity;
 //     bytes largeCalldata;
-//     PresetActions_Single.Data presetDataSingle;
+//     PresetActions.Data presetDataSingle;
 //     PresetActions_Multiple.Data presetDataMultiple;
 
 //     function setUp() public override {
 //         super.setUp();
 
 //         // Initialize mandate instances from deployed addresses
-//         presetSingleAction = PresetActions_Single(mandateAddresses[1]);
+//         presetSingleAction = PresetActions(mandateAddresses[1]);
 //         presetMultipleActions = PresetActions_Multiple(mandateAddresses[2]);
 //         openAction = OpenAction(mandateAddresses[3]);
 //         statementOfIntent = StatementOfIntent(mandateAddresses[4]);
@@ -261,9 +261,9 @@ pragma solidity ^0.8.26;
 //     //               PRESET SINGLE ACTION FUZZ                  //
 //     //////////////////////////////////////////////////////////////
 
-//     /// @notice Fuzz test PresetActions_Single (mandateId 5) returns preset data regardless of input
+//     /// @notice Fuzz test PresetActions (mandateId 5) returns preset data regardless of input
 //     /// @dev mandateId 5 is configured to label role 1 as "Member" and role 2 as "Delegate"
-//     // function testFuzzPresetActions_SingleIgnoresInput(
+//     // function testFuzzPresetActionsIgnoresInput(
 //     //     bytes memory inputCalldataFuzzed,
 //     //     uint256 nonceFuzzed
 //     // ) public {
@@ -301,8 +301,8 @@ pragma solidity ^0.8.26;
 //     //     }
 //     // }
 
-//     /// @notice Fuzz test PresetActions_Single with various nonces
-//     function testFuzzPresetActions_SingleWithVariousNonces(uint256 nonce1, uint256 nonce2) public {
+//     /// @notice Fuzz test PresetActions with various nonces
+//     function testFuzzPresetActionsWithVariousNonces(uint256 nonce1, uint256 nonce2) public {
 //         vm.assume(nonce1 != nonce2);
 
 //         mandateCalldata = abi.encode();
