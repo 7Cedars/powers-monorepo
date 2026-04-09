@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@5.7.2"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/webhooks/mandate-adopted",
+      "destination": "/api/webhooks/mandate-adopted.ts"
+    },
+    {
+      "source": "/api/webhooks/role-set",
+      "destination": "/api/webhooks/role-set.ts"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
