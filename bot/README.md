@@ -32,11 +32,23 @@ bot/
 ├── lib/
 │   ├── xmtp/             # XMTP client and group management
 │   ├── powers/           # Powers contract queries and verification
+│   ├── security/         # Webhook authentication and rate limiting
 │   ├── utils/            # Utility functions (naming, batch operations)
 │   └── types.ts          # TypeScript type definitions
 └── config/
     └── env.ts            # Environment configuration
 ```
+
+## Security
+
+All webhook endpoints are protected with multiple security layers:
+
+- **Signature Verification**: HMAC-SHA256 signatures from Alchemy
+- **Payload Validation**: Strict schema validation of webhook payloads
+- **Rate Limiting**: 100 requests per minute per unique block hash
+- **Method Validation**: Only POST requests accepted
+
+⚠️ **Important**: See [SECURITY.md](./SECURITY.md) for detailed security setup instructions and best practices.
 
 ## Setup
 
@@ -58,7 +70,11 @@ cp .env.example .env
 Required variables:
 - `BOT_PRIVATE_KEY`: Private key for the bot's Ethereum wallet (needs XMTP registration)
 - `XMTP_ENV`: XMTP environment (`production` or `dev`)
+- `WEBHOOK_SECRET_MANDATE_ADOPTED`: Alchemy webhook signing secret for MandateAdopted events
+- `WEBHOOK_SECRET_ROLE_SET`: Alchemy webhook signing secret for RoleSet events
 - `ALCHEMY_API_KEY_*`: Alchemy API keys for each supported chain
+
+**Security Note**: The webhook secrets are critical for preventing unauthorized access. See [SECURITY.md](./SECURITY.md) for setup instructions.
 
 ### 3. Initialize Bot Wallet with XMTP
 
@@ -90,22 +106,28 @@ vercel --prod
 Create two webhooks in the Alchemy dashboard for each chain:
 
 **Webhook 1: MandateAdopted**
+- Type: GraphQL Webhook
 - Event: `MandateAdopted(uint16)`
 - Event Signature: `0x284812f41d73696d76ff026c35ebc1a8e8bf24544551c55dd0877334dca88a56` 
 - Webhook URL: `https://your-app.vercel.app/api/webhooks/mandate-adopted?chainId={CHAIN_ID}`
 - Example: `https://your-app.vercel.app/api/webhooks/mandate-adopted?chainId=11155111` (for Sepolia)
+- **Signing Key**: Generate and save to `WEBHOOK_SECRET_MANDATE_ADOPTED`
 
 **Webhook 2: RoleSet**
+- Type: GraphQL Webhook
 - Event: `RoleSet(uint256,address,bool)`
 - Event Signature: `0x294507a8f5830b538faef39fbdd28f1164f27c8338a32fc7b47ddf82e4c8d9e4`
 - Webhook URL: `https://your-app.vercel.app/api/webhooks/role-set?chainId={CHAIN_ID}`
 - Example: `https://your-app.vercel.app/api/webhooks/role-set?chainId=84532` (for Base Sepolia)
+- **Signing Key**: Generate and save to `WEBHOOK_SECRET_ROLE_SET`
 
 **Note:** Replace `{CHAIN_ID}` with the actual chain ID for each network:
 - Sepolia: `11155111`
 - Base Sepolia: `84532`
 - Optimism Sepolia: `11155420`
 - Arbitrum Sepolia: `421614`
+
+⚠️ **Security**: The signing keys are crucial for webhook authentication. See [SECURITY.md](./SECURITY.md) for detailed setup instructions.
 
 ## Development
 
@@ -167,11 +189,15 @@ Where `flowId` is the ID of the first mandate in the flow (sorted numerically).
 
 ## Security Considerations
 
-1. **Bot Wallet Security**: The bot's private key has full control over all group memberships. Store securely in Vercel environment variables.
+1. **Webhook Authentication**: All webhooks use HMAC-SHA256 signature verification to prevent unauthorized access. See [SECURITY.md](./SECURITY.md) for details.
 
-2. **Powers Contract Verification**: The bot verifies contracts are genuine Powers instances by calling `version()` before creating groups.
+2. **Bot Wallet Security**: The bot's private key has full control over all group memberships. Store securely in Vercel environment variables.
 
-3. **XMTP Inbox Resolution**: Converting Ethereum addresses to XMTP inbox IDs requires creating a DM first, which the bot does automatically.
+3. **Powers Contract Verification**: The bot verifies contracts are genuine Powers instances by calling `version()` before creating groups.
+
+4. **XMTP Inbox Resolution**: Converting Ethereum addresses to XMTP inbox IDs requires creating a DM first, which the bot does automatically.
+
+5. **Rate Limiting**: Built-in rate limiting prevents abuse (100 requests/minute per block hash).
 
 ## Troubleshooting
 
