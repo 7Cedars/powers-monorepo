@@ -7,6 +7,12 @@ import { isPowersContract, getAllMandates, getMandatesByRole } from '../../lib/p
 import { getFlowsContainingMandates } from '../../lib/powers/flows.js';
 import { getMandateGroupName, getFlowGroupName } from '../../lib/utils/naming.js';
 import { tryToSendDM, executeBatchGroupOperations } from '../../lib/xmtp/groups.js';
+import { config } from '../../config/env.js';
+import {
+  verifyAlchemySignature,
+  webhookRateLimiter,
+  isValidAlchemyPayload,
+} from '../../lib/security/webhook-auth.js';
 
 interface AlchemyLog {
   data: string;
@@ -63,7 +69,32 @@ export default async function handler(
   }
 
   try {
+    // 1. VERIFY WEBHOOK SIGNATURE
+    const isValidSignature = verifyAlchemySignature(
+      req,
+      config.webhookSecrets.roleSet
+    );
+    
+    if (!isValidSignature) {
+      console.error('Invalid webhook signature');
+      return res.status(401).json({ error: 'Unauthorized - Invalid signature' });
+    }
+    
+    // 2. VALIDATE PAYLOAD STRUCTURE
+    if (!isValidAlchemyPayload(req.body)) {
+      console.error('Invalid payload structure');
+      return res.status(400).json({ error: 'Bad Request - Invalid payload structure' });
+    }
+    
     const payload = req.body as AlchemyGraphQLWebhook;
+    
+    // 3. RATE LIMITING
+    // Use block hash as identifier (unique per webhook event)
+    const rateLimitKey = `role-set:${payload.block.hash}`;
+    if (!webhookRateLimiter.check(rateLimitKey)) {
+      console.error('Rate limit exceeded');
+      return res.status(429).json({ error: 'Too Many Requests - Rate limit exceeded' });
+    }
     
     // Extract chain ID from query parameter or headers
     const chainIdParam = req.query.chainId as string | undefined;

@@ -10,6 +10,12 @@ export const config = {
   // XMTP environment (production or dev)
   XMTP_ENV: process.env.XMTP_ENV || 'production',
   
+  // Webhook security
+  webhookSecrets: {
+    mandateAdopted: process.env.WEBHOOK_SECRET_MANDATE_ADOPTED!,
+    roleSet: process.env.WEBHOOK_SECRET_ROLE_SET!,
+  },
+  
   // Alchemy API keys per chain
   alchemyApiKeys: {
     arbitrumSepolia: process.env.ALCHEMY_API_KEY_ARBITRUM_SEPOLIA!,
@@ -30,6 +36,8 @@ export const config = {
 // Validate required environment variables
 const requiredVars = [
   'BOT_PRIVATE_KEY',
+  'WEBHOOK_SECRET_MANDATE_ADOPTED',
+  'WEBHOOK_SECRET_ROLE_SET',
   'ALCHEMY_API_KEY_ARBITRUM_SEPOLIA',
   'ALCHEMY_API_KEY_BASE_SEPOLIA',
   'ALCHEMY_API_KEY_OPTIMISM_SEPOLIA',
