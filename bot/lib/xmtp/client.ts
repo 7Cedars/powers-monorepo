@@ -21,9 +21,10 @@ function createXMTPSigner(): Signer {
     }),
     signMessage: async (message: string): Promise<Uint8Array> => {
       // Create a wallet client for signing
+      // Note: We use a dummy URL because this wallet is only used for signing, not RPC calls
       const walletClient = createWalletClient({
         account,
-        transport: http(),
+        transport: http('http://localhost'),
       });
       
       const signature = await walletClient.signMessage({

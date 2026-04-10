@@ -26,10 +26,10 @@ export const config = {
   
   // Optional RPC URLs (fallback to Alchemy)
   rpcUrls: {
-    arbitrumSepolia: process.env.RPC_URL_ARBITRUM_SEPOLIA,
-    baseSepolia: process.env.RPC_URL_BASE_SEPOLIA,
-    optimismSepolia: process.env.RPC_URL_OPTIMISM_SEPOLIA,
-    sepolia: process.env.RPC_URL_SEPOLIA, 
+    arbitrumSepolia: process.env.ALCHEMY_API_KEY_ARBITRUM_SEPOLIA,
+    baseSepolia: process.env.ALCHEMY_API_KEY_BASE_SEPOLIA,
+    optimismSepolia: process.env.ALCHEMY_API_KEY_OPTIMISM_SEPOLIA,
+    sepolia: process.env.ALCHEMY_API_KEY_SEPOLIA, 
   },
 };
 

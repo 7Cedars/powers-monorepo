@@ -120,28 +120,33 @@ export function isValidAlchemyPayload(payload: any): boolean {
     console.error('Payload validation failed: not an object');
     return false;
   }
+
+  console.log('Payload:', { payload: payload.event?.data || payload.payload });
   
-  // Handle GraphQL wrapper (payload.data.block) or direct structure (payload.block)
-  const block = payload.data?.block || payload.block;
+  // Handle multiple payload structures:
+  // - GraphQL wrapper: payload.event.data.block
+  // - Nested payload: payload.payload.block
+  // - Direct structure: payload.block
+  const block = payload.event?.data?.block || payload.payload?.block || payload.block;
   
   if (!block || typeof block !== 'object') {
     console.error('Payload validation failed: missing block object', {
-      hasData: !!payload.data,
-      hasBlock: !!payload.block,
-      hasDataBlock: !!payload.data?.block,
+      hasData: !!payload.event?.data,
+      hasBlock: !!payload.event?.block,
+      hasDataBlock: !!payload.event?.data?.block,
     });
     return false;
   }
   
   // Validate block structure
   if (typeof block.hash !== 'string' ||
-      typeof block.number !== 'string' ||
-      typeof block.timestamp !== 'string' ||
+      typeof block.number !== 'number' ||
+      typeof block.timestamp !== 'number' ||
       !Array.isArray(block.logs)) {
     console.error('Payload validation failed: invalid block structure', {
       hasHash: typeof block.hash === 'string',
-      hasNumber: typeof block.number === 'string',
-      hasTimestamp: typeof block.timestamp === 'string',
+      hasNumber: typeof block.number === 'number',
+      hasTimestamp: typeof block.timestamp === 'number',
       hasLogsArray: Array.isArray(block.logs),
     });
     return false;

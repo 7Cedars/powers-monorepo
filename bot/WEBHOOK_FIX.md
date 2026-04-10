@@ -88,16 +88,61 @@ const payload = (req.body.data || req.body) as AlchemyGraphQLWebhook;
 3. `bot/api/webhooks/role-set.ts` - Payload extraction
 4. `bot/api/webhooks/mandate-adopted.ts` - Payload extraction
 
-## Testing Checklist
+## Deployment Options
 
-- [ ] **Rebuild and redeploy to Railway**
-  ```bash
-  cd bot
-  # Railway will auto-deploy from git push
-  git add .
-  git commit -m "fix: resolve webhook payload validation issues"
-  git push
-  ```
+### Option 1: Direct Deploy via Railway CLI (Recommended) ⭐
+
+1. **Install Railway CLI (if not already installed):**
+   ```bash
+   npm i -g @railway/cli
+   ```
+
+2. **Login to Railway:**
+   ```bash
+   railway login
+   ```
+
+3. **Link to your existing project:**
+   ```bash
+   cd bot
+   railway link
+   # Select your project from the list (or use project ID if you know it)
+   ```
+
+4. **Deploy directly:**
+   ```bash
+   railway up
+   ```
+   
+   This will:
+   - Build the Docker image locally or remotely
+   - Deploy to your Railway service
+   - Stream deployment logs in real-time
+
+5. **Monitor deployment status:**
+   ```bash
+   railway status
+   ```
+
+6. **View logs after deployment:**
+   ```bash
+   railway logs
+   ```
+
+### Option 2: Deploy via Git Push (Auto-deploy)
+
+If Railway is connected to your GitHub repository:
+
+```bash
+cd /home/teijehidde/Documents/7CedarsGit/projects/powers-monorepo
+git add bot/
+git commit -m "fix: resolve webhook payload validation issues"
+git push origin main
+```
+
+Railway will automatically detect changes and deploy.
+
+## Verification Steps
 
 - [ ] **Verify deployment health**
   ```bash

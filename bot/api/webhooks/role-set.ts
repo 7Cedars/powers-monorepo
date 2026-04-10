@@ -31,18 +31,6 @@ interface AlchemyLog {
     to: {
       address: string;
     } | null;
-    value: string;
-    gasPrice: string | null;
-    maxFeePerGas: string | null;
-    maxPriorityFeePerGas: string | null;
-    gas: string;
-    status: number;
-    gasUsed: string;
-    cumulativeGasUsed: string;
-    effectiveGasPrice: string;
-    createdContract: {
-      address: string;
-    } | null;
   };
 }
 
@@ -86,8 +74,11 @@ export default async function handler(
       return res.status(400).json({ error: 'Bad Request - Invalid payload structure' });
     }
     
-    // Handle GraphQL wrapper (req.body.data) or direct structure (req.body)
-    const payload = (req.body.data || req.body) as AlchemyGraphQLWebhook;
+    // Handle multiple payload structures:
+    // - GraphQL wrapper: req.body.event.data
+    // - Nested payload: req.body.payload
+    // - Direct structure: req.body
+    const payload = (req.body.event?.data || req.body.payload || req.body) as AlchemyGraphQLWebhook;
     
     // 3. RATE LIMITING
     // Use block hash as identifier (unique per webhook event)
