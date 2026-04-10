@@ -2,13 +2,18 @@
 // This allows the frontend to request group creation without exposing the bot's private key
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyMessage, isAddress } from 'viem';
+import { verifyMessage, isAddress, type Address } from 'viem';
 import {
   createGroupWithSuperAdminPermissions,
   isBotMemberOfGroup,
   sendMessageToGroup,
 } from '../lib/xmtp/groups.js';
 import { webhookRateLimiter } from '../lib/security/webhook-auth.js';
+import {
+  getMandateMembers,
+  getFlowMembers,
+  getActionMembers,
+} from '../lib/powers/members.js';
 
 interface CreateGroupRequest {
   chatroomType: 'Mandate' | 'Flow' | 'Action' | 'Vote' | 'General';
@@ -37,9 +42,10 @@ function isValidRequest(body: any): body is CreateGroupRequest {
 }
 
 /**
- * Generates the chatroom identifier
+ * Generates the base chatroom identifier (without timestamp)
+ * Used for signature verification
  */
-function getChatroomId(
+function getBaseChatroomId(
   chatroomType: string,
   chainId: string,
   powersAddress: string,
@@ -48,6 +54,24 @@ function getChatroomId(
   const parts = [chatroomType, chainId, powersAddress];
   if (contextId) parts.push(contextId);
   return parts.join('-');
+}
+
+/**
+ * Generates the unique chatroom identifier with timestamp
+ * Used for actual group creation
+ */
+function getChatroomId(
+  chatroomType: string,
+  chainId: string,
+  powersAddress: string,
+  contextId?: string
+): string {
+  const baseParts = [chatroomType, chainId, powersAddress];
+  if (contextId) baseParts.push(contextId);
+  // Add Unix timestamp to make group names unique for testing
+  const unixTime = Math.floor(Date.now() / 1000);
+  baseParts.push(unixTime.toString());
+  return baseParts.join('-');
 }
 
 /**
@@ -109,11 +133,11 @@ export default async function handler(
       });
     }
 
-    // 4. GENERATE CHATROOM ID
-    const chatroomId = getChatroomId(chatroomType, chainId, powersAddress, contextId);
+    // 4. GENERATE BASE CHATROOM ID (for signature verification)
+    const baseChatroomId = getBaseChatroomId(chatroomType, chainId, powersAddress, contextId);
 
-    // 5. VERIFY SIGNATURE
-    const message = `Create XMTP group: ${chatroomId} at ${timestamp}`;
+    // 5. VERIFY SIGNATURE (using base chatroom ID without timestamp)
+    const message = `Create XMTP group: ${baseChatroomId} at ${timestamp}`;
     
     let isValidSignature = false;
     try {
@@ -138,7 +162,10 @@ export default async function handler(
       });
     }
 
-    // 6. RATE LIMITING
+    // 6. GENERATE UNIQUE CHATROOM ID (for actual group creation)
+    const chatroomId = getChatroomId(chatroomType, chainId, powersAddress, contextId);
+    
+    // 7. RATE LIMITING
     const rateLimitKey = `create-group:${requesterAddress}:${chatroomId}`;
     if (!webhookRateLimiter.check(rateLimitKey)) {
       console.error('Rate limit exceeded for:', requesterAddress);
@@ -150,7 +177,7 @@ export default async function handler(
 
     console.log(`Creating group for ${requesterAddress}: ${chatroomId}`);
 
-    // 7. CHECK IF GROUP ALREADY EXISTS
+    // 8. CHECK IF GROUP ALREADY EXISTS
     const alreadyExists = await isBotMemberOfGroup(chatroomId);
     
     if (alreadyExists) {
@@ -163,9 +190,105 @@ export default async function handler(
       });
     }
 
-    // 8. CREATE THE GROUP
+    // 9. CREATE THE GROUP
     try {
       const group = await createGroupWithSuperAdminPermissions(chatroomId);
+      
+      // 10. ADD MEMBERS BASED ON CHATROOM TYPE
+      let membersToAdd: Address[] = [];
+      
+      try {
+        const chainIdNum = parseInt(chainId, 10);
+        
+        if (chatroomType === 'Flow' && contextId) {
+          // Flow chat: get members from all mandates in the flow
+          console.log(`Getting flow members for flow ${contextId}`);
+          membersToAdd = await getFlowMembers(
+            chainIdNum,
+            powersAddress as Address,
+            BigInt(contextId)
+          );
+        } else if (chatroomType === 'Mandate' && contextId) {
+          // Mandate chat: get members from the mandate's role
+          console.log(`Getting mandate members for mandate ${contextId}`);
+          membersToAdd = await getMandateMembers(
+            chainIdNum,
+            powersAddress as Address,
+            BigInt(contextId)
+          );
+        } else if (chatroomType === 'Action' && contextId) {
+          // Action chat: get members from the action's mandate role
+          console.log(`Getting action members for action ${contextId}`);
+          membersToAdd = await getActionMembers(
+            chainIdNum,
+            powersAddress as Address,
+            BigInt(contextId)
+          );
+        }
+
+        console.log(`Found ${membersToAdd.length} members to add for ${chatroomType} chat`);
+        
+        // Add members to the group if any were found
+        if (membersToAdd.length > 0) {
+          console.log(`Adding ${membersToAdd.length} members to group ${chatroomId}`);
+          
+          // Get inbox IDs for the accounts using XMTP client
+          const { getXMTPClient } = await import('../lib/xmtp/client.js');
+          const { IdentifierKind } = await import('@xmtp/node-sdk');
+          const client = await getXMTPClient();
+          
+          const inboxIds: string[] = [];
+          
+          for (const account of membersToAdd) {
+            try {
+              // Check if account can message
+              const canMessageMap = await client.canMessage([{
+                identifier: account.toLowerCase(),
+                identifierKind: IdentifierKind.Ethereum
+              }]);
+              console.log(`Can message ${account}:`, canMessageMap.get(account.toLowerCase()));
+              
+              if (!canMessageMap.get(account.toLowerCase())) {
+                console.log(`Account ${account} cannot receive XMTP messages, skipping`);
+                continue;
+              }
+              
+              // Get inbox ID by creating/fetching DM
+              const dm = await (client.conversations as any).fetchDmByIdentifier({
+                identifier: account.toLowerCase(),
+                identifierKind: IdentifierKind.Ethereum
+              });
+              console.log(`Fetched DM for ${account}:`, {dm});
+              
+              if (dm) {
+                const members = await (dm as any).members();
+                console.log(`Members in DM with ${account}:`, members);
+                const peerMember = members.find((m: any) => m.inboxId !== client.inboxId);
+                console.log(`Peer member for ${account}:`, peerMember);
+                if (peerMember?.inboxId) {
+                  inboxIds.push(peerMember.inboxId);
+                }
+              }
+              console.log(`Inbox IDs collected so far:`, inboxIds);
+            } catch (error) {
+              console.error(`Failed to get inbox ID for ${account}:`, error);
+            }
+          }
+          
+          // Add members to group
+          if (inboxIds.length > 0) {
+            await (group as any).addMembers(inboxIds);
+            console.log(`Successfully added ${inboxIds.length} members to ${chatroomId}`);
+          } else {
+            console.log(`No valid inbox IDs found for group ${chatroomId}`);
+          }
+        } else {
+          console.log(`No members to add for ${chatroomType} chat`);
+        }
+      } catch (memberError) {
+        // Log error but don't fail the group creation
+        console.error('Error adding members to group:', memberError);
+      }
       
       // Send welcome message
       const welcomeMessage = `Welcome to the ${chatroomType} coordination group!\n\nThis group is managed by the Powers XMTP Bot with full admin permissions. Members can be added by the bot or by group admins.`;
