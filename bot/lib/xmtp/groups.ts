@@ -1,6 +1,6 @@
 // XMTP Group management functions
 
-import { IdentifierKind } from '@xmtp/node-sdk';
+import { IdentifierKind, contentTypeText } from '@xmtp/node-sdk';
 import type { GroupOperation } from '../types.js';
 import { getXMTPClient } from './client.js';
 
@@ -96,7 +96,7 @@ export async function findGroupByName(groupName: string) {
  */
 export async function sendMessageToGroup(group: any, message: string): Promise<void> {
   try {
-    await group.send(message);
+    await group.send(message, contentTypeText);
     console.log(`Message sent to group ${group.name}: ${message}`);
   } catch (error) {
     console.error(`Failed to send message to group ${group.name}:`, error);
@@ -139,7 +139,7 @@ export async function tryToSendDM(account: string, message: string): Promise<boo
     }
     
     // Send message
-    await dm.send(message);
+    await dm.send(message, contentTypeText);
     console.log(`DM sent to ${account}: ${message}`);
     
     return true;

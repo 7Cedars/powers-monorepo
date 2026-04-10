@@ -1,13 +1,31 @@
 // Express server for webhook handlers
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Import webhook handlers
 import mandateAdoptedHandler from './api/webhooks/mandate-adopted.js';
 import roleSetHandler from './api/webhooks/role-set.js';
+import createGroupHandler from './api/create-group.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// CORS configuration - allow requests from frontend
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://powers-protocol.vercel.app',
+    'powers-git-develop-7cedars-projects.vercel.app', 
+  ],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 
 // Middleware - preserve raw body for webhook signature verification
 app.use(express.json({
@@ -57,6 +75,18 @@ function createVercelResponse(res: Response): VercelResponse {
   return vercelRes as VercelResponse;
 }
 
+// API routes
+app.post('/api/create-group', async (req: Request, res: Response) => {
+  try {
+    const vercelReq = createVercelRequest(req);
+    const vercelRes = createVercelResponse(res);
+    await createGroupHandler(vercelReq, vercelRes);
+  } catch (error) {
+    console.error('Error in create-group handler:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Webhook routes
 app.post('/api/webhooks/mandate-adopted', async (req: Request, res: Response) => {
   try {
@@ -89,6 +119,8 @@ app.use((_req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`Powers XMTP Bot server listening on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`API endpoints:`);
+  console.log(`  - POST /api/create-group`);
   console.log(`Webhook endpoints:`);
   console.log(`  - POST /api/webhooks/mandate-adopted`);
   console.log(`  - POST /api/webhooks/role-set`);

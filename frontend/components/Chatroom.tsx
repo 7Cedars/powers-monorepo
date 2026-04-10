@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ChatBubbleBottomCenterTextIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useXmtpClient } from '@/hooks/useXmtpClient'
-import { useConnection } from 'wagmi'
+import { useConnection, useSignMessage } from 'wagmi'
 import { getAddress, isAddress } from 'viem'
 import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk'
 import { ConsentState, IdentifierKind } from '@xmtp/browser-sdk'
@@ -32,12 +32,14 @@ interface ChatroomProps {
 export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, powersAddress, contextId }: ChatroomProps) {
   const { address } = useConnection ()
   const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations } = useXmtpClient()
+  const { signMessageAsync } = useSignMessage()
   
   const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null)
   const [messages, setMessages] = useState<DecodedMessage[]>([])
   const [messageInput, setMessageInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
+  const [createGroupError, setCreateGroupError] = useState<string | null>(null)
   const [isLoadingChats, setIsLoadingChats] = useState(false)
   const [inboxToAddress, setInboxToAddress] = useState<Map<string, string>>(new Map())
   const [sendError, setSendError] = useState<string | null>(null)
@@ -283,118 +285,126 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
   }, [client, isConnected, groupChat])
 
   const handleCreateGroupChat = async () => {
-    console.log('@handleCreateGroupChat: Creating group chat with addresses:', HARDCODED_ADDRESSES)
-    if (!client || !chatroomId) return
+    if (!client || !chatroomId || !address || !chainId || !powersAddress) {
+      console.error('@handleCreateGroupChat: Missing required parameters')
+      return
+    }
 
-    console.log('@handleCreateGroupChat: Creating group chat with ID:', chatroomId)
-
+    console.log('@handleCreateGroupChat: Requesting bot to create group:', chatroomId)
+    
     setIsCreatingGroup(true)
+    setCreateGroupError(null)
+    
     try {
-      // Create optimistic group chat with chatroomId in BOTH name and description
-      // This ensures cross-browser recognition via network-persisted metadata
-      const newGroup = await (client.conversations as any).createGroupOptimistic({
-        name: chatroomId,         // Primary identifier
-        description: chatroomId   // Backup identifier (stored on network)
-      })
-
-      console.log('@handleCreateGroupChat: Created optimistic group:', {
-        id: newGroup.id,
-        name: newGroup.name,
-        description: newGroup.description
-      })
-
-      // Create group info
-      const groupInfo: GroupChatInfo = {
-        conversation: newGroup,
-        memberAddresses: HARDCODED_ADDRESSES,
-        uninitializedMembers: [],
-        isOptimistic: HARDCODED_ADDRESSES.length === 0
+      // 1. Generate timestamp and message to sign
+      const timestamp = Date.now()
+      const message = `Create XMTP group: ${chatroomId} at ${timestamp}`
+      
+      console.log('@handleCreateGroupChat: Requesting signature from user...')
+      
+      // 2. Request signature from user's wallet
+      let signature: string
+      try {
+        signature = await signMessageAsync({ message })
+      } catch (signErr) {
+        console.error('@handleCreateGroupChat: User rejected signature:', signErr)
+        setCreateGroupError('Signature required to create group')
+        return
       }
-
-      setGroupChat(groupInfo)
-
-      // Add members if there are any
-      if (HARDCODED_ADDRESSES.length > 0) {
+      
+      console.log('@handleCreateGroupChat: Signature received, calling bot API...')
+      
+      // 3. Call bot API to create the group
+      const botApiUrl = process.env.NEXT_PUBLIC_BOT_API_URL || 'https://bot-railway-production-d5c8.up.railway.app'
+      
+      const response = await fetch(`${botApiUrl}/api/create-group`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatroomType,
+          chainId,
+          powersAddress,
+          contextId,
+          requesterAddress: address,
+          signature,
+          timestamp,
+        }),
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok || !result.success) {
+        console.error('@handleCreateGroupChat: Bot API error:', result)
+        setCreateGroupError(result.error || 'Failed to create group via bot')
+        return
+      }
+      
+      console.log('@handleCreateGroupChat: Bot created group successfully:', result)
+      
+      // 4. Wait a moment for XMTP network propagation
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // 5. Sync and find the newly created group
+      console.log('@handleCreateGroupChat: Syncing conversations to find new group...')
+      await client.conversations.sync()
+      const allConvos = await client.conversations.list()
+      
+      const groupConvos = allConvos.filter((convo: any) => {
+        return 'addMembers' in convo || convo.conversationType === 'group'
+      })
+      
+      const matchingConvo = groupConvos.find((convo: any) => {
+        return (convo.name === chatroomId || convo.description === chatroomId)
+      })
+      
+      if (matchingConvo) {
+        console.log('@handleCreateGroupChat: Found newly created group')
+        
+        // Load group details
+        const convo = matchingConvo as any
+        const members: string[] = []
+        const mapping = new Map<string, string>()
+        
         try {
-          const identifiers: Identifier[] = HARDCODED_ADDRESSES.map(addr => ({
-            identifier: addr,
-            identifierKind: IdentifierKind.Ethereum
-          }))
-          
-          const canMessageMap = await client.canMessage(identifiers)
-          const validInboxes: string[] = []
-          const uninitializedAddresses: string[] = []
-
-          for (const addr of HARDCODED_ADDRESSES) {
-            const canMessage = canMessageMap.get(addr)
-            if (canMessage) {
-              validInboxes.push(addr)
-            } else {
-              uninitializedAddresses.push(addr)
-            }
-          }
-
-          groupInfo.uninitializedMembers = uninitializedAddresses
-          
-          // Sync the group to the network
-          // Note: Browser SDK cannot add members by Ethereum address during creation
-          // Members must be added after they have inbox IDs
-          console.log('@handleCreateGroupChat: Publishing group (members will join manually)')
-          await newGroup.publishMessages()
-          groupInfo.isOptimistic = false
-          
-          // Wait for sync to complete
-          await newGroup.sync()
-          console.log('@handleCreateGroupChat: Group synced to network')
-          
-          // Update metadata with retry logic to ensure cross-browser persistence
-          let metadataUpdateSuccess = false
-          for (let attempt = 0; attempt < 3; attempt++) {
-            try {
-              console.log(`@handleCreateGroupChat: Updating metadata (attempt ${attempt + 1}/3)`)
-              await newGroup.updateName(chatroomId)
-              await newGroup.updateDescription(chatroomId)
-              
-              // Verify the update succeeded
-              await newGroup.sync()
-              const updatedName = newGroup.name
-              const updatedDescription = newGroup.description
-              
-              if (updatedName === chatroomId && updatedDescription === chatroomId) {
-                console.log('@handleCreateGroupChat: Metadata verified:', {
-                  name: updatedName,
-                  description: updatedDescription
-                })
-                metadataUpdateSuccess = true
-                break
-              } else {
-                console.warn('@handleCreateGroupChat: Metadata mismatch:', {
-                  expected: chatroomId,
-                  actualName: updatedName,
-                  actualDescription: updatedDescription
-                })
+          if ('members' in convo && typeof convo.members === 'function') {
+            const memberList = await convo.members()
+            memberList.forEach((m: any) => {
+              const inboxId = m.inboxId || 'Unknown'
+              const ethAddress = m.accountIdentifiers?.[0].identifier || m.accountAddress || inboxId
+              members.push(ethAddress)
+              if (ethAddress && ethAddress !== inboxId) {
+                mapping.set(inboxId, ethAddress)
               }
-            } catch (err) {
-              console.error(`@handleCreateGroupChat: Metadata update attempt ${attempt + 1} failed:`, err)
-              if (attempt < 2) {
-                // Wait before retry
-                await new Promise(resolve => setTimeout(resolve, 1000))
-              }
-            }
+            })
           }
           
-          if (!metadataUpdateSuccess) {
-            console.error('@handleCreateGroupChat: Failed to update metadata after 3 attempts')
-          }
-          
-          // Update the group chat info
-          setGroupChat({ ...groupInfo })
+          await convo.sync()
         } catch (err) {
-          console.error('Failed to add members to group:', err)
+          console.error('@handleCreateGroupChat: Error loading group members:', err)
         }
+        
+        const uninitializedMembers = await checkMemberInitialization(members)
+        
+        setInboxToAddress(mapping)
+        setGroupChat({
+          conversation: convo,
+          memberAddresses: members,
+          uninitializedMembers,
+          isOptimistic: false
+        })
+        
+        console.log('@handleCreateGroupChat: Group loaded successfully')
+      } else {
+        console.warn('@handleCreateGroupChat: Group created but not found in sync - will appear on refresh')
+        // Group will appear on next page load or when streaming picks it up
       }
+      
     } catch (err) {
-      console.error('Failed to create group chat:', err)
+      console.error('@handleCreateGroupChat: Failed to create group via bot:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create group'
+      setCreateGroupError(errorMessage)
     } finally {
       setIsCreatingGroup(false)
     }
@@ -835,6 +845,11 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-4">
             No group chat exists yet. Create one to start discussing this mandate.
           </p>
+          {createGroupError && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-xs text-destructive font-mono max-w-md">
+              {createGroupError}
+            </div>
+          )}
           <button
             onClick={handleCreateGroupChat}
             disabled={isCreatingGroup}
