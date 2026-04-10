@@ -8,7 +8,7 @@ import { createHmac } from 'crypto';
  * Alchemy signs webhook payloads with HMAC-SHA256
  */
 export function verifyAlchemySignature(
-  req: VercelRequest,
+  req: any, // Use 'any' to access rawBody property from Express middleware
   webhookSecret: string
 ): boolean {
   try {
@@ -19,8 +19,9 @@ export function verifyAlchemySignature(
       return false;
     }
     
-    // Get raw body as string
-    const body = JSON.stringify(req.body);
+    // Use raw body if available (from Express middleware), otherwise stringify
+    // This is critical for signature verification to match Alchemy's computation
+    const body = req.rawBody || JSON.stringify(req.body);
     
     // Compute expected signature
     const hmac = createHmac('sha256', webhookSecret);
@@ -112,30 +113,44 @@ export const webhookRateLimiter = new RateLimiter(60000, 100);
 
 /**
  * Validate Alchemy GraphQL webhook payload structure
+ * Handles both direct structure (payload.block) and GraphQL wrapper (payload.data.block)
  */
 export function isValidAlchemyPayload(payload: any): boolean {
   if (!payload || typeof payload !== 'object') {
+    console.error('Payload validation failed: not an object');
     return false;
   }
   
-  // Check required top-level structure
-  if (!payload.block || typeof payload.block !== 'object') {
+  // Handle GraphQL wrapper (payload.data.block) or direct structure (payload.block)
+  const block = payload.data?.block || payload.block;
+  
+  if (!block || typeof block !== 'object') {
+    console.error('Payload validation failed: missing block object', {
+      hasData: !!payload.data,
+      hasBlock: !!payload.block,
+      hasDataBlock: !!payload.data?.block,
+    });
     return false;
   }
-  
-  const { block } = payload;
   
   // Validate block structure
   if (typeof block.hash !== 'string' ||
       typeof block.number !== 'string' ||
       typeof block.timestamp !== 'string' ||
       !Array.isArray(block.logs)) {
+    console.error('Payload validation failed: invalid block structure', {
+      hasHash: typeof block.hash === 'string',
+      hasNumber: typeof block.number === 'string',
+      hasTimestamp: typeof block.timestamp === 'string',
+      hasLogsArray: Array.isArray(block.logs),
+    });
     return false;
   }
   
   // Validate logs structure
   for (const log of block.logs) {
     if (!log || typeof log !== 'object') {
+      console.error('Payload validation failed: invalid log object');
       return false;
     }
     
@@ -143,6 +158,12 @@ export function isValidAlchemyPayload(payload: any): boolean {
         typeof log.data !== 'string' ||
         !log.account?.address ||
         !log.transaction) {
+      console.error('Payload validation failed: invalid log structure', {
+        hasTopics: Array.isArray(log.topics),
+        hasData: typeof log.data === 'string',
+        hasAccount: !!log.account?.address,
+        hasTransaction: !!log.transaction,
+      });
       return false;
     }
   }

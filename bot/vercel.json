@@ -1,12 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "framework": null,
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@5.7.2"
+  "builds": [
+    {
+      "src": "Dockerfile",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "."
+      }
     }
-  },
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
   "env": {
     "NODE_ENV": "production"
   }

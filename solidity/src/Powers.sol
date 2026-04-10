@@ -458,11 +458,10 @@ contract Powers is EIP712, IPowers, Context {
     //                  ROLE AND LAW ADMIN                      //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
-    function adoptMandate(MandateInitData memory mandateInitData) external onlyPowers returns (uint16 mandateId) {
-        mandateId = _adoptMandate(mandateInitData);
-        // emit event.
-        emit MandateAdopted(mandateCounter - 1);
-
+    function adoptMandate(MandateInitData memory mandateInitData) public onlyPowers returns (uint16 mandateId) {
+        mandateId = mandateCounter;
+        _storeMandate(mandateId, mandateInitData);
+        unchecked { mandateCounter++; }
         return mandateId;
     }
 
@@ -472,18 +471,6 @@ contract Powers is EIP712, IPowers, Context {
 
         mandates[mandateId].active = false;
         emit MandateRevoked(mandateId);
-    }
-
-    /// @notice Internal function to set a mandate or revoke it.
-    /// @param mandateInitData Data of the mandate to adopt.
-    /// @return mandateId The ID of the newly adopted mandate.
-    ///
-    /// Emits a {PowersEvents::MandateAdopted} event.
-    function _adoptMandate(MandateInitData memory mandateInitData) internal returns (uint16 mandateId) {
-        mandateId = mandateCounter;
-        _storeMandate(mandateId, mandateInitData);
-        unchecked { mandateCounter++; }
-        return mandateId;
     }
 
     /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation. 
@@ -509,6 +496,8 @@ contract Powers is EIP712, IPowers, Context {
 
         Mandate(mandateInitData.targetMandate)
             .initializeMandate(mandateId, mandateInitData.nameDescription, "", mandateInitData.config);
+
+        emit MandateAdopted(mandateId);
     }
 
     /// @inheritdoc IPowers
@@ -543,7 +532,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @param account The address to assign/revoke the role for.
     /// @param access True to grant role, false to revoke.
     ///
-    /// Emits a {PowersEvents::RoleSet} event.
+    /// Emits a {PowersEvents::PowersRoleSet} event.
     function _setRole(uint256 roleId, address account, bool access) internal {
         // check 1: Public role is locked.
         if (roleId == PUBLIC_ROLE) revert Powers__CannotSetPublicRole();
@@ -575,7 +564,7 @@ contract Powers is EIP712, IPowers, Context {
         }
         // note: nothing happens when 1: access is requested and not a new member 2: access is false and account does not have role. No revert.
 
-        emit RoleSet(roleId, account, access);
+        emit PowersRoleSet(roleId, account, access);
     }
 
 

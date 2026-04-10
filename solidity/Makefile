@@ -308,11 +308,11 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 example-deploy : 
 	@echo "Deploying example contracts..."
-	forge script governance/examples/NestedGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 organisation-deploy : 
 	@echo "Deploying example contracts..."
-	forge script governance/culturalStewardsDAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/governed721DAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 powers-initialise :
 	@echo "Initialising Powers contract..."
@@ -326,7 +326,7 @@ powers-initialise :
 deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:DeployAllowanceModule $(OPT_SEPOLIA_DEPLOY_ARGS) 
 
 # Verify Contracts
-# sepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x05c0379565ef0ebb1bD21C0Ab463ca5CE5211D3A src/Powers.sol:Powers --watch
+sepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x5532DA374DBC92B110Cc8C1061738fB907E723aC src/Powers.sol:Powers --watch
 optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 arbSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 421614 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0xb1fe867eE7919887EB381c4626bdbAe003969683 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 

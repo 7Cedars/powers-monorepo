@@ -77,7 +77,7 @@ export interface MandateAdoptedEvent {
   transactionHash: string;
 }
 
-export interface RoleSetEvent {
+export interface PowersRoleSetEvent {
   roleId: bigint;
   account: string;
   access: boolean;

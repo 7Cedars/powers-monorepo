@@ -13,7 +13,7 @@ export const config = {
   // Webhook security
   webhookSecrets: {
     mandateAdopted: process.env.WEBHOOK_SECRET_MANDATE_ADOPTED!,
-    roleSet: process.env.WEBHOOK_SECRET_ROLE_SET!,
+    powersRoleSet: process.env.WEBHOOK_SECRET_ROLE_SET!,
   },
   
   // Alchemy API keys per chain

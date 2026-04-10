@@ -15,8 +15,8 @@ This bot performs the following functions:
 4. Sets bot as super admin with exclusive member management permissions
 5. Sends initial messages to groups
 
-### RoleSet Event Handler
-1. Listens for `RoleSet` events from Powers contracts
+### PowersRoleSet Event Handler
+1. Listens for `PowersRoleSet` events from Powers contracts
 2. Attempts to send DM notification to affected account
 3. If account has XMTP:
    - Queries Powers contract for mandates with the assigned/revoked role
@@ -71,7 +71,7 @@ Required variables:
 - `BOT_PRIVATE_KEY`: Private key for the bot's Ethereum wallet (needs XMTP registration)
 - `XMTP_ENV`: XMTP environment (`production` or `dev`)
 - `WEBHOOK_SECRET_MANDATE_ADOPTED`: Alchemy webhook signing secret for MandateAdopted events
-- `WEBHOOK_SECRET_ROLE_SET`: Alchemy webhook signing secret for RoleSet events
+- `WEBHOOK_SECRET_ROLE_SET`: Alchemy webhook signing secret for PowersRoleSet events
 - `ALCHEMY_API_KEY_*`: Alchemy API keys for each supported chain
 
 **Security Note**: The webhook secrets are critical for preventing unauthorized access. See [SECURITY.md](./SECURITY.md) for setup instructions.
@@ -113,10 +113,10 @@ Create two webhooks in the Alchemy dashboard for each chain:
 - Example: `https://your-app.vercel.app/api/webhooks/mandate-adopted?chainId=11155111` (for Sepolia)
 - **Signing Key**: Generate and save to `WEBHOOK_SECRET_MANDATE_ADOPTED`
 
-**Webhook 2: RoleSet**
+**Webhook 2: PowersRoleSet**
 - Type: GraphQL Webhook
-- Event: `RoleSet(uint256,address,bool)`
-- Event Signature: `0x294507a8f5830b538faef39fbdd28f1164f27c8338a32fc7b47ddf82e4c8d9e4`
+- Event: `PowersRoleSet(uint256,address,bool)`
+- Event Signature: `0x460c228e73612fca5a452b9cef387929d98c11b684fea0353af55d6ea0e98421`
 - Webhook URL: `https://your-app.vercel.app/api/webhooks/role-set?chainId={CHAIN_ID}`
 - Example: `https://your-app.vercel.app/api/webhooks/role-set?chainId=84532` (for Base Sepolia)
 - **Signing Key**: Generate and save to `WEBHOOK_SECRET_ROLE_SET`
@@ -169,7 +169,7 @@ The bot replicates the frontend's flow identification logic to detect connected 
 
 ### Batch Operations
 
-When processing `RoleSet` events, the bot batches all add/remove operations for efficiency, grouping by group name to minimize API calls.
+When processing `PowersRoleSet` events, the bot batches all add/remove operations for efficiency, grouping by group name to minimize API calls.
 
 ### Error Handling
 

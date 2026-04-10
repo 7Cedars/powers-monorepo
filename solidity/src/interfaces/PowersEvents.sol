@@ -72,7 +72,7 @@ interface PowersEvents {
     /// @param roleId the id of the role
     /// @param account the address of the account that has the role
     /// @param access whether the account has access to the role
-    event RoleSet(uint256 indexed roleId, address indexed account, bool indexed access);
+    event PowersRoleSet(uint256 indexed roleId, address indexed account, bool indexed access);
 
     /// @notice Emitted when a role is labelled.
     /// @param roleId the id of the role

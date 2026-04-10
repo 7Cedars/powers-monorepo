@@ -1,4 +1,4 @@
-// Webhook handler for RoleSet events
+// Webhook handler for PowersRoleSet events
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { Address } from 'viem';
@@ -56,7 +56,7 @@ interface AlchemyGraphQLWebhook {
 }
 
 /**
- * Webhook handler for RoleSet events
+ * Webhook handler for PowersRoleSet events
  * Sends DM notification and adds/removes user from relevant mandate and flow groups
  */
 export default async function handler(
@@ -72,7 +72,7 @@ export default async function handler(
     // 1. VERIFY WEBHOOK SIGNATURE
     const isValidSignature = verifyAlchemySignature(
       req,
-      config.webhookSecrets.roleSet
+      config.webhookSecrets.powersRoleSet
     );
     
     if (!isValidSignature) {
@@ -86,7 +86,8 @@ export default async function handler(
       return res.status(400).json({ error: 'Bad Request - Invalid payload structure' });
     }
     
-    const payload = req.body as AlchemyGraphQLWebhook;
+    // Handle GraphQL wrapper (req.body.data) or direct structure (req.body)
+    const payload = (req.body.data || req.body) as AlchemyGraphQLWebhook;
     
     // 3. RATE LIMITING
     // Use block hash as identifier (unique per webhook event)
@@ -112,7 +113,7 @@ export default async function handler(
       try {
         const powersAddress = log.account.address as Address;
         
-        console.log(`RoleSet event received for ${powersAddress} on chain ${chainId}`);
+        console.log(`PowersRoleSet event received for ${powersAddress} on chain ${chainId}`);
         
         // Verify it's a Powers contract
         const isValid = await isPowersContract(chainId, powersAddress);
@@ -230,7 +231,7 @@ export default async function handler(
     });
     
   } catch (error) {
-    console.error('Error processing RoleSet webhook:', error);
+    console.error('Error processing PowersRoleSet webhook:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
