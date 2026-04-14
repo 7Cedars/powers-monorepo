@@ -12,40 +12,12 @@ export function useXmtpClient() {
   const client = useXmtpStore((state) => state.client)
   const isLoading = useXmtpStore((state) => state.isLoading)
   const error = useXmtpStore((state) => state.error)
-  const isConnected = useXmtpStore((state) => state.isConnected)
-  const hasInbox = useXmtpStore((state) => state.hasInbox)
+  const isConnected = useXmtpStore((state) => state.isConnected) 
   const setClient = useXmtpStore((state) => state.setClient)
   const setIsLoading = useXmtpStore((state) => state.setIsLoading)
   const setError = useXmtpStore((state) => state.setError)
-  const setIsConnected = useXmtpStore((state) => state.setIsConnected)
-  const setHasInbox = useXmtpStore((state) => state.setHasInbox)
+  const setIsConnected = useXmtpStore((state) => state.setIsConnected) 
   const resetStore = useXmtpStore((state) => state.reset)
-
-  // Check if an address has an XMTP inbox
-  const checkInboxExists = useCallback(async (address: string): Promise<boolean> => {
-    try {
-      const identifiers: Identifier[] = [
-        { identifier: address, identifierKind: IdentifierKind.Ethereum }
-      ]
-      
-      const response = await Client.canMessage(identifiers)
-      const canMessage = response.get(address.toLowerCase()) ?? false
-      
-      setHasInbox(canMessage)
-      return canMessage
-    } catch (err) {
-      console.error('Failed to check inbox existence:', err)
-      setHasInbox(false)
-      return false
-    }
-  }, [setHasInbox])
-
-  // Auto-check inbox existence when wallet connects
-  useEffect(() => {
-    if (walletClient?.account?.address && !isConnected) {
-      checkInboxExists(walletClient.account.address)
-    }
-  }, [walletClient?.account?.address, isConnected, checkInboxExists])
 
   const initializeClient = useCallback(async () => {
     // If already connected, don't reinitialize
@@ -91,8 +63,7 @@ export function useXmtpClient() {
       })
 
       setClient(xmtpClient)
-      setIsConnected(true)
-      setHasInbox(true) // Update hasInbox after successful creation/connection
+      setIsConnected(true) 
       console.log(`XMTP client initialized for inbox:`, xmtpClient.inboxId, xmtpClient)
     } catch (err) {
       console.error('Failed to initialize XMTP client:', err)
@@ -134,8 +105,6 @@ export function useXmtpClient() {
     isLoading,
     error,
     isConnected,
-    hasInbox,
-    checkInboxExists,
     initializeClient,
     disconnect,
     removeAllInstallations,

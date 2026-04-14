@@ -9,11 +9,6 @@ import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk
 import { ConsentState, IdentifierKind } from '@xmtp/browser-sdk'
 import { SearchFilterSort } from './SearchFilterSort'
 
-// Hardcoded addresses for group chat creation - for demo purposes only
-const HARDCODED_ADDRESSES = [
-  '0x71B17aABB5007b903c057CcCE2A29F055f64a211'
-]
-
 interface GroupChatInfo {
   conversation: Conversation
   memberAddresses: string[]
@@ -48,10 +43,14 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
   const [showMembersList, setShowMembersList] = useState(false)
   const [newMemberAddress, setNewMemberAddress] = useState('')
   const [addNewMemberError, setAddNewMemberError] = useState<string | null>(null)
+  const [groupExistsButNotMember, setGroupExistsButNotMember] = useState(false)
+  const [isRequestingAccess, setIsRequestingAccess] = useState(false)
+  const [requestAccessError, setRequestAccessError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // Generate unique chatroom identifier
-  const getChatroomId = (): string | null => {
+  // Generate base chatroom identifier (without timestamp)
+  // Used for signature verification and group searching
+  const getBaseChatroomId = (): string | null => {
     if (!chainId || !powersAddress) return null
     
     const parts = [chatroomType, chainId, powersAddress]
@@ -60,9 +59,38 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
     return parts.join('-')
   }
   
-  const chatroomId = getChatroomId()
+  const baseChatroomId = getBaseChatroomId()
  
-  console.log('NB: XMTP Chatroom render:', { client, address, isConnected, groupChat, messages, error, chatroomId })
+  // Check if connected user is in the uninitialized members list
+  const connectedUserNeedsInit = address && groupChat?.uninitializedMembers.some(
+    addr => addr.toLowerCase() === address.toLowerCase()
+  )
+  
+  // Check if user's inbox is already in the group
+  const isUserInGroup = useCallback(async (): Promise<boolean> => {
+    if (!client || !groupChat) return false
+    
+    try {
+      const members = await (groupChat.conversation as any).members()
+      const userInboxId = client.inboxId
+      
+      return members.some((m: any) => m.inboxId === userInboxId)
+    } catch (err) {
+      console.error('Failed to check if user is in group:', err)
+      return false
+    }
+  }, [client, groupChat])
+  
+  const [userInGroup, setUserInGroup] = useState<boolean | null>(null)
+  
+  // Check if user is in the group when group changes
+  useEffect(() => {
+    if (groupChat && client) {
+      isUserInGroup().then(setUserInGroup)
+    }
+  }, [groupChat, client, isUserInGroup])
+  
+  console.log('NB: XMTP Chatroom render:', { client, address, isConnected, connectedUserNeedsInit, groupChat, messages, error, baseChatroomId })
 
   // Scroll to bottom of messages
   const scrollToBottom = useCallback(() => {
@@ -104,7 +132,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
 
   // Load existing group chats when client is connected
   useEffect(() => {
-    if (!client || !isConnected || !chatroomId) return
+    if (!client || !isConnected || !baseChatroomId) return
 
     const loadGroupChats = async () => {
       setIsLoadingChats(true)
@@ -113,32 +141,38 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         const allConvos = await client.conversations.list()
 
         console.log('All conversations:', allConvos)
-        console.log('Looking for chatroom with ID:', chatroomId)
+        console.log('Looking for chatroom with base ID:', baseChatroomId)
         
         // Filter for group chats only
         const groupConvos = allConvos.filter((convo: any) => {
           return 'addMembers' in convo || convo.conversationType === 'group'
         })
 
-        // Find the specific chatroom matching our identifier
+        // Find all chatrooms matching our base identifier (may have timestamp suffix)
         // Check both name and description fields (network-persisted, cross-browser compatible)
-        const matchingConvo = groupConvos.find((convo: any) => {
-          // Priority 1: Check name field (most reliable)
-          if (convo.name && convo.name === chatroomId) {
-            console.log('Found chat by name match:', convo.id, 'name:', convo.name)
-            return true
-          }
+        const matchingConvos = groupConvos.filter((convo: any) => {
+          const name = convo.name || ''
+          const description = convo.description || ''
           
-          // Priority 2: Check description field (backup identifier)
-          if (convo.description && convo.description === chatroomId) {
-            console.log('Found chat by description match:', convo.id, 'description:', convo.description)
-            return true
-          }
-          
-          return false
+          // Pattern match: group name/description should start with base chatroom ID
+          // Agent creates groups with format: baseChatroomId-timestamp
+          return name.startsWith(baseChatroomId) || description.startsWith(baseChatroomId)
         })
         
-        console.log('Matching conversation result:', matchingConvo ? 'Found' : 'Not found', matchingConvo?.id)
+        console.log(`Found ${matchingConvos.length} matching conversations for base ID: ${baseChatroomId}`)
+        
+        // If multiple matches, select the most recent (highest timestamp suffix)
+        let matchingConvo = null
+        if (matchingConvos.length > 0) {
+          // Sort by name/description to get the one with highest timestamp
+          matchingConvo = matchingConvos.sort((a: any, b: any) => {
+            const aName = a.name || a.description || ''
+            const bName = b.name || b.description || ''
+            return bName.localeCompare(aName) // Descending order
+          })[0]
+          
+          console.log('Selected most recent conversation:', matchingConvo.id, 'name:', (matchingConvo as any).name)
+        }
 
         if (matchingConvo) {
           // Load the matching chatroom
@@ -200,8 +234,10 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         const stream = await client.conversations.stream()
         for await (const conversation of stream) {
           if ('addMembers' in conversation || (conversation as any).conversationType === 'group') {
-            // Check if this is the chatroom we're looking for
-            if ((conversation as any).description !== chatroomId) {
+            // Check if this is the chatroom we're looking for (pattern match)
+            const name = (conversation as any).name || ''
+            const desc = (conversation as any).description || ''
+            if (!name.startsWith(baseChatroomId) && !desc.startsWith(baseChatroomId)) {
               continue
             }
             
@@ -233,7 +269,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
     }
 
     streamConversations()
-  }, [client, isConnected, chatroomId])
+  }, [client, isConnected, baseChatroomId])
 
   // Load messages for the group chat
   useEffect(() => {
@@ -285,20 +321,20 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
   }, [client, isConnected, groupChat])
 
   const handleCreateGroupChat = async () => {
-    if (!client || !chatroomId || !address || !chainId || !powersAddress) {
+    if (!client || !baseChatroomId || !address || !chainId || !powersAddress) {
       console.error('@handleCreateGroupChat: Missing required parameters')
       return
     }
 
-    console.log('@handleCreateGroupChat: Requesting bot to create group:', chatroomId)
+    console.log('@handleCreateGroupChat: Requesting bot to create group:', baseChatroomId)
     
     setIsCreatingGroup(true)
     setCreateGroupError(null)
     
     try {
-      // 1. Generate timestamp and message to sign
+      // 1. Generate timestamp and message to sign (using base chatroom ID)
       const timestamp = Date.now()
-      const message = `Create XMTP group: ${chatroomId} at ${timestamp}`
+      const message = `Create XMTP group: ${baseChatroomId} at ${timestamp}`
       
       console.log('@handleCreateGroupChat: Requesting signature from user...')
       
@@ -315,7 +351,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
       console.log('@handleCreateGroupChat: Signature received, calling bot API...')
       
       // 3. Call bot API to create the group
-      const botApiUrl = process.env.NEXT_PUBLIC_BOT_API_URL || 'https://bot-railway-production-d5c8.up.railway.app'
+      const botApiUrl = process.env.NEXT_PUBLIC_BOT_API_URL || 'https://xmtp-agent-production-f937.up.railway.app'
       
       const response = await fetch(`${botApiUrl}/api/create-group`, {
         method: 'POST',
@@ -355,9 +391,19 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         return 'addMembers' in convo || convo.conversationType === 'group'
       })
       
-      const matchingConvo = groupConvos.find((convo: any) => {
-        return (convo.name === chatroomId || convo.description === chatroomId)
+      // Find all matching groups (may have timestamp suffix from agent)
+      const matchingConvos = groupConvos.filter((convo: any) => {
+        const name = convo.name || ''
+        const description = convo.description || ''
+        return name.startsWith(baseChatroomId) || description.startsWith(baseChatroomId)
       })
+      
+      // Select the most recent one (highest timestamp)
+      const matchingConvo = matchingConvos.length > 0 ? matchingConvos.sort((a: any, b: any) => {
+        const aName = a.name || a.description || ''
+        const bName = b.name || b.description || ''
+        return bName.localeCompare(aName) // Descending order
+      })[0] : null
       
       if (matchingConvo) {
         console.log('@handleCreateGroupChat: Found newly created group')
@@ -397,8 +443,9 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         
         console.log('@handleCreateGroupChat: Group loaded successfully')
       } else {
-        console.warn('@handleCreateGroupChat: Group created but not found in sync - will appear on refresh')
-        // Group will appear on next page load or when streaming picks it up
+        console.warn('@handleCreateGroupChat: Group created but user is not a member')
+        // Group was created but user is not a member - show appropriate message
+        setGroupExistsButNotMember(true)
       }
       
     } catch (err) {
@@ -581,6 +628,80 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
     }
   }
 
+  const handleRequestAccess = async () => {
+    if (!client || !groupChat || !address || !baseChatroomId) return
+    console.log('@handleRequestAccess: Requesting access to group chat with base ID:', baseChatroomId)
+    
+    setIsRequestingAccess(true)
+    setRequestAccessError(null)
+    
+    try {
+      // Get the group name (with timestamp suffix if it exists)
+      const groupName = (groupChat.conversation as any).name || (groupChat.conversation as any).description || baseChatroomId
+      
+      // Generate timestamp and message to sign
+      const timestamp = Date.now()
+      const message = `Request access to group: ${groupName} at ${timestamp}`
+      
+      console.log('@handleRequestAccess: Requesting signature from user...')
+      
+      // Request signature from user's wallet
+      let signature: string
+      try {
+        signature = await signMessageAsync({ message })
+      } catch (signErr) {
+        console.error('@handleRequestAccess: User rejected signature:', signErr)
+        setRequestAccessError('Signature required to request access')
+        return
+      }
+      
+      console.log('@handleRequestAccess: Signature received, calling bot API...')
+      
+      // Call bot API to request access
+      const botApiUrl = process.env.NEXT_PUBLIC_BOT_API_URL || 'https://xmtp-agent-production-f937.up.railway.app'
+      
+      const response = await fetch(`${botApiUrl}/api/request-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inboxId: client.inboxId,
+          groupName: groupName,
+          requesterAddress: address,
+          signature,
+          timestamp,
+        }),
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok || !result.success) {
+        console.error('@handleRequestAccess: Bot API error:', result)
+        setRequestAccessError(result.error || 'Failed to request access')
+        return
+      }
+      
+      console.log('@handleRequestAccess: Access granted successfully:', result)
+      
+      // Refresh the group membership status
+      const inGroup = await isUserInGroup()
+      setUserInGroup(inGroup)
+      
+      // If now in group, reload the group chat
+      if (inGroup) {
+        await groupChat.conversation.sync()
+      }
+      
+    } catch (err) {
+      console.error('@handleRequestAccess: Failed to request access:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to request access'
+      setRequestAccessError(errorMessage)
+    } finally {
+      setIsRequestingAccess(false)
+    }
+  }
+
   const handleAddNewMember = async () => {
     if (!client || !groupChat || !newMemberAddress.trim()) return
 
@@ -758,17 +879,29 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
           {groupChat.uninitializedMembers.length > 0 && (
             <div className="mt-3 pt-3 border-t border-border">
               <h6 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1">
-                Uninitialized ({groupChat.uninitializedMembers.length})
+                Pending XMTP Setup ({groupChat.uninitializedMembers.length})
               </h6>
+              <p className="text-xs text-muted-foreground/60 mb-2 italic">
+                These members have governance roles but haven't initialized XMTP yet. 
+                They need to connect their wallet and complete the one-time XMTP setup to participate in chats.
+              </p>
               <div className="max-h-24 overflow-y-auto scrollbar-thin space-y-1">
-                {groupChat.uninitializedMembers.map((memberAddr, index) => (
-                  <div
-                    key={index}
-                    className="text-xs font-mono text-muted-foreground/60 py-1"
-                  >
-                    {memberAddr}
-                  </div>
-                ))}
+                {groupChat.uninitializedMembers.map((memberAddr, index) => {
+                  const isConnectedUser = address && memberAddr.toLowerCase() === address.toLowerCase()
+                  return (
+                    <div
+                      key={index}
+                      className={`text-xs font-mono py-1 flex items-center justify-between ${
+                        isConnectedUser ? 'text-primary font-semibold' : 'text-muted-foreground/60'
+                      }`}
+                    >
+                      <span>{memberAddr}</span>
+                      {isConnectedUser && (
+                        <span className="text-xs bg-primary/20 px-2 py-0.5 rounded">You</span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -817,17 +950,31 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         // Not connected - Show connection button
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
           <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
-          <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-4">
-            These chatrooms are based on the XMTP Web3 Messaging Protocol. They are encrypted and only viewable once a wallet connection is established.
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-2">
+            These chatrooms use XMTP, an encrypted Web3 messaging protocol.
+          </p>
+          <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-md mb-4">
+            Connect your wallet and initialize XMTP (one-time setup) to participate in governance discussions.
           </p>
           {address && !isConnected && (
-            <button
-              onClick={initializeClient}
-              disabled={isLoading}
-              className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
-            >
-              {isLoading ? 'Connecting to XMTP...' : 'Connect to XMTP'}
-            </button>
+            <>
+              {!client?.inboxId && (
+                <div className="mb-3 p-3 bg-primary/10 border border-primary/20 text-xs font-mono max-w-md">
+                  <p className="font-semibold mb-1">🔐 First-Time Setup Required</p>
+                  <p className="text-xs opacity-80">
+                    This is a one-time process to create your encrypted XMTP identity. 
+                    You'll need to sign a message with your wallet.
+                  </p>
+                </div>
+              )}
+              <button
+                onClick={initializeClient}
+                disabled={isLoading}
+                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+              >
+                {isLoading ? 'Initializing XMTP...' : !client?.inboxId ? 'Initialize XMTP' : 'Connect to XMTP'}
+              </button>
+            </>
           )}
           {error && (
             <p className="text-xs text-red-500 mt-2">{error}</p>
@@ -838,13 +985,49 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
         <div className="flex-1 min-h-0 flex items-center justify-center">
           <p className="text-xs text-muted-foreground">Loading chats...</p>
         </div>
+      ) : groupExistsButNotMember ? (
+        // Group exists but user is not a member
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
+          <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-2">
+            A group chat exists for this {chatroomType.toLowerCase()}, but you are not a member.
+          </p>
+          <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-md mb-4">
+            Only users with the required role can participate in this conversation.
+          </p>
+          {hasRole && (
+            <>
+              {requestAccessError && (
+                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-xs text-destructive font-mono max-w-md">
+                  {requestAccessError}
+                </div>
+              )}
+              <button
+                onClick={handleRequestAccess}
+                disabled={isRequestingAccess}
+                className="px-4 py-2 bg-primary text-primary-foreground text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+              >
+                {isRequestingAccess ? 'Requesting Access...' : 'Request Access'}
+              </button>
+            </>
+          )}
+        </div>
       ) : !groupChat ? (
         // Connected but no group chat - Show create button
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
           <ChatBubbleBottomCenterTextIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-4">
-            No group chat exists yet. Create one to start discussing this mandate.
+            No group chat exists yet. Create one to start discussing this {chatroomType.toLowerCase()}.
           </p>
+          {!client?.inboxId && (
+            <div className="mb-4 p-3 bg-primary/10 border border-primary/20 text-xs text-primary font-mono max-w-md">
+              <p className="font-semibold mb-1">⚠️ XMTP Not Fully Initialized</p>
+              <p className="text-xs opacity-80">
+                Your wallet is connected but your XMTP inbox may not be fully set up. 
+                Creating a group will complete the initialization.
+              </p>
+            </div>
+          )}
           {createGroupError && (
             <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-xs text-destructive font-mono max-w-md">
               {createGroupError}
@@ -859,8 +1042,66 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, chainId, po
           </button>
         </div>
       ) : (
-        // Chat loaded - Show messages
+        // Chat loaded - Show messages or request access if not a member
         <div className="flex-1 min-h-0 flex flex-col">
+          {/* Show request access prompt if user has role but is not in group */}
+          {hasRole && userInGroup === false && (
+            <div className="px-6 py-3 bg-primary/10 border-b border-primary/20">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <p className="text-xs font-mono font-semibold text-primary mb-1">
+                    🔐 Request Access to Group
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    You have the required role for this {chatroomType.toLowerCase()} but are not yet a member of the group chat. 
+                    Click below to request access.
+                  </p>
+                </div>
+                <button
+                  onClick={handleRequestAccess}
+                  disabled={isRequestingAccess}
+                  className="px-3 py-1.5 bg-primary text-primary-foreground text-xs hover:opacity-80 transition-opacity disabled:opacity-50 uppercase tracking-wider font-mono whitespace-nowrap"
+                >
+                  {isRequestingAccess ? 'Requesting...' : 'Request Access'}
+                </button>
+              </div>
+              {requestAccessError && (
+                <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 text-xs text-destructive font-mono">
+                  {requestAccessError}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Show initialization prompt if connected user is uninitialized */}
+          {connectedUserNeedsInit && (
+            <div className="px-6 py-3 bg-primary/10 border-b border-primary/20">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <p className="text-xs font-mono font-semibold text-primary mb-1">
+                    🔐 Complete Your XMTP Setup
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Your address is in this group but you haven't fully initialized your XMTP identity. 
+                    Click below to complete the one-time setup and start participating.
+                  </p>
+                </div>
+                <button
+                  onClick={handleAddConnectedAddress}
+                  disabled={isAddingMember}
+                  className="px-3 py-1.5 bg-primary text-primary-foreground text-xs hover:opacity-80 transition-opacity disabled:opacity-50 uppercase tracking-wider font-mono whitespace-nowrap"
+                >
+                  {isAddingMember ? 'Initializing...' : 'Initialize & Join'}
+                </button>
+              </div>
+              {addMemberError && (
+                <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 text-xs text-destructive font-mono">
+                  {addMemberError}
+                </div>
+              )}
+            </div>
+          )}
+          
           <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2 scrollbar-thin flex flex-col">
             <div className="mt-auto space-y-3">
               {messages.length === 0 ? (

@@ -36,7 +36,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { chain } = useConnection();
     const action = useActionStore();
     const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
-    const { isConnected: xmtpConnected, hasInbox, initializeClient, disconnect: disconnectXmtp, checkInboxExists } = useXmtpClient();
+    const { client, isConnected: xmtpConnected, initializeClient, disconnect: disconnectXmtp} = useXmtpClient();
     const [showXmtpModal, setShowXmtpModal] = useState(false);
 
     console.log("layout being triggered")
@@ -92,14 +92,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         }
       }
     }, [powers, powers.contractAddress, savedProtocols, addProtocol])
-
-    // Recheck XMTP status when wallet address changes (user logout/login)
-    useEffect(() => {
-      if (wallets[0]?.address && !xmtpConnected) {
-        checkInboxExists(wallets[0].address)
-      }
-    }, [wallets[0]?.address, xmtpConnected, checkInboxExists])
-
+ 
   return (  
     <div className="h-screen w-screen flex flex-col bg-background scanlines overflow-hidden">
       <header className="w-full flex flex-col items-center border-b border-border px-3 sm:px-4 py-4 flex-shrink-0">
@@ -140,7 +133,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 </div>
                 <span className="text-muted-foreground">|</span>
                 {/* XMTP Status - Three states */}
-                {xmtpConnected && hasInbox ? (
+                {xmtpConnected && client?.inboxId ? (
                   // State 1: Connected to XMTP - clickable to disconnect
                   <button
                     onClick={disconnectXmtp}
@@ -148,7 +141,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                   >
                     <span>XMTP</span>
                   </button>
-                ) : hasInbox === true && !xmtpConnected ? (
+                ) : client?.inboxId && !xmtpConnected ? (
                   // State 2: Has inbox but not connected
                   <button
                     onClick={initializeClient}
@@ -156,7 +149,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                   >
                     <span>XMTP</span>
                   </button>
-                ) : hasInbox === false ? (
+                ) : !client?.inboxId ? (
                   // State 3: No inbox - show in red
                   <button
                     onClick={() => setShowXmtpModal(true)}
