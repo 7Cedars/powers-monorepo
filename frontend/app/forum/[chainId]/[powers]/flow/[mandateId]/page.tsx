@@ -77,6 +77,13 @@ export default function FlowSequencePage() {
             : description;
     };
 
+    const isPublicRole = useMemo(() => {
+        if (!powers?.mandates || !mandateId) return false;
+        const mandate = powers.mandates.find(m => m.index.toString() === mandateId);
+        if (!mandate?.conditions?.allowedRole) return false;
+        return BigInt(mandate.conditions.allowedRole) === BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+    }, [powers, mandateId]);
+
     return (
         <div className="flex-1 flex flex-col bg-background scanlines font-mono">
             {/* Main Content */}
@@ -111,6 +118,7 @@ export default function FlowSequencePage() {
 
                 <Chatroom 
                     chatroomType="Flow" 
+                    isPublicRole={isPublicRole}
                     chainId={chainId}
                     powersAddress={powersAddress}
                     contextId={mandateId}

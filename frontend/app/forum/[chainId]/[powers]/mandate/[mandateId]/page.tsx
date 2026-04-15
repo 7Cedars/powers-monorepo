@@ -92,6 +92,7 @@ export default function MandatePage() {
           <Chatroom 
             chatroomType="Mandate" 
             hasRole={hasRequiredRole}
+            isPublicRole={allowedRole === PUBLIC_ROLE}
             chainId={chainId}
             powersAddress={powersAddress}
             contextId={mandateId}

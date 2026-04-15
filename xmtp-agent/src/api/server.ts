@@ -1,10 +1,9 @@
 // Express server for the XMTP agent API
+// Simplified to health check only - access requests are now handled via XMTP DMs
 
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import type { Agent } from '@xmtp/agent-sdk';
-import { createGroupHandler } from './routes/createGroup.js';
-import { requestAccessHandler } from './routes/requestAccess.js';
 import { config } from '../config/env.js';
 
 /**
@@ -16,7 +15,7 @@ export function createServer(agent: Agent): express.Application {
   // Middleware
   app.use(cors({
     origin: config.server.corsOrigin || '*',
-    methods: ['GET', 'POST'],
+    methods: ['GET'],
     credentials: true,
   }));
   
@@ -33,12 +32,6 @@ export function createServer(agent: Agent): express.Application {
       timestamp: new Date().toISOString(),
     });
   });
-  
-  // Create group endpoint
-  app.post('/api/create-group', createGroupHandler(agent));
-  
-  // Request access endpoint
-  app.post('/api/request-access', requestAccessHandler(agent));
   
   // 404 handler
   app.use((req: Request, res: Response) => {
@@ -69,7 +62,5 @@ export function startServer(app: express.Application): void {
   app.listen(port, () => {
     console.log(`Agent API server listening on port ${port}`);
     console.log(`Health check: http://localhost:${port}/health`);
-    console.log(`Create group: http://localhost:${port}/api/create-group`);
-    console.log(`Request access: http://localhost:${port}/api/request-access`);
   });
 }

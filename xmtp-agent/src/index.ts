@@ -1,9 +1,10 @@
 // Main entry point for the XMTP Powers Agent
-// This file initializes the agent, starts event watchers, and launches the API server
+// This file initializes the agent, starts event watchers, message streaming, and launches the API server
 
 import { initializeAgent } from './agent.js';
 import { watchPowersRoleSetEvents } from './watchers/powersRoleSet.js';
 import { handlePowersRoleSet } from './handlers/roleChange.js';
+import { handleAccessRequestMessage } from './handlers/messageHandler.js';
 import { createServer, startServer } from './api/server.js'; 
 import { config } from './config/env.js';
 import type { Address } from 'viem';
@@ -50,7 +51,13 @@ async function main() {
     console.log('✓ Event watchers started');
     console.log('');
     
-    // 3. Create and start the API server
+    // 3. Start DM message stream for access requests
+    console.log('Starting DM message stream...');
+    startMessageStream(agent);
+    console.log('✓ DM message stream started');
+    console.log('');
+    
+    // 4. Create and start the API server (health check only)
     console.log('Starting API server...');
     const app = createServer(agent);
     startServer(app);
@@ -62,7 +69,7 @@ async function main() {
     console.log('='.repeat(50));
     console.log('');
     
-    // 4. Set up graceful shutdown
+    // 5. Set up graceful shutdown
     const shutdown = async () => {
       console.log('');
       console.log('Shutting down gracefully...');
@@ -89,6 +96,93 @@ async function main() {
     console.error('Failed to start agent:', error);
     process.exit(1);
   }
+}
+
+/**
+ * Starts streaming all DM messages and routes them to the message handler.
+ * Only processes DM messages (not group messages) to avoid feedback loops.
+ */
+function startMessageStream(agent: any) {
+  const streamMessages = async () => {
+    try {
+      // Stream all messages from all conversations
+      await agent.client.conversations.streamAllMessages({
+        onValue: async (message: any) => {
+          try {
+            // Skip messages sent by the agent itself
+            if (message.senderInboxId === agent.client.inboxId) {
+              return;
+            }
+
+            // Only process DM messages (not group messages)
+            // Check the conversation type
+            const conversationId = message.conversationId;
+            
+            // Try to find the conversation to check its type
+            await agent.client.conversations.sync();
+            const allConvos = await agent.client.conversations.list();
+            const conversation = allConvos.find((c: any) => c.id === conversationId);
+            
+            if (!conversation) {
+              console.log('[messageStream] Could not find conversation for message, skipping');
+              return;
+            }
+
+            // Check if this is a DM (not a group)
+            const isGroup = 'addMembers' in conversation || (conversation as any).conversationType === 'group';
+            
+            if (isGroup) {
+              // Skip group messages - we only process DMs
+              return;
+            }
+
+            // Extract message text
+            const messageText = typeof message.content === 'string'
+              ? message.content
+              : JSON.stringify(message.content);
+
+            console.log(`[messageStream] Received DM from ${message.senderInboxId}: ${messageText}`);
+
+            // Create a reply function that sends a DM back
+            const replyFn = async (text: string) => {
+              try {
+                await conversation.sendText(text);
+              } catch (err) {
+                console.error('[messageStream] Failed to send reply:', err);
+              }
+            };
+
+            // Handle the message
+            await handleAccessRequestMessage(
+              agent,
+              message.senderInboxId,
+              messageText,
+              replyFn
+            );
+          } catch (err) {
+            console.error('[messageStream] Error processing message:', err);
+          }
+        },
+        onError: (error: any) => {
+          console.error('[messageStream] Stream error:', error);
+          // Attempt to restart the stream after a delay
+          setTimeout(() => {
+            console.log('[messageStream] Attempting to restart message stream...');
+            streamMessages();
+          }, 5000);
+        },
+      });
+    } catch (err) {
+      console.error('[messageStream] Failed to start message stream:', err);
+      // Attempt to restart the stream after a delay
+      setTimeout(() => {
+        console.log('[messageStream] Attempting to restart message stream...');
+        streamMessages();
+      }, 5000);
+    }
+  };
+
+  streamMessages();
 }
 
 // Run the application

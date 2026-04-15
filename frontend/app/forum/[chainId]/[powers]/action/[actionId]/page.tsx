@@ -145,6 +145,7 @@ export default function ActionPage() {
           {/* Action Chatroom Placeholder */}
           <Chatroom 
             chatroomType="Action"
+            isPublicRole={mandate.conditions?.allowedRole ? BigInt(mandate.conditions.allowedRole) === BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff') : false}
             chainId={chainId}
             powersAddress={powersAddress}
             contextId={actionId}

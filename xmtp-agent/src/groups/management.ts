@@ -6,6 +6,7 @@ import type { Address } from 'viem';
 import type { GroupOperation } from '../utils/types.js';
 import { isMandateActive, isActionActive } from '../powers/contract.js';
 import { parseGroupName } from '../utils/naming.js';
+import { saveGroupMapping, getGroupConversationId } from './groupStore.js';
 
 /**
  * Checks if a group should still be active based on its name and contract state
@@ -63,16 +64,39 @@ export async function getAllAgentGroups(agent: Agent): Promise<any[]> {
 }
 
 /**
- * Finds a group by name
+ * Finds a group by name, using the persistent store for reliable lookup
  */
 export async function findGroupByName(agent: Agent, groupName: string): Promise<any | null> {
   try {
-    const groups = await getAllAgentGroups(agent);
+    // First, check the persistent store for a known conversationId
+    const storedConversationId = getGroupConversationId(groupName);
     
-    // Find matching group by name
+    if (storedConversationId) {
+      console.log(`[findGroupByName] Found stored conversationId for "${groupName}": ${storedConversationId}`);
+      
+      // Sync and look up by conversationId
+      await agent.client.conversations.sync();
+      const allConvos = await agent.client.conversations.list();
+      const group = allConvos.find((c: any) => c.id === storedConversationId);
+      
+      if (group) {
+        return group;
+      }
+      
+      console.warn(`[findGroupByName] Stored conversationId ${storedConversationId} not found in conversations list, falling back to name search`);
+    }
+    
+    // Fallback: search by name (for groups created before the store existed)
+    const groups = await getAllAgentGroups(agent);
     const group = groups.find((g: any) => 
       g.name === groupName || g.description === groupName
     );
+    
+    // If found by name fallback, save the mapping for future lookups
+    if (group) {
+      console.log(`[findGroupByName] Found group by name fallback, saving mapping`);
+      saveGroupMapping(groupName, group.id);
+    }
     
     return group || null;
   } catch (error) {
@@ -83,6 +107,7 @@ export async function findGroupByName(agent: Agent, groupName: string): Promise<
 
 /**
  * Creates a group with super admin-only permissions
+ * Saves the groupName → conversationId mapping to the persistent store
  */
 export async function createGroupWithSuperAdminPermissions(
   agent: Agent,
@@ -97,7 +122,10 @@ export async function createGroupWithSuperAdminPermissions(
       groupDescription: groupName,
     });
     
-    console.log(`Group created: ${groupName}`);
+    // Save the mapping to persistent store
+    saveGroupMapping(groupName, group.id);
+    
+    console.log(`Group created: ${groupName} (conversationId: ${group.id})`);
     
     return group;
   } catch (error) {

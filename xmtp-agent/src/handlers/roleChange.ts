@@ -3,7 +3,8 @@
 import type { Agent } from '@xmtp/agent-sdk';
 import type { Address } from 'viem';
 import type { PowersRoleSetEvent } from '../utils/types.js';
-import { isPowersContract, getAllMandates, getMandatesByRole, getAllActions } from '../powers/contract.js';
+import { isPowersContract, getAllMandates, getMandatesByRole, getAllActions, getPublicClient } from '../powers/contract.js';
+import { powersAbi } from '../powers/abi.js';
 import { getFlowsContainingMandates } from '../powers/flows.js';
 import { getMandateGroupName, getFlowGroupName, getActionGroupName } from '../utils/naming.js';
 import { tryToSendDM, getAllAgentGroups, findGroupByName } from '../groups/management.js';
@@ -40,7 +41,30 @@ export async function handlePowersRoleSet(
   }
   
   try {
-    // 1. Verify it's a Powers contract
+    // 1. Verify the account actually lost the role (handles remove+re-add in same tx)
+    const client = getPublicClient(chainId);
+    const amountHolders = await client.readContract({
+      address: powersAddress,
+      abi: powersAbi,
+      functionName: 'getAmountRoleHolders',
+      args: [roleId],
+    }) as bigint;
+    
+    for (let i = 0; i < Number(amountHolders); i++) {
+      const holder = await client.readContract({
+        address: powersAddress,
+        abi: powersAbi,
+        functionName: 'getRoleHolderAtIndex',
+        args: [roleId, BigInt(i)],
+      }) as Address;
+      
+      if (holder.toLowerCase() === account.toLowerCase()) {
+        console.log(`Account ${account} still holds role ${roleId} on-chain (likely removed and re-added in same tx) - skipping removal`);
+        return;
+      }
+    }
+    
+    // 2. Verify it's a Powers contract
     const isValid = await isPowersContract(chainId, powersAddress);
     
     if (!isValid) {
@@ -48,7 +72,7 @@ export async function handlePowersRoleSet(
       return;
     }
     
-    // 2. Try to send DM notification
+    // 3. Try to send DM notification
     const dmMessage = `Your role ${roleId} has been revoked in the Powers contract at ${powersAddress} on chain ${chainId}. You will be removed from related group chats.`;
     
     const dmSent = await tryToSendDM(agent, account, dmMessage);
@@ -60,7 +84,7 @@ export async function handlePowersRoleSet(
     
     console.log(`DM sent to ${account}`);
     
-    // 3. Get all mandates for this role
+    // 4. Get all mandates for this role
     const roleMandates = await getMandatesByRole(chainId, powersAddress, roleId);
     
     if (roleMandates.length === 0) {
@@ -70,15 +94,15 @@ export async function handlePowersRoleSet(
     
     console.log(`Found ${roleMandates.length} mandates for role ${roleId}`);
     
-    // 4. Get all mandates for flow identification
+    // 5. Get all mandates for flow identification
     const allMandates = await getAllMandates(chainId, powersAddress);
     
-    // 5. Identify flows containing these mandates
+    // 6. Identify flows containing these mandates
     const flows = getFlowsContainingMandates(allMandates, roleMandates);
     
     console.log(`Found ${flows.length} flows containing role mandates`);
     
-    // 6. Get all actions that belong to these mandates
+    // 7. Get all actions that belong to these mandates
     const allActions = await getAllActions(chainId, powersAddress);
     const relatedActions = allActions.filter(action => 
       roleMandates.some(mandate => mandate.index === BigInt(action.mandateId))
@@ -86,7 +110,7 @@ export async function handlePowersRoleSet(
     
     console.log(`Found ${relatedActions.length} actions for role mandates`);
     
-    // 7. Build list of group names to check
+    // 8. Build list of group names to check
     const groupNamesToCheck: string[] = [];
     
     // Add mandate groups
@@ -107,10 +131,10 @@ export async function handlePowersRoleSet(
     
     console.log(`Checking ${groupNamesToCheck.length} groups for member removal`);
     
-    // 8. Get all agent groups
+    // 9. Get all agent groups
     const allGroups = await getAllAgentGroups(agent);
     
-    // 9. For each group name, find the group and check if account is a member
+    // 10. For each group name, find the group and check if account is a member
     for (const groupName of groupNamesToCheck) {
       try {
         // Find matching group (may have timestamp suffix)

@@ -59,8 +59,9 @@ export function useXmtpClient() {
 
       // Create XMTP client
       const xmtpClient = await Client.create(signer, {
-        // env: 'dev', // Use 'production' for mainnet
-      })
+        env: "production", // Use 'production' for mainnet
+        loggingLevel: 3, // Set logging level to debug for development
+      } as any) // Cast to any to bypass type issues with loggingLevel
 
       setClient(xmtpClient)
       setIsConnected(true) 
