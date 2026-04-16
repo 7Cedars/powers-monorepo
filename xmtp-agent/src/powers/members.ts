@@ -178,6 +178,8 @@ export async function getActionMembers(
   actionId: bigint
 ): Promise<Address[]> {
   const client = getPublicClient(chainId);
+
+  console.log(`Getting action members for action ${actionId} on contract ${powersAddress} (chain ${chainId})`);
   
   try {
     // Get action data to find the associated mandate
@@ -187,8 +189,16 @@ export async function getActionMembers(
       functionName: 'getActionData',
       args: [actionId],
     }) as {
-      mandateId: number;
+      mandateId: bigint;
+      proposedAt: bigint;
+      requestedAt: bigint;
+      fulfilledAt: bigint;
+      cancelledAt: bigint;
+      caller: Address;
+      nonce: bigint;
     };
+
+    console.log(`Action data for action ${actionId}:`, actionData);
     
     // Get members for this mandate
     return await getMandateMembers(chainId, powersAddress, BigInt(actionData.mandateId));

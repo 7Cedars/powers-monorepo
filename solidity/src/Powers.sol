@@ -84,6 +84,8 @@ contract Powers is EIP712, IPowers, Context {
     // NB! this is a gotcha: mandates start counting a 1, NOT 0!. 0 is used as a default 'false' value.
     /// @notice Number of mandates that have been initiated throughout the life of the organisation
     uint16 public mandateCounter = 1;
+    /// @notice array of flows to provide human and mandate readable structure to governance.  
+    Flow[] public flows;
     /// @dev Is the constitute phase closed? Note: no actions can be started when the constitute phase is open.
     bool private _constituteClosed;
 
@@ -173,22 +175,34 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function closeConstitute() external onlyAdmin() { 
-        _closeConstitute(_msgSender());
+    function closeConstitute() external onlyAdmin() {  
+        _closeConstitute(_msgSender(), new Flow[](0));
     }
 
     /// @inheritdoc IPowers
     function closeConstitute(address newAdmin) external onlyAdmin() { 
-        _closeConstitute(newAdmin);
+        _closeConstitute(newAdmin, new Flow[](0));
+    }
+
+    /// @inheritdoc IPowers
+    function closeConstitute(address newAdmin, Flow[] memory _flows) external onlyAdmin() { 
+        _closeConstitute(newAdmin, _flows);
     }
 
     /// @dev Internal function to close constitution phase.
     /// @param newAdmin Address of the new admin.
-    function _closeConstitute(address newAdmin) internal {
+    /// @param _flows The initial governance flows to set in the protocol.
+    function _closeConstitute(address newAdmin, Flow[] memory _flows) internal {
         // if newAdmin is different from current admin, set new admin...
         if (_msgSender() != newAdmin) {
             _setRole(ADMIN_ROLE, _msgSender(), false);
             _setRole(ADMIN_ROLE, newAdmin, true);
+        }
+        // save flows if provided.
+        if (_flows.length > 0) {
+            for (uint256 i = 0; i < _flows.length; i++) {
+                flows.push(_flows[i]);
+            }
         }
         _constituteClosed = true;
     }
@@ -455,7 +469,7 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     //////////////////////////////////////////////////////////////
-    //                  ROLE AND LAW ADMIN                      //
+    //             ROLE, MANDATE AND FLOW ADMIN                 //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
     function adoptMandate(MandateInitData memory mandateInitData) public onlyPowers returns (uint16 mandateId) {
@@ -501,6 +515,38 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
+    function addFlow (Flow memory flow) external onlyPowers {
+        flows.push(flow);
+        emit FlowAdded(flow.mandateIds, flow.nameDescription);
+    }
+
+    /// @inheritdoc IPowers
+    function removeFlow(uint8 index) external onlyPowers {
+        if (index >= flows.length) revert Powers__InvalidFlowIndex();
+
+        // delete flow by replacing it with the last flow and popping the last flow.
+        uint256 lastIndex = flows.length - 1;
+        if (index != lastIndex) {
+            flows[index] = flows[lastIndex];
+        }
+        flows.pop();
+
+        emit FlowDeleted(index);
+    }
+    
+    /// @inheritdoc IPowers
+    function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external onlyPowers {
+        if (mandateId >= mandateCounter) revert Powers__InvalidMandateId();
+        if (index1 >= flows.length) revert Powers__InvalidFlowIndex();
+        Flow storage flow = flows[index1];
+        if (index2 >= flow.mandateIds.length) revert Powers__InvalidMandateIndex();
+
+        flow.mandateIds[index2] = mandateId;
+
+        emit FlowAdapted(index1, index2, mandateId);
+    }
+
+    /// @inheritdoc IPowers
     function labelRole(uint256 roleId, string memory label, string memory metadata) external onlyPowers {
         if (bytes(label).length == 0) revert Powers__InvalidLabel();
         if (bytes(label).length > 255) revert Powers__LabelTooLong();
@@ -532,7 +578,7 @@ contract Powers is EIP712, IPowers, Context {
     /// @param account The address to assign/revoke the role for.
     /// @param access True to grant role, false to revoke.
     ///
-    /// Emits a {PowersEvents::PowersRoleSet} event.
+    /// Emits a {PowersEvents::RoleSet} event.
     function _setRole(uint256 roleId, address account, bool access) internal {
         // check 1: Public role is locked.
         if (roleId == PUBLIC_ROLE) revert Powers__CannotSetPublicRole();
@@ -564,7 +610,7 @@ contract Powers is EIP712, IPowers, Context {
         }
         // note: nothing happens when 1: access is requested and not a new member 2: access is false and account does not have role. No revert.
 
-        emit PowersRoleSet(roleId, account, access);
+        emit RoleSet(roleId, account, access);
     }
 
 
@@ -665,6 +711,26 @@ contract Powers is EIP712, IPowers, Context {
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
         return "v0.6.0";
+    }
+
+    /// @inheritdoc IPowers
+    function getAmountFlows() public view returns (uint256) {
+        return flows.length;
+    }
+
+    /// @inheritdoc IPowers
+    function getFlowMandatesAtIndex(uint256 index) public view returns (uint16[] memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].mandateIds;
+    }
+
+    function getFlowDescriptionAtIndex(uint256 index) public view returns (string memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].nameDescription;
     }
 
     /// @inheritdoc IPowers

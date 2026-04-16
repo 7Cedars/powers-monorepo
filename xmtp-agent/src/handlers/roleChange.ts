@@ -1,8 +1,8 @@
-// Handler for PowersRoleSet events - ONLY REMOVES members when roles are revoked
+// Handler for RoleSet events - ONLY REMOVES members when roles are revoked
 
 import type { Agent } from '@xmtp/agent-sdk';
 import type { Address } from 'viem';
-import type { PowersRoleSetEvent } from '../utils/types.js';
+import type { RoleSetEvent } from '../utils/types.js';
 import { isPowersContract, getAllMandates, getMandatesByRole, getAllActions, getPublicClient } from '../powers/contract.js';
 import { powersAbi } from '../powers/abi.js';
 import { getFlowsContainingMandates } from '../powers/flows.js';
@@ -10,7 +10,7 @@ import { getMandateGroupName, getFlowGroupName, getActionGroupName } from '../ut
 import { tryToSendDM, getAllAgentGroups, findGroupByName } from '../groups/management.js';
 
 /**
- * Handles a PowersRoleSet event - ONLY processes role revocations (access = false)
+ * Handles a RoleSet event - ONLY processes role revocations (access = false)
  * 
  * Process:
  * 1. Check if this is a role revocation (access = false)
@@ -20,13 +20,13 @@ import { tryToSendDM, getAllAgentGroups, findGroupByName } from '../groups/manag
  * 5. For each related group chat, check if the account is a member
  * 6. Remove the account from all relevant groups
  */
-export async function handlePowersRoleSet(
+export async function handleRoleSet(
   agent: Agent,
-  event: PowersRoleSetEvent
+  event: RoleSetEvent
 ): Promise<void> {
   const { roleId, account, access, powersAddress, chainId } = event;
   
-  console.log(`Processing PowersRoleSet event:`, {
+  console.log(`Processing RoleSet event:`, {
     roleId: roleId.toString(),
     account,
     access,
@@ -217,6 +217,6 @@ export async function handlePowersRoleSet(
     }
     
   } catch (error) {
-    console.error('Error handling PowersRoleSet event:', error);
+    console.error('Error handling RoleSet event:', error);
   }
 }

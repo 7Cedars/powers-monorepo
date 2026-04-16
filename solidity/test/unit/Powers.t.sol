@@ -717,7 +717,7 @@ contract SetMandateTest is TestSetupPowers {
 }
 
 contract SetRoleTest is TestSetupPowers {
-    function testSetPowersRoleSetsNewRole() public {
+    function testSetRoleSetsNewRole() public {
         assertEq(daoMock.hasRoleSince(helen, ROLE_THREE), 0);
 
         vm.prank(address(daoMock));
@@ -737,7 +737,7 @@ contract SetRoleTest is TestSetupPowers {
 
         vm.prank(address(daoMock));
         vm.expectEmit(true, false, false, false);
-        emit PowersRoleSet(ROLE_ONE, bob, false);
+        emit RoleSet(ROLE_ONE, bob, false);
         daoMock.assignRole(ROLE_ONE, bob);
     }
 
@@ -765,9 +765,9 @@ contract SetRoleTest is TestSetupPowers {
         assertEq(balanceAfter, balanceBefore - 1, "Member count should decrease by 1");
     }
 
-    function testSetPowersRoleSetsEmitsEvent() public {
+    function testSetRoleSetsEmitsEvent() public {
         vm.expectEmit(true, false, false, false);
-        emit PowersRoleSet(ROLE_THREE, helen, true);
+        emit RoleSet(ROLE_THREE, helen, true);
         vm.prank(address(daoMock));
         daoMock.assignRole(ROLE_THREE, helen);
     }

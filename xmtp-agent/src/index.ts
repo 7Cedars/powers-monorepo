@@ -2,8 +2,8 @@
 // This file initializes the agent, starts event watchers, message streaming, and launches the API server
 
 import { initializeAgent } from './agent.js';
-import { watchPowersRoleSetEvents } from './watchers/powersRoleSet.js';
-import { handlePowersRoleSet } from './handlers/roleChange.js';
+import { watchRoleSetEvents } from './watchers/roleSet.js';
+import { handleRoleSet } from './handlers/roleChange.js';
 import { handleAccessRequestMessage } from './handlers/messageHandler.js';
 import { createServer, startServer } from './api/server.js'; 
 import { config } from './config/env.js';
@@ -36,12 +36,12 @@ async function main() {
     for (const powersAddress of config.powersAddresses) {
       console.log(`  Watching chain ${config.powersChainId}, contract ${powersAddress}`);
       
-      const unwatch = watchPowersRoleSetEvents(
+      const unwatch = watchRoleSetEvents(
         config.powersChainId,
         powersAddress as Address,
         async (event) => {
           // Handle the event
-          await handlePowersRoleSet(agent, event);
+          await handleRoleSet(agent, event);
         }
       );
       

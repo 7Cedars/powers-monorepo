@@ -4,7 +4,7 @@ A persistent XMTP agent that manages governance group chats for the Powers Proto
 
 ## Features
 
-- **Event-Driven Architecture**: Watches PowersRoleSet events on-chain using viem
+- **Event-Driven Architecture**: Watches RoleSet events on-chain using viem
 - **Automatic Group Management**: Creates and manages XMTP group chats for mandates, flows, and actions
 - **Persistent Database**: Uses Railway database to store agent state and avoid hitting 10x initialization limit
 - **Super-Admin Control**: Agent has exclusive admin rights for managing group memberships
@@ -21,7 +21,7 @@ agent/
 │   ├── config/
 │   │   └── env.ts            # Environment configuration
 │   ├── watchers/
-│   │   └── powersRoleSet.ts  # Viem event watcher
+│   │   └── roleSet.ts  # Viem event watcher
 │   ├── handlers/
 │   │   └── roleChange.ts     # Event handler logic
 │   ├── groups/

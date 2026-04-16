@@ -22,7 +22,7 @@ export interface GroupOperation {
   action: 'add' | 'remove';
 }
 
-export interface PowersRoleSetEvent {
+export interface RoleSetEvent {
   roleId: bigint;
   account: Address;
   access: boolean;

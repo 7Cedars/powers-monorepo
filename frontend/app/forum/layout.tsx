@@ -213,7 +213,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         {children}
       </main>
 
-      {/* XMTP Inbox Creation Modal */}
+      {/* XMTP Login Modal */}
       <ForumModal 
         open={showXmtpModal} 
         onOpenChange={setShowXmtpModal}
@@ -221,16 +221,16 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <h2 className="text-xl font-mono font-bold text-foreground">Create XMTP Inbox</h2>
+            <h2 className="text-xl font-mono font-bold text-foreground">Login to XMTP</h2>
             <p className="text-sm text-muted-foreground font-mono">
-              You don't have an XMTP inbox yet. Creating one will enable you to send and receive messages on the XMTP network.
+              Please log in to your XMTP identity to send and receive messages on the XMTP network.
             </p>
           </div>
           
           <div className="space-y-3 pt-2">
             <div className="bg-muted/30 p-3 rounded border border-border">
               <p className="text-xs text-muted-foreground font-mono">
-                This will require a signature from your wallet to create your inbox on the XMTP network.
+                This will require a signature from your wallet to log in to your encrypted XMTP identity.
               </p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
               }}
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors"
             >
-              Create Inbox
+              Login
             </button>
           </div>
         </div>

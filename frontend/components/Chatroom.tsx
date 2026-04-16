@@ -138,7 +138,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         
         // Filter for group chats only (explicitly check conversationType to exclude DMs)
         const groupConvos = allConvos.filter((convo: any) => {
-          return convo.conversationType === 'group'
+          return 'addMembers' in convo || convo.conversationType === 'group'
         })
         console.log('Group conversations:', groupConvos)
 
@@ -211,7 +211,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
       try {
         const stream = await client.conversations.stream()
         for await (const conversation of stream) {
-          if ((conversation as any).conversationType === 'group') {
+          if ('addMembers' in conversation || (conversation as any).conversationType === 'group') {
             // Check if this is the exact chatroom we're looking for
             const name = (conversation as any).name || ''
             const desc = (conversation as any).description || ''
@@ -412,6 +412,56 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
 
         try {
           await client.conversations.sync()
+          
+          // If we don't have a groupChat yet, search for it after sync
+          if (!groupChat) {
+            const allConvos = await client.conversations.list()
+            const matchingConvo = allConvos.find((convo: any) => {
+              const isGroup = 'addMembers' in convo || convo.conversationType === 'group'
+              if (!isGroup) return false
+              const name = convo.name || ''
+              const description = convo.description || ''
+              return name === baseChatroomId || description === baseChatroomId
+            })
+            
+            if (matchingConvo) {
+              // Found the group - set it up and we're done
+              const convo = matchingConvo as any
+              const members: string[] = []
+              const mapping = new Map<string, string>()
+              
+              try {
+                if ('members' in convo && typeof convo.members === 'function') {
+                  const memberList = await convo.members()
+                  memberList.forEach((m: any) => {
+                    const inboxId = m.inboxId || 'Unknown'
+                    const ethAddress = m.accountIdentifiers?.[0].identifier || m.accountAddress || inboxId
+                    members.push(ethAddress)
+                    if (ethAddress && ethAddress !== inboxId) {
+                      mapping.set(inboxId, ethAddress)
+                    }
+                  })
+                }
+              } catch (err) {
+                console.error('Error getting group members:', err)
+              }
+              
+              const uninitializedMembers = await checkMemberInitialization(members)
+              setInboxToAddress(mapping)
+              setGroupChat({
+                conversation: convo,
+                memberAddresses: members,
+                uninitializedMembers,
+                isOptimistic: false
+              })
+              setUserInGroup(true)
+              clearInterval(pollInterval)
+              setIsRequestingAccess(false)
+              return
+            }
+          }
+          
+          // If we already had a groupChat, just check membership
           const inGroup = await isUserInGroup()
           if (inGroup) {
             console.log('@handleRequestAccess: Successfully added to group')
@@ -483,7 +533,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
           <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
-            Due to the risk of spamming, publically accesible mandates do not have a xmtp chat enabled.
+            Due to the risk of spamming, publically accesible mandates do not have xmtp chat enabled.
           </p>
         </div>
       ) : !address || !isConnected ? (
@@ -494,16 +544,15 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
             These chatrooms use XMTP, an encrypted Web3 messaging protocol.
           </p>
           <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-md mb-4">
-            Connect your wallet and initialize XMTP (one-time setup) to participate in governance discussions.
+            Connect your wallet and log in to XMTP to participate in governance discussions.
           </p>
           {address && !isConnected && (
             <>
               {!client?.inboxId && (
                 <div className="mb-3 p-3 bg-primary/10 border border-primary/20 text-xs font-mono max-w-md">
-                  <p className="font-semibold mb-1">🔐 First-Time Setup Required</p>
+                  <p className="font-semibold mb-1">🔐 Login Required</p>
                   <p className="text-xs opacity-80">
-                    This is a one-time process to create your encrypted XMTP identity. 
-                    You'll need to sign a message with your wallet.
+                    Please log in to your encrypted XMTP identity by signing a message with your wallet.
                   </p>
                 </div>
               )}
@@ -512,7 +561,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
                 disabled={isLoading}
                 className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
               >
-                {isLoading ? 'Initializing XMTP...' : !client?.inboxId ? 'Initialize XMTP' : 'Connect to XMTP'}
+                {isLoading ? 'Logging in...' : !client?.inboxId ? 'Login to XMTP' : 'Connect to XMTP'}
               </button>
             </>
           )}

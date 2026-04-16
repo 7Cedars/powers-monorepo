@@ -28,6 +28,12 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param newAdmin The address of the new admin account
     function closeConstitute(address newAdmin) external;
 
+    /// @notice Closes the constitute phase, preventing further mandates from being added, and sets the initial flows.
+    /// @dev Can only be called by an admin account
+    /// @param newAdmin The address of the new admin account
+    /// @param flows The initial governance flows to set in the protocol
+    function closeConstitute(address newAdmin, Flow[] memory flows) external;
+
     //////////////////////////////////////////////////////////////
     //                  GOVERNANCE FUNCTIONS                    //
     //////////////////////////////////////////////////////////////
@@ -91,7 +97,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     function castVoteWithReason(uint256 actionId, uint8 support, string calldata reason) external;
 
     //////////////////////////////////////////////////////////////
-    //                  ROLE AND LAW ADMIN                       //
+    //            ROLE, MANDATE AND FLOW ADMIN                  //
     //////////////////////////////////////////////////////////////
     /// @notice Activates a new mandate in the protocol
     /// @dev Can only be called through the protocol itself
@@ -102,6 +108,23 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @dev Can only be called through the protocol itself
     /// @param mandateId The id of the mandate
     function revokeMandate(uint16 mandateId) external;
+
+    /// @notice Adds flows
+    /// @dev Can only be called through the protocol itself
+    /// @param flow The flow to add 
+    function addFlow(Flow memory flow) external;
+
+    /// @notice Removes a flow
+    /// @dev Can only be called through the protocol itself
+    /// @param index The index of the flow to remove
+    function removeFlow(uint8 index) external;
+
+    /// @notice Edits a flow by replacing a mandate in the flow with another mandate
+    /// @dev Can only be called through the protocol itself
+    /// @param index1 The index of the flow to edit
+    /// @param index2 The index of the mandate in the flow to replace
+    /// @param mandateId The id of the new mandate to add to the flow
+    function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external;
 
     /// @notice Grants a role to an account
     /// @dev Can only be called through the protocol itself
@@ -141,6 +164,23 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     //////////////////////////////////////////////////////////////
     //                      VIEW FUNCTIONS                       //
     //////////////////////////////////////////////////////////////
+    /// @notice Gets the protocol version
+    /// @return version the version string
+    function version() external pure returns (string memory version);
+
+    /// @notice Gets the quantity of governance flows for a mandate  
+    function getAmountFlows() external view returns (uint256);
+
+    /// @notice Gets the mandates of a governance flow at a specific index
+    /// @param index The index of the flow
+    /// @return mandateIds The list of mandate ids in the flow
+    function getFlowMandatesAtIndex(uint256 index) external view returns (uint16[] memory);
+
+    /// @notice Gets the description of a governance flow at a specific index
+    /// @param index The index of the flow
+    /// @return description The human-readable description of the flow
+    function getFlowDescriptionAtIndex(uint256 index) external view returns (string memory);
+
     /// @notice Gets the quantity of actions of a mandate
     /// @param mandateId The id of the mandate
     /// @return quantityMandateActions The quantity of actions of the mandate
@@ -283,9 +323,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @return canCall True if the caller has permission, false otherwise
     function canCallMandate(address caller, uint16 mandateId) external view returns (bool canCall);
 
-    /// @notice Gets the protocol version
-    /// @return version the version string
-    function version() external pure returns (string memory version);
+
 
     /// @notice Checks if an account is blacklisted
     /// @param account The address to check

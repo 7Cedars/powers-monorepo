@@ -91,9 +91,12 @@ export function identifyFlows(mandates: Mandate[], mandateId?: bigint): bigint[]
     }
   });
 
+  console.log(`Identified flows:`, flows);
+
   // If mandateId is provided, filter to only return the flow containing that mandate
   if (mandateId !== undefined) {
     const targetFlow = flows.find(flow => flow.includes(mandateId));
+    console.log(`Flow containing mandate ${mandateId}:`, targetFlow);
     return targetFlow ? [targetFlow] : [];
   }
 
