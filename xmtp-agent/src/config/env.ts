@@ -17,7 +17,6 @@ export const config = {
   // Alchemy RPC URLs for contract watching
   rpcUrls: {
     sepolia: process.env.ALCHEMY_API_KEY_SEPOLIA!,
-    // Future expansion
     baseSepolia: process.env.ALCHEMY_API_KEY_BASE_SEPOLIA,
     optimismSepolia: process.env.ALCHEMY_API_KEY_OPTIMISM_SEPOLIA,
     arbitrumSepolia: process.env.ALCHEMY_API_KEY_ARBITRUM_SEPOLIA,
@@ -32,20 +31,6 @@ export const config = {
   
   // API Security
   apiSecretKey: process.env.API_SECRET_KEY,
-  
-  // Powers Contract Configuration
-  powersChainId: parseInt(process.env.POWERS_CHAIN_ID || '11155111', 10), // Default to Sepolia
-  powersAddresses: process.env.POWERS_ADDRESSES
-    ? process.env.POWERS_ADDRESSES.split(',')
-        .map(addr => addr.trim())
-        .filter(addr => {
-          if (!isAddress(addr)) {
-            console.warn(`Invalid Ethereum address in POWERS_ADDRESSES: ${addr}`);
-            return false;
-          }
-          return true;
-        })
-    : [],
 };
 
 // Validate required environment variables
@@ -67,5 +52,3 @@ console.log('- XMTP Environment:', config.xmtp.env);
 console.log('- XMTP DB Directory:', config.xmtp.dbDirectory);
 console.log('- Server Port:', config.server.port);
 console.log('- Node Environment:', config.server.nodeEnv);
-console.log('- Powers Chain ID:', config.powersChainId);
-console.log('- Powers Addresses:', config.powersAddresses.length > 0 ? `${config.powersAddresses.length} address(es) loaded` : 'None configured');

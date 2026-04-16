@@ -6,7 +6,6 @@ import { Chatroom } from "@/components/Chatroom";
 import { SingleFlow } from "./SingleFlow";
 import { LatestActionsDropdown, SelectedActionInfo } from "./LatestActionsDropdown";
 import { usePowersStore } from '@/context/store';
-import { identifyFlows } from '@/utils/identifyFlows';
 import { useLatestActions } from '@/hooks/useLatestActions';
 import { useBlocks } from '@/hooks/useBlocks';
 import { toFullDateAndTimeFormat } from '@/utils/toDates';
@@ -28,11 +27,10 @@ export default function FlowSequencePage() {
     const flowMandateIds = useMemo(() => {
         if (!powers || !mandateId) return new Set<bigint>();
         
-        const flows = identifyFlows(powers, BigInt(mandateId));
-        if (flows.length === 0) return new Set<bigint>();
+        const targetFlow = powers.flows?.find(flow => flow.mandateIds.includes(BigInt(mandateId)));
+        if (!targetFlow) return new Set<bigint>([BigInt(mandateId)]);
         
-        // identifyFlows returns [[mandateIds]] when given a specific mandateId
-        return new Set(flows[0]);
+        return new Set(targetFlow.mandateIds);
     }, [powers, mandateId]);
     
     // Filter actions to only include those from mandates in the flow
@@ -77,12 +75,15 @@ export default function FlowSequencePage() {
             : description;
     };
 
+    const mandate = useMemo(() => {
+        if (!powers?.mandates || !mandateId) return undefined;
+        return powers.mandates.find(m => m.index.toString() === mandateId);
+    }, [powers, mandateId]);
+
     const isPublicRole = useMemo(() => {
-        if (!powers?.mandates || !mandateId) return false;
-        const mandate = powers.mandates.find(m => m.index.toString() === mandateId);
         if (!mandate?.conditions?.allowedRole) return false;
         return BigInt(mandate.conditions.allowedRole) === BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
-    }, [powers, mandateId]);
+    }, [mandate]);
 
     return (
         <div className="flex-1 flex flex-col bg-background scanlines font-mono">
@@ -122,6 +123,7 @@ export default function FlowSequencePage() {
                     chainId={chainId}
                     powersAddress={powersAddress}
                     contextId={mandateId}
+                    xmtpAgentAddress={mandate?.xmtpAgentAddress}
                 />
 
                 </div>

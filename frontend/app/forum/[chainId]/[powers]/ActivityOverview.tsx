@@ -3,7 +3,6 @@ import React from 'react';
 import { Powers, Action } from '@/context/types';
 import { bigintToRole } from "@/utils/bigintTo";
 import { useRouter, useParams } from 'next/navigation';
-import { identifyFlows } from '@/utils/identifyFlows';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useBlockNumber } from 'wagmi';
 import { parseChainId } from '@/utils/parsers';
@@ -18,7 +17,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const router = useRouter();
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>();
   const { data: currentBlockNumber } = useBlockNumber({ chainId: parseChainId(chainId) || undefined });
-  const flows = identifyFlows(powers)
+  const flows = powers.flows?.map(f => f.mandateIds) || []
   console.log({flows})
  
   // Create a map of mandate index to flow

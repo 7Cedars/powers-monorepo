@@ -21,7 +21,6 @@ import { Mandate, Powers, Action, Status } from '@/context/types'
 import { useParams, useRouter } from 'next/navigation'
 import { usePowersStore } from '@/context/store'
 import { bigintToRole } from '@/utils/bigintTo'
-import { identifyFlows } from '@/utils/identifyFlows'
 import { hashAction } from '@/utils/hashAction'
 import { useBlocks } from '@/hooks/useBlocks'
 import { parseChainId } from '@/utils/parsers'
@@ -125,83 +124,21 @@ function getActionDataForChain(
   return actionDataMap
 }
 
-// Compact hierarchical layout for a small set of mandates
-function createFlowLayout(mandates: Mandate[]): Map<string, { x: number; y: number }> {
+// Helper to place a single flow on one row
+function createSingleFlowLayout(mandates: Mandate[], flowMandateIds: bigint[]): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>()
-  if (mandates.length === 0) return positions
+  
+  // Arrange them in order of flowMandateIds
+  flowMandateIds.forEach((id, index) => {
+     positions.set(String(id), { x: index * NODE_SPACING_X, y: 0 })
+  })
 
-  const dependencies = new Map<string, Set<string>>()
-  const dependents = new Map<string, Set<string>>()
-
+  // For any mandates not in flowMandateIds, put them at the end
+  let currentX = flowMandateIds.length * NODE_SPACING_X
   mandates.forEach(m => {
-    const id = String(m.index)
-    dependencies.set(id, new Set())
-    dependents.set(id, new Set())
-  })
-
-  mandates.forEach(m => {
-    const id = String(m.index)
-    if (m.conditions?.needFulfilled && m.conditions.needFulfilled !== 0n) {
-      const dep = String(m.conditions.needFulfilled)
-      if (dependencies.has(dep)) {
-        dependencies.get(id)?.add(dep)
-        dependents.get(dep)?.add(id)
-      }
-    }
-    if (m.conditions?.needNotFulfilled && m.conditions.needNotFulfilled !== 0n) {
-      const dep = String(m.conditions.needNotFulfilled)
-      if (dependencies.has(dep)) {
-        dependencies.get(id)?.add(dep)
-        dependents.get(dep)?.add(id)
-      }
-    }
-  })
-
-  const allIds = mandates.map(m => String(m.index))
-  const roots = allIds.filter(id => (dependencies.get(id)?.size ?? 0) === 0)
-  const placed = new Set<string>()
-
-  const subtreeSize = new Map<string, number>()
-  function calcSize(id: string, visiting = new Set<string>()): number {
-    if (visiting.has(id)) return 0
-    visiting.add(id)
-    const children = Array.from(dependents.get(id) ?? [])
-    const size = children.length === 0
-      ? 1
-      : children.reduce((sum, c) => sum + calcSize(c, visiting), 0)
-    subtreeSize.set(id, size)
-    visiting.delete(id)
-    return size
-  }
-  roots.forEach(r => calcSize(r))
-
-  let nextRow = 0
-  function place(id: string, col: number, row: number, visiting = new Set<string>()) {
-    if (placed.has(id) || visiting.has(id)) return
-    placed.add(id)
-    visiting.add(id)
-    positions.set(id, { x: col * NODE_SPACING_X, y: row * NODE_SPACING_Y })
-    const children = Array.from(dependents.get(id) ?? [])
-      .sort((a, b) => (subtreeSize.get(b) ?? 1) - (subtreeSize.get(a) ?? 1))
-    let childRow = row
-    for (const child of children) {
-      place(child, col + 1, childRow, visiting)
-      childRow += subtreeSize.get(child) ?? 1
-    }
-    visiting.delete(id)
-  }
-
-  roots.forEach(rootId => {
-    place(rootId, 0, nextRow)
-    nextRow += subtreeSize.get(rootId) ?? 1
-  })
-
-  // Place any nodes not reached by roots (e.g. disconnected cycles)
-  allIds.forEach(id => {
-    if (!placed.has(id)) {
-      positions.set(id, { x: 0, y: nextRow * NODE_SPACING_Y })
-      nextRow++
-      placed.add(id)
+    if (!flowMandateIds.includes(m.index)) {
+       positions.set(String(m.index), { x: currentX, y: 0 })
+       currentX += NODE_SPACING_X
     }
   })
 
@@ -537,10 +474,16 @@ const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId, actionId }) =
   const flowMandates = useMemo((): Mandate[] => {
     if (!powers || !powers.mandates) return []
     const activeMandates = powers.mandates.filter(m => m.active)
-    const flows = identifyFlows(powers)
-    const targetFlow = flows.find(flow => flow.some(id => id === mandateId))
+    const targetFlow = powers.flows?.find(flow => flow.mandateIds.includes(mandateId))
     if (!targetFlow) return activeMandates.filter(m => m.index === mandateId)
-    return activeMandates.filter(m => targetFlow.includes(m.index))
+    return activeMandates.filter(m => targetFlow.mandateIds.includes(m.index))
+  }, [powers, mandateId])
+
+  const targetFlowIds = useMemo((): bigint[] => {
+    if (!powers || !powers.mandates) return []
+    const targetFlow = powers.flows?.find(flow => flow.mandateIds.includes(mandateId))
+    if (!targetFlow) return [mandateId]
+    return targetFlow.mandateIds
   }, [powers, mandateId])
 
   // Load saved layout from localStorage
@@ -565,8 +508,8 @@ const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId, actionId }) =
       }
     }
     // Otherwise, create new layout
-    return createFlowLayout(flowMandates)
-  }, [flowMandates, savedFlowData])
+    return createSingleFlowLayout(flowMandates, targetFlowIds)
+  }, [flowMandates, savedFlowData, targetFlowIds])
 
   // Get the selected action and chain action data
   const { selectedAction, chainActionData, highlightedMandateId } = useMemo(() => {

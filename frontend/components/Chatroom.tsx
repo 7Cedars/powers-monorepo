@@ -22,9 +22,10 @@ interface ChatroomProps {
   chainId?: string
   powersAddress?: string
   contextId?: string  // mandateId or actionId depending on type
+  xmtpAgentAddress?: string
 }
 
-export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRole = false, chainId, powersAddress, contextId }: ChatroomProps) {
+export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRole = false, chainId, powersAddress, contextId, xmtpAgentAddress }: ChatroomProps) {
   const { address } = useConnection ()
   const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations } = useXmtpClient()
   const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null)
@@ -373,7 +374,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
     console.log('@handleRequestAccess: Requesting access to group chat with base ID:', baseChatroomId)
     console.log('@handleRequestAccess: Client:', client, 'Address:', address)
     
-    const agentAddress = process.env.NEXT_PUBLIC_XMTP_AGENT_ADDRESS
+    const agentAddress = xmtpAgentAddress
     if (!agentAddress) {
       setRequestAccessError('Agent address not configured')
       return

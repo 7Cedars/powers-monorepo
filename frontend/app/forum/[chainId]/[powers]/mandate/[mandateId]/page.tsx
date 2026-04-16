@@ -96,6 +96,7 @@ export default function MandatePage() {
             chainId={chainId}
             powersAddress={powersAddress}
             contextId={mandateId}
+            xmtpAgentAddress={mandate?.xmtpAgentAddress}
           />
         </div>
       </main>

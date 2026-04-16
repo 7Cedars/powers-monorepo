@@ -74,6 +74,7 @@ export type Mandate = {
   inputParams?: `0x${string}`; 
   params ?: {varName: string, dataType: DataType}[]; 
   active: boolean;
+  xmtpAgentAddress?: `0x${string}`;
 }
 
 export type CommunicationChannels = {
@@ -100,6 +101,7 @@ export type Metadata = {
   website?: string;
   codeOfConduct?: string;
   disputeResolution?: string;
+  xmtpAgentAddress?: `0x${string}`;
   communicationChannels?: CommunicationChannels;
   parentContracts?: familyMember[];
   childContracts?: familyMember[];
@@ -109,6 +111,11 @@ export type Metadata = {
 export type BlockRange = {
   from: bigint;
   to: bigint;
+}
+
+export type Flow = {
+  nameDescription: string;
+  mandateIds: bigint[];
 }
 
 export type ActionVote = {
@@ -133,6 +140,7 @@ export type Powers = {
   mandateCount?: bigint;
   mandates?: Mandate[];
   roles?: Role[];
+  flows?: Flow[];
   layout?: Record<string, { x: number; y: number }>; // Graph layout positions
 }
 

@@ -52,7 +52,7 @@ contract Deploy is DeployHelpers {
     string[] inputParams;
     string[] dynamicParams;
  
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidklnn4b7heysrhr5pqtiabvcl5aldnzuv2mdybotdtx5vvq44nqi/";
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibcfc5dzcah2xxmvk3gjhij7t3sp5v6ppkub36jmtex2t75fcz22i/";
 
     function run() external {
         // step 0, setup.

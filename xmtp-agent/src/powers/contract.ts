@@ -8,10 +8,9 @@ import { powersAbi } from './abi.js';
 // Chain configurations for Alchemy RPC endpoints
 const CHAIN_CONFIGS = {
   11155111: { name: 'sepolia', rpcUrl: config.rpcUrls.sepolia },
-  // Future expansion
-  // 84532: { name: 'base-sepolia', rpcUrl: config.rpcUrls.baseSepolia },
-  // 11155420: { name: 'optimism-sepolia', rpcUrl: config.rpcUrls.optimismSepolia },
-  // 421614: { name: 'arbitrum-sepolia', rpcUrl: config.rpcUrls.arbitrumSepolia }
+  84532: { name: 'base-sepolia', rpcUrl: config.rpcUrls.baseSepolia },
+  11155420: { name: 'optimism-sepolia', rpcUrl: config.rpcUrls.optimismSepolia },
+  421614: { name: 'arbitrum-sepolia', rpcUrl: config.rpcUrls.arbitrumSepolia }
 } as const;
 
 type SupportedChainId = keyof typeof CHAIN_CONFIGS;

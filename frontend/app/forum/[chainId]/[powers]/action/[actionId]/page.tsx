@@ -149,6 +149,7 @@ export default function ActionPage() {
             chainId={chainId}
             powersAddress={powersAddress}
             contextId={actionId}
+            xmtpAgentAddress={mandate.xmtpAgentAddress}
           />
          
         </div>

@@ -173,13 +173,13 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
 
     /// @notice Gets the mandates of a governance flow at a specific index
     /// @param index The index of the flow
-    /// @return mandateIds The list of mandate ids in the flow
-    function getFlowMandatesAtIndex(uint256 index) external view returns (uint16[] memory);
+    /// @return mandateIds The ids of the mandates in the flow
+    function getFlowMandatesAtIndex(uint8 index) external view returns (uint16[] memory mandateIds);
 
     /// @notice Gets the description of a governance flow at a specific index
     /// @param index The index of the flow
     /// @return description The human-readable description of the flow
-    function getFlowDescriptionAtIndex(uint256 index) external view returns (string memory);
+    function getFlowDescriptionAtIndex(uint8 index) external view returns (string memory);
 
     /// @notice Gets the quantity of actions of a mandate
     /// @param mandateId The id of the mandate

@@ -719,14 +719,15 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function getFlowMandatesAtIndex(uint256 index) public view returns (uint16[] memory) {
+    function getFlowMandatesAtIndex(uint8 index) public view returns (uint16[] memory) {
         if (index >= flows.length) {
             revert Powers__InvalidIndex();
         }
         return flows[index].mandateIds;
     }
-
-    function getFlowDescriptionAtIndex(uint256 index) public view returns (string memory) {
+    
+    /// @inheritdoc IPowers
+    function getFlowDescriptionAtIndex(uint8 index) public view returns (string memory) {
         if (index >= flows.length) {
             revert Powers__InvalidIndex();
         }

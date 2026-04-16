@@ -6,7 +6,7 @@ import { watchRoleSetEvents } from './watchers/roleSet.js';
 import { handleRoleSet } from './handlers/roleChange.js';
 import { handleAccessRequestMessage } from './handlers/messageHandler.js';
 import { createServer, startServer } from './api/server.js'; 
-import { config } from './config/env.js';
+import { getRegistry } from './db/registry.js';
 import type { Address } from 'viem';
 import type { WatchContractEventReturnType } from 'viem';
 
@@ -25,27 +25,45 @@ async function main() {
     console.log('  Agent address:', agent.address);
     console.log('');
     
-    // 2. Start event watchers for each Powers contract
+    // 2. Start event watchers for each Powers contract from the registry
     console.log('Starting event watchers...');
-    const unwatchFunctions: WatchContractEventReturnType[] = [];
     
-    if (config.powersAddresses.length === 0) {
-      console.warn('WARNING: No Powers contract addresses configured in POWERS_ADDRESSES environment variable');
+    const activeWatchers = new Map<string, WatchContractEventReturnType>();
+    
+    const watcherManager = {
+      addWatcher: (chainId: number, address: Address) => {
+        const key = `${chainId}:${address.toLowerCase()}`;
+        if (activeWatchers.has(key)) return;
+        
+        console.log(`  Watching chain ${chainId}, contract ${address}`);
+        const unwatch = watchRoleSetEvents(
+          chainId,
+          address,
+          async (event) => {
+            // Handle the event
+            await handleRoleSet(agent, event);
+          }
+        );
+        activeWatchers.set(key, unwatch);
+      },
+      removeWatcher: (chainId: number, address: Address) => {
+        const key = `${chainId}:${address.toLowerCase()}`;
+        const unwatch = activeWatchers.get(key);
+        if (unwatch) {
+          unwatch();
+          activeWatchers.delete(key);
+          console.log(`  Stopped watching chain ${chainId}, contract ${address}`);
+        }
+      }
+    };
+    
+    const registeredPowers = getRegistry();
+    if (registeredPowers.length === 0) {
+      console.warn('WARNING: No Powers contract addresses registered in database. Use the API to register them.');
     }
     
-    for (const powersAddress of config.powersAddresses) {
-      console.log(`  Watching chain ${config.powersChainId}, contract ${powersAddress}`);
-      
-      const unwatch = watchRoleSetEvents(
-        config.powersChainId,
-        powersAddress as Address,
-        async (event) => {
-          // Handle the event
-          await handleRoleSet(agent, event);
-        }
-      );
-      
-      unwatchFunctions.push(unwatch);
+    for (const powers of registeredPowers) {
+      watcherManager.addWatcher(powers.chainId, powers.address);
     }
     
     console.log('✓ Event watchers started');
@@ -57,9 +75,9 @@ async function main() {
     console.log('✓ DM message stream started');
     console.log('');
     
-    // 4. Create and start the API server (health check only)
+    // 4. Create and start the API server
     console.log('Starting API server...');
-    const app = createServer(agent);
+    const app = createServer(agent, watcherManager);
     startServer(app);
     console.log('✓ API server started');
     console.log('');
@@ -76,7 +94,7 @@ async function main() {
       
       // Stop all event watchers
       console.log('Stopping event watchers...');
-      for (const unwatch of unwatchFunctions) {
+      for (const unwatch of activeWatchers.values()) {
         unwatch();
       }
       console.log('✓ Event watchers stopped');

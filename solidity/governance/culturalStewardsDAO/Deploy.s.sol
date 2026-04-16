@@ -59,7 +59,7 @@ contract Deploy is DeployHelpers {
     address testAccount3 = 0x49fCf1DD685F6b5F88d9b0a972Dbf80Ee8846234;
     // NB: FOR TESTING PURPOSES ONLY: REMOVE BEFORE ACTUAL DEPLOYMENT!
 
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifceq5v4w7hgramjzevdwktki2ihkbtcidzq2caghjjjzsps37zxa/";
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidhtykvnkp2wy5gnq4u65w3pxvgrf5sm3r6xj3q7pjog5bdltxm7i/";
 
     uint256 constitutionLength; 
     address[] targets;

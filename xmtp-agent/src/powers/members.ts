@@ -188,20 +188,11 @@ export async function getActionMembers(
       abi: powersAbi,
       functionName: 'getActionData',
       args: [actionId],
-    }) as {
-      mandateId: bigint;
-      proposedAt: bigint;
-      requestedAt: bigint;
-      fulfilledAt: bigint;
-      cancelledAt: bigint;
-      caller: Address;
-      nonce: bigint;
-    };
-
+    }) as any 
     console.log(`Action data for action ${actionId}:`, actionData);
     
     // Get members for this mandate
-    return await getMandateMembers(chainId, powersAddress, BigInt(actionData.mandateId));
+    return await getMandateMembers(chainId, powersAddress, BigInt(actionData[0]));
   } catch (error) {
     console.error(`Failed to get action members for action ${actionId}:`, error);
     return [];
