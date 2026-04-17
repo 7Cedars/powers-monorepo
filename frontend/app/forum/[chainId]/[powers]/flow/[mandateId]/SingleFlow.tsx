@@ -391,11 +391,17 @@ const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
 
   return (
     <div
-      className={`bg-background border font-mono cursor-pointer hover:border-primary transition-all ${
+      className={`bg-background border font-mono transition-all ${
         isHighlighted ? 'border-primary/60 border-2' : 'border-border'
+      } ${
+        !mandate.active ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'
       }`}
       style={{ width: NODE_WIDTH }}
-      onClick={() => onNodeClick(String(mandate.index))}
+      onClick={() => {
+        if (mandate.active) {
+          onNodeClick(String(mandate.index))
+        }
+      }}
     >
       <div className="px-3 py-2 border-b border-border bg-muted/50">
         <div className="flex items-baseline gap-1.5">
@@ -473,10 +479,11 @@ const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId, actionId }) =
 
   const flowMandates = useMemo((): Mandate[] => {
     if (!powers || !powers.mandates) return []
-    const activeMandates = powers.mandates.filter(m => m.active)
     const targetFlow = powers.flows?.find(flow => flow.mandateIds.includes(mandateId))
-    if (!targetFlow) return activeMandates.filter(m => m.index === mandateId)
-    return activeMandates.filter(m => targetFlow.mandateIds.includes(m.index))
+    if (!targetFlow) {
+      return powers.mandates.filter(m => m.index === mandateId && m.active)
+    }
+    return powers.mandates.filter(m => targetFlow.mandateIds.includes(m.index))
   }, [powers, mandateId])
 
   const targetFlowIds = useMemo((): bigint[] => {

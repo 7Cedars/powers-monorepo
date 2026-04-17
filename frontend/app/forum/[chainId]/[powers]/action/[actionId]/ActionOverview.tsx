@@ -118,7 +118,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
       <div>
         <div className="flex items-center gap-2 mb-2">
           <KeyIcon className="h-4 w-4 text-muted-foreground" />
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Action ID</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Action ID</p>
         </div>
         <div className="flex items-center gap-2">
           <p className="text-sm text-foreground font-mono" title={action.actionId}>

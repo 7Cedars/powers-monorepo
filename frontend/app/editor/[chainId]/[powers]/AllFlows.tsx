@@ -270,7 +270,10 @@ const FlowContent: React.FC = () => {
   // Create nodes and edges from mandates
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!powers?.mandates) return { initialNodes: [], initialEdges: [] }
-    const ActiveMandates = powers?.mandates.filter(mandate => mandate.active)
+    const ActiveMandates = powers?.mandates.filter(mandate => {
+      if (mandate.active) return true;
+      return powers?.flows?.some(flow => flow.mandateIds.includes(mandate.index));
+    })
     if (!ActiveMandates) return { initialNodes: [], initialEdges: [] }
     
     const nodes: Node[] = []
@@ -449,7 +452,10 @@ const FlowContent: React.FC = () => {
     }
   }, [onNodesChange, debouncedSaveLayout])
   
-  const ActiveMandates = powers?.mandates?.filter(mandate => mandate.active)
+  const ActiveMandates = powers?.mandates?.filter(mandate => {
+    if (mandate.active) return true;
+    return powers?.flows?.some(flow => flow.mandateIds.includes(mandate.index));
+  })
   if (!ActiveMandates || ActiveMandates.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-background border border-border">

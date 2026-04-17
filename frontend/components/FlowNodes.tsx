@@ -314,11 +314,17 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ({ data })
 
   return (
     <div
-      className={`bg-background border font-mono cursor-pointer hover:border-primary transition-all ${
+      className={`bg-background border font-mono transition-all ${
         isHighlighted ? 'border-primary/60 border-2' : 'border-border'
+      } ${
+        !mandate.active ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'
       }`}
       style={{ width: NODE_WIDTH }}
-      onClick={() => onNodeClick(String(mandate.index))}
+      onClick={() => {
+        if (mandate.active) {
+          onNodeClick(String(mandate.index))
+        }
+      }}
     >
       <div className="px-3 py-2 border-b border-border bg-muted/50">
         <div className="flex items-baseline gap-1.5">

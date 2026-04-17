@@ -7,6 +7,16 @@ import { useConnection, useSignMessage } from 'wagmi'
 import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk'
 import { ConsentState, IdentifierKind } from '@xmtp/browser-sdk'
 import { SearchFilterSort } from './SearchFilterSort'
+import { useAddressDisplay } from '@/hooks/useAddressDisplay'
+
+function MemberItem({ address }: { address: string }) {
+  const { displayName } = useAddressDisplay(address)
+  return (
+    <div className="text-xs font-mono py-1.5 px-3 hover:bg-muted/50 cursor-default truncate transition-colors border-b border-border/20 last:border-0" title={address}>
+      {displayName}
+    </div>
+  )
+}
 
 interface GroupChatInfo {
   conversation: Conversation
@@ -371,7 +381,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
 
   const handleRequestAccess = async () => {
     if (!client || !address || !baseChatroomId) return
-    console.log('@handleRequestAccess: Requesting access to group chat with base ID:', baseChatroomId)
+    console.log('@handleRequestAccess: Requesting access to group chat with base ID:', baseChatroomId, 'and agent address:', xmtpAgentAddress)
     console.log('@handleRequestAccess: Client:', client, 'Address:', address)
     
     const agentAddress = xmtpAgentAddress
@@ -504,7 +514,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           )} */}
         </div>
         {isConnected && groupChat && (
-         <div className="flex items-center justify-between gap-3">
+         <div className="flex items-center justify-between gap-3 relative">
           <SearchFilterSort 
               onSearchChange={(query) => console.log('Search:', query)}
               onFilterChange={(filter) => console.log('Filter:', filter)}
@@ -517,6 +527,19 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
             >
               | {groupChat.memberAddresses.length}/250 members
             </button>
+
+            {showMembersList && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-background border border-border shadow-md z-50 max-h-60 overflow-y-auto scrollbar-thin">
+                <div className="p-2 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 bg-background/95 backdrop-blur">
+                  Members List
+                </div>
+                <div className="flex flex-col">
+                  {groupChat.memberAddresses.map((addr) => (
+                    <MemberItem key={addr} address={addr} />
+                  ))}
+                </div>
+              </div>
+            )}
         </div>
         )}
       </div>
@@ -541,22 +564,14 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         // Not connected - Show connection button
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
           <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
-          <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-2">
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl mb-2">
             These chatrooms use XMTP, an encrypted Web3 messaging protocol.
           </p>
-          <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-md mb-4">
+          <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-2xl mb-4">
             Connect your wallet and log in to XMTP to participate in governance discussions.
           </p>
           {address && !isConnected && (
-            <>
-              {!client?.inboxId && (
-                <div className="mb-3 p-3 bg-primary/10 border border-primary/20 text-xs font-mono max-w-md">
-                  <p className="font-semibold mb-1">🔐 Login Required</p>
-                  <p className="text-xs opacity-80">
-                    Please log in to your encrypted XMTP identity by signing a message with your wallet.
-                  </p>
-                </div>
-              )}
+            <> 
               <button
                 onClick={initializeClient}
                 disabled={isLoading}
@@ -616,9 +631,30 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
               ) : (
                 messages.map((message) => {
                   const isOwnMessage = message.senderInboxId === client?.inboxId
-                  const messageContent = typeof message.content === 'string' 
-                    ? message.content 
-                    : JSON.stringify(message.content)
+                  
+                  // Check if this is a group update system message
+                  const isGroupUpdate = typeof message.content === 'object' && message.content !== null && ('addedInboxes' in message.content || 'initiatedByInboxId' in message.content)
+                  
+                  let messageContent = ''
+                  if (isGroupUpdate) {
+                    const content = message.content as any
+                    const addedCount = content.addedInboxes?.length || 0
+                    const removedCount = content.removedInboxes?.length || 0
+                    
+                    if (addedCount > 0) {
+                      const addedAddrs = content.addedInboxes.map((i: any) => formatAddress(inboxToAddress.get(i.inboxId) || i.inboxId)).join(', ')
+                      messageContent = `Added ${addedCount} member${addedCount > 1 ? 's' : ''} (${addedAddrs})`
+                    } else if (removedCount > 0) {
+                      const removedAddrs = content.removedInboxes.map((i: any) => formatAddress(inboxToAddress.get(i.inboxId) || i.inboxId)).join(', ')
+                      messageContent = `Removed ${removedCount} member${removedCount > 1 ? 's' : ''} (${removedAddrs})`
+                    } else {
+                      messageContent = 'Updated the chatroom'
+                    }
+                  } else {
+                    messageContent = typeof message.content === 'string' 
+                      ? message.content 
+                      : JSON.stringify(message.content)
+                  }
                   
                   // Use Ethereum address if available, otherwise use inbox ID
                   const displayAddress = inboxToAddress.get(message.senderInboxId) || message.senderInboxId
@@ -633,9 +669,9 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
                           <div>
                             <span className="text-muted-foreground">[{formatTimestamp(message.sentAt)}]</span>
                             <span className={`ml-2 ${isOwnMessage ? 'text-primary' : 'text-foreground'}`}>
-                              {formatAddress(displayAddress)}:
+                              {formatAddress(displayAddress)}{isGroupUpdate ? ' ' : ':'}
                             </span>
-                            <span className="text-muted-foreground ml-2">
+                            <span className={`${isGroupUpdate ? 'text-muted-foreground/70 italic' : 'text-muted-foreground'} ${!isGroupUpdate ? 'ml-2' : ''}`}>
                               {messageContent}
                             </span>
                           </div>
