@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Chatroom } from "@/components/Chatroom";
 import { SingleFlow } from "./SingleFlow";
@@ -17,6 +17,13 @@ export default function FlowSequencePage() {
     
     const powers = usePowersStore();
     const allActions = useLatestActions(25);
+
+    // Redirect to overview page if powers data is not loaded yet
+    useEffect(() => {
+        if (!powers || !powers.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
+            router.push(`/forum/${chainId}/${powersAddress}`);
+        }
+    }, [powers, router, chainId, powersAddress]);
     
     // Get actionId from URL search params
     const actionIdFromUrl = searchParams.get('actionId');

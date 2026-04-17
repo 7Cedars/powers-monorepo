@@ -19,6 +19,13 @@ export default function ActionPage() {
   const powers = usePowersStore();
   const { timestamps, fetchTimestamps } = useBlocks();
   const action = useActionStore();
+
+  // Redirect to overview page if powers data is not loaded yet
+  useEffect(() => {
+    if (!powers || !powers.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
+      router.push(`/forum/${chainId}/${powersAddress}`);
+    }
+  }, [powers, router, chainId, powersAddress]);
   
   // Find the action across all mandates 
   const [mandate, setMandate] = useState<Mandate | undefined>();
