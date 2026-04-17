@@ -21,6 +21,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
 
 /// @title Nested Governance Deployment Script
 contract Deploy is DeployHelpers {
@@ -67,12 +68,14 @@ contract Deploy is DeployHelpers {
 
         // step 2: deploy Child PowersFactory
         vm.startBroadcast();
+        PowersDeployer powersDeployer = new PowersDeployer();
         powersChildFactory = new PowersFactory(
             "Nested Governance Child",
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/nestedGovernance-child.json", 
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid) 
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(powersDeployer)
         );
         vm.stopBroadcast();
         console2.log("Powers Child Factory deployed at:", address(powersChildFactory));

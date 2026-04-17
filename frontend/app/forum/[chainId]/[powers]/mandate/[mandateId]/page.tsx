@@ -1,7 +1,7 @@
 'use client'
  
 import { useState, useMemo, useEffect } from 'react'; 
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, AdjustmentsHorizontalIcon, ChartBarIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 import { usePowersStore } from '@/context/store';
 import { useParams, useRouter } from 'next/navigation';
 import { Action, Mandate } from '@/context/types';
@@ -146,142 +146,157 @@ export default function MandatePage() {
           </div>
 
           {/* Three Column Section */}
-          <div className="border-b border-border">
-            <div className="flex flex-col lg:flex-row lg:divide-x divide-border w-full">
+          <div className="border-b border-border p-4">
+            <div className="flex flex-col lg:flex-row gap-4 w-full">
               {/* LEFT: Mandate Conditions */}
-              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-4 overflow-y-auto" style={{ maxHeight: '280px' }}>
-                <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Conditions</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Role</span>
-                    <span className="text-foreground">{bigintToRole(BigInt(mandate?.conditions?.allowedRole?.toString() || '0'), powers)}</span>
-                  </div> 
-                  {mandate?.conditions?.quorum != null && BigInt(mandate.conditions.quorum) !== 0n && (
-                    <>
+              <div className="flex-1 min-w-0 border border-border bg-background">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                  <AdjustmentsHorizontalIcon className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm text-foreground tracking-wider">Conditions</h4>
+                </div>
+                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[170px]">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Role</span>
+                      <span className="text-foreground">{bigintToRole(BigInt(mandate?.conditions?.allowedRole?.toString() || '0'), powers)}</span>
+                    </div> 
+                    {mandate?.conditions?.quorum != null && BigInt(mandate.conditions.quorum) !== 0n && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Quorum</span>
+                          <span className="text-foreground">{mandate.conditions.quorum.toString()}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Succeed At</span>
+                          <span className="text-foreground">{mandate?.conditions?.succeedAt?.toString() || '0'}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Voting Period</span>
+                          <span className="text-foreground">{mandate?.conditions?.votingPeriod?.toString() || '0'} blocks</span>
+                        </div>
+                      </>
+                    )}
+                    {mandate?.conditions?.timelock != null && BigInt(mandate.conditions.timelock) !== 0n && (
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Quorum</span>
-                        <span className="text-foreground">{mandate.conditions.quorum.toString()}%</span>
+                        <span className="text-muted-foreground">Timelock</span>
+                        <span className="text-foreground">{mandate.conditions.timelock.toString()} blocks</span>
                       </div>
+                    )}
+                    {mandate?.conditions?.throttleExecution != null && BigInt(mandate.conditions.throttleExecution) !== 0n && (
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Succeed At</span>
-                        <span className="text-foreground">{mandate?.conditions?.succeedAt?.toString() || '0'}%</span>
+                        <span className="text-muted-foreground">Throttle</span>
+                        <span className="text-foreground">{mandate.conditions.throttleExecution.toString()} blocks</span>
                       </div>
+                    )}
+                    {mandate?.conditions?.needFulfilled != null && BigInt(mandate.conditions.needFulfilled) !== 0n && (
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Voting Period</span>
-                        <span className="text-foreground">{mandate?.conditions?.votingPeriod?.toString() || '0'} blocks</span>
+                        <span className="text-muted-foreground">Need Fulfilled</span>
+                        <span className="text-foreground">#{mandate.conditions.needFulfilled.toString()}</span>
                       </div>
-                    </>
-                  )}
-                  {mandate?.conditions?.timelock != null && BigInt(mandate.conditions.timelock) !== 0n && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Timelock</span>
-                      <span className="text-foreground">{mandate.conditions.timelock.toString()} blocks</span>
-                    </div>
-                  )}
-                  {mandate?.conditions?.throttleExecution != null && BigInt(mandate.conditions.throttleExecution) !== 0n && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Throttle</span>
-                      <span className="text-foreground">{mandate.conditions.throttleExecution.toString()} blocks</span>
-                    </div>
-                  )}
-                  {mandate?.conditions?.needFulfilled != null && BigInt(mandate.conditions.needFulfilled) !== 0n && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Need Fulfilled</span>
-                      <span className="text-foreground">#{mandate.conditions.needFulfilled.toString()}</span>
-                    </div>
-                  )}
-                  {mandate?.conditions?.needNotFulfilled != null && BigInt(mandate.conditions.needNotFulfilled) !== 0n && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Need Not Fulfilled</span>
-                      <span className="text-foreground">#{mandate.conditions.needNotFulfilled.toString()}</span>
-                    </div>
-                  )} 
+                    )}
+                    {mandate?.conditions?.needNotFulfilled != null && BigInt(mandate.conditions.needNotFulfilled) !== 0n && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Need Not Fulfilled</span>
+                        <span className="text-foreground">#{mandate.conditions.needNotFulfilled.toString()}</span>
+                      </div>
+                    )} 
+                  </div>
                 </div>
               </div>
 
               {/* MIDDLE: Usage Statistics */}
-              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-4">
-                <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Usage</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total Actions</span>
-                    <span className="text-foreground font-semibold">{stats.total}</span>
+              <div className="flex-1 min-w-0 border border-border bg-background">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                  <ChartBarIcon className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm text-foreground tracking-wider">Usage</h4>
+                </div>
+                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[170px]">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Actions</span>
+                      <span className="text-foreground font-semibold">{stats.total}</span>
+                    </div>
+                    {stats.active > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-green-600">Active</span>
+                        <span className="text-green-600">{stats.active}</span>
+                      </div>
+                    )}
+                    {stats.proposed > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">Proposed</span>
+                        <span className="text-blue-600">{stats.proposed}</span>
+                      </div>
+                    )}
+                    {stats.requested > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-yellow-600">Requested</span>
+                        <span className="text-yellow-600">{stats.requested}</span>
+                      </div>
+                    )}
+                    {stats.succeeded > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-green-600">Succeeded</span>
+                        <span className="text-green-600">{stats.succeeded}</span>
+                      </div>
+                    )}
+                    {stats.fulfilled > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Fulfilled</span>
+                        <span className="text-green-700">{stats.fulfilled}</span>
+                      </div>
+                    )}
+                    {stats.defeated > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-red-600">Defeated</span>
+                        <span className="text-red-600">{stats.defeated}</span>
+                      </div>
+                    )}
+                    {stats.cancelled > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Cancelled</span>
+                        <span className="text-gray-500">{stats.cancelled}</span>
+                      </div>
+                    )}
                   </div>
-                  {stats.active > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-green-600">Active</span>
-                      <span className="text-green-600">{stats.active}</span>
-                    </div>
-                  )}
-                  {stats.proposed > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-blue-600">Proposed</span>
-                      <span className="text-blue-600">{stats.proposed}</span>
-                    </div>
-                  )}
-                  {stats.requested > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-yellow-600">Requested</span>
-                      <span className="text-yellow-600">{stats.requested}</span>
-                    </div>
-                  )}
-                  {stats.succeeded > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-green-600">Succeeded</span>
-                      <span className="text-green-600">{stats.succeeded}</span>
-                    </div>
-                  )}
-                  {stats.fulfilled > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-green-700">Fulfilled</span>
-                      <span className="text-green-700">{stats.fulfilled}</span>
-                    </div>
-                  )}
-                  {stats.defeated > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-red-600">Defeated</span>
-                      <span className="text-red-600">{stats.defeated}</span>
-                    </div>
-                  )}
-                  {stats.cancelled > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Cancelled</span>
-                      <span className="text-gray-500">{stats.cancelled}</span>
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* RIGHT: Actions List */}
-              <div className="flex-1 min-w-0 p-4 overflow-y-auto" style={{ maxHeight: '280px' }}>
-                <h4 className="text-sm text-muted-foreground uppercase tracking-wider mb-3">Recent Actions</h4>
-                {sortedActions.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    {sortedActions.map((action, idx) => {
-                      const status = getActionStatus(action);
-                      return (
-                        <div key={`action-${action.actionId}-${idx}`} className="flex items-start gap-2">
-                          <span
-                            className="text-foreground text-sm cursor-pointer hover:text-primary hover:underline transition-colors flex-1 truncate"
-                            onClick={() => router.push(`/forum/${chainId}/${powersAddress}/action/${action.actionId}`)}
-                          >
-                            {action.description || 'No description'}
-                          </span>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {status.isActive && (
-                              <span className="w-2 h-2 bg-green-500" />
-                            )}
-                            <span className={`${status.color} text-[10px]`}>
-                              {status.text}
+              <div className="flex-1 min-w-0 border border-border bg-background">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                  <ListBulletIcon className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm text-foreground tracking-wider">Recent Actions</h4>
+                </div>
+                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[170px]">
+                  {sortedActions.length > 0 ? (
+                    <div className="flex flex-col gap-2">
+                      {sortedActions.map((action, idx) => {
+                        const status = getActionStatus(action);
+                        return (
+                          <div key={`action-${action.actionId}-${idx}`} className="flex items-start gap-2">
+                            <span
+                              className="text-foreground text-sm cursor-pointer hover:text-primary hover:underline transition-colors flex-1 truncate"
+                              onClick={() => router.push(`/forum/${chainId}/${powersAddress}/action/${action.actionId}`)}
+                            >
+                              {action.description || 'No description'}
                             </span>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {status.isActive && (
+                                <span className="w-2 h-2 bg-green-500" />
+                              )}
+                              <span className={`${status.color} text-[10px]`}>
+                                {status.text}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground/50 text-xs">No actions yet</p>
-                )}
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground/50 text-xs">No actions yet</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

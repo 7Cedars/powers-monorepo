@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Powers } from "../Powers.sol";
+import { PowersDeployer } from "./PowersDeployer.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { MandateUtilities } from "../libraries/MandateUtilities.sol";
@@ -27,6 +27,7 @@ contract PowersFactory is IPowersFactory, Ownable {
     uint256 public immutable maxReturnDataLength;
     uint256 public immutable maxExecutionsLength;
     address public latestDeployment;
+    address public immutable deployer;
 
     /// @notice Initializes the factory with maximum limits for Powers contracts.
     /// @param _maxCallDataLength The maximum length of call data allowed in the Powers contract.
@@ -37,7 +38,8 @@ contract PowersFactory is IPowersFactory, Ownable {
         string memory _uri, 
         uint256 _maxCallDataLength,
         uint256 _maxReturnDataLength,
-        uint256 _maxExecutionsLength
+        uint256 _maxExecutionsLength,
+        address _deployer
     ) Ownable(msg.sender) {
         // set immutable variables. note for now data not validated. 
         name = _name;
@@ -46,6 +48,7 @@ contract PowersFactory is IPowersFactory, Ownable {
         maxCallDataLength = _maxCallDataLength;
         maxReturnDataLength = _maxReturnDataLength;
         maxExecutionsLength = _maxExecutionsLength;
+        deployer = _deployer;
     }
 
     ////////////////////////////////
@@ -108,26 +111,24 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
     function createPowers() external onlyOwner returns (address) {
-        Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
+        address powers = PowersDeployer(deployer).deploy(
+            name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, msg.sender
+        );
+        latestDeployment = powers;
 
-        powers.constitute(mandateInitData); // set the Powers address as the initial deployer and set as the admin!
-        powers.closeConstitute(msg.sender); // admin set to the address that called the factory.
-        latestDeployment = address(powers);
-
-        return address(powers);
+        return powers;
     }
 
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
     function createPowers(address admin) external onlyOwner returns (address) {
-        Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
+        address powers = PowersDeployer(deployer).deploy(
+            name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, admin
+        );
+        latestDeployment = powers;
 
-        powers.constitute(mandateInitData); // set the Powers address as the initial deployer and set as the admin!
-        powers.closeConstitute(admin); // admin set to the address that called the factory.
-        latestDeployment = address(powers);
-
-        return address(powers);
+        return powers;
     }
     
     /// @notice Returns the address of the latest deployed Powers contract.
