@@ -6,7 +6,7 @@ import { usePowersStore } from '@/context/store';
 import { Action, Mandate } from '@/context/types';
 import { useBlocks } from '@/hooks/useBlocks';
 import { Chatroom } from '@/components/Chatroom';
-import { ArrowLongRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { ArrowLongRightIcon, DocumentTextIcon, QueueListIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Vote } from './Vote';
 import { ActionOverview } from './ActionOverview';
 import { PastVotes } from './PastVotes';
@@ -127,31 +127,51 @@ export default function ActionPage() {
           </div>
 
           {/* Three Component Section - Responsive Layout */}
-          <div className="border-b border-border">
-            <div className="flex flex-col lg:flex-row lg:divide-x divide-border w-full">
+          <div className="border-b border-border p-4">
+            <div className="flex flex-col lg:flex-row gap-4 w-full">
               {/* Action Overview Section (Left) */}
-              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6 overflow-y-auto" style={{ maxHeight: '280px' }}>
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
-                    <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Description</h4>
-                  </div>
-                  <p className="text-sm text-foreground">{action.description || 'No Description'}</p>
+              <div className="flex-1 min-w-0 border border-border bg-background">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                  <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm text-foreground tracking-wider">Details</h4>
                 </div>
-                <ActionOverview action={action} mandate={mandate} />
+                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[300px]">
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
+                        <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Description</h4>
+                      </div>
+                      <p className="text-sm text-foreground">{action.description || 'No Description'}</p>
+                    </div>
+                    <ActionOverview action={action} mandate={mandate} />
+                  </div>
+                </div>
               </div>
 
               {/* Timeline Section (Middle) */}
-              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6 overflow-y-auto" style={{ maxHeight: '280px' }}>
-                <Timeline action={action} mandate={mandate} chainId={chainId} />
+              <div className="flex-1 min-w-0 border border-border bg-background">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                  <QueueListIcon className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm text-foreground tracking-wider">Timeline</h4>
+                </div>
+                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[300px]">
+                  <Timeline action={action} mandate={mandate} chainId={chainId} />
+                </div>
               </div>
 
               {/* Voting & Past Votes Section (Right) - Only show if mandate has voting */}
               {(mandate.conditions?.quorum ?? 0n) > 0n && (
-                <div className="flex-1 min-w-0 p-6 overflow-y-auto" style={{ maxHeight: '280px' }}>
-                  <div className="flex flex-col gap-8">
-                    <Vote action={action} mandate={mandate} />
-                    <PastVotes action={action} mandate={mandate} powers={powers} />
+                <div className="flex-1 min-w-0 border border-border bg-background">
+                  <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                    <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="text-sm text-foreground tracking-wider">Voting</h4>
+                  </div>
+                  <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[300px]">
+                    <div className="space-y-8">
+                      <Vote action={action} mandate={mandate} />
+                      <PastVotes action={action} mandate={mandate} powers={powers} />
+                    </div>
                   </div>
                 </div>
               )}
