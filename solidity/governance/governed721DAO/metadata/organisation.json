@@ -6,6 +6,7 @@
   "website": "https://sepolia.etherscan.io/address/0xA69300486514ae20Dd987eB30c736f4F682e2275#code",
   "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md", 
   "disputeResolution": "",
+  "xmtpAgentAddress": "0xe65d5d40c878339596423b929058a13147f925e1",
   "communicationChannels": {
       "discord": "https://discordapp.com/users/1006928106487021638",
       "telegram": "https://t.me/thd83",

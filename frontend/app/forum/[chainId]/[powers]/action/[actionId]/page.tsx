@@ -6,11 +6,12 @@ import { usePowersStore } from '@/context/store';
 import { Action, Mandate } from '@/context/types';
 import { useBlocks } from '@/hooks/useBlocks';
 import { Chatroom } from '@/components/Chatroom';
-import { ArrowLongRightIcon } from '@heroicons/react/24/outline';
+import { ArrowLongRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { Vote } from './Vote';
 import { ActionOverview } from './ActionOverview';
 import { PastVotes } from './PastVotes';
 import { setAction, useActionStore } from '@/context/store';
+import { Timeline } from './Timeline';
 
 export default function ActionPage() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function ActionPage() {
   
   // Find the action across all mandates 
   const [mandate, setMandate] = useState<Mandate | undefined>();
+
+  console.log('ActionPage:', { mandate });
+
 
   useEffect(() => {
     if (powers.mandates && actionId) {
@@ -101,43 +105,48 @@ export default function ActionPage() {
       <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
         <div className="flex-1 flex flex-col border border-border overflow-hidden">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-2 border-b border-border bg-muted/50 gap-3">
-            <div className="flex-1">
-              <h3 className="text-foreground text-base">
-                {action.description || 'No Description'}
-              </h3>
-              <p className="text-muted-foreground text-sm">Mandate #{action.mandateId}: {mandate.nameDescription?.split(':')[0] || 'Unnamed Mandate'}</p>
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
+            <div className="min-w-0 flex-1 text-center sm:text-left w-full">
+              <h3 className="text-foreground text-base truncate">#{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
+              <p className="text-muted-foreground text-sm truncate">{mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}</p>
             </div>
-            <div className="flex items-center gap-3">
-                <button
-                onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${action.mandateId}?actionId=${action.actionId}`)}
-                className="terminal-btn-sm flex items-center gap-2 text-sm px-4 py-2 bg-foreground text-background hover:bg-foreground/80 hover:text-background whitespace-nowrap">
-                VIEW FLOW SEQUENCE
-                  <ArrowLongRightIcon className="h-3 w-3" />
-                </button>
-            </div>
+            <button
+              onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${action.mandateId}?actionId=${action.actionId}`)}
+              className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80"
+            >
+              View Flow Sequence
+              <ArrowLongRightIcon className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Three Component Section - Responsive Layout */}
           <div className="border-b border-border">
             <div className="flex flex-col lg:flex-row lg:divide-x divide-border w-full">
-              {/* Action Overview Section */}
-              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6">
+              {/* Action Overview Section (Left) */}
+              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6 overflow-y-auto" style={{ maxHeight: '280px' }}>
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Description</h4>
+                  </div>
+                  <p className="text-sm text-foreground">{action.description || 'No Description'}</p>
+                </div>
                 <ActionOverview action={action} mandate={mandate} />
               </div>
 
-              {/* Voting Section - Only show if mandate has voting */}
-              {mandate.conditions?.quorum && mandate.conditions.quorum > 0n && (
-                <>
-                  <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6">
-                    <Vote action={action} mandate={mandate} />
-                  </div>
+              {/* Timeline Section (Middle) */}
+              <div className="flex-1 min-w-0 border-b lg:border-b-0 border-border p-6 overflow-y-auto" style={{ maxHeight: '280px' }}>
+                <Timeline action={action} mandate={mandate} chainId={chainId} />
+              </div>
 
-                  {/* Past Votes Section */}
-                  <div className="flex-1 min-w-0 p-6">
+              {/* Voting & Past Votes Section (Right) - Only show if mandate has voting */}
+              {(mandate.conditions?.quorum ?? 0n) > 0n && (
+                <div className="flex-1 min-w-0 p-6 overflow-y-auto" style={{ maxHeight: '280px' }}>
+                  <div className="flex flex-col gap-8">
+                    <Vote action={action} mandate={mandate} />
                     <PastVotes action={action} mandate={mandate} powers={powers} />
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -145,9 +154,11 @@ export default function ActionPage() {
           {/* Action Chatroom Placeholder */}
           <Chatroom 
             chatroomType="Action"
+            isPublicRole={mandate.conditions?.allowedRole ? BigInt(mandate.conditions.allowedRole) === BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff') : false}
             chainId={chainId}
             powersAddress={powersAddress}
             contextId={actionId}
+            xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
           />
          
         </div>

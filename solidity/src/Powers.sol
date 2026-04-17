@@ -84,6 +84,8 @@ contract Powers is EIP712, IPowers, Context {
     // NB! this is a gotcha: mandates start counting a 1, NOT 0!. 0 is used as a default 'false' value.
     /// @notice Number of mandates that have been initiated throughout the life of the organisation
     uint16 public mandateCounter = 1;
+    /// @notice array of flows to provide human and mandate readable structure to governance.  
+    Flow[] public flows;
     /// @dev Is the constitute phase closed? Note: no actions can be started when the constitute phase is open.
     bool private _constituteClosed;
 
@@ -173,22 +175,34 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function closeConstitute() external onlyAdmin() { 
-        _closeConstitute(_msgSender());
+    function closeConstitute() external onlyAdmin() {  
+        _closeConstitute(_msgSender(), new Flow[](0));
     }
 
     /// @inheritdoc IPowers
     function closeConstitute(address newAdmin) external onlyAdmin() { 
-        _closeConstitute(newAdmin);
+        _closeConstitute(newAdmin, new Flow[](0));
+    }
+
+    /// @inheritdoc IPowers
+    function closeConstitute(address newAdmin, Flow[] memory _flows) external onlyAdmin() { 
+        _closeConstitute(newAdmin, _flows);
     }
 
     /// @dev Internal function to close constitution phase.
     /// @param newAdmin Address of the new admin.
-    function _closeConstitute(address newAdmin) internal {
+    /// @param _flows The initial governance flows to set in the protocol.
+    function _closeConstitute(address newAdmin, Flow[] memory _flows) internal {
         // if newAdmin is different from current admin, set new admin...
         if (_msgSender() != newAdmin) {
             _setRole(ADMIN_ROLE, _msgSender(), false);
             _setRole(ADMIN_ROLE, newAdmin, true);
+        }
+        // save flows if provided.
+        if (_flows.length > 0) {
+            for (uint256 i = 0; i < _flows.length; i++) {
+                flows.push(_flows[i]);
+            }
         }
         _constituteClosed = true;
     }
@@ -455,14 +469,13 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     //////////////////////////////////////////////////////////////
-    //                  ROLE AND LAW ADMIN                      //
+    //             ROLE, MANDATE AND FLOW ADMIN                 //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
-    function adoptMandate(MandateInitData memory mandateInitData) external onlyPowers returns (uint16 mandateId) {
-        mandateId = _adoptMandate(mandateInitData);
-        // emit event.
-        emit MandateAdopted(mandateCounter - 1);
-
+    function adoptMandate(MandateInitData memory mandateInitData) public onlyPowers returns (uint16 mandateId) {
+        mandateId = mandateCounter;
+        _storeMandate(mandateId, mandateInitData);
+        unchecked { mandateCounter++; }
         return mandateId;
     }
 
@@ -472,18 +485,6 @@ contract Powers is EIP712, IPowers, Context {
 
         mandates[mandateId].active = false;
         emit MandateRevoked(mandateId);
-    }
-
-    /// @notice Internal function to set a mandate or revoke it.
-    /// @param mandateInitData Data of the mandate to adopt.
-    /// @return mandateId The ID of the newly adopted mandate.
-    ///
-    /// Emits a {PowersEvents::MandateAdopted} event.
-    function _adoptMandate(MandateInitData memory mandateInitData) internal returns (uint16 mandateId) {
-        mandateId = mandateCounter;
-        _storeMandate(mandateId, mandateInitData);
-        unchecked { mandateCounter++; }
-        return mandateId;
     }
 
     /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation. 
@@ -509,6 +510,40 @@ contract Powers is EIP712, IPowers, Context {
 
         Mandate(mandateInitData.targetMandate)
             .initializeMandate(mandateId, mandateInitData.nameDescription, "", mandateInitData.config);
+
+        emit MandateAdopted(mandateId);
+    }
+
+    /// @inheritdoc IPowers
+    function addFlow (Flow memory flow) external onlyPowers {
+        flows.push(flow);
+        emit FlowAdded(flow.mandateIds, flow.nameDescription);
+    }
+
+    /// @inheritdoc IPowers
+    function removeFlow(uint8 index) external onlyPowers {
+        if (index >= flows.length) revert Powers__InvalidFlowIndex();
+
+        // delete flow by replacing it with the last flow and popping the last flow.
+        uint256 lastIndex = flows.length - 1;
+        if (index != lastIndex) {
+            flows[index] = flows[lastIndex];
+        }
+        flows.pop();
+
+        emit FlowDeleted(index);
+    }
+    
+    /// @inheritdoc IPowers
+    function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external onlyPowers {
+        if (mandateId >= mandateCounter) revert Powers__InvalidMandateId();
+        if (index1 >= flows.length) revert Powers__InvalidFlowIndex();
+        Flow storage flow = flows[index1];
+        if (index2 >= flow.mandateIds.length) revert Powers__InvalidMandateIndex();
+
+        flow.mandateIds[index2] = mandateId;
+
+        emit FlowAdapted(index1, index2, mandateId);
     }
 
     /// @inheritdoc IPowers
@@ -676,6 +711,27 @@ contract Powers is EIP712, IPowers, Context {
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
         return "v0.6.0";
+    }
+
+    /// @inheritdoc IPowers
+    function getAmountFlows() public view returns (uint256) {
+        return flows.length;
+    }
+
+    /// @inheritdoc IPowers
+    function getFlowMandatesAtIndex(uint8 index) public view returns (uint16[] memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].mandateIds;
+    }
+    
+    /// @inheritdoc IPowers
+    function getFlowDescriptionAtIndex(uint8 index) public view returns (string memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].nameDescription;
     }
 
     /// @inheritdoc IPowers

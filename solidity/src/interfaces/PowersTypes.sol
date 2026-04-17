@@ -5,6 +5,7 @@
 pragma solidity ^0.8.26;
 
 interface PowersTypes {
+    /// @notice struct to keep track of a mandate.
     struct Conditions {
         uint256 allowedRole; // Takes its own slot
         // --- All of the following can be packed into a single slot (144 bits total) ---
@@ -17,6 +18,7 @@ interface PowersTypes {
         uint8 succeedAt;
     }
 
+    /// @notice struct to keep track of an adopted mandate.
     struct AdoptedMandate {
         address targetMandate;
         uint48 latestFulfillment;
@@ -25,11 +27,18 @@ interface PowersTypes {
         uint256[] actionIds; 
     }
 
+    /// @notice struct used in adopting mandates. 
     struct MandateInitData {
         string nameDescription; // 32 bytes
         address targetMandate; // 20 bytes
         bytes config; // 32 bytes
         Conditions conditions; // 104 bytes
+    }
+
+    /// @notice struct to keep track of a flow.
+    struct Flow {
+        uint16[] mandateIds;
+        string nameDescription;
     }
 
     /// @notice struct to keep track of a proposal.

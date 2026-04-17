@@ -395,6 +395,7 @@ export const parseMetadata = (metadata: unknown): Metadata => {
     'website' in metadata &&
     'codeOfConduct' in metadata &&
     'disputeResolution' in metadata &&
+    'xmtpAgentAddress' in metadata &&
     'communicationChannels' in metadata &&
     'attributes' in metadata 
     ) { 
@@ -404,6 +405,7 @@ export const parseMetadata = (metadata: unknown): Metadata => {
           website: parseString(metadata.website),
           codeOfConduct: parseString(metadata.codeOfConduct),
           disputeResolution: parseString(metadata.disputeResolution),
+          xmtpAgentAddress: 'xmtpAgentAddress' in metadata ? metadata.xmtpAgentAddress as `0x${string}` : undefined,  
           communicationChannels: metadata.communicationChannels as CommunicationChannels, // This should actually also have a proper parser. 
           description: parseString(metadata.description),
           parentContracts: 'parentContracts' in metadata ? metadata.parentContracts as any : undefined,

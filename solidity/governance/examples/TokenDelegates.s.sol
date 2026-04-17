@@ -47,7 +47,7 @@ contract Deploy is DeployHelpers {
         simpleErc20Votes = new SimpleErc20Votes();
         powers = new Powers(
             "Token Delegates", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/tokenDelegates.json", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/tokenDelegates.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length

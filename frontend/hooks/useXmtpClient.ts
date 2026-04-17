@@ -1,5 +1,5 @@
-import { useCallback } from 'react'
-import { Client, type Signer } from '@xmtp/browser-sdk'
+import { useCallback, useEffect } from 'react'
+import { Client, type Signer, type Identifier } from '@xmtp/browser-sdk'
 import { IdentifierKind } from '@xmtp/browser-sdk'
 import { useWalletClient } from 'wagmi'
 import { hexToBytes } from 'viem'
@@ -12,11 +12,11 @@ export function useXmtpClient() {
   const client = useXmtpStore((state) => state.client)
   const isLoading = useXmtpStore((state) => state.isLoading)
   const error = useXmtpStore((state) => state.error)
-  const isConnected = useXmtpStore((state) => state.isConnected)
+  const isConnected = useXmtpStore((state) => state.isConnected) 
   const setClient = useXmtpStore((state) => state.setClient)
   const setIsLoading = useXmtpStore((state) => state.setIsLoading)
   const setError = useXmtpStore((state) => state.setError)
-  const setIsConnected = useXmtpStore((state) => state.setIsConnected)
+  const setIsConnected = useXmtpStore((state) => state.setIsConnected) 
   const resetStore = useXmtpStore((state) => state.reset)
 
   const initializeClient = useCallback(async () => {
@@ -59,11 +59,12 @@ export function useXmtpClient() {
 
       // Create XMTP client
       const xmtpClient = await Client.create(signer, {
-        // env: 'dev', // Use 'production' for mainnet
-      })
+        env: "production", // Use 'production' for mainnet
+        loggingLevel: 3, // Set logging level to debug for development
+      } as any) // Cast to any to bypass type issues with loggingLevel
 
       setClient(xmtpClient)
-      setIsConnected(true)
+      setIsConnected(true) 
       console.log(`XMTP client initialized for inbox:`, xmtpClient.inboxId, xmtpClient)
     } catch (err) {
       console.error('Failed to initialize XMTP client:', err)
