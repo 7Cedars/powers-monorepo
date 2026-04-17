@@ -22,6 +22,7 @@ contract PowersFactory is IPowersFactory, Ownable {
     string public name;
     string public uri;
     MandateInitData[] public mandateInitData;
+    Flow[] public flows;
     uint256 public immutable maxCallDataLength;
     uint256 public immutable maxReturnDataLength;
     uint256 public immutable maxExecutionsLength;
@@ -47,6 +48,10 @@ contract PowersFactory is IPowersFactory, Ownable {
         maxExecutionsLength = _maxExecutionsLength;
     }
 
+    ////////////////////////////////
+    /// MANAGE MANDATE INIT DATA ///
+    ////////////////////////////////
+
     /// @notice Adds a list of mandates to the factory's storage.
     /// @dev Can only be called by the owner.
     /// @param _mandateInitData An array of MandateInitData structs to be added.
@@ -70,6 +75,34 @@ contract PowersFactory is IPowersFactory, Ownable {
     function getMandate(uint256 index) external view returns (MandateInitData memory) {
         return mandateInitData[index];
     } 
+
+    ////////////////////////////////
+    ///      MANAGE FLOWS        ///
+    ////////////////////////////////
+
+    /// @notice Adds a list of flows to the factory's storage.
+    /// @dev Can only be called by the owner.
+    /// @param _flows An array of Flow structs to be added.
+    function addFlows(Flow[] memory _flows) external onlyOwner {
+        for (uint256 i = 0; i < _flows.length; i++) {
+            flows.push(_flows[i]);
+        }
+    }
+
+    /// @notice Replaces a flow at a specific index.
+    /// @dev Can only be called by the owner.
+    /// @param index The index of the flow to replace.
+    /// @param _flow The new Flow struct.
+    function replaceFlow(uint256 index, Flow memory _flow) external onlyOwner {
+        flows[index] = _flow;
+    }
+
+    /// @notice Retrieves a flow at a specific index.
+    /// @param index The index of the flow to retrieve.
+    /// @return The Flow struct at the specified index.
+    function getFlow(uint256 index) external view returns (Flow memory) {
+        return flows[index];
+    }
 
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.

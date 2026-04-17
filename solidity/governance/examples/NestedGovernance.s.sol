@@ -26,11 +26,14 @@ import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 contract Deploy is DeployHelpers {
     InitialisePowers initialisePowers;
     Configurations helperConfig; 
-
     PowersTypes.Conditions conditions;
+
     PowersTypes.MandateInitData[] parentConstitution;
     PowersTypes.MandateInitData[] childConstitution;
-    Powers powersParent;
+    PowersTypes.Flow[] parentFlows;
+    PowersTypes.Flow[] childFlows;
+
+    Powers powersParent;    
     PowersFactory powersChildFactory;
     
     address treasury;
@@ -43,7 +46,7 @@ contract Deploy is DeployHelpers {
     uint16 requestAllowanceMandateId; 
     address cedars = vm.envAddress("DEV2_ADDRESS");
 
-    function run() external {
+    function run() external returns (Powers, PowersFactory) {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
@@ -109,12 +112,13 @@ contract Deploy is DeployHelpers {
         // step 5: add mandates to factory
         vm.startBroadcast();
         powersChildFactory.addMandates(childConstitution);
+        powersChildFactory.addFlows(childFlows);
         vm.stopBroadcast();
 
         // step 6: constitute Parent
         vm.startBroadcast();
         powersParent.constitute(parentConstitution);
-        powersParent.closeConstitute();
+        powersParent.closeConstitute(msg.sender, parentFlows);
         vm.stopBroadcast();
         console2.log("Parent Powers constituted.");
 
@@ -123,6 +127,8 @@ contract Deploy is DeployHelpers {
         powersChildFactory.transferOwnership(address(powersParent));
         vm.stopBroadcast();
         console2.log("Child Factory ownership transferred to Parent.");
+
+        return (powersParent, powersChildFactory);
     }
 
     function createParentConstitution() internal {
@@ -168,7 +174,7 @@ contract Deploy is DeployHelpers {
         calldatas[6] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;
-        conditions.allowedRole = 0; // Admin
+        conditions.allowedRole = type(uint256).max; // anyone can execute this mandate. 
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels, set treasury and enable allowance module.",
@@ -179,12 +185,27 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate: Initiate Child DAO Creation
+        // CREATE NEW DAO FLOW // 
+        uint16[] memory mandateIds = new uint16[](3); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+        mandateIds[2] = mandateCount + 3;
+
+        parentFlows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Create Child DAO: Executives can vote to create a new Child DAO. After its creation, any executive can assign a role Id to this new DAO and add it as a delegate to the treasury's Safe allowance module."
+        }));
+
+        // Initiate Child DAO Creation
         inputParams = new string[](1);
         inputParams[0] = "address Admin";
 
-        // Mandate: Create Child DAO
+        // Create Child DAO
         mandateCount++;
+        conditions.allowedRole = 1; // Executive
+        conditions.quorum = 20; // 20% quorum for demo purposes
+        conditions.succeedAt = 51; // >50% to pass
+        conditions.votingPeriod = minutesToBlocks(10, helperConfig.getBlocksPerHour(block.chainid)); // 10 min voting period for demo
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create Child DAO: Executive can execute creation of Child DAO.",
@@ -199,7 +220,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate: Assign Child Role to new DAO
+        // Assign Child Role to new DAO
         mandateCount++;
         conditions.allowedRole = 1; // Executive
         conditions.needFulfilled = mandateCount - 1; // Need creation
@@ -220,7 +241,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate: Add Delegate to Allowance Module
+        // Add Delegate to Allowance Module
         mandateCount++;
         conditions.allowedRole = 1; // Executive
         conditions.needFulfilled = mandateCount - 2; // Need creation (to get address)
@@ -241,7 +262,17 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate: Child can request allowance
+        // REQUEST ALLOWANCE FLOW //
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+
+        parentFlows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Requesting an Allowance: A child DAO can request an allowance from the Safe treasury. Executives can vote to approve or reject the request."
+        }));
+
+        // Child can request allowance
         inputParams = new string[](5);
         inputParams[0] = "address Sub-DAO";
         inputParams[1] = "address Token";
@@ -262,7 +293,7 @@ contract Deploy is DeployHelpers {
         delete conditions;
         requestAllowanceMandateId = mandateCount;
 
-        // Mandate: Executive can set allowance (fulfilling request)
+        // Executive can set allowance (fulfilling request)
         mandateCount++;
         conditions.allowedRole = 1; // Executive
         conditions.needFulfilled = mandateCount - 1; // Need request
@@ -283,7 +314,16 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate: Veto Transfer at Child DAO level  
+        // VETO TRANSFER AT CHILD DAO //
+        mandateIds = new uint16[](1); 
+        mandateIds[0] = mandateCount + 1; 
+
+        parentFlows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Veto Child DAO's Token Transfer: Even after an allowance has been granted, a parent organisation can still veto specific token transfers at a child DAO."
+        }));
+
+        // Veto Transfer at Child DAO level  
         inputParams = new string[](3);
         inputParams[0] = "address Token";
         inputParams[1] = "uint96 Amount";
@@ -303,10 +343,18 @@ contract Deploy is DeployHelpers {
             })  
         );
         delete conditions;
+ 
+        /// ADMIN ASSIGN ANY ROLE FLOW ///
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
 
-        // ELECTORAL MANDATES // 
+        parentFlows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Assign any role: For demo purposes, this flow allows the admin to assign any role and executives to revoke roles."
+        }));
 
-        // Mandate: Admin can assign any role
+        // Admin can assign any role
         dynamicParams = new string[](2);
         dynamicParams[0] = "uint256 roleId";
         dynamicParams[1] = "address account";
@@ -317,13 +365,13 @@ contract Deploy is DeployHelpers {
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: The admin can assign any role to an account.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powersParent), IPowers.assignRole.selector, dynamicParams),
+                config: abi.encode(address(0), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate: Executive can revoke role
+        // Executive can revoke role
         mandateCount++;
         conditions.allowedRole = 1; // Executive
         conditions.needFulfilled = mandateCount - 1; // Need admin assignment
@@ -356,13 +404,12 @@ contract Deploy is DeployHelpers {
             })
         );
         delete conditions;
-
     }
 
     function createChildConstitution() internal {
         uint16 mandateCount = 0;
 
-        // Mandate 1: Setup
+        // Initial Setup
         calldatas = new bytes[](6);
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
@@ -383,7 +430,18 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 4: Public Request Transfer
+        /// TRANSFER TOKENS FLOW ///
+        uint16[] memory mandateIds = new uint16[](3); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+        mandateIds[2] = mandateCount + 3; 
+
+        childFlows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Transfer tokens: Anyone can submit a request to transfer tokens, but members have to vote to execute the transfer. Meanwhile, the parent DAO retains veto power over any transfer."
+        }));
+
+        // Public Request Transfer
         inputParams = new string[](3);
         inputParams[0] = "address Token";
         inputParams[1] = "uint256 Amount";
@@ -401,7 +459,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 5: Parent DAO Veto Transfer
+        // Parent DAO Veto Transfer
         mandateCount++;
         conditions.allowedRole = 2; // Parent DAO
         conditions.needFulfilled = mandateCount - 1; // Need request
@@ -415,7 +473,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 6: Members Execute Transfer
+        // Members Execute Transfer
         mandateCount++;
         conditions.allowedRole = 1; // Members
         conditions.quorum = 20; // 50% quorum for voting on Parent to set allowance
@@ -423,8 +481,6 @@ contract Deploy is DeployHelpers {
         conditions.succeedAt = 51; // >50% to pass
         conditions.needFulfilled = mandateCount - 2; // Need request (4)
         conditions.needNotFulfilled = mandateCount - 1; // Need NO veto (5)
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
-        conditions.succeedAt = 51;
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Transfer: Members vote to execute transfer from Parent Treasury.",
@@ -435,7 +491,16 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 7: Request Additional Allowance from Parent
+        /// REQUEST ADDITIONAL ALLOWANCE FLOW ///
+        mandateIds = new uint16[](1); 
+        mandateIds[0] = mandateCount + 1; 
+
+        childFlows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Request Additional Allowance: A child DAO can request additional allowance from the Parent DAO. The Parent DAO can vote to approve the request, which if approved will trigger an execution at the Parent level to set the allowance for the child."
+        }));
+
+        // Request Additional Allowance from Parent
         inputParams = new string[](5);
         inputParams[0] = "address Sub-DAO";
         inputParams[1] = "address Token";
@@ -460,9 +525,17 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
         
+        /// ADMIN ASSIGN ANY ROLE FLOW ///
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
 
-        // ELECTORAL MANDATES //
-        // Mandate 2: Admin can assign any role
+        childFlows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Assign any role: For demo purposes, this flow allows the admin to assign any role and executives to revoke roles."
+        }));
+
+        // Admin can assign any role
         dynamicParams = new string[](2);
         dynamicParams[0] = "uint256 roleId";
         dynamicParams[1] = "address account";
@@ -479,7 +552,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 3: Members can revoke role
+        // Members can revoke role
         mandateCount++;
         conditions.allowedRole = 1; // Members
         conditions.needFulfilled = mandateCount - 1; // Need admin assignment
@@ -493,7 +566,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Admin: update uri 
+        /// ADMIN UPDATE URI: Note not assigned to any flow /// 
         inputParams = new string[](1);
         inputParams[0] = "string newUri";
 

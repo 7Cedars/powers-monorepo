@@ -23,6 +23,7 @@ import { ElectionList } from "@src/helpers/ElectionList.sol";
 contract Deploy is DeployHelpers {
     Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
+    PowersTypes.Flow[] flows;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
     Powers powers;
@@ -61,7 +62,7 @@ contract Deploy is DeployHelpers {
         // step 3: run constitute.
         vm.startBroadcast();
         powers.constitute(constitution);
-        powers.closeConstitute();
+        powers.closeConstitute(msg.sender, flows);
         vm.stopBroadcast();
         console2.log("Powers successfully constituted.");
 
@@ -95,13 +96,24 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // ELECT DELEGATES //
+        // ELECTION FLOW //
+        uint16[] memory mandateIds = new uint16[](4); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        mandateIds[2] = mandateCount + 3;
+        mandateIds[3] = mandateCount + 4; 
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Election flow: A flow that allows voters to create elections, open votes and tally results."
+        }));
+        
+        // Members: create election
         string[] memory inputParams = new string[](3);
         inputParams[0] = "string Title";
         inputParams[1] = "uint48 StartBlock";
         inputParams[2] = "uint48 EndBlock";
 
-        // Members: create election
         mandateCount++;
         conditions.allowedRole = 1; // = Voters
         conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
@@ -177,6 +189,16 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
+        // NOMINATION FLOW //
+        mandateIds = new uint16[](2);
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Nomination flow: A flow that allows voters to nominate themselves for an election and revoke their nomination."
+        }));
+
         // Members: Nominate for Delegate election
         mandateCount++;
         conditions.allowedRole = 1; // = Voters
@@ -209,6 +231,16 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
+        /// DEMO ONLY: ADMIN ASSIGNS ANY ROLE FLOW ///
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Assign any role: For demo purposes, this flow allows the admin to assign any role and delegates to revoke roles."
+        }));
+        
         // Mandate: Admin assign role
         dynamicParams = new string[](2);
         dynamicParams[0] = "uint256 roleId";
@@ -220,15 +252,13 @@ contract Deploy is DeployHelpers {
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powers), IPowers.assignRole.selector, dynamicParams),
+                config: abi.encode(address(0), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
         // Mandate: Delegate revoke role
-        // Note: TS file says "A delegate can revoke..." but allowedRole is 2 (Funders).
-        // Transposing the value allowedRole = 2.
         mandateCount++;
         conditions.allowedRole = 2; // = Delegates
         conditions.needFulfilled = mandateCount - 1; // = Mandate Admin assign role
@@ -236,7 +266,7 @@ contract Deploy is DeployHelpers {
             PowersTypes.MandateInitData({
                 nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powers), IPowers.revokeRole.selector, dynamicParams),
+                config: abi.encode(address(0), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })
         );

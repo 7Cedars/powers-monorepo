@@ -286,7 +286,12 @@ export const usePowers = () => {
   }
 
   const fetchRoles = async (mandates: Mandate[], chainId: ChainId): Promise<Role[] | undefined> => {
-    const rolesIds = new Set(mandates.filter((mandate) => mandate.active).flatMap((mandate) => mandate.conditions?.allowedRole) || [])
+    const rolesIds = new Set(
+      mandates
+        .filter((mandate) => mandate.active)
+        .map((mandate) => mandate.conditions?.allowedRole)
+        .filter((role) => role !== undefined)
+    ) as Set<bigint>;
  
     if (rolesIds.size > 0) {
       try {

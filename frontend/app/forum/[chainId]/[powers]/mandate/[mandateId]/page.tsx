@@ -38,14 +38,14 @@ export default function MandatePage() {
     address: powersAddress as `0x${string}`,
     abi: powersAbi,
     functionName: 'hasRoleSince',
-    args: walletAddress && mandate?.conditions?.allowedRole 
+    args: walletAddress && mandate?.conditions?.allowedRole !== undefined
       ? [walletAddress as `0x${string}`, BigInt(mandate.conditions.allowedRole)]
       : undefined
   });
   
   // PUBLIC_ROLE is type(uint256).max - everyone has this role by default
   const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
-  const allowedRole = mandate?.conditions?.allowedRole ? BigInt(mandate.conditions.allowedRole) : BigInt(0);
+  const allowedRole = mandate?.conditions?.allowedRole !== undefined ? BigInt(mandate.conditions.allowedRole) : BigInt(0);
   
   // User has role if hasRoleSince returns non-zero value OR if the allowed role is PUBLIC_ROLE
   const hasRequiredRole = allowedRole === PUBLIC_ROLE || (hasRoleSinceData ? Number(hasRoleSinceData) > 0 : false);

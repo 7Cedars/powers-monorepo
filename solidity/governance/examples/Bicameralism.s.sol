@@ -22,6 +22,7 @@ contract Deploy is DeployHelpers {
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
+    PowersTypes.Flow[] flows;
     Powers powers;
 
     address[] targets;
@@ -30,7 +31,7 @@ contract Deploy is DeployHelpers {
     string[] inputParams;
     string[] dynamicParams;
 
-    function run() external {
+    function run() external returns (Powers) {
         // step 0, setup.
         initialisePowers = new InitialisePowers();
         initialisePowers.run();
@@ -56,14 +57,16 @@ contract Deploy is DeployHelpers {
         // step 3: run constitute.
         vm.startBroadcast();
         powers.constitute(constitution);
-        powers.closeConstitute();
+        powers.closeConstitute(msg.sender, flows);
         vm.stopBroadcast();
         console2.log("Powers successfully constituted.");
+
+        return powers;
     }
 
     function createConstitution() internal returns (uint256 constitutionLength) {
         uint16 mandateCount = 0;
-        // Mandate 1: Initial Setup
+        // Initial Setup
         targets = new address[](5);
         values = new uint256[](5);
         calldatas = new bytes[](5);
@@ -88,7 +91,17 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 2: Initiate action (StatementOfIntent)
+        // BICAMERALISM FLOW // 
+        uint16[] memory mandateIds = new uint16[](2);
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+
+        flows.push(PowersTypes.Flow({
+            nameDescription: "Bicameralism flow: Delegates can propose actions, but Funders have veto power. Both Delegates and Funders must approve for an action to be executed.",
+            mandateIds: mandateIds
+        }));
+
+        // Initiate action (StatementOfIntent)
         inputParams = new string[](3);
         inputParams[0] = "address[] targets";
         inputParams[1] = "uint256[] values";
@@ -98,7 +111,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = 1; // = Delegates
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes approx (depends on block time, 300 is ~5 mins on 1s chain, 1h on 12s)
         conditions.succeedAt = 51; // = 51% majority
-        conditions.quorum = 51; // = 33% quorum
+        conditions.quorum = 33; // = 33% quorum
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate action: Delegates can initiate an action",
@@ -109,7 +122,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 3: Execute action (OpenAction)
+        // Execute action (OpenAction)
         mandateCount++;
         conditions.allowedRole = 2; // = Funders
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
@@ -126,7 +139,17 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 4: Admin assign role (BespokeAction_Simple)
+        /// DEMO ONLY: ADMIN ASSIGNS ANY ROLE FLOW ///
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Assign any role: For demo purposes, this flow allows the admin to assign any role and delegates to revoke roles."
+        }));
+
+        // Admin assign role (BespokeAction_Simple)
         dynamicParams = new string[](2);
         dynamicParams[0] = "uint256 roleId";
         dynamicParams[1] = "address account";
@@ -137,15 +160,13 @@ contract Deploy is DeployHelpers {
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powers), IPowers.assignRole.selector, dynamicParams),
+                config: abi.encode(address(0), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 5: Delegate revoke role (BespokeAction_Simple)
-        // Note: TS file says "A delegate can revoke..." but allowedRole is 2 (Funders).
-        // Transposing the value allowedRole = 2.
+        // Delegate revoke role (BespokeAction_Simple) 
         mandateCount++;
         conditions.allowedRole = 1; // = Delegates
         conditions.needFulfilled = mandateCount - 1; // = Mandate 4 (Admin assign role)
@@ -153,7 +174,7 @@ contract Deploy is DeployHelpers {
             PowersTypes.MandateInitData({
                 nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(powers), IPowers.revokeRole.selector, dynamicParams),
+                config: abi.encode(address(0), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })
         );
