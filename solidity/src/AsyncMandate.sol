@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
-
-/// @title Async Mandate - Base Implementation for Powers Protocol Mandates. v0.6.
+/*
+  _____   ____  __          __ ______  _____    _____ 
+ |  __ \ / __ \ \ \        / /|  ____||  __ \  / ____|
+ | |__) | |  | | \ \  /\  / / | |__   | |__) || (___  
+ |  ___/| |  | |  \ \/  \/ /  |  __|  |  _  /  \___ \ 
+ | |    | |__| |   \  /\  /   | |____ | | \ \  ____) |
+ |_|     \____/     \/  \/    |______||_|  \_\|_____/ 
+                                                      
+*/
+/// @title Async Mandate - Base Implementation for Powers Protocol Mandates. v0.6.1
 /// @notice Base contract for implementing role-restricted async governance actions 
 ///
 /// Mandates serve four key functions:
@@ -137,7 +145,7 @@ abstract contract AsyncMandate is ERC165, IMandate {
     }
 
     function version() public pure returns (string memory) {
-        return "v0.6.0";
+        return "v0.6.1";
     }
 
     // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate. 
