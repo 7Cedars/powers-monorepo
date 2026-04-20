@@ -9,25 +9,30 @@
                                                       
 */
 /// @title Powers Protocol v.0.5
-/// @notice Institutional governance for on-chain communities. 
+/// @notice A modular governance protocol enabling institutional design for on-chain organizations through role-based access control and separation of powers.
 ///
-/// @dev This contract is the core engine of the protocol. It is meant to be used in combination with implementations of {Mandate.sol}. The contract should be used as is, making changes to this contract should be avoided.
-/// @dev Code is derived from OpenZeppelin's Governor.sol and AccessManager contracts, in addition to Haberdasher Labs Hats protocol.
-/// @dev note that Powers prefers to save as much data as possible on-chain. This reduces reliance on off-chain data that needs to be indexed and (often centrally) stored.
+/// @dev Powers is built around three core concepts:
+/// @dev 1. **Roles**: Define access identifiers for different participants in the organization.
+/// @dev 2. **Mandates**: Modular smart contracts that transform governance proposals into executable actions. Each mandate is role-restricted and can include conditional logic (voting, delays, parent mandates, etc.).
+/// @dev 3. **Actions**: The governance lifecycle (propose → vote → execute) that flows through this central Powers contract.
 ///
-/// Note several key differences from openzeppelin's {Governor.sol}.
-/// 1 - Any DAO action needs to be encoded in role restricted external contracts, or mandates, that follow the {IMandate} interface.
-/// 2 - Proposing, voting, cancelling and executing actions are role restricted along the target mandate that is called.
-/// 3 - All DAO actions need to run through the governance flow provided by Powers.sol. Calls to mandates that do not need a proposedAction vote, for instance, still need to be executed through the {execute} function.
-/// 4 - The core protocol uses a non-weighted voting mechanism: one account has one vote. Accounts vote with their roles, not with their tokens.
-/// 5 - The core protocol is intentionally minimalistic. Any complexities (multi-chain governance, oracle based governance, timelocks, delayed execution, guardian roles, weighted votes, staking, etc.) has to be integrated through mandates.
+/// @dev Key Protocol Features:
+/// @dev - Role-Based Governance: All governance actions are restricted by role assignments, enabling fine-grained access control.
+/// @dev - Separation of Powers: Different roles can propose, vote on, veto, and execute actions, creating institutional checks and balances.
+/// @dev - Modular Architecture: Governance logic lives in external mandate contracts, keeping the core protocol minimal and extensible.
+/// @dev - Non-Weighted Voting: The core protocol uses one-account-one-vote. Accounts vote with their roles, not tokens.
+/// @dev - On-Chain Data Preference: Maximizes on-chain storage to reduce reliance on indexers and centralized off-chain infrastructure.
 ///
-/// For example organisational implementations, see the script/organisations folder.
+/// @dev Implementation Notes:
+/// @dev - This contract is the core engine and should be used as-is. Customizations should be implemented through mandates.
+/// @dev - All DAO actions flow through Powers.sol governance functions, even non-voting actions.
+/// @dev - Complex features (multi-chain governance, oracle-based governance, timelocks, weighted voting, staking, etc.) are added via mandates, not by modifying this core contract.
 ///
-/// Note This protocol is a work in progress. A number of features are planned to be added in the future.
-/// - Gas efficiency improvements.
-/// - Integration with new ENS standards to log organisational data on-chain.
-/// - And more.
+/// @dev For example organizational implementations, see the script/organisations folder.
+///
+/// @dev Roadmap:
+/// @dev - Integration with new ENS standards for on-chain organizational metadata
+/// @dev - Additional governance primitives and mandate templates
 ///
 /// @author 7Cedars
 
@@ -56,6 +61,8 @@ contract Powers is EIP712, IPowers, Context {
     mapping(uint256 roleId => Role) internal roles;
     /// @dev Mapping from account to blacklisted status
     mapping(address account => bool blacklisted) internal _blacklist;
+    /// @dev Mapping of trusted forwarders for meta-transactions (ERC-2771)
+    mapping(address forwarder => bool trusted) public trustedForwarders;
 
     // two roles are preset: ADMIN_ROLE == 0 and PUBLIC_ROLE == type(uint256).max. These values should be avoided in any arythmetic operations with roleIds, to avoid overflow/underflow issues.
     /// @notice Role identifier for the admin role
@@ -631,6 +638,12 @@ contract Powers is EIP712, IPowers, Context {
         treasury = newTreasury;
     }
 
+    /// @inheritdoc IPowers
+    function setTrustedForwarder(address forwarder, bool trusted) external onlyPowers {
+        if (forwarder == address(0)) revert Powers__CannotSetZeroAddress();
+        trustedForwarders[forwarder] = trusted;
+    }
+
     //////////////////////////////////////////////////////////////
     //               INTERNAL HELPER FUNCTIONS                  //
     //////////////////////////////////////////////////////////////
@@ -705,12 +718,32 @@ contract Powers is EIP712, IPowers, Context {
         return roles[roleId].membersArray.length;
     }
 
+    /// @dev ERC-2771: Override to extract sender from calldata if caller is a trusted forwarder
+    function _msgSender() internal view override returns (address sender) {
+        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    /// @dev ERC-2771: Override to extract data from calldata if caller is a trusted forwarder
+    function _msgData() internal view override returns (bytes calldata) {
+        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
     //////////////////////////////////////////////////////////////
     //                 VIEW / GETTER FUNCTIONS                  //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
-        return "v0.6.0";
+        return "v0.6.1";
     }
 
     /// @inheritdoc IPowers

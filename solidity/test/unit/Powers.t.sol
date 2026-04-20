@@ -27,7 +27,7 @@ contract DeployTest is TestSetupPowers {
             daoMock.uri(),
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibd3qgeohyjeamqtfgk66lr427gpp4ify5q4civ2khcgkwyvz5hcq"
         );
-        assertEq(daoMock.version(), "v0.6.0");
+        assertEq(daoMock.version(), "v0.6.1");
         assertNotEq(daoMock.mandateCounter(), 0);
 
         assertNotEq(daoMock.hasRoleSince(alice, ROLE_ONE), 0);

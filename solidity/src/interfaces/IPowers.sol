@@ -155,6 +155,12 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param newTreasury The new treasury address
     function setTreasury(address payable newTreasury) external;
 
+    /// @notice Sets a trusted forwarder for ERC-2771 meta-transactions
+    /// @dev Can only be called through the protocol itself
+    /// @param forwarder The address of the forwarder
+    /// @param trusted Whether the forwarder is trusted
+    function setTrustedForwarder(address forwarder, bool trusted) external;
+
     /// @notice Blacklists an account
     /// @dev Can only be called through the protocol itself
     /// @param account The address to blacklist
