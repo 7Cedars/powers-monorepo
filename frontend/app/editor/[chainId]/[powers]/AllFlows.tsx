@@ -25,8 +25,7 @@ import {
   NODE_WIDTH,
   NODE_SPACING_Y,
   getActionDataForChain,
-  findConnectedNodes,
-  createHierarchicalLayout,
+  createFlowLayout,
 } from '../../../../components/FlowNodes'
 
 // Store for viewport state persistence using localStorage
@@ -271,7 +270,10 @@ const FlowContent: React.FC = () => {
   // Create nodes and edges from mandates
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!powers?.mandates) return { initialNodes: [], initialEdges: [] }
-    const ActiveMandates = powers?.mandates.filter(mandate => mandate.active)
+    const ActiveMandates = powers?.mandates.filter(mandate => {
+      if (mandate.active) return true;
+      return powers?.flows?.some(flow => flow.mandateIds.includes(mandate.index));
+    })
     if (!ActiveMandates) return { initialNodes: [], initialEdges: [] }
     
     const nodes: Node[] = []
@@ -279,13 +281,7 @@ const FlowContent: React.FC = () => {
     
     // Use hierarchical layout instead of simple grid
     const savedLayout = loadSavedLayout()
-    const positions = createHierarchicalLayout(ActiveMandates || [], savedLayout)
-    
-    // Find connected nodes if a mandate is selected
-    const selectedMandateIdFromStore = action.mandateId !== 0n ? String(action.mandateId) : undefined
-    const connectedNodes = selectedMandateIdFromStore 
-      ? findConnectedNodes(powers as Powers, selectedMandateIdFromStore as string)
-      : undefined
+    const positions = createFlowLayout(ActiveMandates || [], powers?.flows || [], savedLayout)
     
     // Get the selected action from the store
     const selectedAction = action.actionId !== "0" ? action : undefined
@@ -320,8 +316,6 @@ const FlowContent: React.FC = () => {
           mandate,
           roleColor,
           onNodeClick: handleNodeClick,
-          selectedMandateId: selectedMandateIdFromStore,
-          connectedNodes,
           actionDataTimestamp: Date.now(),
           selectedAction,
           chainActionData,
@@ -339,8 +333,6 @@ const FlowContent: React.FC = () => {
         // Edge from needFulfilled check to target mandate
         if (mandate.conditions.needFulfilled != null && mandate.conditions.needFulfilled !== 0n) {
           const targetId = String(mandate.conditions.needFulfilled)
-          const isEdgeConnected = !connectedNodes || connectedNodes.has(sourceId) || connectedNodes.has(targetId)
-          const edgeOpacity = isEdgeConnected ? 1 : 0.5
           
           edges.push({
             id: `${sourceId}-needFulfilled-${targetId}`,
@@ -350,9 +342,9 @@ const FlowContent: React.FC = () => {
             targetHandle: 'fulfilled-target',
             type: 'smoothstep',
             label: '',
-            style: { stroke: edgeColor, strokeWidth: 1.5, opacity: edgeOpacity },
-            labelStyle: { fontSize: '9px', fill: edgeColor, opacity: edgeOpacity },
-            labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 * edgeOpacity },
+            style: { stroke: edgeColor, strokeWidth: 1.5 },
+            labelStyle: { fontSize: '9px', fill: edgeColor },
+            labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 },
             markerStart: {
               type: MarkerType.ArrowClosed,
               color: edgeColor,
@@ -366,8 +358,6 @@ const FlowContent: React.FC = () => {
         // Edge from needNotFulfilled check to target mandate
         if (mandate.conditions.needNotFulfilled != null && mandate.conditions.needNotFulfilled != 0n) {
           const targetId = String(mandate.conditions.needNotFulfilled)
-          const isEdgeConnected = !connectedNodes || connectedNodes.has(sourceId) || connectedNodes.has(targetId)
-          const edgeOpacity = isEdgeConnected ? 1 : 0.5
           
           edges.push({
             id: `${sourceId}-needNotFulfilled-${targetId}`,
@@ -377,9 +367,9 @@ const FlowContent: React.FC = () => {
             targetHandle: 'fulfilled-target',
             type: 'smoothstep',
             label: '',
-            style: { stroke: edgeColor, strokeWidth: 1.5, strokeDasharray: '5,3', opacity: edgeOpacity },
-            labelStyle: { fontSize: '9px', fill: edgeColor, opacity: edgeOpacity },
-            labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 * edgeOpacity },
+            style: { stroke: edgeColor, strokeWidth: 1.5, strokeDasharray: '5,3' },
+            labelStyle: { fontSize: '9px', fill: edgeColor },
+            labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 },
             markerStart: {
               type: MarkerType.ArrowClosed,
               color: edgeColor,
@@ -462,7 +452,10 @@ const FlowContent: React.FC = () => {
     }
   }, [onNodesChange, debouncedSaveLayout])
   
-  const ActiveMandates = powers?.mandates?.filter(mandate => mandate.active)
+  const ActiveMandates = powers?.mandates?.filter(mandate => {
+    if (mandate.active) return true;
+    return powers?.flows?.some(flow => flow.mandateIds.includes(mandate.index));
+  })
   if (!ActiveMandates || ActiveMandates.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-background border border-border">

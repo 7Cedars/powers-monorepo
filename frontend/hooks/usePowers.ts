@@ -1,4 +1,4 @@
-import { Status, Action, Powers, Mandate, Metadata, Role, Conditions, ChainId } from "../context/types"
+import { Status, Action, Powers, Mandate, Metadata, Role, Conditions, ChainId, Flow } from "../context/types"
 import { wagmiConfig } from '../context/wagmiConfig'
 import { useCallback, useState } from "react";
 import { mandateAbi, powersAbi } from "@/context/abi";
@@ -231,8 +231,67 @@ export const usePowers = () => {
     }
   }
 
+  const fetchFlows = async (powersAddress: `0x${string}`, chainId: ChainId): Promise<Flow[] | undefined> => {
+    try {
+      const amountFlows = await readContract(wagmiConfig, {
+        abi: powersAbi,
+        address: powersAddress,
+        functionName: 'getAmountFlows',
+        chainId: chainId
+      }) as bigint
+
+      if (amountFlows === 0n) return []
+
+      const flowIndices = Array.from({ length: Number(amountFlows) }, (_, i) => i)
+      
+      const contracts = flowIndices.flatMap(i => [
+        {
+          abi: powersAbi,
+          address: powersAddress,
+          functionName: 'getFlowMandatesAtIndex',
+          args: [i],
+          chainId: chainId
+        },
+        {
+          abi: powersAbi,
+          address: powersAddress,
+          functionName: 'getFlowDescriptionAtIndex',
+          args: [i],
+          chainId: chainId
+        }
+      ])
+
+      const results = await readContracts(wagmiConfig, {
+        allowFailure: false,
+        contracts
+      })
+
+      const flows: Flow[] = []
+      
+      for (let i = 0; i < flowIndices.length; i++) {
+        const mandateIds = results[i * 2] as readonly number[] | readonly bigint[]
+        const nameDescription = results[i * 2 + 1] as string
+        
+        flows.push({
+          nameDescription,
+          mandateIds: mandateIds.map(id => BigInt(id))
+        })
+      }
+
+      return flows
+    } catch (error) {
+      console.warn("Failed to fetch flows", error)
+      return undefined
+    }
+  }
+
   const fetchRoles = async (mandates: Mandate[], chainId: ChainId): Promise<Role[] | undefined> => {
-    const rolesIds = new Set(mandates.filter((mandate) => mandate.active).flatMap((mandate) => mandate.conditions?.allowedRole) || [])
+    const rolesIds = new Set(
+      mandates
+        .filter((mandate) => mandate.active)
+        .map((mandate) => mandate.conditions?.allowedRole)
+        .filter((role) => role !== undefined)
+    ) as Set<bigint>;
  
     if (rolesIds.size > 0) {
       try {
@@ -599,6 +658,7 @@ export const usePowers = () => {
       let mandates: Mandate[] | undefined
       let mandateWithActions: Mandate[] | undefined
       let roles: Role[] | undefined
+      let flows: Flow[] | undefined
 
       let existing: Powers | undefined
       const localStore = localStorage.getItem("powersProtocols")
@@ -623,6 +683,7 @@ export const usePowers = () => {
         if (mandates) {
           mandateWithActions = await fetchActions(mandates, chainId)
           roles = await fetchRoles(mandates, chainId)
+          flows = await fetchFlows(address, chainId)
         }
 
         // console.log("@refetchPowers, waypoint 4", {metaData, mandates})
@@ -640,6 +701,7 @@ export const usePowers = () => {
             mandateCount: data.mandateCount,
             mandates: mandateWithActions,
             roles: roles,
+            flows: flows,
             layout: powersToBeUpdated.layout
           }
           // console.log("@refetchPowers, waypoint 8", {newPowers})

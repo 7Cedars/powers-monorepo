@@ -118,7 +118,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
       <div>
         <div className="flex items-center gap-2 mb-2">
           <KeyIcon className="h-4 w-4 text-muted-foreground" />
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Action ID</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Action ID</p>
         </div>
         <div className="flex items-center gap-2">
           <p className="text-sm text-foreground font-mono" title={action.actionId}>
@@ -152,9 +152,26 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
           <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Input Data</h4>
         </div>
 
-        {mandate.params && mandate.params.length > 0 ? (
-          <div className="space-y-3">
-            {mandate.params.map((param, idx) => (
+        <div className="space-y-3">
+          {/* Nonce */}
+          <div className="space-y-1">
+            <div className="flex items-start gap-2">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">
+                nonce
+              </span>
+              <span className="text-[10px] text-muted-foreground/60 font-mono">
+                (uint256)
+              </span>
+            </div>
+            <div className="bg-muted/30 p-2  border border-border">
+              <p className="text-xs text-foreground font-mono break-all">
+                {action.nonce !== undefined ? action.nonce.toString() : '0'}
+              </p>
+            </div>
+          </div>
+
+          {/* Mandate Parameters */}
+          {mandate.params && mandate.params.length > 0 && mandate.params.map((param, idx) => (
               <div key={idx} className="space-y-1">
                 <div className="flex items-start gap-2">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">
@@ -173,10 +190,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
                 </div>
               </div>
             ))}
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">No input parameters required</p>
-        )}
+        </div>
       </div>
 
       {/* Executable Output Data Section */}

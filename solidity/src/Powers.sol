@@ -9,25 +9,30 @@
                                                       
 */
 /// @title Powers Protocol v.0.5
-/// @notice Institutional governance for on-chain communities. 
+/// @notice A modular governance protocol enabling institutional design for on-chain organizations through role-based access control and separation of powers.
 ///
-/// @dev This contract is the core engine of the protocol. It is meant to be used in combination with implementations of {Mandate.sol}. The contract should be used as is, making changes to this contract should be avoided.
-/// @dev Code is derived from OpenZeppelin's Governor.sol and AccessManager contracts, in addition to Haberdasher Labs Hats protocol.
-/// @dev note that Powers prefers to save as much data as possible on-chain. This reduces reliance on off-chain data that needs to be indexed and (often centrally) stored.
+/// @dev Powers is built around three core concepts:
+/// @dev 1. **Roles**: Define access identifiers for different participants in the organization.
+/// @dev 2. **Mandates**: Modular smart contracts that transform governance proposals into executable actions. Each mandate is role-restricted and can include conditional logic (voting, delays, parent mandates, etc.).
+/// @dev 3. **Actions**: The governance lifecycle (propose → vote → execute) that flows through this central Powers contract.
 ///
-/// Note several key differences from openzeppelin's {Governor.sol}.
-/// 1 - Any DAO action needs to be encoded in role restricted external contracts, or mandates, that follow the {IMandate} interface.
-/// 2 - Proposing, voting, cancelling and executing actions are role restricted along the target mandate that is called.
-/// 3 - All DAO actions need to run through the governance flow provided by Powers.sol. Calls to mandates that do not need a proposedAction vote, for instance, still need to be executed through the {execute} function.
-/// 4 - The core protocol uses a non-weighted voting mechanism: one account has one vote. Accounts vote with their roles, not with their tokens.
-/// 5 - The core protocol is intentionally minimalistic. Any complexities (multi-chain governance, oracle based governance, timelocks, delayed execution, guardian roles, weighted votes, staking, etc.) has to be integrated through mandates.
+/// @dev Key Protocol Features:
+/// @dev - Role-Based Governance: All governance actions are restricted by role assignments, enabling fine-grained access control.
+/// @dev - Separation of Powers: Different roles can propose, vote on, veto, and execute actions, creating institutional checks and balances.
+/// @dev - Modular Architecture: Governance logic lives in external mandate contracts, keeping the core protocol minimal and extensible.
+/// @dev - Non-Weighted Voting: The core protocol uses one-account-one-vote. Accounts vote with their roles, not tokens.
+/// @dev - On-Chain Data Preference: Maximizes on-chain storage to reduce reliance on indexers and centralized off-chain infrastructure.
 ///
-/// For example organisational implementations, see the script/organisations folder.
+/// @dev Implementation Notes:
+/// @dev - This contract is the core engine and should be used as-is. Customizations should be implemented through mandates.
+/// @dev - All DAO actions flow through Powers.sol governance functions, even non-voting actions.
+/// @dev - Complex features (multi-chain governance, oracle-based governance, timelocks, weighted voting, staking, etc.) are added via mandates, not by modifying this core contract.
 ///
-/// Note This protocol is a work in progress. A number of features are planned to be added in the future.
-/// - Gas efficiency improvements.
-/// - Integration with new ENS standards to log organisational data on-chain.
-/// - And more.
+/// @dev For example organizational implementations, see the script/organisations folder.
+///
+/// @dev Roadmap:
+/// @dev - Integration with new ENS standards for on-chain organizational metadata
+/// @dev - Additional governance primitives and mandate templates
 ///
 /// @author 7Cedars
 
@@ -56,6 +61,8 @@ contract Powers is EIP712, IPowers, Context {
     mapping(uint256 roleId => Role) internal roles;
     /// @dev Mapping from account to blacklisted status
     mapping(address account => bool blacklisted) internal _blacklist;
+    /// @dev Mapping of trusted forwarders for meta-transactions (ERC-2771)
+    mapping(address forwarder => bool trusted) public trustedForwarders;
 
     // two roles are preset: ADMIN_ROLE == 0 and PUBLIC_ROLE == type(uint256).max. These values should be avoided in any arythmetic operations with roleIds, to avoid overflow/underflow issues.
     /// @notice Role identifier for the admin role
@@ -84,6 +91,8 @@ contract Powers is EIP712, IPowers, Context {
     // NB! this is a gotcha: mandates start counting a 1, NOT 0!. 0 is used as a default 'false' value.
     /// @notice Number of mandates that have been initiated throughout the life of the organisation
     uint16 public mandateCounter = 1;
+    /// @notice array of flows to provide human and mandate readable structure to governance.  
+    Flow[] public flows;
     /// @dev Is the constitute phase closed? Note: no actions can be started when the constitute phase is open.
     bool private _constituteClosed;
 
@@ -173,22 +182,34 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function closeConstitute() external onlyAdmin() { 
-        _closeConstitute(_msgSender());
+    function closeConstitute() external onlyAdmin() {  
+        _closeConstitute(_msgSender(), new Flow[](0));
     }
 
     /// @inheritdoc IPowers
     function closeConstitute(address newAdmin) external onlyAdmin() { 
-        _closeConstitute(newAdmin);
+        _closeConstitute(newAdmin, new Flow[](0));
+    }
+
+    /// @inheritdoc IPowers
+    function closeConstitute(address newAdmin, Flow[] memory _flows) external onlyAdmin() { 
+        _closeConstitute(newAdmin, _flows);
     }
 
     /// @dev Internal function to close constitution phase.
     /// @param newAdmin Address of the new admin.
-    function _closeConstitute(address newAdmin) internal {
+    /// @param _flows The initial governance flows to set in the protocol.
+    function _closeConstitute(address newAdmin, Flow[] memory _flows) internal {
         // if newAdmin is different from current admin, set new admin...
         if (_msgSender() != newAdmin) {
             _setRole(ADMIN_ROLE, _msgSender(), false);
             _setRole(ADMIN_ROLE, newAdmin, true);
+        }
+        // save flows if provided.
+        if (_flows.length > 0) {
+            for (uint256 i = 0; i < _flows.length; i++) {
+                flows.push(_flows[i]);
+            }
         }
         _constituteClosed = true;
     }
@@ -455,14 +476,13 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     //////////////////////////////////////////////////////////////
-    //                  ROLE AND LAW ADMIN                      //
+    //             ROLE, MANDATE AND FLOW ADMIN                 //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
-    function adoptMandate(MandateInitData memory mandateInitData) external onlyPowers returns (uint16 mandateId) {
-        mandateId = _adoptMandate(mandateInitData);
-        // emit event.
-        emit MandateAdopted(mandateCounter - 1);
-
+    function adoptMandate(MandateInitData memory mandateInitData) public onlyPowers returns (uint16 mandateId) {
+        mandateId = mandateCounter;
+        _storeMandate(mandateId, mandateInitData);
+        unchecked { mandateCounter++; }
         return mandateId;
     }
 
@@ -472,18 +492,6 @@ contract Powers is EIP712, IPowers, Context {
 
         mandates[mandateId].active = false;
         emit MandateRevoked(mandateId);
-    }
-
-    /// @notice Internal function to set a mandate or revoke it.
-    /// @param mandateInitData Data of the mandate to adopt.
-    /// @return mandateId The ID of the newly adopted mandate.
-    ///
-    /// Emits a {PowersEvents::MandateAdopted} event.
-    function _adoptMandate(MandateInitData memory mandateInitData) internal returns (uint16 mandateId) {
-        mandateId = mandateCounter;
-        _storeMandate(mandateId, mandateInitData);
-        unchecked { mandateCounter++; }
-        return mandateId;
     }
 
     /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation. 
@@ -509,6 +517,40 @@ contract Powers is EIP712, IPowers, Context {
 
         Mandate(mandateInitData.targetMandate)
             .initializeMandate(mandateId, mandateInitData.nameDescription, "", mandateInitData.config);
+
+        emit MandateAdopted(mandateId);
+    }
+
+    /// @inheritdoc IPowers
+    function addFlow (Flow memory flow) external onlyPowers {
+        flows.push(flow);
+        emit FlowAdded(flow.mandateIds, flow.nameDescription);
+    }
+
+    /// @inheritdoc IPowers
+    function removeFlow(uint8 index) external onlyPowers {
+        if (index >= flows.length) revert Powers__InvalidFlowIndex();
+
+        // delete flow by replacing it with the last flow and popping the last flow.
+        uint256 lastIndex = flows.length - 1;
+        if (index != lastIndex) {
+            flows[index] = flows[lastIndex];
+        }
+        flows.pop();
+
+        emit FlowDeleted(index);
+    }
+    
+    /// @inheritdoc IPowers
+    function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external onlyPowers {
+        if (mandateId >= mandateCounter) revert Powers__InvalidMandateId();
+        if (index1 >= flows.length) revert Powers__InvalidFlowIndex();
+        Flow storage flow = flows[index1];
+        if (index2 >= flow.mandateIds.length) revert Powers__InvalidMandateIndex();
+
+        flow.mandateIds[index2] = mandateId;
+
+        emit FlowAdapted(index1, index2, mandateId);
     }
 
     /// @inheritdoc IPowers
@@ -596,6 +638,12 @@ contract Powers is EIP712, IPowers, Context {
         treasury = newTreasury;
     }
 
+    /// @inheritdoc IPowers
+    function setTrustedForwarder(address forwarder, bool trusted) external onlyPowers {
+        if (forwarder == address(0)) revert Powers__CannotSetZeroAddress();
+        trustedForwarders[forwarder] = trusted;
+    }
+
     //////////////////////////////////////////////////////////////
     //               INTERNAL HELPER FUNCTIONS                  //
     //////////////////////////////////////////////////////////////
@@ -670,12 +718,53 @@ contract Powers is EIP712, IPowers, Context {
         return roles[roleId].membersArray.length;
     }
 
+    /// @dev ERC-2771: Override to extract sender from calldata if caller is a trusted forwarder
+    function _msgSender() internal view override returns (address sender) {
+        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    /// @dev ERC-2771: Override to extract data from calldata if caller is a trusted forwarder
+    function _msgData() internal view override returns (bytes calldata) {
+        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
     //////////////////////////////////////////////////////////////
     //                 VIEW / GETTER FUNCTIONS                  //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
-        return "v0.6.0";
+        return "v0.6.1";
+    }
+
+    /// @inheritdoc IPowers
+    function getAmountFlows() public view returns (uint256) {
+        return flows.length;
+    }
+
+    /// @inheritdoc IPowers
+    function getFlowMandatesAtIndex(uint8 index) public view returns (uint16[] memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].mandateIds;
+    }
+    
+    /// @inheritdoc IPowers
+    function getFlowDescriptionAtIndex(uint8 index) public view returns (string memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].nameDescription;
     }
 
     /// @inheritdoc IPowers

@@ -1,39 +1,45 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Chatroom } from "@/components/Chatroom";
 import { SingleFlow } from "./SingleFlow";
-import { LatestActionsDropdown, SelectedActionInfo } from "./LatestActionsDropdown";
+import { SelectActionDialog } from "./SelectActionDialog";
 import { usePowersStore } from '@/context/store';
-import { identifyFlows } from '@/utils/identifyFlows';
 import { useLatestActions } from '@/hooks/useLatestActions';
-import { useBlocks } from '@/hooks/useBlocks';
-import { toFullDateAndTimeFormat } from '@/utils/toDates';
-
 
 export default function FlowSequencePage() {
     const { chainId, powers: powersAddress, mandateId } = useParams<{ chainId: string; powers: string; mandateId: string }>();
     const searchParams = useSearchParams();
-    const [selectedAction, setSelectedAction] = useState<SelectedActionInfo | null>(null);
+    const router = useRouter();
+    const pathname = usePathname();
+    const [actionDialogOpen, setActionDialogOpen] = useState(false);
     
     const powers = usePowersStore();
     const allActions = useLatestActions(25);
-    const { timestamps, fetchTimestamps } = useBlocks();
+
+    // Redirect to overview page if powers data is not loaded yet
+    useEffect(() => {
+        if (!powers || !powers.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
+            router.push(`/forum/${chainId}/${powersAddress}`);
+        }
+    }, [powers, router, chainId, powersAddress]);
     
     // Get actionId from URL search params
     const actionIdFromUrl = searchParams.get('actionId');
     
     // Get mandate IDs that are part of the same flow
-    const flowMandateIds = useMemo(() => {
-        if (!powers || !mandateId) return new Set<bigint>();
+    const targetFlow = useMemo(() => {
+        if (!powers || !mandateId) return undefined;
         
-        const flows = identifyFlows(powers, BigInt(mandateId));
-        if (flows.length === 0) return new Set<bigint>();
-        
-        // identifyFlows returns [[mandateIds]] when given a specific mandateId
-        return new Set(flows[0]);
+        return powers.flows?.find(flow => flow.mandateIds.includes(BigInt(mandateId)));
     }, [powers, mandateId]);
+    
+    const flowMandateIds = useMemo(() => {
+        if (!targetFlow) return new Set<bigint>([BigInt(mandateId)]);
+        
+        return new Set(targetFlow.mandateIds);
+    }, [targetFlow, mandateId]);
     
     // Filter actions to only include those from mandates in the flow
     const filteredActions = useMemo(() => {
@@ -44,38 +50,31 @@ export default function FlowSequencePage() {
         );
     }, [allActions, flowMandateIds]);
 
-    // Auto-select action from URL search params
-    useEffect(() => {
-        if (actionIdFromUrl && filteredActions.length > 0 && chainId) {
-            const matchingAction = filteredActions.find(
-                action => action.actionId === actionIdFromUrl
-            );
-            if (matchingAction) {
-                // Fetch timestamp for this action
-                fetchTimestamps([matchingAction.highestBlockNumber], chainId);
-                
-                // Create SelectedActionInfo with datetime
-                const key = `${chainId}:${matchingAction.highestBlockNumber}`;
-                const blockTimestamp = timestamps.get(key);
-                
-                const actionInfo: SelectedActionInfo = {
-                    actionId: matchingAction.actionId,
-                    datetime: blockTimestamp?.timestamp 
-                        ? toFullDateAndTimeFormat(Number(blockTimestamp.timestamp))
-                        : `Block ${matchingAction.highestBlockNumber}`,
-                    description: matchingAction.description || "No description"
-                };
-                
-                setSelectedAction(actionInfo);
+    const mandate = useMemo(() => {
+        if (!powers?.mandates) return undefined;
+        
+        if (actionIdFromUrl) {
+            const action = filteredActions.find(a => a.actionId === actionIdFromUrl);
+            if (action) {
+                return powers.mandates.find(m => m.index === action.mandateId);
             }
         }
-    }, [actionIdFromUrl, filteredActions, chainId, timestamps, fetchTimestamps]);
+        
+        if (!mandateId) return undefined;
+        return powers.mandates.find(m => m.index.toString() === mandateId);
+    }, [powers, mandateId, actionIdFromUrl, filteredActions]);
 
-    const abbreviateDescription = (description: string): string => {
-        return description.length > 35 
-            ? `${description.slice(0, 8)}...${description.slice(-8)}` 
-            : description;
-    };
+    const isPublicRole = useMemo(() => {
+        if (!powers?.mandates || flowMandateIds.size === 0) return false;
+        
+        const flowMandates = powers.mandates.filter(m => flowMandateIds.has(BigInt(m.index.toString())));
+        if (flowMandates.length === 0) return false;
+
+        return flowMandates.every(m => {
+            if (!m.conditions?.allowedRole) return false;
+            return BigInt(m.conditions.allowedRole) === BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        });
+    }, [powers, flowMandateIds]);
 
     return (
         <div className="flex-1 flex flex-col bg-background scanlines font-mono">
@@ -83,41 +82,53 @@ export default function FlowSequencePage() {
             <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
                 <div className="flex-1 flex flex-col border border-border overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/50">
-                    <h3 className="text-foreground uppercase tracking-wider text-base">Flow Sequence</h3>
-                    <LatestActionsDropdown 
-                        trigger={() => (
-                            <button className="px-3 py-2 min-w-[12rem] max-w-[24rem] text-xs text-center border border-border bg-foreground text-background hover:bg-accent transition-colors flex flex-row items-center gap-2">
-                                {selectedAction ? (
-                                    <>
-                                        <span className="">{selectedAction.datetime} - </span>
-                                        <span className="">{abbreviateDescription(selectedAction.description)}</span>
-                                    </>
-                                ) : (
-                                    <span>Select Action</span>
-                                )}
-                            </button>
-                        )}
-                        align="end"
-                        onSelect={(actionInfo) => setSelectedAction(actionInfo)}
-                        actions={filteredActions}
-                    />
+                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
+                    { targetFlow ? 
+                    <div className="min-w-0 flex-1 text-center sm:text-left w-full">
+                        <h3 className="text-foreground text-base truncate">{targetFlow.nameDescription ? `Flow: ${targetFlow.nameDescription.split(':')[0] || 'Flow Sequence'}` : 'Flow Sequence'}</h3>
+                        <p className="text-muted-foreground text-sm truncate">{targetFlow.nameDescription ? targetFlow.nameDescription.split(':').slice(1).join(':').trim() || '' : ''}</p>
+                    </div>
+                    :
+                    <div className="min-w-0 flex-1 text-center sm:text-left w-full">
+                        <h3 className="text-foreground uppercase tracking-wider text-base truncate">Flow Sequence</h3>
+                    </div>
+                    }
+                    <button 
+                        onClick={() => setActionDialogOpen(true)}
+                        className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80"
+                    >
+                        Select Action
+                    </button>
                 </div>
 
                 {/* Flow Visualisation */}
                 <div className="border-b border-border h-[320px]">
-                    <SingleFlow mandateId={BigInt(mandateId)} actionId={BigInt(selectedAction?.actionId ?? 0)} />
+                    <SingleFlow mandateId={BigInt(mandateId)} actionId={BigInt(actionIdFromUrl ?? 0)} />
                 </div>
 
                 <Chatroom 
                     chatroomType="Flow" 
+                    isPublicRole={isPublicRole}
                     chainId={chainId}
                     powersAddress={powersAddress}
                     contextId={mandateId}
+                    xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
                 />
 
                 </div>
             </main>
+
+            {/* Select Action Dialog */}
+            <SelectActionDialog
+                open={actionDialogOpen}
+                onOpenChange={setActionDialogOpen}
+                onSelect={(actionInfo) => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('actionId', actionInfo.actionId);
+                    router.push(`${pathname}?${params.toString()}`);
+                }}
+                actions={filteredActions}
+            />
         </div>
     );
 

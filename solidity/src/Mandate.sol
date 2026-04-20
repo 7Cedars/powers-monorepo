@@ -1,5 +1,13 @@
 // SPDX-License-Identifier: MIT
-
+/*
+  _____   ____  __          __ ______  _____    _____ 
+ |  __ \ / __ \ \ \        / /|  ____||  __ \  / ____|
+ | |__) | |  | | \ \  /\  / / | |__   | |__) || (___  
+ |  ___/| |  | |  \ \/  \/ /  |  __|  |  _  /  \___ \ 
+ | |    | |__| |   \  /\  /   | |____ | | \ \  ____) |
+ |_|     \____/     \/  \/    |______||_|  \_\|_____/ 
+                                                      
+*/
 /// @title Mandate - Base Implementation for Powers Protocol Mandates. v0.4.
 /// @notice Base contract for implementing role-restricted governance actions
 /// @dev Provides core functionality for creating institutional mandates in the Powers protocol
@@ -120,7 +128,7 @@ abstract contract Mandate is ERC165, IMandate {
     }
 
     function version() public pure returns (string memory) {
-        return "v0.6.0";
+        return "v0.6.1";
     }
 
     // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate. 

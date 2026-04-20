@@ -38,6 +38,7 @@ import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
 import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
 import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol"; 
 import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
@@ -618,12 +619,14 @@ abstract contract TestSetupIntegrations is BaseSetup {
         allowedTokens = new AllowedTokens();
         soulbound1155 = new Soulbound1155("this is a test uri");
         electionList = new ElectionList();
+        PowersDeployer powersDeployer = new PowersDeployer();
         powersFactory = new PowersFactory(
             "Powers Factory", // name
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid)
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(powersDeployer)
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();

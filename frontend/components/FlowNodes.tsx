@@ -6,7 +6,7 @@ import {
   Position,
   NodeProps,
 } from 'reactflow'
-import { Mandate, Powers, Action, Status } from '@/context/types'
+import { Mandate, Powers, Action, Status, Flow } from '@/context/types'
 import { toFullDateFormat, toEurTimeFormat } from '@/utils/toDates'
 import { useBlocks } from '@/hooks/useBlocks'
 import { parseChainId } from '@/utils/parsers'
@@ -314,11 +314,17 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ({ data })
 
   return (
     <div
-      className={`bg-background border font-mono cursor-pointer hover:border-primary transition-all ${
+      className={`bg-background border font-mono transition-all ${
         isHighlighted ? 'border-primary/60 border-2' : 'border-border'
+      } ${
+        !mandate.active ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'
       }`}
       style={{ width: NODE_WIDTH }}
-      onClick={() => onNodeClick(String(mandate.index))}
+      onClick={() => {
+        if (mandate.active) {
+          onNodeClick(String(mandate.index))
+        }
+      }}
     >
       <div className="px-3 py-2 border-b border-border bg-muted/50">
         <div className="flex items-baseline gap-1.5">
@@ -382,203 +388,58 @@ const MandateSchemaNode: React.FC<NodeProps<MandateSchemaNodeData>> = ({ data })
 
 export const nodeTypes = { mandateSchema: MandateSchemaNode }
 
-// Helper function to find all nodes connected to a selected node through dependencies
-export function findConnectedNodes(powers: Powers, selectedMandateId: string): Set<string> {
-  const connected = new Set<string>()
-  const visited = new Set<string>()
-
-  const mandates = powers?.mandates || []
-
-  // Build dependency maps
-  const dependencies = new Map<string, Set<string>>()
-  const dependents = new Map<string, Set<string>>()
-  
-  mandates.forEach(mandate => {
-    const mandateId = String(mandate.index)
-    dependencies.set(mandateId, new Set())
-    dependents.set(mandateId, new Set())
-  })
-  
-  // Populate dependency relationships
-  mandates.forEach(mandate => {
-    const mandateId = String(mandate.index)
-    if (mandate.conditions) {
-      if (mandate.conditions.needFulfilled != null && mandate.conditions.needFulfilled !== 0n) {
-        const targetId = String(mandate.conditions.needFulfilled)
-        if (dependencies.has(targetId)) {
-          dependencies.get(mandateId)?.add(targetId)
-          dependents.get(targetId)?.add(mandateId)
-        }
-      }
-      if (mandate.conditions.needNotFulfilled != null && mandate.conditions.needNotFulfilled !== 0n) {
-        const targetId = String(mandate.conditions.needNotFulfilled)
-        if (dependencies.has(targetId)) {
-          dependencies.get(mandateId)?.add(targetId)
-          dependents.get(targetId)?.add(mandateId)
-        }
-      }
-    }
-  })
-  
-  // Recursive function to find all connected nodes
-  const traverse = (nodeId: string) => {
-    if (visited.has(nodeId)) return
-    visited.add(nodeId)
-    connected.add(nodeId)
-    
-    // Add all dependencies
-    const deps = dependencies.get(nodeId) || new Set()
-    deps.forEach(depId => traverse(depId))
-    
-    // Add all dependents  
-    const dependentNodes = dependents.get(nodeId) || new Set()
-    dependentNodes.forEach(depId => traverse(depId))
-  }
-  
-  traverse(selectedMandateId)
-  return connected
-}
-
-// Helper function to create a compact layered tree layout based on dependencies
-export function createHierarchicalLayout(mandates: Mandate[], savedLayout?: Record<string, { x: number; y: number }>): Map<string, { x: number; y: number }> {
+// Helper function to create a grid layout based explicitly on flow membership
+export function createFlowLayout(mandates: Mandate[], flows: Flow[] = [], savedLayout?: Record<string, { x: number; y: number }>): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>()
 
-  // If we have saved layout, use it first
-  if (savedLayout) {
+  // If we have saved layout for all mandates, use it
+  if (savedLayout && Object.keys(savedLayout).length === mandates.length) {
+    let allFound = true;
     mandates.forEach(mandate => {
-      const mandateId = String(mandate.index)
-      if (savedLayout[mandateId]) {
-        positions.set(mandateId, savedLayout[mandateId])
+      const idStr = String(mandate.index)
+      if (savedLayout[idStr]) {
+        positions.set(idStr, savedLayout[idStr])
+      } else {
+        allFound = false;
       }
     })
-    if (positions.size === mandates.length) {
+    if (allFound) {
       return positions
     }
   }
 
-  // Build dependency and dependent maps
-  const dependencies = new Map<string, Set<string>>()
-  const dependents = new Map<string, Set<string>>()
-  mandates.forEach(mandate => {
-    const mandateId = String(mandate.index)
-    dependencies.set(mandateId, new Set())
-    dependents.set(mandateId, new Set())
-  })
-  mandates.forEach(mandate => {
-    const mandateId = String(mandate.index)
-    if (mandate.conditions) {
-      if (mandate.conditions.needFulfilled != null && mandate.conditions.needFulfilled !== 0n) {
-        const targetId = String(mandate.conditions.needFulfilled)
-        if (dependencies.has(targetId)) {
-          dependencies.get(mandateId)?.add(targetId)
-          dependents.get(targetId)?.add(mandateId)
-        }
-      }
-      if (mandate.conditions.needNotFulfilled != null && mandate.conditions.needNotFulfilled !== 0n) {
-        const targetId = String(mandate.conditions.needNotFulfilled)
-        if (dependencies.has(targetId)) {
-          dependencies.get(mandateId)?.add(targetId)
-          dependents.get(targetId)?.add(mandateId)
-        }
-      }
-    }
-  })
-
-  // Find root nodes (no dependencies)
-  const allMandateIds = mandates.map(mandate => String(mandate.index))
-  const rootNodes = allMandateIds.filter(mandateId => (dependencies.get(mandateId)?.size || 0) === 0)
-
-  // Track placed nodes to avoid cycles
   const placed = new Set<string>()
+  let currentYRow = 0
 
-  // Compute the size (number of rows) of each subtree
-  const subtreeSize = new Map<string, number>()
-  function computeSubtreeSize(mandateId: string, visiting: Set<string> = new Set()): number {
-    if (visiting.has(mandateId)) return 0
-    visiting.add(mandateId)
-    const children = Array.from(dependents.get(mandateId) || [])
-    if (children.length === 0) {
-      subtreeSize.set(mandateId, 1)
-      visiting.delete(mandateId)
-      return 1
-    }
-    const sizes = children.map(childId => computeSubtreeSize(childId, visiting))
-    const total = sizes.reduce((a, b) => a + b, 0)
-    subtreeSize.set(mandateId, total)
-    visiting.delete(mandateId)
-    return total
-  }
-  rootNodes.forEach(rootId => computeSubtreeSize(rootId))
+  // Place explicit flows into rows
+  flows.forEach((flow) => {
+    // only layout mandates that actually exist in the current subset of mandates
+    const flowMandates = flow.mandateIds.filter(id => mandates.some(m => m.index === id))
 
-  let nextY = 0
-
-  function placeNode(mandateId: string, x: number, y: number, visiting: Set<string> = new Set()) {
-    if (placed.has(mandateId)) return
-    if (visiting.has(mandateId)) return
-    placed.add(mandateId)
-    positions.set(mandateId, { x: x * NODE_SPACING_X, y: y * NODE_SPACING_Y })
-
-    visiting.add(mandateId)
-    const children = Array.from(dependents.get(mandateId) || [])
-    if (children.length === 0) {
-      visiting.delete(mandateId)
-      return
-    }
-    children.sort((a, b) => (subtreeSize.get(b) || 1) - (subtreeSize.get(a) || 1))
-    let childY = y
-    for (let i = 0; i < children.length; i++) {
-      const childId = children[i]
-      placeNode(childId, x + 1, childY, visiting)
-      childY += subtreeSize.get(childId) || 1
-    }
-    visiting.delete(mandateId)
-  }
-
-  let processingSingletons = false
-  let singletonX = 0
-
-  rootNodes.forEach(rootId => {
-    const isSingleton = (dependents.get(rootId)?.size || 0) === 0
-
-    if (isSingleton) {
-      if (!processingSingletons) {
-        processingSingletons = true
-        singletonX = 0
+    flowMandates.forEach((mandateId, index) => {
+      const idStr = String(mandateId)
+      if (!placed.has(idStr)) {
+        positions.set(idStr, { x: index * NODE_SPACING_X, y: currentYRow * NODE_SPACING_Y })
+        placed.add(idStr)
       }
-      placeNode(rootId, singletonX, nextY)
-      singletonX++
-    } else {
-      if (processingSingletons) {
-        nextY += 1
-        processingSingletons = false
-      }
-      
-      placeNode(rootId, 0, nextY)
-      nextY += subtreeSize.get(rootId) || 1
+    })
+    
+    if (flowMandates.length > 0) {
+      currentYRow++
     }
   })
 
-  if (processingSingletons) {
-    nextY += 1
-  }
-
-  allMandateIds.forEach(mandateId => {
-    if (!placed.has(mandateId)) {
-      positions.set(mandateId, { x: 0, y: nextY * NODE_SPACING_Y })
-      nextY += 1
-      placed.add(mandateId)
-    }
-  })
-
-  const usedYRows = Array.from(new Set(Array.from(positions.values()).map(pos => pos.y / NODE_SPACING_Y))).sort((a, b) => a - b)
-  const yRowMap = new Map<number, number>()
-  usedYRows.forEach((row, idx) => yRowMap.set(row, idx))
-  positions.forEach((pos, mandateId) => {
-    const oldRow = pos.y / NODE_SPACING_Y
-    const newRow = yRowMap.get(oldRow)
-    if (newRow !== undefined) {
-      positions.set(mandateId, { x: pos.x, y: newRow * NODE_SPACING_Y })
-    }
+  // Place remaining unplaced mandates at the bottom in rows of 6
+  const unplacedMandates = mandates.filter(m => !placed.has(String(m.index)))
+  
+  unplacedMandates.forEach((mandate, index) => {
+    const rowOffset = Math.floor(index / 6)
+    const colIndex = index % 6
+    
+    positions.set(String(mandate.index), {
+      x: colIndex * NODE_SPACING_X,
+      y: (currentYRow + rowOffset) * NODE_SPACING_Y
+    })
   })
 
   return positions

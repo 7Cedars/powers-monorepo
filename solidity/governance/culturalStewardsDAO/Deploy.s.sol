@@ -24,6 +24,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
 import { Soulbound1155, Soulbound1155Factory } from "@src/helpers/Soulbound1155.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol"; 
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { Governed721 } from "@src/helpers/Governed721.sol";
 import { Nominees } from "@src/helpers/Nominees.sol";
@@ -59,7 +60,7 @@ contract Deploy is DeployHelpers {
     address testAccount3 = 0x49fCf1DD685F6b5F88d9b0a972Dbf80Ee8846234;
     // NB: FOR TESTING PURPOSES ONLY: REMOVE BEFORE ACTUAL DEPLOYMENT!
 
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifceq5v4w7hgramjzevdwktki2ihkbtcidzq2caghjjjzsps37zxa/";
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidhtykvnkp2wy5gnq4u65w3pxvgrf5sm3r6xj3q7pjog5bdltxm7i/";
 
     uint256 constitutionLength; 
     address[] targets;
@@ -151,24 +152,28 @@ contract Deploy is DeployHelpers {
         // Deploy factories first (empty) so their addresses are available
         console2.log("Deploying Physical sub-DAO factory (contract only)...");
         vm.startBroadcast();
+        PowersDeployer physicalDaoDeployer = new PowersDeployer();
         physicalDaoFactory = new PowersFactory(
             "Physical sub-DAO", // name
             string.concat(baseURI, "physicalSubDao.json"), // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length 
+            address(physicalDaoDeployer)
         );
         vm.stopBroadcast();
         console2.log("Physical sub-DAO factory deployed at:", address(physicalDaoFactory));
 
         console2.log("Deploying Ideas Sub-DAO factory (contract only)...");
         vm.startBroadcast();
+        PowersDeployer ideasDaoDeployer = new PowersDeployer();
         ideasDaoFactory = new PowersFactory(
             "Ideas sub-DAO", // name
             string.concat(baseURI, "ideasSubDao.json"),
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(ideasDaoDeployer)
         );
         vm.stopBroadcast();
         console2.log("Ideas sub-DAO factory deployed at:", address(ideasDaoFactory));

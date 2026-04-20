@@ -23,6 +23,7 @@ contract Deploy is DeployHelpers {
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
     Powers powers;
+    PowersTypes.Flow[] flows;
 
     address[] targets;
     uint256[] values;
@@ -41,7 +42,7 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         powers = new Powers(
             "Optimistic Execution", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/optimisticExecution.json", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/optimisticExecution.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length 
@@ -57,7 +58,7 @@ contract Deploy is DeployHelpers {
         // step 3: run constitute.
         vm.startBroadcast();
         powers.constitute(constitution);
-        powers.closeConstitute();
+        powers.closeConstitute(msg.sender, flows);
         vm.stopBroadcast();
         console2.log("Powers successfully constituted.");
     }
@@ -89,7 +90,17 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 2: Veto Actions (StatementOfIntent)
+        // MINT NEW TOKENS FLOW // 
+        uint16[] memory mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Optimistic execution: A governance flow that allows executives to propose and execute any actions, but with members having veto power."
+        }));
+
+        // Veto Actions (StatementOfIntent)
         inputParams = new string[](3);
         inputParams[0] = "address[] targets";
         inputParams[1] = "uint256[] values";
@@ -102,7 +113,7 @@ contract Deploy is DeployHelpers {
         conditions.quorum = 66; // = 66% quorum (high quorum)
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Veto Actions: Funders can veto actions",
+                nameDescription: "Veto Actions: Members can veto actions",
                 targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
@@ -110,7 +121,7 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 3: Execute an action (OpenAction)
+        // Execute an action (OpenAction)
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
@@ -119,7 +130,7 @@ contract Deploy is DeployHelpers {
         conditions.quorum = 33;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Execute an action: Members propose adopting new mandates",
+                nameDescription: "Execute an action: Executives can propose and execute actions, but members have veto power.",
                 targetMandate: initialisePowers.getInitialisedAddress("OpenAction"),
                 config: abi.encode(), // empty config
                 conditions: conditions
@@ -127,7 +138,17 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 4: Admin assign role (BespokeAction_Simple)
+        /// ADMIN ASSIGN ANY ROLE FLOW ///
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Assign any role: For demo purposes, this flow allows the admin to assign any role and executives to revoke roles."
+        }));
+
+        // Admin assign role (BespokeAction_Simple)
         dynamicParams = new string[](2);
         dynamicParams[0] = "uint256 roleId";
         dynamicParams[1] = "address account";
@@ -144,13 +165,13 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Mandate 5: Delegate revoke role (BespokeAction_Simple)
+        // Executive revoke role (BespokeAction_Simple)
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
         conditions.needFulfilled = mandateCount - 1; // = Mandate 4 (Admin assign role)
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
+                nameDescription: "An executive can revoke a role: For this demo, any executive can revoke previously assigned roles.",
                 targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions

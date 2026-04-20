@@ -31,6 +31,7 @@ contract Deploy is DeployHelpers {
     PowersTypes.MandateInitData[] constitution;
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
+    PowersTypes.Flow[] flows;
     Powers powers;
 
     Nominees nominees;
@@ -41,6 +42,7 @@ contract Deploy is DeployHelpers {
     uint256[] values;
     bytes[] calldatas;
     string[] dynamicParams;
+    
 
     function run() external returns (Powers) {
         // step 0, setup.
@@ -55,7 +57,7 @@ contract Deploy is DeployHelpers {
         nominees = new Nominees();
         powers = new Powers(
             "Powers 101", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/powers101.json", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/powers101.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -71,7 +73,7 @@ contract Deploy is DeployHelpers {
         // step 3: transfer ownership and run constitute.
         vm.startBroadcast();
         powers.constitute(constitution);
-        powers.closeConstitute();
+        powers.closeConstitute(msg.sender, flows);
 
         nominees.transferOwnership(address(powers));
         erc20DelegateElection.transferOwnership(address(powers));
@@ -118,6 +120,16 @@ contract Deploy is DeployHelpers {
         //////////////////////////////////////////////////////////////////////
         
         // MINT NEW TOKENS FLOW // 
+        uint16[] memory mandateIds = new uint16[](3); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        mandateIds[2] = mandateCount + 3;
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Minting Flow: Propose a mint, veto a mint, execute a mint."
+        }));
+
         // Members: propose minting tokens to an address.  
         string[] memory inputParams = new string[](2);
         inputParams[0] = "address To";
@@ -169,11 +181,21 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
+
         //////////////////////////////////////////////////////////////////////
         //                      ELECTORAL MANDATES                          //
         //////////////////////////////////////////////////////////////////////
         
         // ELECT DELEGATES FLOW // 
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+        
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Elect your delegates: Nominate yourself and call an election."
+        }));
+
         // Members: nominate themselves for a delegate 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = anyone can nominate themselves as delegate.

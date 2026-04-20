@@ -9,9 +9,14 @@ import {
   CodeBracketIcon,
   BookOpenIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  CpuChipIcon
 } from '@heroicons/react/24/outline'
 import { CommunicationChannels, familyMember } from '@/context/types'
+import { useParams } from 'next/navigation'
+import { useAccount, useSignMessage, useReadContract } from 'wagmi'
+import { powersAbi } from '@/context/abi'
+import { useState } from 'react'
 
 // SVG icons for social platforms (as heroicons doesn't have them all)
 // Note: AI generated these SVGs
@@ -78,6 +83,66 @@ export function MetadataLinks({
   chainId,
   isEditorView = false
 }: MetadataLinksProps) {
+  const params = useParams<{ chainId?: string; powers?: string }>() || {};
+  const { address: userAddress } = useAccount()
+  const { signMessageAsync } = useSignMessage()
+  const [isRegistering, setIsRegistering] = useState(false)
+
+  const contractAddress = params?.powers;
+  const currentChainId = chainId || params?.chainId;
+
+  const { data: adminSince } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: powersAbi,
+    functionName: 'hasRoleSince',
+    args: userAddress ? [userAddress, 0n] : undefined,
+    chainId: currentChainId ? Number(currentChainId) : undefined,
+    query: {
+      enabled: !!userAddress && !!contractAddress
+    }
+  })
+
+  const isAdmin = adminSince ? (adminSince as bigint) > 0n : false;
+
+  const handleRegisterAgent = async () => {
+    if (!userAddress || !contractAddress || !currentChainId) return;
+    
+    try {
+      setIsRegistering(true);
+      const message = `Register Powers ${contractAddress} on chain ${currentChainId}`;
+      const signature = await signMessageAsync({ message });
+      
+      const rpcUrl = process.env.NEXT_PUBLIC_XMTP_AGENT_RPC_URL;
+      if (!rpcUrl) throw new Error("XMTP Agent RPC URL not configured in .env");
+
+      const response = await fetch(`${rpcUrl}/api/powers/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          address: contractAddress,
+          chainId: Number(currentChainId),
+          signerAddress: userAddress,
+          signature,
+          message
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to register');
+      }
+      
+      alert(data.message || 'Successfully registered with XMTP Agent!');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      alert(`Error: ${err.message}`);
+    } finally {
+      setIsRegistering(false);
+    }
+  }
+
   // Extract the first communication communicationChannels object (if it exists)
 
   // Helper function to check if a value is a valid link
@@ -109,8 +174,8 @@ export function MetadataLinks({
   const validParents = parentContracts?.filter(parent => parent.address && parent.title) || []
   const validChildren = childContracts?.filter(child => child.address && child.title) || []
 
-  // Don't render anything if there are no valid links
-  if (mainLinks.length === 0 && socialLinks.length === 0 && validParents.length === 0 && validChildren.length === 0) {
+  // Don't render anything if there are no valid links and not admin
+  if (mainLinks.length === 0 && socialLinks.length === 0 && validParents.length === 0 && validChildren.length === 0 && !isAdmin) {
     return null
   }
 
@@ -189,6 +254,18 @@ export function MetadataLinks({
             </a>
           )
         })}
+
+        {/* XMTP Agent Registration (Admin Only) */}
+        {isAdmin && (
+          <button
+            onClick={handleRegisterAgent}
+            disabled={isRegistering}
+            className={`flex items-center gap-2 px-3 py-2 ml-auto bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary ${isRegistering ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title="Register with XMTP Agent"
+          >
+            <CpuChipIcon className={`w-4 h-4 ${isRegistering ? 'animate-pulse' : ''}`} />
+          </button>
+        )}
       </div>
     </section>
   )

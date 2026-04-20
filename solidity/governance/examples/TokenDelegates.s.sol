@@ -27,6 +27,7 @@ contract Deploy is DeployHelpers {
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
     Powers powers;
+    PowersTypes.Flow[] flows;
     Nominees nominees;
     SimpleErc20Votes simpleErc20Votes;
 
@@ -47,7 +48,7 @@ contract Deploy is DeployHelpers {
         simpleErc20Votes = new SimpleErc20Votes();
         powers = new Powers(
             "Token Delegates", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/tokenDelegates.json", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/tokenDelegates.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
@@ -63,7 +64,7 @@ contract Deploy is DeployHelpers {
         // step 3: transfer ownership and run constitute.
         vm.startBroadcast();
         powers.constitute(constitution);
-        powers.closeConstitute();
+        powers.closeConstitute(msg.sender, flows);
         vm.stopBroadcast();
         console2.log("Powers successfully constituted.");
     }
@@ -95,6 +96,16 @@ contract Deploy is DeployHelpers {
             })
         );
         delete conditions;
+        
+        /// FLOW: Electing Delegates /// 
+        uint16[] memory mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Electing Delegates: A governance flow that allows anyone to nominate themselves for a delegate role and to call a delegate election."
+        }));
 
         // Mandate 2: Nominate for Delegates
         mandateCount++;
@@ -127,6 +138,16 @@ contract Deploy is DeployHelpers {
             })
         );
         delete conditions;
+
+        /// DEMO ONLY: ADMIN ASSIGNS ANY ROLE FLOW ///
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Assign any role: For demo purposes, this flow allows the admin to assign any role and delegates to revoke roles."
+        }));
 
         // Mandate 4: Admin assign role
         dynamicParams = new string[](2);

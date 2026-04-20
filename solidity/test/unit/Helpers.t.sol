@@ -15,6 +15,7 @@ import { SimpleGovernor } from "@mocks/SimpleGovernor.sol";
 import { EmptyTargetsMandate } from "@mocks/MandateMocks.sol";
 import { MockTargetsMandate } from "@mocks/MandateMocks.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
 import { Powers } from "@src/Powers.sol";
 import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
@@ -2203,13 +2204,15 @@ contract PowersFactoryTest is TestSetupPowers {
         (PowersTypes.MandateInitData[] memory mandateInitDataArray) =
             testConstitutions.powersTestConstitution(address(daoMock));
 
+        PowersDeployer deployer = new PowersDeployer();
         vm.startPrank(address(daoMock));
         factory = new PowersFactory(
             "Factory DAO", // name
             "https://factory.dao", // uri
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
-            MAX_EXECUTIONS
+            MAX_EXECUTIONS,
+            address(deployer)
             );
         factory.addMandates(mandateInitDataArray);
         vm.stopPrank();
@@ -2266,13 +2269,15 @@ contract PowersFactoryTest is TestSetupPowers {
         (PowersTypes.MandateInitData[] memory mandateInitDataArray) =
             testConstitutions.powersTestConstitution(address(daoMock));
 
+        PowersDeployer deployer = new PowersDeployer();
         vm.startPrank(address(daoMockChild1));
         factory = new PowersFactory(
             "Another DAO", // name
             "ipfs://QmHash", // uri
             MAX_CALL_DATA, 
             MAX_RETURN_DATA, 
-            MAX_EXECUTIONS
+            MAX_EXECUTIONS,
+            address(deployer)
             );
         factory.addMandates(mandateInitDataArray);
         address deployedAddress = factory.createPowers();
