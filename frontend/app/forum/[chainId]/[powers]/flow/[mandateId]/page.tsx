@@ -29,14 +29,17 @@ export default function FlowSequencePage() {
     const actionIdFromUrl = searchParams.get('actionId');
     
     // Get mandate IDs that are part of the same flow
-    const flowMandateIds = useMemo(() => {
-        if (!powers || !mandateId) return new Set<bigint>();
+    const targetFlow = useMemo(() => {
+        if (!powers || !mandateId) return undefined;
         
-        const targetFlow = powers.flows?.find(flow => flow.mandateIds.includes(BigInt(mandateId)));
+        return powers.flows?.find(flow => flow.mandateIds.includes(BigInt(mandateId)));
+    }, [powers, mandateId]);
+    
+    const flowMandateIds = useMemo(() => {
         if (!targetFlow) return new Set<bigint>([BigInt(mandateId)]);
         
         return new Set(targetFlow.mandateIds);
-    }, [powers, mandateId]);
+    }, [targetFlow, mandateId]);
     
     // Filter actions to only include those from mandates in the flow
     const filteredActions = useMemo(() => {
@@ -80,10 +83,10 @@ export default function FlowSequencePage() {
                 <div className="flex-1 flex flex-col border border-border overflow-hidden">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
-                    { mandate ? 
+                    { targetFlow ? 
                     <div className="min-w-0 flex-1 text-center sm:text-left w-full">
-                        <h3 className="text-foreground text-base truncate">#{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
-                        <p className="text-muted-foreground text-sm truncate">{mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}</p>
+                        <h3 className="text-foreground text-base truncate">{targetFlow.nameDescription ? `Flow: ${targetFlow.nameDescription.split(':')[0] || 'Flow Sequence'}` : 'Flow Sequence'}</h3>
+                        <p className="text-muted-foreground text-sm truncate">{targetFlow.nameDescription ? targetFlow.nameDescription.split(':').slice(1).join(':').trim() || '' : ''}</p>
                     </div>
                     :
                     <div className="min-w-0 flex-1 text-center sm:text-left w-full">

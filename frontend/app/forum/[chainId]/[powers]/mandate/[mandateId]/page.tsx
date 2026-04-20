@@ -128,7 +128,7 @@ export default function MandatePage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
             <div className="min-w-0 flex-1 text-center sm:text-left w-full">
-              <h3 className="text-foreground text-base truncate">#{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
+              <h3 className="text-foreground text-base truncate">Mandate: #{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
               <p className="text-muted-foreground text-sm truncate">{mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}</p>
             </div>
             <button
