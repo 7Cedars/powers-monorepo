@@ -20,6 +20,8 @@ export default function ActionPage() {
   const { timestamps, fetchTimestamps } = useBlocks();
   const action = useActionStore();
 
+  console.log('ActionPage Action:', { actionId, action });
+
   // Redirect to overview page if powers data is not loaded yet
   useEffect(() => {
     if (!powers || !powers.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
@@ -54,10 +56,10 @@ export default function ActionPage() {
   useEffect(() => {
     if (action && chainId) {
       const blockNumbers: bigint[] = [];
-      if (action.proposedAt && action.proposedAt !== 0n) blockNumbers.push(action.proposedAt);
-      if (action.requestedAt && action.requestedAt !== 0n) blockNumbers.push(action.requestedAt);
-      if (action.fulfilledAt && action.fulfilledAt !== 0n) blockNumbers.push(action.fulfilledAt);
-      if (action.cancelledAt && action.cancelledAt !== 0n) blockNumbers.push(action.cancelledAt);
+      if (action.proposedAt && BigInt(action.proposedAt) !== 0n) blockNumbers.push(BigInt(action.proposedAt));
+      if (action.requestedAt && BigInt(action.requestedAt) !== 0n) blockNumbers.push(BigInt(action.requestedAt));
+      if (action.fulfilledAt && BigInt(action.fulfilledAt) !== 0n) blockNumbers.push(BigInt(action.fulfilledAt));
+      if (action.cancelledAt && BigInt(action.cancelledAt) !== 0n) blockNumbers.push(BigInt(action.cancelledAt));
       
       if (blockNumbers.length > 0) {
         fetchTimestamps(blockNumbers, chainId);
@@ -114,7 +116,7 @@ export default function ActionPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
             <div className="min-w-0 flex-1 text-center sm:text-left w-full">
-              <h3 className="text-foreground text-base truncate">#{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
+              <h3 className="text-foreground text-base truncate">Action: #{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
               <p className="text-muted-foreground text-sm truncate">{mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}</p>
             </div>
             <button
@@ -140,7 +142,7 @@ export default function ActionPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
-                        <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Description</h4>
+                        <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Description Action</h4>
                       </div>
                       <p className="text-sm text-foreground">{action.description || 'No Description'}</p>
                     </div>
@@ -150,18 +152,10 @@ export default function ActionPage() {
               </div>
 
               {/* Timeline Section (Middle) */}
-              <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
-                  <QueueListIcon className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm text-foreground tracking-wider">Timeline</h4>
-                </div>
-                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[300px]">
-                  <Timeline action={action} mandate={mandate} chainId={chainId} />
-                </div>
-              </div>
+              <Timeline action={action} mandate={mandate} chainId={chainId} />
 
               {/* Voting & Past Votes Section (Right) - Only show if mandate has voting */}
-              {(mandate.conditions?.quorum ?? 0n) > 0n && (
+              {(mandate.conditions?.quorum ? BigInt(mandate.conditions.quorum) : 0n) > 0n && (
                 <div className="flex-1 min-w-0 border border-border bg-background">
                   <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
                     <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />

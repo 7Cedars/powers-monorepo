@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useMemo } from "react";
 import { XMarkIcon, ArrowPathIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { ForumModal } from "../../../../../../components/ForumModal";
+import { SelectActionDialog, SelectedActionInfo } from "../../flow/[mandateId]/SelectActionDialog";
 import { DynamicInput } from "@/components/DynamicInput";
 import { SimulationBox } from "@/components/SimulationBox";
 import { setError, useActionStore, useErrorStore, usePowersStore, useStatusStore, setStatus } from "@/context/store";
@@ -48,9 +49,64 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
 
   // Track if we're submitting a transaction (not just simulating)
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Track whether to show the Select Input dialog
+  const [showSelectInput, setShowSelectInput] = useState(false);
 
   const params = mandate.params || [];
   const dataTypes = params.map(param => param.dataType);
+
+  // Get actions from the same flow (excluding current mandate)
+  const flowActions = useMemo(() => {
+    if (!powers?.flows || !powers?.mandates) return [];
+    
+    // Find the flow that contains the current mandate
+    const targetFlow = powers.flows.find(flow => 
+      flow.mandateIds.includes(mandate.index)
+    );
+    
+    if (!targetFlow) return [];
+    
+    // Get all mandate IDs in the flow (excluding current mandate)
+    const flowMandateIds = new Set(
+      targetFlow.mandateIds.filter(id => id !== mandate.index)
+    );
+    
+    // Collect all actions from these mandates
+    const actions: any[] = [];
+    powers.mandates.forEach(m => {
+      if (flowMandateIds.has(m.index) && m.actions) {
+        m.actions.forEach(a => {
+          const blockNumbers = [
+            a.proposedAt || 0n,
+            a.requestedAt || 0n,
+            a.fulfilledAt || 0n,
+            a.cancelledAt || 0n
+          ].filter(bn => bn > 0n);
+          
+          const highestBlockNumber = blockNumbers.length > 0 
+            ? blockNumbers.reduce((max, bn) => bn > max ? bn : max, 0n)
+            : 0n;
+          
+          if (highestBlockNumber > 0n) {
+            actions.push({
+              ...a,
+              highestBlockNumber
+            });
+          }
+        });
+      }
+    });
+    
+    // Sort by highest block number (descending)
+    actions.sort((a, b) => {
+      if (a.highestBlockNumber > b.highestBlockNumber) return -1;
+      if (a.highestBlockNumber < b.highestBlockNumber) return 1;
+      return 0;
+    });
+    
+    return actions.slice(0, 25);
+  }, [powers, mandate.index]);
 
   // Reset status when dialog closes
   useEffect(() => {
@@ -76,7 +132,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [status.status, open, onOpenChange, isSubmitting, action.actionId, router, chainId, powersAddress]);
+  }, [status.status, open, onOpenChange, isSubmitting, action?.actionId, router, chainId, powersAddress]);
 
   // Handle param value changes
   const handleChange = useCallback((input: InputType | InputType[], index: number) => {
@@ -286,6 +342,42 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
     }
   }, [action, mandate, powers, propose, request]);
 
+  // Handle selecting an action from the flow
+  const handleSelectAction = useCallback((selectedActionInfo: SelectedActionInfo) => {
+    // Find the full action object
+    const selectedAction = flowActions.find(a => a.actionId === selectedActionInfo.actionId);
+    if (!selectedAction || !selectedAction.callData) return;
+    
+    try {
+      // Decode callData to get param values
+      const values = decodeAbiParameters(
+        parseAbiParameters(dataTypes.toString()), 
+        selectedAction.callData as `0x${string}`
+      );
+      const valuesParsed = parseParamValues(values);
+      
+      // Update the action store with the selected action's data
+      // Note: We keep the current description (don't copy it)
+      // But we DO copy the nonce (as per requirement)
+      setAction({
+        ...action,
+        mandateId: mandate.index,
+        callData: selectedAction.callData,
+        nonce: selectedAction.nonce,
+        paramValues: valuesParsed,
+        dataTypes,
+        upToDate: false // Trigger revalidation
+      });
+      
+      // Close the select input dialog
+      setShowSelectInput(false);
+    } catch (error) {
+      console.error("Error loading selected action:", error);
+      setError({ error: error as Error });
+      setShowSelectInput(false);
+    }
+  }, [flowActions, dataTypes, mandate.index, action]);
+
   const needsVote = mandate.conditions?.quorum && mandate.conditions.quorum > 0n;
   console.log("@NewActionDialog: ", {action, error, status, simulation, checks, needsVote});
   
@@ -321,6 +413,19 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           <XMarkIcon className="h-4 w-4" />
         </button>
       </div>
+
+      {/* Select Input Button */}
+      {flowActions.length > 0 && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowSelectInput(true)}
+            className="w-full flex items-center justify-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap bg-foreground text-background hover:bg-foreground/80 transition-colors"
+          >
+            Select Input
+          </button>
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
@@ -453,6 +558,14 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           </div>
         )
       }
+
+      {/* Select Input Dialog */}
+      <SelectActionDialog
+        open={showSelectInput}
+        onOpenChange={setShowSelectInput}
+        onSelect={handleSelectAction}
+        actions={flowActions}
+      />
     </ForumModal>
   );
 };

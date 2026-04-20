@@ -59,14 +59,14 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
     : 0;
 
   const voteEnd = mandate?.conditions?.votingPeriod && populatedAction?.proposedAt
-    ? populatedAction.proposedAt + mandate.conditions.votingPeriod
+    ? BigInt(populatedAction.proposedAt) + BigInt(mandate.conditions.votingPeriod)
     : 0n;
 
   const quorumPassed =
     Number(actionVote?.forVotes || 0) + Number(actionVote?.abstainVotes || 0) >= quorum;
   const thresholdPassed = Number(actionVote?.forVotes || 0) >= threshold;
   const voteActive = populatedAction?.state === 3;
-  const voteEnded = blockNumber && voteEnd ? blockNumber >= voteEnd : false;
+  const voteEnded = blockNumber && voteEnd ? BigInt(blockNumber) >= voteEnd : false;
 
   // Fetch action data
   useEffect(() => {
@@ -76,7 +76,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
       );
       setPopulatedAction(newPopulatedAction || propAction);
     }
-  }, [propAction.actionId, mandate]);
+  }, [propAction?.actionId, mandate]);
 
   // Fetch vote data
   useEffect(() => {
@@ -97,7 +97,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   // Fetch timestamps
   useEffect(() => {
     if (populatedAction?.proposedAt && voteEnd) {
-      fetchTimestamps([populatedAction.proposedAt, voteEnd], chainId);
+      fetchTimestamps([BigInt(populatedAction.proposedAt), voteEnd], chainId);
     }
   }, [populatedAction?.proposedAt, voteEnd, chainId]);
 

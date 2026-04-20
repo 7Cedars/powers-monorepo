@@ -44,7 +44,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
 
   // Calculate vote end block
   const voteEnd = mandate?.conditions?.votingPeriod && action?.proposedAt
-    ? action.proposedAt + mandate.conditions.votingPeriod
+    ? BigInt(action.proposedAt) + BigInt(mandate.conditions.votingPeriod)
     : 0n;
 
   // Helper to truncate addresses, preferring ENS names
@@ -157,7 +157,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
     if (powers && action && mandate) {
       fetchVotes();
     }
-  }, [action.actionId, powers?.contractAddress]);
+  }, [action?.actionId, powers?.contractAddress]);
 
   return (
     <div className="w-full space-y-3">
