@@ -1,9 +1,9 @@
 // // SPDX-License-Identifier: MIT
 // pragma solidity ^0.8.26;
 
-// import { Mandate } from "@src/Mandate.sol";
-// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-// import { IPowers } from "@src/interfaces/IPowers.sol";
+// import { Mandate } from "../../Mandate.sol";
+// import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+// import { IPowers } from "../../interfaces/IPowers.sol";
 // // Chainlink Functions Oracle
 // import { FunctionsClient } from "@chainlink/contracts/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
 // import { ConfirmedOwner } from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";

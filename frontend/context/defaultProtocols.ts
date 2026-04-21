@@ -8,7 +8,7 @@ import { Powers } from './types'
  * for understanding the Powers protocol.
  */
 export const defaultPowers101: Powers = {
-  contractAddress: '0x49cf94fc23ba8f6dffea883b7a260ce3cf97bf91' as `0x${string}`,
+  contractAddress: '0x77A7D275ACA6461a1c0Bd70218E38F7D1b1C14Db' as `0x${string}`,
   chainId: 11155111n,
   name: 'Powers 101',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/powers101.json",

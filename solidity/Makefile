@@ -141,6 +141,8 @@ reset-deps:
 	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-git || exit 1
 	@forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	@forge install safe-fndn/safe-modules --no-git || exit 1
+	@forge install zkpassport/circuits --no-git || exit 1
+	@forge install zkpassport/zkpassport-packages --no-git || exit 1
 	@echo "Dependencies reset complete. All libs installed without git metadata."
 
 # Documentation
@@ -309,7 +311,7 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 example-deploy : 
 	@echo "Deploying example contracts..."
-	forge script governance/examples/NestedGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 organisation-deploy : 
 	@echo "Deploying example contracts..."

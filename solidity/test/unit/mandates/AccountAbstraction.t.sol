@@ -2,10 +2,10 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import { Powers } from "@src/Powers.sol";
-import { PowersPaymaster } from "@src/mandates/integrations/AccountAbstraction/PowersPaymaster.sol";
-import { FundPaymaster } from "@src/mandates/integrations/AccountAbstraction/FundPaymaster.sol";
-import { WithdrawFromPaymaster } from "@src/mandates/integrations/AccountAbstraction/WithdrawFromPaymaster.sol";
+import { Powers } from "../../../src/Powers.sol";
+import { PowersPaymaster } from "../../../src/mandates/integrations/AccountAbstraction/PowersPaymaster.sol";
+import { FundPaymaster } from "../../../src/mandates/integrations/AccountAbstraction/FundPaymaster.sol";
+import { WithdrawFromPaymaster } from "../../../src/mandates/integrations/AccountAbstraction/WithdrawFromPaymaster.sol";
 import { IEntryPoint } from "../../../lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "../../../lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ISenderCreator } from "../../../lib/account-abstraction/contracts/interfaces/ISenderCreator.sol";

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 
-import { DisclosedData, ProofVerificationParams, BoundData, FaceMatchMode, OS } from "@zkpassport/circuits/src/Types.sol";
+import { DisclosedData, ProofVerificationParams, BoundData, FaceMatchMode, OS } from "../../lib/circuits/src/solidity/src/Types.sol";
 
 /// @title ZKPassport Interfaces
 

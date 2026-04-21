@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Mandate } from "@src/Mandate.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { IPowers } from "@src/interfaces/IPowers.sol";
+import { Mandate } from "../../Mandate.sol";
+import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { IPowers } from "../../interfaces/IPowers.sol";
 
 /**
  * @title AssignExternalRole
