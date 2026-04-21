@@ -3,9 +3,9 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
 import { IPowers } from "../../../interfaces/IPowers.sol";
-import { IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IGoverned721 } from "../../../helpers/Governed721.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.

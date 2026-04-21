@@ -4,12 +4,12 @@ pragma solidity ^0.8.26;
 // import { console } from "forge-std/Test.sol";
 // // import { Console } from "forge-std/console.sol";
 // import { TestSetupExecutive } from "../../TestSetup.t.sol";
-// import { StatementOfIntent } from "../../../src/mandates/executive/StatementOfIntent.sol";
-// import { Governor_CreateProposal } from "../../../src/mandates/integrations/Governor_CreateProposal.sol";
-// import { Governor_ExecuteProposal } from "../../../src/mandates/integrations/Governor_ExecuteProposal.sol";
-// import { OpenAction } from "../../../src/mandates/executive/OpenAction.sol";
-// import { PresetActions } from "../../../src/mandates/executive/PresetActions.sol";
-// import { Governor } from "../../../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
+// import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
+// import { Governor_CreateProposal } from "@src/mandates/integrations/Governor_CreateProposal.sol";
+// import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor_ExecuteProposal.sol";
+// import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+// import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
+// import { Governor } from "@lib/openzeppelin-contracts/contracts/governance/Governor.sol";
 
 // /// @title Executive Mandate Fuzz Tests
 // /// @notice Comprehensive fuzz testing for all executive mandate implementations using pre-initialized mandates

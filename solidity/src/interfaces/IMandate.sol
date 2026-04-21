@@ -6,7 +6,7 @@
 /// @author 7Cedars
 pragma solidity ^0.8.26;
 
-import { IERC165 } from "../../lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 interface IMandate is IERC165 {
     //////////////////////////////////////////////////////////////

@@ -4,9 +4,9 @@ pragma solidity ^0.8.26;
 // import { TestSetupPowers } from "../../TestSetup.t.sol";
 // // import { console2 } from "forge-std/console2.sol";
 
-// import { MandateUtilities } from "../../../src/libraries/MandateUtilities.sol";
-// import { MessageHashUtils } from "../../../lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
-// import { ECDSA } from "../../../lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+// import { MessageHashUtils } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
+// import { ECDSA } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 // /// @notice Comprehensive unit tests for all electoral mandates
 // /// @dev Tests all functionality of electoral mandates including initialization, execution, and edge cases

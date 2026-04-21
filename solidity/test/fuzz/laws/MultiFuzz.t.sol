@@ -3,12 +3,12 @@ pragma solidity ^0.8.26;
 
 // import { Test } from "forge-std/Test.sol";
 // import { TestSetupMulti } from "../../TestSetup.t.sol";
-// import { OpenAction } from "../../../src/mandates/executive/OpenAction.sol";
-// import { StatementOfIntent } from "../../../src/mandates/executive/StatementOfIntent.sol";
-// import { BespokeAction_Simple } from "../../../src/mandates/executive/BespokeAction_Simple.sol";
-// import { PresetActions } from "../../../src/mandates/executive/PresetActions.sol";
-// import { PresetActions_Multiple } from "../../../src/mandates/executive/PresetActions_Multiple.sol";
-// import { BespokeAction_Advanced } from "../../../src/mandates/executive/BespokeAction_Advanced.sol";
+// import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+// import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
+// import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
+// import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
+// import { PresetActions_Multiple } from "@src/mandates/executive/PresetActions_Multiple.sol";
+// import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Advanced.sol";
 
 // /// @title Multi Mandate Fuzz Tests
 // /// @notice Comprehensive fuzz testing for all multi mandate implementations using pre-initialized mandates

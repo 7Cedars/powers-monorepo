@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import { Client } from "../../lib/chainlink-ccip/chains/evm/contracts/libraries/Client.sol";
-import { CCIPReceiver } from "../../lib/chainlink-ccip/chains/evm/contracts/applications/CCIPReceiver.sol";
-import { IRouterClient } from "../../lib/chainlink-ccip/chains/evm/contracts/interfaces/IRouterClient.sol";
+import { Client } from "@lib/chainlink-ccip/chains/evm/contracts/libraries/Client.sol";
+import { CCIPReceiver } from "@lib/chainlink-ccip/chains/evm/contracts/applications/CCIPReceiver.sol";
+import { IRouterClient } from "@lib/chainlink-ccip/chains/evm/contracts/interfaces/IRouterClient.sol";
 
-import { ConfirmedOwner } from "../../lib/chainlink-evm/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
+import { ConfirmedOwner } from "@lib/chainlink-evm/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 import { IPowers } from "../interfaces/IPowers.sol";
 
