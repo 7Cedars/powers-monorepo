@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.26;
 
-import { Ownable } from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 

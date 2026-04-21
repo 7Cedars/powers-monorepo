@@ -26,8 +26,8 @@ pragma solidity ^0.8.26;
 import { IPowers } from "./interfaces/IPowers.sol";
 import { MandateUtilities } from "./libraries/MandateUtilities.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
-import { ERC165 } from "../lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
-import { IERC165 } from "../lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import { ERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying
 

@@ -4,15 +4,15 @@ pragma solidity ^0.8.26;
 // Base contracts
 import { IPowers } from "../../../interfaces/IPowers.sol";
 import { AsyncMandate } from "../../../AsyncMandate.sol"; 
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 // Chainlink Functions
-import { FunctionsClient } from "../../../../lib/chainlink-evm/contracts/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
-import { FunctionsRequest } from "../../../../lib/chainlink-evm/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
+import { FunctionsClient } from "@lib/chainlink-evm/contracts/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
+import { FunctionsRequest } from "@lib/chainlink-evm/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 
 // OpenZeppelin for signature verification
-import { MessageHashUtils } from "../../../../lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
-import { ECDSA } from "../../../../lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ECDSA } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @title Github_ClaimRoleWithSig

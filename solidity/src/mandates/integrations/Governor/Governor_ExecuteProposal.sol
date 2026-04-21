@@ -10,9 +10,9 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
-import { Governor } from "../../../../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
-import { IGovernor } from "../../../../lib/openzeppelin-contracts/contracts/governance/IGovernor.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { Governor } from "@lib/openzeppelin-contracts/contracts/governance/Governor.sol";
+import { IGovernor } from "@lib/openzeppelin-contracts/contracts/governance/IGovernor.sol";
 
 contract Governor_ExecuteProposal is Mandate {
     struct Mem {

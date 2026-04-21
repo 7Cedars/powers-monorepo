@@ -4,14 +4,14 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 import { TestSetupExecutive } from "../../TestSetup.t.sol";
 
-import { Powers } from "../../../src/Powers.sol";
-import { MandateUtilities } from "../../../src/libraries/MandateUtilities.sol";
-import { PowersTypes } from "../../../src/interfaces/PowersTypes.sol";
-import { PowersEvents } from "../../../src/interfaces/PowersEvents.sol";
-import { PowersErrors } from "../../../src/interfaces/PowersErrors.sol";
+import { Powers } from "@src/Powers.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
+import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { PowersMock } from "../../mocks/PowersMock.sol";
-import { OpenAction } from "../../../src/mandates/executive/OpenAction.sol";
-import { PresetActions } from "../../../src/mandates/executive/PresetActions.sol";
+import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
 import { SimpleErc1155 } from "../../mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "../../mocks/ReturnDataMock.sol";
 

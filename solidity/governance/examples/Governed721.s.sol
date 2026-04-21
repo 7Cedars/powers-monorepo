@@ -4,25 +4,25 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "../../script/Configurations.s.sol";
-import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
+import { Configurations } from "@script/Configurations.s.sol";
+import { InitialisePowers } from "@script/InitialisePowers.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";
 
 // external protocols
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol"; 
-import { SafeProxyFactory } from "../../lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
-import { Safe } from "../../lib/safe-smart-account/contracts/Safe.sol"; 
-import { ModuleManager } from "../../lib/safe-smart-account/contracts/base/ModuleManager.sol";
-import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol"; 
+import { SafeProxyFactory } from "@lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
+import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol"; 
+import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
+import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 // powers contracts
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { Powers } from "../../src/Powers.sol";
-import { IPowers } from "../../src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { Powers } from "@src/Powers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers 
-import { ElectionList } from "../../src/helpers/ElectionList.sol";
-import { Governed721, IGoverned721 } from "../../src/helpers/Governed721.sol";
+import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
 
 /// @title Governed721DAO Deployment Script
 contract Deploy is DeployHelpers {

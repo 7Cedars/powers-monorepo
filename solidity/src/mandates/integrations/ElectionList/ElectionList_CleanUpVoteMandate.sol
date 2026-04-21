@@ -17,7 +17,7 @@ pragma solidity ^0.8.26;
 import { Mandate } from "../../../Mandate.sol";
 import { IPowers } from "../../../interfaces/IPowers.sol";
 import { PowersTypes } from "../../../interfaces/PowersTypes.sol";
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { ElectionList } from "../../../helpers/ElectionList.sol";
 
 contract ElectionList_CleanUpVoteMandate is Mandate {
