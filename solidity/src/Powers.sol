@@ -42,10 +42,10 @@ import { Mandate } from "./Mandate.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
 import { IPowers } from "./interfaces/IPowers.sol";
 import { Checks } from "./libraries/Checks.sol";
-import { ERC165Checker } from "../lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
-import { Address } from "../lib/openzeppelin-contracts/contracts/utils/Address.sol";
-import { EIP712 } from "../lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
-import { Context } from "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
+import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
+import { Address } from "@lib/openzeppelin-contracts/contracts/utils/Address.sol";
+import { EIP712 } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
+import { Context } from "@lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 

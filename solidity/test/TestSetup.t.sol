@@ -3,20 +3,20 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import { Strings } from "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
+import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 // protocol
-import { Powers } from "../src/Powers.sol";
-import { Mandate } from "../src/Mandate.sol";
-import { PowersErrors } from "../src/interfaces/PowersErrors.sol";
-import { PowersTypes } from "../src/interfaces/PowersTypes.sol";
-import { PowersEvents } from "../src/interfaces/PowersEvents.sol";
-import { Configurations } from "../script/Configurations.s.sol";
+import { Powers } from "@src/Powers.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
+import { Configurations } from "@script/Configurations.s.sol";
 import { TestConstitutions } from "./TestConstitutions.sol"; 
 import { console2 } from "forge-std/console2.sol";
 
 // deploy scripts
-import { InitialisePowers } from "../script/InitialisePowers.s.sol";
+import { InitialisePowers } from "@script/InitialisePowers.s.sol";
 import { PowersMock } from "./mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 
@@ -26,22 +26,22 @@ import { Deploy as ElectionListsDAO } from "../governance/examples/ElectionLists
 // import { Deploy } from "@governance/examples/CulturalStewardsDAO/Deploy.s.sol";
 
 // helpers
-import { Nominees } from "../src/helpers/Nominees.sol";
-import { ElectionList } from "../src/helpers/ElectionList.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
+import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { Erc20DelegateElection } from "./mocks/Erc20DelegateElection.sol";
-import { FlagActions } from "../src/helpers/FlagActions.sol";
+import { FlagActions } from "@src/helpers/FlagActions.sol";
 import { SimpleGovernor } from "./mocks/SimpleGovernor.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 import { Erc20Taxed } from "./mocks/Erc20Taxed.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
-import { AllowedTokens } from "../src/helpers/AllowedTokens.sol";
-import { PowersFactory } from "../src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "../src/helpers/PowersDeployer.sol";
-import { Soulbound1155 } from "../src/helpers/Soulbound1155.sol";
-import { ElectionList } from "../src/helpers/ElectionList.sol"; 
-import { ZKPassport_PowersRegistry } from "../src/helpers/ZKPassport_PowersRegistry.sol";
+import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
+import { PowersFactory } from "@src/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
+import { ElectionList } from "@src/helpers/ElectionList.sol"; 
+import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // protocol and mocks
     Powers powers;

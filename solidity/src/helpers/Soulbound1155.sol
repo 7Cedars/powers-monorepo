@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { ERC1155 } from "../../lib/openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
-import { Ownable } from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol";
+import { ERC1155 } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
+import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
 
 /**
  * @dev Soulbound1155 is meant as a soulbound ERC 1155 token that has a dynamic token ID, allowing for encoding data into the token ID.

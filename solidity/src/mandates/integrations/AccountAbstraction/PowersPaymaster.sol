@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { BasePaymaster } from "../../../../lib/account-abstraction/contracts/core/BasePaymaster.sol";
-import { PackedUserOperation } from "../../../../lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { IEntryPoint } from "../../../../lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { BasePaymaster } from "@lib/account-abstraction/contracts/core/BasePaymaster.sol";
+import { PackedUserOperation } from "@lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
 /// @title PowersPaymaster
 /// @notice An ERC-4337 Paymaster that only sponsors calls where the target is a specific Powers protocol contract.

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.26;
 
 // import { TestSetupMandate } from "../TestSetup.t.sol";
-// import { IMandate } from "../../src/interfaces/IMandate.sol";
-// import { PresetActions } from "../../src/mandates/executive/PresetActions.sol";
-// import { OpenAction } from "../../src/mandates/executive/OpenAction.sol";
-// import { StatementOfIntent } from "../../src/mandates/executive/StatementOfIntent.sol";
-// import { BespokeAction_Simple } from "../../src/mandates/executive/BespokeAction_Simple.sol";
-// import { BespokeAction_Advanced } from "../../src/mandates/executive/BespokeAction_Advanced.sol";
-// import { IERC165 } from "../../../../lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+// import { IMandate } from "@src/interfaces/IMandate.sol";
+// import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
+// import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+// import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
+// import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
+// import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Advanced.sol";
+// import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 // /// @title Mandate Fuzz Tests
 // /// @notice Comprehensive fuzz testing for the Mandate.sol contract and its implementations
