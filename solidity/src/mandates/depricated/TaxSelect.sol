@@ -22,9 +22,9 @@
 // /// @author 7Cedars
 pragma solidity ^0.8.26;
 
-// import { Mandate } from "@src/Mandate.sol"; 
-// import { IPowers } from "@src/interfaces/IPowers.sol";
-// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+// import { Mandate } from "../../Mandate.sol"; 
+// import { IPowers } from "../../interfaces/IPowers.sol";
+// import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
 // import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
 
 // // import "forge-std/Test.sol"; // only for testing

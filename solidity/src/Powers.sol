@@ -8,7 +8,7 @@
  |_|     \____/     \/  \/    |______||_|  \_\|_____/ 
                                                       
 */
-/// @title Powers Protocol v.0.5
+/// @title Powers Protocol v.0.6.1
 /// @notice A modular governance protocol enabling institutional design for on-chain organizations through role-based access control and separation of powers.
 ///
 /// @dev Powers is built around three core concepts:
@@ -118,7 +118,7 @@ contract Powers is EIP712, IPowers, Context {
 
     /// @dev Internal check for onlyAdmin modifier.
     function _onlyAdmin() internal view {
-        if (_msgSender() != getRoleHolderAtIndex(ADMIN_ROLE, 0)) revert Powers__OnlyAdmin();
+        if (hasRoleSince(_msgSender(), ADMIN_ROLE) == 0) revert Powers__OnlyAdmin();
     }
 
     //////////////////////////////////////////////////////////////

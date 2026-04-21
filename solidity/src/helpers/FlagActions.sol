@@ -7,7 +7,7 @@
 
 pragma solidity ^0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import { IPowers } from "../../src/interfaces/IPowers.sol";
 import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
 

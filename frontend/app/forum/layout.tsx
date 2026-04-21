@@ -228,7 +228,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           </div>
           
           <div className="space-y-3 pt-2">
-            <div className="bg-muted/30 p-3 rounded border border-border">
+            <div className="bg-muted/50 p-3 rounded border border-border">
               <p className="text-xs text-muted-foreground font-mono">
                 This will require a signature from your wallet to log in to your encrypted XMTP identity.
               </p>

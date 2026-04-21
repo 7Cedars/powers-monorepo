@@ -13,7 +13,7 @@ import { TestSetupPowers } from "../TestSetup.t.sol";
 import { PowersMock } from "../mocks/PowersMock.sol";
 import { OpenAction } from "../../src/mandates/executive/OpenAction.sol";
 
-import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
+import { SimpleErc1155 } from "../mocks/SimpleErc1155.sol";
 
 /// @notice Unit tests for the core Powers protocol (updated v0.4)
 

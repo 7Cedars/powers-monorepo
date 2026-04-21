@@ -85,7 +85,7 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
                   {sortedActions.map((action, index) => (
                       <tr
                         key={index}
-                        className="border-b border-border hover:bg-muted/30 transition-colors"
+                        className="border-b border-border hover:bg-muted/50 transition-colors"
                       >
                         <td className="px-4 py-3">
                           <a

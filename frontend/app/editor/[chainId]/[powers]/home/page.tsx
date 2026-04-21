@@ -50,7 +50,7 @@ export default function FlowPage() {
         </section>
         
         {/* Description + link to powers protocol deployment */}
-        <div className="border border-border bg-muted/30 mb-6">
+        <div className="border border-border bg-muted/50 mb-6">
           <div className="px-4 py-3">
             <div className="text-foreground text-sm mb-3 font-mono">
               {powers?.metadatas?.description}

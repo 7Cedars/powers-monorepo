@@ -36,7 +36,7 @@ export function RoleList({powers}: RoleListProps) {
               {powers.roles?.map((role: Role, i: number) => (
                 <tr 
                   key={i} 
-                  className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                  className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
                   onClick={() => {
                     router.push(`/editor/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`);
                   }}

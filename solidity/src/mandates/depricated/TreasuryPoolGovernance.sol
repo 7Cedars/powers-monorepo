@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-// import { Mandate } from "@src/Mandate.sol";
-// import { IPowers } from "@src/interfaces/IPowers.sol";
-// import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+// import { Mandate } from "../../Mandate.sol";
+// import { IPowers } from "../../interfaces/IPowers.sol";
+// import { PowersTypes } from "../../interfaces/PowersTypes.sol";
 // import { Powers } from "../../Powers.sol";
-// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-// import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+// import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+// import { Strings } from "../../../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 // /**
 //  * @title TreasuryPoolGovernance

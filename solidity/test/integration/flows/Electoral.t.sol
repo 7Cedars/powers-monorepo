@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Test, console, console2 } from "lib/forge-std/src/Test.sol";
-import { Powers } from "@src/Powers.sol";
-import { Mandate } from "@src/Mandate.sol";
-import { Nominees } from "@src/helpers/Nominees.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { Test, console, console2 } from "../../../lib/forge-std/src/Test.sol";
+import { Powers } from "../../../src/Powers.sol";
+import { Mandate } from "../../../src/Mandate.sol";
+import { Nominees } from "../../../src/helpers/Nominees.sol";
+import { ElectionList } from "../../../src/helpers/ElectionList.sol";
 import {
     TestSetupDelegateTokenFlow,
     TestSetupElectionListFlow,
     TestSetupAssignExternalRoleParentFlow
 } from "../../TestSetup.t.sol";
 
-import { Nominees } from "@src/helpers/Nominees.sol";
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
+import { Nominees } from "../../../src/helpers/Nominees.sol";
+import { SimpleErc20Votes } from "../../mocks/SimpleErc20Votes.sol";
 
 contract DelegateTokenFlow_IntegrationTest is TestSetupDelegateTokenFlow {
     uint16 constant MANDATE_NOMINATE = 1;

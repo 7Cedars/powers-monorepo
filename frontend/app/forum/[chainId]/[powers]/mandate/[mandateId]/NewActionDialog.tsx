@@ -511,7 +511,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
             onClick={handleSimulate}
             className={cn(
               "w-full border border-border px-4 py-2.5 text-xs text-foreground",
-              "bg-muted/10 hover:bg-muted/30 hover:border-foreground/40 transition-colors",
+              "bg-muted/10 hover:bg-muted/50 hover:border-foreground/40 transition-colors",
               "uppercase tracking-wider font-mono"
             )}
           >

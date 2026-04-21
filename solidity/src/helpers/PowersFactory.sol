@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { PowersDeployer } from "./PowersDeployer.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import { MandateUtilities } from "../libraries/MandateUtilities.sol";
 
 /// @title Powers Factory

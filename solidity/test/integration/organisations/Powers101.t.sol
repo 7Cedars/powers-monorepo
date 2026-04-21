@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 // import { Test, console, console2 } from "lib/forge-std/src/Test.sol";
-// import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+// import { Strings } from "../../../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 // import { Powers } from "../../../src/Powers.sol";
 // import { IPowers } from "../../../src/interfaces/IPowers.sol";

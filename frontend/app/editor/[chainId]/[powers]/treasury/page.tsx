@@ -31,7 +31,7 @@ export default function Page() {
         
         {powers.treasury && powers.treasury !== "0x0000000000000000000000000000000000000000" ? (
           <>
-            <div className="mb-4 border border-border bg-muted/30 px-4 py-3">
+            <div className="mb-4 border border-border bg-muted/50 px-4 py-3">
               <a
                 href={`${supportedChain?.blockExplorers?.default.url}/address/${powers.treasury as `0x${string}`}#code`}
                 target="_blank"

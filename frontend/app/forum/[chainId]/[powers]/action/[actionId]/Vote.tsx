@@ -318,7 +318,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
               <button
                 onClick={() => handleVoteClick(2n)}
                 disabled={status.status === "pending"}
-                className="w-full border  px-4 py-3 text-xs transition-colors bg-muted/30 border-border text-muted-foreground hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
+                className="w-full border  px-4 py-3 text-xs transition-colors bg-muted/50 border-border text-muted-foreground hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed font-mono uppercase tracking-wider"
               >
                 {status.status === "pending" && logSupport === 2n ? "VOTING..." : "ABSTAIN"}
               </button>

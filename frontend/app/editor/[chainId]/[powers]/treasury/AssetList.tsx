@@ -39,7 +39,7 @@ export function AssetList() {
                 fetchTokens(powers)
               }
             }}
-            className="flex items-center justify-center p-1.5 hover:bg-muted/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center p-1.5 hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Refresh Assets"
           >
             <ArrowPathIcon 
@@ -71,7 +71,7 @@ export function AssetList() {
                 </thead>
                 <tbody className="w-full text-left divide-y divide-border">
                   {native && (
-                    <tr className="border-b border-border hover:bg-muted/30 transition-colors">
+                    <tr className="border-b border-border hover:bg-muted/50 transition-colors">
                       {/* Asset */}
                       <td className="px-4 py-3">
                         <span className="text-muted-foreground">
@@ -117,7 +117,7 @@ export function AssetList() {
                   )}
                   {
                     tokens?.map((token: Token, i) => 
-                      <tr className="border-b border-border hover:bg-muted/30 transition-colors" key={i}>
+                      <tr className="border-b border-border hover:bg-muted/50 transition-colors" key={i}>
                         {/* Asset */}
                         <td className="px-4 py-3">
                           <span className="text-muted-foreground">

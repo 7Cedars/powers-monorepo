@@ -6,10 +6,10 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 
 // interfaces
-import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { PowersTypes } from "../src/interfaces/PowersTypes.sol";
 
 // mandates
-import { ReformMandate_Static } from "@src/mandates/reform/MandatePackage_Static.sol";
+import { ReformMandate_Static } from "../src/mandates/reform/MandatePackage_Static.sol";
 
 contract DeployHelpers is Script {
     function daysToBlocks(uint256 quantityDays, uint256 blocksPerHour) public pure returns (uint32) {

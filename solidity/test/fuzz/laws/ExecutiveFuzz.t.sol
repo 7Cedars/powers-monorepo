@@ -9,7 +9,7 @@ pragma solidity ^0.8.26;
 // import { Governor_ExecuteProposal } from "../../../src/mandates/integrations/Governor_ExecuteProposal.sol";
 // import { OpenAction } from "../../../src/mandates/executive/OpenAction.sol";
 // import { PresetActions } from "../../../src/mandates/executive/PresetActions.sol";
-// import { Governor } from "@openzeppelin/contracts/governance/Governor.sol";
+// import { Governor } from "../../../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
 
 // /// @title Executive Mandate Fuzz Tests
 // /// @notice Comprehensive fuzz testing for all executive mandate implementations using pre-initialized mandates

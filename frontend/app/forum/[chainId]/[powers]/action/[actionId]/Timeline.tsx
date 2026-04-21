@@ -182,7 +182,7 @@ export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) 
 
   return (
     <div className="flex-1 min-w-0 border border-border bg-background">
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+      <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
         <QueueListIcon className="h-4 w-4 text-muted-foreground" />
         <h4 className="text-sm text-foreground tracking-wider">Timeline</h4>
       </div>

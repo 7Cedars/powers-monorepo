@@ -14,8 +14,8 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "@src/Mandate.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { Mandate } from "../../Mandate.sol";
+import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying
 

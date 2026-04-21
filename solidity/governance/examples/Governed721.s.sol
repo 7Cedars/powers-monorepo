@@ -4,25 +4,25 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "@script/Configurations.s.sol";
-import { InitialisePowers } from "@script/InitialisePowers.s.sol";
+import { Configurations } from "../../script/Configurations.s.sol";
+import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";
 
 // external protocols
-import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol"; 
-import { SafeProxyFactory } from "@lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
-import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol"; 
-import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol"; 
+import { SafeProxyFactory } from "../../lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
+import { Safe } from "../../lib/safe-smart-account/contracts/Safe.sol"; 
+import { ModuleManager } from "../../lib/safe-smart-account/contracts/base/ModuleManager.sol";
+import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 // powers contracts
-import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { Powers } from "@src/Powers.sol";
-import { IPowers } from "@src/interfaces/IPowers.sol";
+import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
+import { Powers } from "../../src/Powers.sol";
+import { IPowers } from "../../src/interfaces/IPowers.sol";
 
 // helpers 
-import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
+import { ElectionList } from "../../src/helpers/ElectionList.sol";
+import { Governed721, IGoverned721 } from "../../src/helpers/Governed721.sol";
 
 /// @title Governed721DAO Deployment Script
 contract Deploy is DeployHelpers {
@@ -31,6 +31,7 @@ contract Deploy is DeployHelpers {
     InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
     Powers public powers;
+    PowersTypes.Flow[] flows;
     Governed721 public governed721;
 
     uint256 constant PACKAGE_SIZE = 10; // number of mandates per packaged mandate.
@@ -94,7 +95,7 @@ contract Deploy is DeployHelpers {
             vm.stopBroadcast();
         }
         vm.startBroadcast(); 
-        powers.closeConstitute();
+        powers.closeConstitute(msg.sender, flows); // close constitute and set flows. msg.sender is admin.
         
         // Transfer ownership of Governed721 to Powers (important for minting/updating)
         governed721.setPaymentId(paymentMandateId);
@@ -111,13 +112,13 @@ contract Deploy is DeployHelpers {
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
         calldatas = new bytes[](11);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", string.concat(baseURI, "/admin.json"));  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", string.concat(baseURI, "/public.json")); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", string.concat(baseURI, "/artist.json"));
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Owner", string.concat(baseURI, "/owner.json")); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Operator", string.concat(baseURI, "/operator.json")); 
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", string.concat(baseURI, "/voter.json")); 
-        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", string.concat(baseURI, "/executive.json"));
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Owner", ""); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Operator", ""); 
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", ""); 
+        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", "");
         // Assign roles to msg.sender for initial setup (will be revoked later or kept for testing)
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, msg.sender);
         calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, msg.sender);
@@ -139,24 +140,21 @@ contract Deploy is DeployHelpers {
         //////////////////////////////////////////////////////////////////////
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
-        // COLLECT PAYMENT 
-        mandateCount++;
-        conditions.allowedRole = type(uint256).max; // Any one can call, but logic enforces caller matches role
-        // conditions.needFulfilled = transferMandateId; // No longer linked to transfer mandate directly
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Collect Split Payment: Role holders can collect their split of payment.",
-                targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_CollectSplitPayment"),
-                config: abi.encode(
-                    address(governed721) // Governed721 Address
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-        paymentMandateId = mandateCount;
- 
-        // SET SPLIT PAYMENT
+        // SET SPLIT PAYMENT FLOW
+        uint16[] memory mandateIds = new uint16[](7); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2; 
+        mandateIds[2] = mandateCount + 3; 
+        mandateIds[3] = mandateCount + 4;
+        mandateIds[4] = mandateCount + 5;
+        mandateIds[5] = mandateCount + 6;
+        mandateIds[6] = mandateCount + 7;
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Set a split payment: Executives can propose a new split, minter, owner and intermediary can veto, and if no vetoes, executives can execute the new split after a time lock."
+        }));
+
         // single executive: propose new split and vote. Input should be the new split between minter, intermediary and owner.
         inputParams = new string[](2);
         inputParams[0] = "uint8 Role"; // 1 = Artist, 2 = Intermediary. The Old Owner gets the remainder after Artist and Intermediary split, so we only need to input the splits for Artist and Intermediary.
@@ -285,6 +283,15 @@ contract Deploy is DeployHelpers {
         splitCheckpoint3 = mandateCount;
  
         // ADD / REMOVE ALLOWED TOKENS MANDATE 
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Add/Remove Allowed Tokens: Executives can add or remove allowed tokens, with a voting period and veto power for members."
+        }));
+
         // executives: add allowed tokens. Vote. Execute. 
         inputParams = new string[](2);
         inputParams[0] = "address Token";
@@ -334,7 +341,16 @@ contract Deploy is DeployHelpers {
         delete conditions;
 
         // SET BLACKLIST
-        // £todo - update 
+        // £todo - update this flow? 
+        mandateIds = new uint16[](2); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Set Blacklist: Executives can add or remove accounts from a blacklist, with a voting period and veto power for members."
+        }));
+
         // executives: add addresses to blacklist. Vote. Execute.
         inputParams = new string[](2);
         inputParams[0] = "address Account";
@@ -386,7 +402,17 @@ contract Deploy is DeployHelpers {
         //                        ELECTORAL MANDATES                        // 
         //////////////////////////////////////////////////////////////////////
 
-        // ASSIGNING OWNER ROLE
+        // MANAGING OWNER ROLE
+        mandateIds = new uint16[](3); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        mandateIds[2] = mandateCount + 3;
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Manage Owner Role: Assigning and revoking owner role based on ownership of the NFT. Owner can be assigned or revoked based on the ownership check, with a veto from executives for revocation."
+        }));
+
         inputParams = new string[](1);
         inputParams[0] = "uint256 TokenId";
         // First calls the ERC721 contract to check owner of NFT. 
@@ -451,7 +477,19 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // ASSIGNING ARTIST ROLE:
+
+
+        // MANAGING ARTIST ROLE:
+        mandateIds = new uint16[](3); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        mandateIds[2] = mandateCount + 3;
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Manage Artist Role: Assigning and revoking artist role based on having minted an NFT. Artist can be assigned or revoked based on the artist check, with a veto from executives for revocation."
+        }));
+
         // follows the same logic as owner role assignment, but reads the artist from the governed721 contract instead of the owner. 
         inputParams = new string[](1);
         inputParams[0] = "uint256 TokenId";
@@ -517,7 +555,17 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // ASSIGNING INTERMEDIARY ROLE:
+        // MANAGING INTERMEDIARY ROLE:
+        mandateIds = new uint16[](3); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        mandateIds[2] = mandateCount + 3;
+
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Manage Intermediary Role: Assigning and revoking intermediary role based on approved address of the NFT. Intermediary can be assigned or revoked based on the approved address check, with a veto from executives for revocation."
+        }));
+
         // Note follows the same logic as owner role assignments, but now checks if / who has been assigned as 'approved' at a token. 
         inputParams = new string[](1);
         inputParams[0] = "uint256 TokenId";
@@ -583,27 +631,21 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-        // Set URI 
-        inputParams = new string[](1);
-        inputParams[0] = "string newUri";
+        // VOTER ROLE AND EXECUTIVE ELECTIONS  
+        mandateIds = new uint16[](7); 
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        mandateIds[2] = mandateCount + 3;
+        mandateIds[3] = mandateCount + 4;
+        mandateIds[4] = mandateCount + 5;
+        mandateIds[5] = mandateCount + 6;
+        mandateIds[6] = mandateCount + 7;
 
-        mandateCount++;
-        conditions.allowedRole = 5; // Executives
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
-        conditions.succeedAt = 51;
-        conditions.quorum = 10;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Executives can update URI: Executives can update the URI of the contract.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
-                conditions: conditions
-            })
-        ); 
-        delete conditions;
+        flows.push(PowersTypes.Flow({
+            mandateIds: mandateIds,
+            nameDescription: "Manage Voter Role and Executive Elections: Assigning voter role based on having a certain role (e.g. owner, minter, intermediary), with executives having the power to veto. Executives can create elections, voters can vote, and executives can tally and execute results."
+        }));
 
- 
-        // ASSIGNING VOTER ROLE: 
         uint256[] memory voterRoleCriteria = new uint256[](3);
         voterRoleCriteria[0] = 1; // Minter role ID
         voterRoleCriteria[1] = 2; // Owner role ID
@@ -624,11 +666,9 @@ contract Deploy is DeployHelpers {
         );
         delete conditions; 
 
-        // ELECTION EXECUTIVES 
-        // standard election flow. See cultural stewards DAO for example. WHO ARE THE VOTERS AND CANDIDATES? 
+        // Note standard election flow. See cultural stewards DAO for example. WHO ARE THE VOTERS AND CANDIDATES? 
         // Voters = Role 4 (Voter)
-        // Candidates = Role 4? (Assume Voters can be Executives)
-        
+        // Candidates = Role 4? (Assume Voters can be Executives)        
         inputParams = new string[](3);
         inputParams[0] = "string Title";
         inputParams[1] = "uint48 StartBlock";
@@ -743,6 +783,45 @@ contract Deploy is DeployHelpers {
                 conditions: conditions
             })
         );
+        delete conditions;
+
+        //////////////////////////////////////////////////////////////////////
+        //                        ORPHAN MANDATES                           //
+        //////////////////////////////////////////////////////////////////////
+        // COLLECT PAYMENT 
+        mandateCount++;
+        conditions.allowedRole = type(uint256).max; // Any one can call, but logic enforces caller matches role
+        // conditions.needFulfilled = transferMandateId; // No longer linked to transfer mandate directly
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Collect Split Payment: Role holders can collect their split of payment.",
+                targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_CollectSplitPayment"),
+                config: abi.encode(
+                    address(governed721) // Governed721 Address
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+        paymentMandateId = mandateCount;
+
+        // SET URI 
+        inputParams = new string[](1);
+        inputParams[0] = "string newUri";
+
+        mandateCount++;
+        conditions.allowedRole = 5; // Executives
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.succeedAt = 51;
+        conditions.quorum = 10;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Executives can update URI: Executives can update the URI of the contract.",
+                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
+                conditions: conditions
+            })
+        ); 
         delete conditions;
 
         //////////////////////////////////////////////////////////////////////

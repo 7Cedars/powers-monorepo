@@ -6,7 +6,7 @@ import { PowersTypes } from "../../../src/interfaces/PowersTypes.sol";
 import { IPowers } from "../../../src/interfaces/IPowers.sol";
 import { IMandate } from "../../../src/interfaces/IMandate.sol";
 import { console2 } from "forge-std/console2.sol";
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
+import { SimpleErc20Votes } from "../../mocks/SimpleErc20Votes.sol";
 
 contract SafeProtocolFlowTest is TestSetupSafeProtocolFlow {
     function testSafeProtocolFlow() public {
