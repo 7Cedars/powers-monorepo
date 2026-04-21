@@ -44,7 +44,7 @@ export function Assets({powers}: {status: Status, powers: Powers | undefined}) {
             </thead>
             <tbody>
               {native && (
-                <tr className="border-b border-border hover:bg-muted/30 transition-colors">
+                <tr className="border-b border-border hover:bg-muted/50 transition-colors">
                   <td className="px-4 py-3">
                     <span className="text-foreground">{native.symbol}</span>
                   </td>
@@ -61,7 +61,7 @@ export function Assets({powers}: {status: Status, powers: Powers | undefined}) {
                 </tr>
               )}
               {tokens && tokens.map((token, i) => (
-                <tr key={i} className="border-b border-border hover:bg-muted/30 transition-colors">
+                <tr key={i} className="border-b border-border hover:bg-muted/50 transition-colors">
                   <td className="px-4 py-3">
                     <span className="text-foreground">{token.symbol}</span>
                   </td>

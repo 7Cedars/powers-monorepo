@@ -150,7 +150,7 @@ export default function MandatePage() {
             <div className="flex flex-col lg:flex-row gap-4 w-full">
               {/* LEFT: Mandate Conditions */}
               <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
                   <AdjustmentsHorizontalIcon className="h-4 w-4 text-muted-foreground" />
                   <h4 className="text-sm text-foreground tracking-wider">Conditions</h4>
                 </div>
@@ -206,7 +206,7 @@ export default function MandatePage() {
 
               {/* MIDDLE: Usage Statistics */}
               <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
                   <ChartBarIcon className="h-4 w-4 text-muted-foreground" />
                   <h4 className="text-sm text-foreground tracking-wider">Usage</h4>
                 </div>
@@ -264,7 +264,7 @@ export default function MandatePage() {
 
               {/* RIGHT: Actions List */}
               <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
                   <ListBulletIcon className="h-4 w-4 text-muted-foreground" />
                   <h4 className="text-sm text-foreground tracking-wider">Recent Actions</h4>
                 </div>

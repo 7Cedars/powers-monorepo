@@ -86,7 +86,7 @@ export function Actions({ powers, status}: ActionsProps) {
                 return (
                   <tr
                     key={i}
-                    className="border-b border-border hover:bg-muted/30 transition-colors"
+                    className="border-b border-border hover:bg-muted/50 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <a

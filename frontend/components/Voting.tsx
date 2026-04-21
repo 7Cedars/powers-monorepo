@@ -177,7 +177,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
               <button
               onClick={fetchVotes}
               disabled={loading}
-              className="flex items-center justify-center p-1.5 hover:bg-muted/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center p-1.5 hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refresh Votes"
             >
               <ArrowPathIcon 
@@ -319,7 +319,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
                 </thead>
                 <tbody className="w-full text-left divide-y divide-border">
                   {votes.map((vote, index) => (
-                    <tr key={index} className="border-b border-border hover:bg-muted/30 transition-colors">
+                    <tr key={index} className="border-b border-border hover:bg-muted/50 transition-colors">
                       {/* Vote timestamp */}
                       <td className="px-4 py-3">
                         <div className="text-foreground whitespace-nowrap">

@@ -95,7 +95,7 @@ contract Deploy is DeployHelpers {
             vm.stopBroadcast();
         }
         vm.startBroadcast(); 
-        powers.closeConstitute();
+        powers.closeConstitute(msg.sender, flows); // close constitute and set flows. msg.sender is admin.
         
         // Transfer ownership of Governed721 to Powers (important for minting/updating)
         governed721.setPaymentId(paymentMandateId);
@@ -643,7 +643,7 @@ contract Deploy is DeployHelpers {
 
         flows.push(PowersTypes.Flow({
             mandateIds: mandateIds,
-            nameDescription: "Manage Intermediary Role: Assigning and revoking intermediary role based on approved address of the NFT. Intermediary can be assigned or revoked based on the approved address check, with a veto from executives for revocation."
+            nameDescription: "Manage Voter Role and Executive Elections: Assigning voter role based on having a certain role (e.g. owner, minter, intermediary), with executives having the power to veto. Executives can create elections, voters can vote, and executives can tally and execute results."
         }));
 
         uint256[] memory voterRoleCriteria = new uint256[](3);

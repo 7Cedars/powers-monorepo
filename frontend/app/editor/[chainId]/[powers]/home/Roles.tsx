@@ -49,7 +49,7 @@ export function Roles({powers, status}: RolesProps) {
               {powers?.roles?.map((role, i) => (
                 <tr
                   key={i}
-                  className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                  className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
                   onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`)}
                 >
                   <td className="px-4 py-3">

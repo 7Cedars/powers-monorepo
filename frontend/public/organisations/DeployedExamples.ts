@@ -26,7 +26,7 @@ export const DeployedExamples = [
         banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/optimisticExecution.png",
         description: "In Optimistic Execution, the Powers protocol leverages optimistic mechanisms to enable faster decision-making processes by assuming proposals are valid unless challenged. This approach can improve efficiency while still allowing for dispute resolution through challenges. A similar mechanism is currently used by the Optimism Collective.",
         chainId: sepolia.id,
-        address: '0x7CE4dD713cc86724a30f61D2d1F0d1A148ECCCDB'
+        address: '0xDE48000A343c1A0A603c7c93AB606f80582B3C4f'
     },
     {
         id: "nested-governance-parent",
@@ -35,7 +35,7 @@ export const DeployedExamples = [
         banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/nestedGovernance-parent.png",
         description: "Nested Governance demonstrates how the Powers protocol can be used to layer governance within each other to create complex decision-making hierarchies. This example is a single parent organisation that governs a child, but any type of complex structure can be created. The notion of sub-DAOs is similar to nested governance.",
         chainId: sepolia.id,
-        address: '0xE90eAB28479d221029C5bDC0Eae976647d9083c4' 
+        address: '0x159B539FdA7E16c46Edea9252d951d5F6038Fa27' 
     },
     {
         id: "open-elections",
@@ -53,6 +53,15 @@ export const DeployedExamples = [
         banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/tokenDelegates.png",
         description: "One-token-one-vote is the most popular approach to DAO governance today, despite its many shortcomings. This Token Delegate example demonstrates how the Powers protocol can be used to give power to accounts along the amount of  delegated tokens they hold. There is one key difference with traditional approaches: after delegates have been selected, they all hold the same amount of power (similar to democratic elections) while in classic DAO governance inequality in votes is reflected in delegates power.",
         chainId: sepolia.id,
-        address: '0x8864b6475c1ab17d858fcb6d4022b372d7495f71'
-    }
+        address: '0xEB514913179d8B209e454b8C3c7423c9bDC604e0'
+    }, 
+    {
+        id: "governed-721",
+        title: "Governed 721",
+        uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibcfc5dzcah2xxmvk3gjhij7t3sp5v6ppkub36jmtex2t75fcz22i/organisation.json",
+        banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiboosk4qnbeazftgdjppcuwunlxvatph5aobajj6txbcgcy3p33cu/organisation.png",
+        description: "Governed 721 is an example of an organisation that governs specific functionality in a Protocol. In this case: setting payment split for royalties of NFT sales. It has a policy setting (the split) and enforcement (blacklisting of addresses). This type of organisation can be used to govern specific parameters or functionalities in a larger ecosystem, such as a protocol or platform.",
+        chainId: sepolia.id,
+        address: '0xAa655eDfa1B3351F9Cf3ff72beF0e333Ed7005f7'
+    }, 
 ]

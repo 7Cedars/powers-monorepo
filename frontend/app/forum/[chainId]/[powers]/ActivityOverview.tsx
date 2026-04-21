@@ -10,7 +10,6 @@ interface ActivityOverviewProps {
 }
 
 export function ActivityOverview({ powers }: ActivityOverviewProps) {
-  const router = useRouter();
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>();
 
   // Extract flows and mandates
@@ -51,7 +50,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
   if (flowBoxes.length === 0) {
     return (
       <div className="border border-border flex flex-col h-full">
-        <div className="px-4 py-2 border-b border-border bg-muted/30">
+        <div className="px-4 py-2 border-b border-border bg-muted/50">
           <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">GOVERNANCE OVERVIEW</span>
         </div>
         <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm">
@@ -63,7 +62,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
 
   return (
     <div className="flex-1 flex flex-col border border-border min-h-0">
-      <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
+      <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
         <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">GOVERNANCE OVERVIEW</span>
         <SearchFilterSort 
           onSearchChange={(query) => console.log('Search:', query)}
@@ -76,7 +75,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
       <div className="flex-1 overflow-auto p-4"> 
         <div className="flex flex-wrap gap-4">
           {flowBoxes.map((box, idx) => (
-            <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[16rem] max-w-2xl">
+            <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[21rem] max-w-2xl">
               <FlowSummaryBox 
                 box={box}
                 powers={powers}
@@ -106,33 +105,15 @@ function FlowSummaryBox({
   const router = useRouter();
   
   const [name, ...descParts] = box.nameDescription.split(':');
-  const description = descParts.join(':').trim();
-  const headerText = description ? `${name.trim()}: ${description}` : name.trim();
-  
-  // Aggregate actions
-  const allActions = box.mandates.flatMap(m => m.actions || []);
-  
-  // Active actions: state 1 (Proposed), 3 (Active), 6 (Requested)
-  const activeActionsCount = allActions.filter(a => a.state === 1 || a.state === 3 || a.state === 6).length;
-  
-  // Latest action
-  const latestAction = allActions.sort((a, b) => {
-    // sort by highest timestamp
-    const timeA = Math.max(Number(a.proposedAt||0n), Number(a.requestedAt||0n), Number(a.fulfilledAt||0n));
-    const timeB = Math.max(Number(b.proposedAt||0n), Number(b.requestedAt||0n), Number(b.fulfilledAt||0n));
-    return timeB - timeA;
-  })[0];
+  const description = descParts.join(':').trim(); 
 
   return (
     <div 
       className="border border-border bg-background transition-colors relative hover:border-primary/50 cursor-pointer max-w-2xl"
       onClick={() => box.flowIndex && router.push(`/forum/${chainId}/${powersAddress}/flow/${box.flowIndex}`)}
     >
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-b border-border bg-muted/30 transition-colors">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-b border-border bg-muted/50 transition-colors">
         <h3 className="text-foreground tracking-wider text-sm">{name.trim() || 'Unnamed Flow'}</h3>
-        {/* {box.flowIndex && (
-            <span className="text-[10px] text-muted-foreground uppercase hidden sm:inline-block">View Flow →</span>
-        )} */}
       </div>
       
       <div className="px-4 sm:px-6 py-4 flex flex-col lg:flex-row gap-6 lg:gap-8">
@@ -164,30 +145,7 @@ function FlowSummaryBox({
             })}
           </div>
         </div>
-        
-        {/* Stats section */}
-        {/* <div className="lg:flex-shrink-0 lg:w-64 border-t lg:border-t-0 lg:border-l border-border pt-4 lg:pt-0 lg:pl-8 flex flex-col justify-center">
-          <div className="flex flex-col gap-2 text-xs font-mono text-foreground">
-            <div>Total Actions: {allActions.length}</div>
-            <div>Active Actions: {activeActionsCount}</div>
-            <div className="flex items-center gap-1">
-              <span className="flex-shrink-0">Last Action:</span> 
-              {latestAction ? (
-                <span 
-                  className="truncate hover:text-primary hover:underline transition-colors group cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/forum/${chainId}/${powersAddress}/action/${latestAction.actionId}`);
-                  }}
-                >
-                  {latestAction.description || 'No description'}
-                </span>
-              ) : (
-                <span className="text-muted-foreground">None</span>
-              )}
-            </div>
-          </div>
-        </div> */}
+
       </div>
     </div>
   );

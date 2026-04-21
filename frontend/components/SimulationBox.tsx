@@ -99,7 +99,7 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
   return (
     <div className="w-full flex flex-col">
       <div className="w-full flex flex-col bg-background border border-border overflow-hidden">
-        <div className="w-full flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground px-3 py-2 bg-muted/30 border-b border-border">
+        <div className="w-full flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground px-3 py-2 bg-muted/50 border-b border-border">
           <span className="flex-1 text-center">Calls to be executed by Powers</span>
           {hasOverflow && (
             <div className="flex gap-1">
