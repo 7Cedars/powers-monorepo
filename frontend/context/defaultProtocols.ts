@@ -69,7 +69,4 @@ export const CulturalStewardsDAO: Powers = {
   roles: [],
 }
 
-
-
-
 // £TODO: adding new Powers Labs governance demo protocol here once deployed.

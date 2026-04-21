@@ -4,7 +4,7 @@
 // import { Script } from "forge-std/Script.sol";
 // import { console } from "forge-std/console.sol";
 
-// import { AllowanceModule } from "@lib/safe-modules/modules/allowances/contracts/AllowanceModule.sol";
+// import { AllowanceModule } from "../lib/safe-modules/modules/allowances/contracts/AllowanceModule.sol";
 
 // // @dev this script deploys Safe Allowance Module.
 // contract DeployAllowanceModule is Script {

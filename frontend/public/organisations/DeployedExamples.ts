@@ -8,7 +8,7 @@ export const DeployedExamples = [
         banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/powers101.png",
         description: "A base example of an on-chain organisation that uses the Powers protocol to govern itself and create a simple check and balance system.",
         chainId: sepolia.id,
-        address: '0x49cf94fc23ba8f6dffea883b7a260ce3cf97bf91'
+        address: '0x77A7D275ACA6461a1c0Bd70218E38F7D1b1C14Db'
     },
     {
         id: "bicameralism",
@@ -17,7 +17,7 @@ export const DeployedExamples = [
         banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/bicameralism.png",
         description: "In Bicameralism, the governance system is divided into two separate chambers or houses, each with its own distinct powers and responsibilities. In this example Delegates can initiate an action, but it can only be executed by Funders. A version of Bicameralism is implemented at the Optimism Collective.",
         chainId: sepolia.id,
-        address: '0x30f6d89bfaa26ddc9da641162fcbeda3da65ffeb'
+        address: '0x6b49084548752C9c52dc65b122A10DF3CB0C80E3'
     },
     {
         id: "optimistic-execution",
@@ -44,7 +44,7 @@ export const DeployedExamples = [
         banner: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidwnowffbyj2gpaorm3oom42yqcp4delfwvubniuk32b26zholgwa/electionListDao.png",
         description: "Election lists demonstrates how, using the Powers protocol, electoral lists can be used to assign roles to accounts. (These type of approaches are becoming more popular, see for instance the elections for Arbitrum's Security council, or multiple options votes). The specific logic used for an electoral list can be customised in its mandate implementation.",
         chainId: sepolia.id,
-        address: '0xdB77dC08dd0D986E2FADE739f94ac2cf4F8b92DF'
+        address: '0x815D3b777E158b65Fb3857165e6D0d56e618F55C'
     },
     {
         id: "token-delegates",

@@ -4,25 +4,25 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "@script/Configurations.s.sol";
-import { InitialisePowers } from "@script/InitialisePowers.s.sol";
+import { Configurations } from "../../script/Configurations.s.sol";
+import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";
 
 // external protocols
-import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol"; 
-import { SafeProxyFactory } from "@lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
-import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol"; 
-import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol"; 
+import { SafeProxyFactory } from "../../lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
+import { Safe } from "../../lib/safe-smart-account/contracts/Safe.sol"; 
+import { ModuleManager } from "../../lib/safe-smart-account/contracts/base/ModuleManager.sol";
+import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 // powers contracts
-import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { Powers } from "@src/Powers.sol";
-import { IPowers } from "@src/interfaces/IPowers.sol";
+import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
+import { Powers } from "../../src/Powers.sol";
+import { IPowers } from "../../src/interfaces/IPowers.sol";
 
 // helpers 
-import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
+import { ElectionList } from "../../src/helpers/ElectionList.sol";
+import { Governed721, IGoverned721 } from "../../src/helpers/Governed721.sol";
 
 /// @title Governed721DAO Deployment Script
 contract Deploy is DeployHelpers {
@@ -111,13 +111,13 @@ contract Deploy is DeployHelpers {
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
         calldatas = new bytes[](11);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", string.concat(baseURI, "/admin.json"));  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", string.concat(baseURI, "/public.json")); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", string.concat(baseURI, "/artist.json"));
-        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Owner", string.concat(baseURI, "/owner.json")); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Operator", string.concat(baseURI, "/operator.json")); 
-        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", string.concat(baseURI, "/voter.json")); 
-        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", string.concat(baseURI, "/executive.json"));
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", "");
+        calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Owner", ""); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Operator", ""); 
+        calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", ""); 
+        calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", "");
         // Assign roles to msg.sender for initial setup (will be revoked later or kept for testing)
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, msg.sender);
         calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, msg.sender);
