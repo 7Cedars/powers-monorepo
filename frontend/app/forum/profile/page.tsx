@@ -148,7 +148,7 @@ export default function UserProfile() {
                         <p className="font-mono text-xs text-muted-foreground leading-relaxed line-clamp-2">"{msg.content}"</p>
                         <button
                         onClick={() => router.push(`/view/${msg.daoSlug}/mandate/${msg.mandateId}`)}
-                        className="w-full font-mono text-[10px] uppercase tracking-wider text-center py-1.5 border border-border  text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors">
+                        className="w-full font-mono text-[10px] uppercase tracking-wider text-center py-1.5 border border-border  text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
                         
                           View in Chatroom →
                         </button>

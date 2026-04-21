@@ -168,7 +168,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
                 relative transition-colors font-mono text-[10px] uppercase tracking-wider border border-border
                 ${active 
                   ? 'text-background bg-foreground border-foreground' 
-                  : 'bg-muted/30 text-muted-foreground hover:bg-foreground/20'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-foreground/20'
                 }
               `}
               style={{

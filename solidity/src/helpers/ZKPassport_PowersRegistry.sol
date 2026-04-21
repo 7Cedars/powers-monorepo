@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { DisclosedData, ProofVerificationParams, BoundData } from "@zkpassport/circuits/src/Types.sol";
-import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "@src/interfaces/IZKPassport.sol";
+import { DisclosedData, ProofVerificationParams, BoundData } from "../../lib/circuits/src/solidity/src/Types.sol";
+import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "../interfaces/IZKPassport.sol";
 
 // import { console } from "forge-std/console.sol"; // only for testing purposes.
 

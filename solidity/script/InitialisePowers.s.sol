@@ -3,99 +3,99 @@ pragma solidity ^0.8.26;
 
 // --- Forge/OpenZeppelin Imports ---
 import { Script } from "forge-std/Script.sol";
-import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { Create2 } from "../lib/openzeppelin-contracts/contracts/utils/Create2.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "@script/Configurations.s.sol";
+import { Configurations } from "./Configurations.s.sol";
 
 // --- Library Imports ---
-import { Checks } from "@src/libraries/Checks.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { Checks } from "../src/libraries/Checks.sol";
+import { MandateUtilities } from "../src/libraries/MandateUtilities.sol";
 
 // --- Mandate Contract Imports ---
 // async mandates
 
 
 // ELECTORAL MANDATES
-import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol"; 
-import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
-import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
-import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
-import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol"; 
-import { DelegateTokenSelect } from "@src/mandates/electoral/DelegateTokenSelect.sol";
-import { Nominate } from "@src/mandates/electoral/Nominate.sol";
-import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
-import { RevokeAccountsRoleId } from "@src/mandates/electoral/RevokeAccountsRoleId.sol";
+import { PeerSelect } from "../src/mandates/electoral/PeerSelect.sol"; 
+import { RoleByRoles } from "../src/mandates/electoral/RoleByRoles.sol";
+import { SelfSelect } from "../src/mandates/electoral/SelfSelect.sol";
+import { RenounceRole } from "../src/mandates/electoral/RenounceRole.sol";
+import { AssignExternalRole } from "../src/mandates/electoral/AssignExternalRole.sol"; 
+import { DelegateTokenSelect } from "../src/mandates/electoral/DelegateTokenSelect.sol";
+import { Nominate } from "../src/mandates/electoral/Nominate.sol";
+import { RevokeInactiveAccounts } from "../src/mandates/electoral/RevokeInactiveAccounts.sol";
+import { RevokeAccountsRoleId } from "../src/mandates/electoral/RevokeAccountsRoleId.sol";
 
 // EXECUTIVE MANDATES
-import { PresetActions } from "@src/mandates/executive/PresetActions.sol"; 
-import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
-import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
+import { PresetActions } from "../src/mandates/executive/PresetActions.sol"; 
+import { OpenAction } from "../src/mandates/executive/OpenAction.sol";
+import { StatementOfIntent } from "../src/mandates/executive/StatementOfIntent.sol";
 
-import { CheckExternalActionState } from "@src/mandates/executive/CheckExternalActionState.sol";
-import { BespokeAction_OnReturnValue } from "@src/mandates/executive/BespokeAction_OnReturnValue.sol"; 
-import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Advanced.sol";
-import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
-import { ExternalAction_Simple } from "@src/mandates/executive/ExternalAction_Simple.sol";
-import { ExternalAction_Flexible } from "@src/mandates/executive/ExternalAction_Flexible.sol";
-import { PresetActions_OnOwnPowers } from "@src/mandates/executive/PresetActions_OnOwnPowers.sol";
+import { CheckExternalActionState } from "../src/mandates/executive/CheckExternalActionState.sol";
+import { BespokeAction_OnReturnValue } from "../src/mandates/executive/BespokeAction_OnReturnValue.sol"; 
+import { BespokeAction_Advanced } from "../src/mandates/executive/BespokeAction_Advanced.sol";
+import { BespokeAction_Simple } from "../src/mandates/executive/BespokeAction_Simple.sol";
+import { ExternalAction_Simple } from "../src/mandates/executive/ExternalAction_Simple.sol";
+import { ExternalAction_Flexible } from "../src/mandates/executive/ExternalAction_Flexible.sol";
+import { PresetActions_OnOwnPowers } from "../src/mandates/executive/PresetActions_OnOwnPowers.sol";
 
 // INTEGRATION MANDATES
 // Election List 
-import { ElectionList_Nominate } from "@src/mandates/integrations/ElectionList/ElectionList_Nominate.sol";
-import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList/ElectionList_Tally.sol";
-import { ElectionList_Vote } from "@src/mandates/integrations/ElectionList/ElectionList_Vote.sol";
-import { ElectionList_CreateVoteMandate } from "@src/mandates/integrations/ElectionList/ElectionList_CreateVoteMandate.sol";
-import { ElectionList_CleanUpVoteMandate } from "@src/mandates/integrations/ElectionList/ElectionList_CleanUpVoteMandate.sol";
+import { ElectionList_Nominate } from "../src/mandates/integrations/ElectionList/ElectionList_Nominate.sol";
+import { ElectionList_Tally } from "../src/mandates/integrations/ElectionList/ElectionList_Tally.sol";
+import { ElectionList_Vote } from "../src/mandates/integrations/ElectionList/ElectionList_Vote.sol";
+import { ElectionList_CreateVoteMandate } from "../src/mandates/integrations/ElectionList/ElectionList_CreateVoteMandate.sol";
+import { ElectionList_CleanUpVoteMandate } from "../src/mandates/integrations/ElectionList/ElectionList_CleanUpVoteMandate.sol";
 // ERC721 
-import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
+import { ERC721_GatedAccess } from "../src/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
 
 // GitHub
-import { Github_ClaimRoleWithSig } from "@src/mandates/integrations/Github/Github_ClaimRoleWithSig.sol";
-import { Github_AssignRoleWithSig } from "@src/mandates/integrations/Github/Github_AssignRoleWithSig.sol";
+import { Github_ClaimRoleWithSig } from "../src/mandates/integrations/Github/Github_ClaimRoleWithSig.sol";
+import { Github_AssignRoleWithSig } from "../src/mandates/integrations/Github/Github_AssignRoleWithSig.sol";
 
 // GovernedToken
-import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
-import { GovernedToken_MintEncodedToken } from "@src/mandates/integrations/GovernedToken/GovernedToken_MintEncodedToken.sol";
-import { GovernedToken_CollectSplitPayment } from "@src/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol";
-import { GovernedToken_BurnToAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_BurnToAccess.sol";
+import { GovernedToken_GatedAccess } from "../src/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
+import { GovernedToken_MintEncodedToken } from "../src/mandates/integrations/GovernedToken/GovernedToken_MintEncodedToken.sol";
+import { GovernedToken_CollectSplitPayment } from "../src/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol";
+import { GovernedToken_BurnToAccess } from "../src/mandates/integrations/GovernedToken/GovernedToken_BurnToAccess.sol";
 
 // Governor
-import { Governor_CreateProposal } from "@src/mandates/integrations/Governor/Governor_CreateProposal.sol";
-import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
+import { Governor_CreateProposal } from "../src/mandates/integrations/Governor/Governor_CreateProposal.sol";
+import { Governor_ExecuteProposal } from "../src/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
 
 
 // PowersFactory
-import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
-import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
+import { PowersFactory_AssignRole } from "../src/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
+import { PowersFactory_AddSafeDelegate } from "../src/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
 
 // Safe 
-import { Safe_ExecTransaction } from "@src/mandates/integrations/Safe/Safe_ExecTransaction.sol";
-import { Safe_RecoverTokens } from "@src/mandates/integrations/Safe/Safe_RecoverTokens.sol";
-import { Safe_ExecTransaction_OnReturnValue } from "@src/mandates/integrations/Safe/Safe_ExecTransaction_OnReturnValue.sol";
-import { SafeAllowance_Transfer } from "@src/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
-import { SafeAllowance_PresetTransfer } from "@src/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
-import { SafeAllowance_Action } from "@src/mandates/integrations/Safe/SafeAllowance_Action.sol";
+import { Safe_ExecTransaction } from "../src/mandates/integrations/Safe/Safe_ExecTransaction.sol";
+import { Safe_RecoverTokens } from "../src/mandates/integrations/Safe/Safe_RecoverTokens.sol";
+import { Safe_ExecTransaction_OnReturnValue } from "../src/mandates/integrations/Safe/Safe_ExecTransaction_OnReturnValue.sol";
+import { SafeAllowance_Transfer } from "../src/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
+import { SafeAllowance_PresetTransfer } from "../src/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
+import { SafeAllowance_Action } from "../src/mandates/integrations/Safe/SafeAllowance_Action.sol";
 // Snapshot
 // Will be reintegrated soon. 
 
 // ZKPassport
-import { ZKPassport_Check } from "@src/mandates/integrations/ZKPassport/ZKPassport_Check.sol";
+import { ZKPassport_Check } from "../src/mandates/integrations/ZKPassport/ZKPassport_Check.sol";
 
 // REFORM MANDATES
-import { Adopt_Mandates } from "@src/mandates/reform/Adopt_Mandates.sol";
-import { Revoke_Mandates } from "@src/mandates/reform/Revoke_Mandates.sol";
-import { Adopt_Preset_Mandates } from "@src/mandates/reform/Adopt_Preset_Mandates.sol";
-import { Revoke_Preset_Mandates } from "@src/mandates/reform/Revoke_Preset_Mandates.sol";
+import { Adopt_Mandates } from "../src/mandates/reform/Adopt_Mandates.sol";
+import { Revoke_Mandates } from "../src/mandates/reform/Revoke_Mandates.sol";
+import { Adopt_Preset_Mandates } from "../src/mandates/reform/Adopt_Preset_Mandates.sol";
+import { Revoke_Preset_Mandates } from "../src/mandates/reform/Revoke_Preset_Mandates.sol";
 
 // HELPER CONTRACTS 
-import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { Nominees } from "@src/helpers/Nominees.sol";
-import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";  
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";  
-import { OnchainIdRegistryMock, IdentityRegistryMock, ComplianceRegistryMock, RwaMock } from "@mocks/RwaMock.sol";
-import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
-import { Governed721 } from "@src/helpers/Governed721.sol";
-import { Soulbound1155Factory } from "@src/helpers/Soulbound1155.sol";
+import { ElectionList } from "../src/helpers/ElectionList.sol";
+import { Nominees } from "../src/helpers/Nominees.sol";
+import { Erc20Taxed } from "../test/mocks/Erc20Taxed.sol";  
+import { SimpleErc20Votes } from "../test/mocks/SimpleErc20Votes.sol";  
+import { OnchainIdRegistryMock, IdentityRegistryMock, ComplianceRegistryMock, RwaMock } from "../test/mocks/RwaMock.sol";
+import { ZKPassport_PowersRegistry } from "../src/helpers/ZKPassport_PowersRegistry.sol";
+import { Governed721 } from "../src/helpers/Governed721.sol";
+import { Soulbound1155Factory } from "../src/helpers/Soulbound1155.sol";
 
 /// @title InitialisePowers
 /// @notice Deploys all library and mandate contracts deterministically using CREATE2

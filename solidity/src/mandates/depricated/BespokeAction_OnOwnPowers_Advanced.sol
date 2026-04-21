@@ -5,8 +5,8 @@
 
 pragma solidity ^0.8.26;
 
-// import { Mandate } from "@src/Mandate.sol";
-// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+// import { Mandate } from "../../Mandate.sol";
+// import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
 
 // contract BespokeAction_OnOwnPowers_Advanced is Mandate {
 //     struct Mem {

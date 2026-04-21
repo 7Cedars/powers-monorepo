@@ -61,7 +61,7 @@ export default function ProtocolPage() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {savedProtocols.map((protocol) => (
+          {[...savedProtocols].reverse().map((protocol) => (
             <OrgSummaryBox
               key={protocol.contractAddress}
               powers={protocol}

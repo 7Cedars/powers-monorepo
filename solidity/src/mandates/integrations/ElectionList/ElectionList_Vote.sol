@@ -12,10 +12,10 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "@src/Mandate.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Mandate } from "../../../Mandate.sol";
+import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { ElectionList } from "../../../helpers/ElectionList.sol";
+import { Strings } from "../../../../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract ElectionList_Vote is Mandate {
     struct Mem {

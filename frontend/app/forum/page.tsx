@@ -60,7 +60,7 @@ export default function AllDaos() {
         {/* DAO Summary Boxes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {
-            savedProtocols.map((protocol) => (
+            [...savedProtocols].reverse().map((protocol) => (
               <OrgSummaryBox
                 key={protocol.contractAddress}
                 powers={protocol}

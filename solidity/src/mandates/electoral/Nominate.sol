@@ -7,9 +7,9 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "@src/Mandate.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { Nominees } from "@src/helpers/Nominees.sol";
+import { Mandate } from "../../Mandate.sol";
+import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { Nominees } from "../../helpers/Nominees.sol";
 
 contract Nominate is Mandate {
     /// @notice Constructor for Nominate mandate

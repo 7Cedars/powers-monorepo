@@ -133,7 +133,7 @@ export default function ActionPage() {
             <div className="flex flex-col lg:flex-row gap-4 w-full">
               {/* Action Overview Section (Left) */}
               <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
                   <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
                   <h4 className="text-sm text-foreground tracking-wider">Details</h4>
                 </div>
@@ -157,7 +157,7 @@ export default function ActionPage() {
               {/* Voting & Past Votes Section (Right) - Only show if mandate has voting */}
               {(mandate.conditions?.quorum ? BigInt(mandate.conditions.quorum) : 0n) > 0n && (
                 <div className="flex-1 min-w-0 border border-border bg-background">
-                  <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/30">
+                  <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
                     <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
                     <h4 className="text-sm text-foreground tracking-wider">Voting</h4>
                   </div>

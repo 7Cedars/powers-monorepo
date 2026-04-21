@@ -2,7 +2,7 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.26;
 
-import { ProofVerificationParams, ProofVerificationData, ServiceConfig } from "@zkpassport/circuits/src/Types.sol";
+import { ProofVerificationParams, ProofVerificationData, ServiceConfig } from "../../lib/circuits/src/solidity/src/Types.sol";
  
 // The following abstract contract contains an action ZKProof struct that can be used in testing. 
 // The proof is linked to address 0x328735d26e5Ada93610F0006c32abE2278c46211

@@ -106,7 +106,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
                 </thead>
                 <tbody>
                   {members?.map((member, i) =>
-                    <tr key={i} className="border-b border-border hover:bg-muted/30 transition-colors">
+                    <tr key={i} className="border-b border-border hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3">
                         <span className="text-muted-foreground">
                           {i + 1}

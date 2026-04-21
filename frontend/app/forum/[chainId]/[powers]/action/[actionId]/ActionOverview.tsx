@@ -163,7 +163,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
                 (uint256)
               </span>
             </div>
-            <div className="bg-muted/30 p-2  border border-border">
+            <div className="bg-muted/50 p-2  border border-border">
               <p className="text-xs text-foreground font-mono break-all">
                 {action.nonce !== undefined ? action.nonce.toString() : '0'}
               </p>
@@ -181,7 +181,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
                     ({param.dataType})
                   </span>
                 </div>
-                <div className="bg-muted/30 p-2  border border-border">
+                <div className="bg-muted/50 p-2  border border-border">
                   <p className="text-xs text-foreground font-mono break-all">
                     {decodedParams[idx] !== undefined 
                       ? formatParamValue(decodedParams[idx], param.dataType)

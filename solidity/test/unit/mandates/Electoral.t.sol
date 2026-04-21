@@ -4,17 +4,17 @@ pragma solidity ^0.8.26;
 import { BaseSetup } from "../../TestSetup.t.sol";
 import { TestSetupElectoral } from "../../TestSetup.t.sol";
 
-import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
-import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
-import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
-import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
-import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol";
-import { FlagActions } from "@src/helpers/FlagActions.sol"; 
-import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { PowersMock } from "@mocks/PowersMock.sol";
-import { Nominees } from "@src/helpers/Nominees.sol"; 
-import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
-import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
+import { PeerSelect } from "../../../src/mandates/electoral/PeerSelect.sol";
+import { RoleByRoles } from "../../../src/mandates/electoral/RoleByRoles.sol";
+import { SelfSelect } from "../../../src/mandates/electoral/SelfSelect.sol";
+import { RenounceRole } from "../../../src/mandates/electoral/RenounceRole.sol";
+import { AssignExternalRole } from "../../../src/mandates/electoral/AssignExternalRole.sol";
+import { FlagActions } from "../../../src/helpers/FlagActions.sol"; 
+import { PowersTypes } from "../../../src/interfaces/PowersTypes.sol";
+import { PowersMock } from "../../mocks/PowersMock.sol";
+import { Nominees } from "../../../src/helpers/Nominees.sol"; 
+import { RevokeInactiveAccounts } from "../../../src/mandates/electoral/RevokeInactiveAccounts.sol";
+import { PowersErrors } from "../../../src/interfaces/PowersErrors.sol";
 
 /// @notice Comprehensive unit tests for all electoral mandates
 /// @dev Tests all functionality of electoral mandates including initialization, execution, and edge cases

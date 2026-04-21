@@ -8,7 +8,7 @@ import { Powers } from './types'
  * for understanding the Powers protocol.
  */
 export const defaultPowers101: Powers = {
-  contractAddress: '0x49cf94fc23ba8f6dffea883b7a260ce3cf97bf91' as `0x${string}`,
+  contractAddress: '0x77A7D275ACA6461a1c0Bd70218E38F7D1b1C14Db' as `0x${string}`,
   chainId: 11155111n,
   name: 'Powers 101',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/powers101.json",
@@ -31,9 +31,9 @@ export const defaultPowers101: Powers = {
  * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
 export const Governed721DAO: Powers = {
-  contractAddress: '0xA3f2227957Af05D35bE1cCc7d3152FbDee8e1f52' as `0x${string}`,
+  contractAddress: '0xAa655eDfa1B3351F9Cf3ff72beF0e333Ed7005f7' as `0x${string}`,
   chainId: 11155111n,
-  name: 'Governed 721 DAO',
+  name: 'Governed 721',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidklnn4b7heysrhr5pqtiabvcl5aldnzuv2mdybotdtx5vvq44nqi",
   metadatas: {
     icon: '/logo1_notext.png',
@@ -54,7 +54,7 @@ export const Governed721DAO: Powers = {
  * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
 export const CulturalStewardsDAO: Powers = {
-  contractAddress: '0xD7c83ba6665EEb7b7360f617e49a3f6D616600C6' as `0x${string}`,
+  contractAddress: '0x159B539FdA7E16c46Edea9252d951d5F6038Fa27' as `0x${string}`,
   chainId: 11155111n,
   name: 'Primary DAO',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifpvurtqfawksmflqgm342fdsvmmtme2pjzzlvdr7vippeygfy3au/primaryDao.json",
@@ -68,8 +68,5 @@ export const CulturalStewardsDAO: Powers = {
   mandates: [],
   roles: [],
 }
-
-
-
 
 // £TODO: adding new Powers Labs governance demo protocol here once deployed.

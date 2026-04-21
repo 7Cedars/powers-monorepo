@@ -6,11 +6,11 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "@src/Mandate.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol";
-import { Enum } from "@lib/safe-smart-account/contracts/common/Enum.sol";
-import { IPowers } from "@src/interfaces/IPowers.sol";
+import { Mandate } from "../../../Mandate.sol";
+import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { Safe } from "../../../../lib/safe-smart-account/contracts/Safe.sol";
+import { Enum } from "../../../../lib/safe-smart-account/contracts/common/Enum.sol";
+import { IPowers } from "../../../interfaces/IPowers.sol";
 
 contract Safe_ExecTransaction_OnReturnValue is Mandate {
     struct Mem {

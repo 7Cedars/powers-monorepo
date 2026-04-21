@@ -2,16 +2,16 @@
 pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
-import { IPowers } from "@src/interfaces/IPowers.sol";
-import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { Configurations } from "@script/Configurations.s.sol";
+import { IPowers } from "../src/interfaces/IPowers.sol";
+import { PowersTypes } from "../src/interfaces/PowersTypes.sol";
+import { Configurations } from "../script/Configurations.s.sol";
 
-import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
-import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
-import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
-import { ISoulbound1155 } from "@src/helpers/Soulbound1155.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
+import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
+import { IPowersFactory } from "../src/helpers/PowersFactory.sol";
+import { ISoulbound1155 } from "../src/helpers/Soulbound1155.sol";
+import { ElectionList } from "../src/helpers/ElectionList.sol";
+import { IERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract TestConstitutions is Test {
     uint256[] milestoneDisbursements;
