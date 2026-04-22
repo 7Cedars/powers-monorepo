@@ -315,7 +315,7 @@ example-deploy :
 
 organisation-deploy : 
 	@echo "Deploying example contracts..."
-	forge script governance/governed721DAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/publius-registry/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 powers-initialise :
 	@echo "Initialising Powers contract..."
