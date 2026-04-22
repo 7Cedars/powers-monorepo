@@ -97,7 +97,7 @@ import { Soulbound1155Factory } from "@src/helpers/Soulbound1155.sol";
 /// @title InitialisePowers
 /// @notice Deploys all library and mandate contracts deterministically using CREATE2
 /// and saves their names and addresses to a obj1 file.
-contract MandateAndHelpers is Script {
+contract MandatesAndHelpers is Script {
     Configurations helperConfig; 
     string[] names;
     bytes[] creationCodes;
