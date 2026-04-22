@@ -21,6 +21,8 @@ contract InitialisePowers is Script, MandatesAndHelpers {
    
     function run() external override { 
         string memory obj1 = "some key"; 
+        helperConfig = new Configurations(); 
+        recordMandatesAndHelpers();
 
         address checksAddr = deploy(type(Checks).creationCode, abi.encode("Checks"));
         vm.serializeAddress(obj1, "Checks", checksAddr);
@@ -31,9 +33,7 @@ contract InitialisePowers is Script, MandatesAndHelpers {
         string memory powersBytecode = generatePowersBytecode(checksAddr);
         vm.serializeString(obj1, "powers", powersBytecode);
 
-        helperConfig = new Configurations(); 
         string memory outputJson = deployAndRecordMandates();
-
         string memory finalJson = vm.serializeString(obj1, "mandates", outputJson);
 
         outputFile = string.concat("../frontend/public/powered/", vm.toString(block.chainid), ".json");
@@ -64,17 +64,23 @@ contract InitialisePowers is Script, MandatesAndHelpers {
         internal
         returns (string memory outputJson)
     {
-        (string[] memory _names, bytes[] memory _creationCodes, bytes[] memory _constructorArgs) = recordMandatesAndHelpers();
- 
         //////////////////////////////////////////////////////////////////////////
         //                          DEPLOY SEQUENCE                             //
         //////////////////////////////////////////////////////////////////////////
         string memory obj2 = "second key";
         address mandateAddr;
-        for (uint256 i = 0; i < _names.length; i++) {
-            mandateAddr = deploy(_creationCodes[i], _constructorArgs[i]);
+        for (uint256 i = 0; i < names.length; i++) {
+            console2.log("Deploying:", names[i]);
+            
+            mandateAddr = deploy(creationCodes[i], constructorArgs[i]);
+            console2.log("Deployed at:", mandateAddr);
+
             addresses.push(mandateAddr);
-            vm.serializeAddress(obj2, _names[i], mandateAddr);
+
+            // £todo: here record the version and address of mandates and helpers on-chain as well. 
+            
+             
+            vm.serializeAddress(obj2, names[i], mandateAddr);
         }
         outputJson = vm.serializeUint(obj2, "chainId", uint256(block.chainid));
     }

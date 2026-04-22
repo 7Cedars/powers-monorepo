@@ -90,4 +90,31 @@ interface IMandate is IERC165 {
         external
         view
         returns (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas);
+    
+    
+    //////////////////////////////////////////////////////////////
+    //                       GETTERS                            //
+    //////////////////////////////////////////////////////////////
+ 
+    /// @notice Retrieves the name and description for a specific mandate
+    /// @param powers Address of the Powers protocol
+    /// @param mandateId The id of the mandate
+    /// @return nameDescription The name and description of the mandate
+    function getNameDescription(address powers, uint16 mandateId) external view returns (string memory nameDescription);
+
+    /// @notice Retrieves the input parameters for a specific mandate
+    /// @param powers Address of the Powers protocol
+    /// @param mandateId The id of the mandate
+    /// @return inputParams The input parameters for the mandate
+    function getInputParams(address powers, uint16 mandateId) external view returns (bytes memory inputParams);
+
+    /// @notice Retrieves the configuration for a specific mandate
+    /// @param powers Address of the Powers protocol
+    /// @param mandateId The id of the mandate
+    /// @return config The configuration data for the mandate
+    function getConfig(address powers, uint16 mandateId) external view returns (bytes memory config);
+
+    /// @notice Retrieves the version of the mandate contract
+    function version() external pure returns (string memory);
+     
 }

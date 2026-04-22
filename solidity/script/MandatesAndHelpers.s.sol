@@ -110,8 +110,7 @@ contract MandatesAndHelpers is Script {
 
     /// @notice Creates a list in state of all mandates and helper contracts to be deployed, including their creation code and constructor arguments
     function recordMandatesAndHelpers()
-        internal
-        returns (string[] memory _names, bytes[] memory _creationCodes, bytes[] memory _constructorArgs)
+        internal 
     {
         //////////////////////////////////////////////////////////////////////////
         //                         Async Mandates                               //
@@ -359,8 +358,6 @@ contract MandatesAndHelpers is Script {
             "powers-git-develop-7cedars-projects.vercel.app",
             "powers"
         ));
-
-        return (names, creationCodes, constructorArgs);
     }
 
     function getInitialisedAddress(string memory mandateName) public view returns (address) {
