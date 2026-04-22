@@ -6,6 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "./Configurations.s.sol";
+import { MandateAndHelpers } from "./MandatesAndHelpers.s.sol";
 
 // --- Library Imports ---
 import { Checks } from "@src/libraries/Checks.sol";
@@ -100,34 +101,24 @@ import { Soulbound1155Factory } from "@src/helpers/Soulbound1155.sol";
 /// @title InitialisePowers
 /// @notice Deploys all library and mandate contracts deterministically using CREATE2
 /// and saves their names and addresses to a obj1 file.
-contract InitialisePowers is Script {
-    string outputFile;
-    Configurations helperConfig; 
-    string[] names;
+contract InitialisePowers is Script, MandateAndHelpers {
+    string outputFile; 
     address[] addresses;
-    bytes[] creationCodes;
-    bytes[] constructorArgs;
-
-    string[] namePackages;
-    address[] addressPackages;
-    bytes[] creationCodesPackages;
-    bytes[] constructorArgsPackages;
-
-    function run() external {
-        string memory obj1 = "some key";
-        string memory outputJson;
+   
+    function run() external override { 
+        string memory obj1 = "some key"; 
 
         address checksAddr = deploy(type(Checks).creationCode, abi.encode("Checks"));
         vm.serializeAddress(obj1, "Checks", checksAddr);
-
-        address mandateUtilsAddr = deploy(type(Checks).creationCode, abi.encode("MandateUtilities"));
+ 
+        address mandateUtilsAddr = deploy(type(MandateUtilities).creationCode, abi.encode("MandateUtilities"));
         vm.serializeAddress(obj1, "MandateUtilities", mandateUtilsAddr);
 
         string memory powersBytecode = generatePowersBytecode(checksAddr);
         vm.serializeString(obj1, "powers", powersBytecode);
 
-        helperConfig = new Configurations();
-        outputJson = deployAndRecordMandates();
+        helperConfig = new Configurations(); 
+        string memory outputJson = deployAndRecordMandates();
 
         string memory finalJson = vm.serializeString(obj1, "mandates", outputJson);
 
@@ -159,262 +150,17 @@ contract InitialisePowers is Script {
         internal
         returns (string memory outputJson)
     {
-        //////////////////////////////////////////////////////////////////////////
-        //                         Async Mandates                               //
-        //////////////////////////////////////////////////////////////////////////
-        names.push("Github_ClaimRoleWithSig");
-        creationCodes.push(type(Github_ClaimRoleWithSig).creationCode);
-        constructorArgs.push(abi.encode(helperConfig.getChainlinkFunctionsRouter(block.chainid)));
-
-        names.push("Github_AssignRoleWithSig");
-        creationCodes.push(type(Github_AssignRoleWithSig).creationCode);
-        constructorArgs.push(abi.encode());
-
-        //////////////////////////////////////////////////////////////////////////
-        //                      Electoral Mandates                              //
-        //////////////////////////////////////////////////////////////////////////
-        names.push("PeerSelect");
-        creationCodes.push(type(PeerSelect).creationCode);
-        constructorArgs.push(abi.encode("PeerSelect")); 
-
-        names.push("RoleByRoles");
-        creationCodes.push(type(RoleByRoles).creationCode);
-        constructorArgs.push(abi.encode("RoleByRoles"));
-
-        names.push("SelfSelect");
-        creationCodes.push(type(SelfSelect).creationCode);
-        constructorArgs.push(abi.encode("SelfSelect"));
-
-        names.push("RenounceRole");
-        creationCodes.push(type(RenounceRole).creationCode);
-        constructorArgs.push(abi.encode("RenounceRole"));
- 
-        names.push("AssignExternalRole");
-        creationCodes.push(type(AssignExternalRole).creationCode);
-        constructorArgs.push(abi.encode("AssignExternalRole"));
-
-        names.push("DelegateTokenSelect");
-        creationCodes.push(type(DelegateTokenSelect).creationCode);
-        constructorArgs.push(abi.encode("DelegateTokenSelect"));
-
-        names.push("Nominate");
-        creationCodes.push(type(Nominate).creationCode);
-        constructorArgs.push(abi.encode("Nominate"));
-
-        names.push("RevokeInactiveAccounts");
-        creationCodes.push(type(RevokeInactiveAccounts).creationCode);
-        constructorArgs.push(abi.encode("RevokeInactiveAccounts"));
-
-        names.push("RevokeAccountsRoleId");
-        creationCodes.push(type(RevokeAccountsRoleId).creationCode);
-        constructorArgs.push(abi.encode("RevokeAccountsRoleId"));
-
-        //////////////////////////////////////////////////////////////////////////
-        //                       Executive Mandates                             //
-        //////////////////////////////////////////////////////////////////////////
-        names.push("PresetActions");
-        creationCodes.push(type(PresetActions).creationCode);
-        constructorArgs.push(abi.encode("PresetActions"));
-
-        names.push("PresetActions_OnOwnPowers");
-        creationCodes.push(type(PresetActions_OnOwnPowers).creationCode);
-        constructorArgs.push(abi.encode("PresetActions_OnOwnPowers"));
-
-        names.push("OpenAction");
-        creationCodes.push(type(OpenAction).creationCode);
-        constructorArgs.push(abi.encode("OpenAction"));
-
-        names.push("StatementOfIntent");
-        creationCodes.push(type(StatementOfIntent).creationCode);
-        constructorArgs.push(abi.encode("StatementOfIntent"));
-
-        names.push("BespokeAction_Advanced");
-        creationCodes.push(type(BespokeAction_Advanced).creationCode);
-        constructorArgs.push(abi.encode("BespokeAction_Advanced"));
-
-        names.push("BespokeAction_OnReturnValue");
-        creationCodes.push(type(BespokeAction_OnReturnValue).creationCode);
-        constructorArgs.push(abi.encode("BespokeAction_OnReturnValue"));
-
-        names.push("BespokeAction_Simple");
-        creationCodes.push(type(BespokeAction_Simple).creationCode);
-        constructorArgs.push(abi.encode("BespokeAction_Simple"));
-
-        names.push("CheckExternalActionState");
-        creationCodes.push(type(CheckExternalActionState).creationCode);
-        constructorArgs.push(abi.encode("CheckExternalActionState"));
-
-        names.push("ExternalAction_Simple");
-        creationCodes.push(type(ExternalAction_Simple).creationCode);
-        constructorArgs.push(abi.encode("ExternalAction_Simple"));
-
-        names.push("ExternalAction_Flexible");
-        creationCodes.push(type(ExternalAction_Flexible).creationCode);
-        constructorArgs.push(abi.encode("ExternalAction_Flexible"));
-
-        //////////////////////////////////////////////////////////////////////////
-        //                      Integrations Mandates                           //
-        //////////////////////////////////////////////////////////////////////////
-        names.push("Governor_CreateProposal");
-        creationCodes.push(type(Governor_CreateProposal).creationCode);
-        constructorArgs.push(abi.encode("Governor_CreateProposal"));
-
-        names.push("Governor_ExecuteProposal");
-        creationCodes.push(type(Governor_ExecuteProposal).creationCode);
-        constructorArgs.push(abi.encode("Governor_ExecuteProposal"));
-
-        names.push("Safe_ExecTransaction");
-        creationCodes.push(type(Safe_ExecTransaction).creationCode);
-        constructorArgs.push(abi.encode("Safe_ExecTransaction"));
-
-        names.push("Safe_ExecTransaction_OnReturnValue");
-        creationCodes.push(type(Safe_ExecTransaction_OnReturnValue).creationCode);
-        constructorArgs.push(abi.encode("Safe_ExecTransaction_OnReturnValue"));
-
-        names.push("Safe_RecoverTokens");
-        creationCodes.push(type(Safe_RecoverTokens).creationCode);
-        constructorArgs.push(abi.encode("Safe_RecoverTokens"));
-
-        names.push("SafeAllowance_Transfer");
-        creationCodes.push(type(SafeAllowance_Transfer).creationCode);
-        constructorArgs.push(abi.encode("SafeAllowance_Transfer"));
-
-        names.push("SafeAllowance_PresetTransfer");
-        creationCodes.push(type(SafeAllowance_PresetTransfer).creationCode);
-        constructorArgs.push(abi.encode("SafeAllowance_PresetTransfer"));
-
-        names.push("SafeAllowance_Action");
-        creationCodes.push(type(SafeAllowance_Action).creationCode);
-        constructorArgs.push(abi.encode("SafeAllowance_Action"));
-
-        names.push("PowersFactory_AssignRole");
-        creationCodes.push(type(PowersFactory_AssignRole).creationCode);
-        constructorArgs.push(abi.encode("PowersFactory_AssignRole"));
-
-        names.push("PowersFactory_AddSafeDelegate");
-        creationCodes.push(type(PowersFactory_AddSafeDelegate).creationCode);
-        constructorArgs.push(abi.encode("PowersFactory_AddSafeDelegate"));
-
-        names.push("GovernedToken_GatedAccess");
-        creationCodes.push(type(GovernedToken_GatedAccess).creationCode);
-        constructorArgs.push(abi.encode("GovernedToken_GatedAccess"));
-
-        names.push("ERC721_GatedAccess");
-        creationCodes.push(type(ERC721_GatedAccess).creationCode);
-        constructorArgs.push(abi.encode("ERC721_GatedAccess"));
-
-        names.push("GovernedToken_MintEncodedToken");
-        creationCodes.push(type(GovernedToken_MintEncodedToken).creationCode);
-        constructorArgs.push(abi.encode("GovernedToken_MintEncodedToken"));
-
-        names.push("GovernedToken_BurnToAccess");
-        creationCodes.push(type(GovernedToken_BurnToAccess).creationCode);
-        constructorArgs.push(abi.encode("GovernedToken_BurnToAccess"));
-
-        names.push("ElectionList_Vote");
-        creationCodes.push(type(ElectionList_Vote).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_Vote"));
-
-        names.push("ElectionList_Nominate");
-        creationCodes.push(type(ElectionList_Nominate).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_Nominate"));
-
-        names.push("ElectionList_CreateVoteMandate");
-        creationCodes.push(type(ElectionList_CreateVoteMandate).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_CreateVoteMandate"));
-
-        names.push("ElectionList_Tally");
-        creationCodes.push(type(ElectionList_Tally).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_Tally"));
-
-        names.push("ElectionList_CleanUpVoteMandate");
-        creationCodes.push(type(ElectionList_CleanUpVoteMandate).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_CleanUpVoteMandate"));
-
-        names.push("GovernedToken_CollectSplitPayment");
-        creationCodes.push(type(GovernedToken_CollectSplitPayment).creationCode);
-        constructorArgs.push(abi.encode("GovernedToken_CollectSplitPayment"));
-
-        names.push("ZKPassport_Check");
-        creationCodes.push(type(ZKPassport_Check).creationCode);
-        constructorArgs.push(abi.encode());
-
-        //////////////////////////////////////////////////////////////////////////
-        //                          Reform Mandates                             //
-        //////////////////////////////////////////////////////////////////////////
-        names.push("Adopt_Mandates");
-        creationCodes.push(type(Adopt_Mandates).creationCode);
-        constructorArgs.push(abi.encode("Adopt_Mandates"));
-
-        names.push("Adopt_Preset_Mandates");
-        creationCodes.push(type(Adopt_Preset_Mandates).creationCode);
-        constructorArgs.push(abi.encode("Adopt_Preset_Mandates"));
-
-        names.push("Revoke_Mandates");
-        creationCodes.push(type(Revoke_Mandates).creationCode);
-        constructorArgs.push(abi.encode("Revoke_Mandates"));
-
-        names.push("Revoke_Preset_Mandates");
-        creationCodes.push(type(Revoke_Preset_Mandates).creationCode);
-        constructorArgs.push(abi.encode("Revoke_Preset_Mandates"));
-
-        //////////////////////////////////////////////////////////////////////////
-        //                  Singleton Helper Contracts                          //
-        //////////////////////////////////////////////////////////////////////////
-        names.push("ElectionList");
-        creationCodes.push(type(ElectionList).creationCode);
-        constructorArgs.push(abi.encode());
-
-        names.push("Nominees");
-        creationCodes.push(type(Nominees).creationCode);
-        constructorArgs.push(abi.encode("Nominees"));
-
-        names.push("Erc20Taxed");
-        creationCodes.push(type(Erc20Taxed).creationCode);
-        constructorArgs.push(abi.encode());
-
-        names.push("SimpleErc20Votes");
-        creationCodes.push(type(SimpleErc20Votes).creationCode);
-        constructorArgs.push(abi.encode());
-
-        names.push("ComplianceRegistryMock");
-        creationCodes.push(type(ComplianceRegistryMock).creationCode);
-        constructorArgs.push(abi.encode());
-        
-        names.push("RwaMock");
-        creationCodes.push(type(RwaMock).creationCode);
-        constructorArgs.push(abi.encode());
-
-        names.push("Governed721"); 
-        creationCodes.push(type(Governed721).creationCode);
-        constructorArgs.push(abi.encode());
-
-        names.push("Soulbound1155Factory");
-        creationCodes.push(type(Soulbound1155Factory).creationCode);
-        constructorArgs.push(abi.encode());
-
-        names.push("OnchainIdRegistryMock");
-        creationCodes.push(type(OnchainIdRegistryMock).creationCode);
-        constructorArgs.push(abi.encode());
- 
-        names.push("ZKPassport_PowersRegistry");
-        creationCodes.push(type(ZKPassport_PowersRegistry).creationCode);
-        constructorArgs.push(abi.encode(
-            helperConfig.getZkPassportVerifier(block.chainid),
-            helperConfig.getZkPassportHelper(block.chainid),
-            "powers-git-develop-7cedars-projects.vercel.app",
-            "powers"
-        ));
+        (string[] memory _names, bytes[] memory _creationCodes, bytes[] memory _constructorArgs) = recordMandatesAndHelpers();
  
         //////////////////////////////////////////////////////////////////////////
         //                          DEPLOY SEQUENCE                             //
         //////////////////////////////////////////////////////////////////////////
         string memory obj2 = "second key";
         address mandateAddr;
-        for (uint256 i = 0; i < names.length; i++) {
-            mandateAddr = deploy(creationCodes[i], constructorArgs[i]);
+        for (uint256 i = 0; i < _names.length; i++) {
+            mandateAddr = deploy(_creationCodes[i], _constructorArgs[i]);
             addresses.push(mandateAddr);
-            vm.serializeAddress(obj2, names[i], mandateAddr);
+            vm.serializeAddress(obj2, _names[i], mandateAddr);
         }
         outputJson = vm.serializeUint(obj2, "chainId", uint256(block.chainid));
     }
@@ -440,27 +186,5 @@ contract InitialisePowers is Script {
         helperConfig = new Configurations();
         deployAndRecordMandates();
         return (names, addresses);
-    }
-
-    function getInitialisedAddress(string memory mandateName) public view returns (address) {
-        bytes32 mandateHash = keccak256(abi.encodePacked(mandateName));
-        for (uint256 i = 0; i < names.length; i++) {
-            bytes32 nameHash = keccak256(abi.encodePacked(names[i]));
-            if (nameHash == mandateHash) {
-                return addresses[i];
-            }
-        }
-        revert(string.concat("Mandate not found: ", mandateName));
-    }
-
-    function getInitialisedAddressNoRevert(string memory mandateName) public view returns (address) {
-        bytes32 mandateHash = keccak256(abi.encodePacked(mandateName));
-        for (uint256 i = 0; i < names.length; i++) {
-            bytes32 nameHash = keccak256(abi.encodePacked(names[i]));
-            if (nameHash == mandateHash) {
-                return addresses[i];
-            }
-        }
-        return address(0);
     }
 }
