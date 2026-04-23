@@ -309,17 +309,17 @@ fork-anvil :
 # Adjust the ANVIL_DEPLOY_ARGS, SEPOLIA_DEPLOY_ARGS, OPT_SEPOLIA_DEPLOY_ARGS, ARB_SEPOLIA_DEPLOY_ARGS variables above to change network and deployment settings.
 # Adjust the script path and contract name below to change which organisation is deployed.
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
+registry-deploy : 
+	@echo "Deploying mandate registry..."
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
+
 example-deploy : 
 	@echo "Deploying example contracts..."
 	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 organisation-deploy : 
-	@echo "Deploying example contracts..."
+	@echo "Deploying organisation..."
 	forge script governance/publius-registry/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-
-powers-initialise :
-	@echo "Initialising Powers contract..."
-	forge script script/InitialisePowers.s.sol:InitialisePowers $(SEPOLIA_DEPLOY_ARGS)
 
 # deploy-zkregistry : 
 # 	@echo "Deploying ZKPassport Registry..."

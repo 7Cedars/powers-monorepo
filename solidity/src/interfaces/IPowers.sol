@@ -111,7 +111,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
 
     /// @notice Adds flows
     /// @dev Can only be called through the protocol itself
-    /// @param flow The flow to add 
+    /// @param flow The flow to add
     function addFlow(Flow memory flow) external;
 
     /// @notice Removes a flow
@@ -138,7 +138,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param account The address to remove the role from
     function revokeRole(uint256 roleId, address account) external;
 
-    /// @notice Assigns a human-readable label and URI to a role  
+    /// @notice Assigns a human-readable label and URI to a role
     /// @dev Optional. Can only be called through the protocol itself
     /// @param roleId The identifier of the role to label
     /// @param label The human-readable label for the role
@@ -174,7 +174,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @return version the version string
     function version() external pure returns (string memory version);
 
-    /// @notice Gets the quantity of governance flows for a mandate  
+    /// @notice Gets the quantity of governance flows for a mandate
     function getAmountFlows() external view returns (uint256);
 
     /// @notice Gets the mandates of a governance flow at a specific index
@@ -328,8 +328,6 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param mandateId The mandate id to check
     /// @return canCall True if the caller has permission, false otherwise
     function canCallMandate(address caller, uint16 mandateId) external view returns (bool canCall);
-
-
 
     /// @notice Checks if an account is blacklisted
     /// @param account The address to check

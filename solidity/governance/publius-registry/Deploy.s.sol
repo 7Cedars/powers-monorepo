@@ -5,8 +5,9 @@ pragma solidity ^0.8.26;
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
-import { InitialisePowers } from "@script/InitialisePowers.s.sol";
+import { DeployMandates } from "@script/DeployMandates.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -20,26 +21,33 @@ import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
 contract Deploy is DeployHelpers {
     Configurations helperConfig;
     PowersTypes.MandateInitData[] constitution;
-    InitialisePowers initialisePowers;
+    DeployMandates deployMandates;
     PowersTypes.Conditions conditions;
     PowersTypes.Flow[] flows;
     Powers powers;
-    MandateRegistry registry;
+    MandateRegistry newRegistry;
+    IMandateRegistry oldRegistry;
 
     address[] targets;
     uint256[] values;
     bytes[] calldatas;
     string[] dynamicParams;
 
+    // Select version mandates to be used.
+    uint16 constant MAJOR = 0;
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
+
     function run() external returns (Powers, MandateRegistry) {
         // step 0, setup.
-        initialisePowers = new InitialisePowers();
-        initialisePowers.run();
+        deployMandates = new DeployMandates();
+        deployMandates.run();
         helperConfig = new Configurations();
+        oldRegistry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Registry and Powers
         vm.startBroadcast();
-        registry = new MandateRegistry();
+        newRegistry = new MandateRegistry();
         powers = new Powers(
             "Publius Registry", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreiay7gwqdcyhxnrg7glyjpjak7uc2mvw5pgfbrtgc7xzdz6ndjsp24", // uri
@@ -49,25 +57,25 @@ contract Deploy is DeployHelpers {
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
-        console2.log("MandateRegistry deployed at:", address(registry));
+        console2.log("MandateRegistry deployed at:", address(newRegistry));
 
         // step 2: create constitution
         uint256 constitutionLength = createConstitution();
         console2.log("Constitution created with length:");
         console2.logUint(constitutionLength);
 
-        // step 3: run constitute and transfer registry ownership
+        // step 3: run constitute and transfer newRegistry ownership
         vm.startBroadcast();
         powers.constitute(constitution);
         powers.closeConstitute(msg.sender, flows);
         
-        // Transfer ownership of registry to powers
-        registry.transferOwnership(address(powers));
+        // Transfer ownership of newRegistry to powers
+        newRegistry.transferOwnership(address(powers));
         
         vm.stopBroadcast();
-        console2.log("Powers successfully constituted and registry ownership transferred.");
+        console2.log("Powers successfully constituted and newRegistry ownership transferred.");
 
-        return (powers, registry);
+        return (powers, newRegistry);
     }
 
     function createConstitution() internal returns (uint256 constitutionLength) {
@@ -90,7 +98,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and setup treasury",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
+                targetMandate: oldRegistry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -111,35 +119,36 @@ contract Deploy is DeployHelpers {
         }));
 
         // 1. registerMandate
-        dynamicParams = new string[](3);
-        dynamicParams[0] = "string version";
-        dynamicParams[1] = "string mandateName";
-        dynamicParams[2] = "address mandateAddress";
+        dynamicParams = new string[](2);
+        dynamicParams[0] = "string mandateName";
+        dynamicParams[1] = "address mandateAddress";
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Register Mandate: Admin can register new mandates in the registry.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(registry), MandateRegistry.registerMandate.selector, dynamicParams),
+                nameDescription: "Register Mandate: Admin can register new mandates in the newRegistry.",
+                targetMandate: oldRegistry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"), 
+                config: abi.encode(address(newRegistry), MandateRegistry.registerMandate.selector, dynamicParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
         // 2. deactivateMandate
-        dynamicParams = new string[](2);
-        dynamicParams[0] = "string version";
-        dynamicParams[1] = "string mandateName";
+        dynamicParams = new string[](4);
+        dynamicParams[0] = "uint16 major";
+        dynamicParams[1] = "uint16 minor";
+        dynamicParams[2] = "uint16 patch";
+        dynamicParams[3] = "string mandateName";
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Deactivate Mandate: Admin can deactivate mandates in the registry.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(registry), MandateRegistry.deactivateMandate.selector, dynamicParams),
+                nameDescription: "Deactivate Mandate: Admin can deactivate mandates in the newRegistry.",
+                targetMandate: oldRegistry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                config: abi.encode(address(newRegistry), MandateRegistry.deactivateMandate.selector, dynamicParams),
                 conditions: conditions
             })
         );
@@ -150,27 +159,26 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = 0; // Admin
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Reactivate Mandate: Admin can reactivate mandates in the registry.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(registry), MandateRegistry.reactivateMandate.selector, dynamicParams),
+                nameDescription: "Reactivate Mandate: Admin can reactivate mandates in the newRegistry.",
+                targetMandate: oldRegistry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                config: abi.encode(address(newRegistry), MandateRegistry.reactivateMandate.selector, dynamicParams),
                 conditions: conditions
             })
         );
         delete conditions;
 
         // 4. batchRegisterMandates
-        dynamicParams = new string[](3);
-        dynamicParams[0] = "string version";
-        dynamicParams[1] = "string[] mandateNames";
-        dynamicParams[2] = "address[] mandateAddresses";
+        dynamicParams = new string[](2);
+        dynamicParams[0] = "string[] mandateNames";
+        dynamicParams[1] = "address[] mandateAddresses";
 
         mandateCount++;
         conditions.allowedRole = 0; // Admin
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Batch Register Mandates: Admin can batch register mandates in the registry.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
-                config: abi.encode(address(registry), MandateRegistry.batchRegisterMandates.selector, dynamicParams),
+                nameDescription: "Batch Register Mandates: Admin can batch register mandates in the newRegistry.",
+                targetMandate: oldRegistry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                config: abi.encode(address(newRegistry), MandateRegistry.batchRegisterMandates.selector, dynamicParams),
                 conditions: conditions
             })
         );
@@ -182,7 +190,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Mandate: Admin can adopt new mandates to the powers organization.",
-                targetMandate: initialisePowers.getInitialisedAddress("Adopt_Mandates"),
+                targetMandate: oldRegistry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Adopt_Mandates"),
                 config: abi.encode(),
                 conditions: conditions
             })

@@ -24,10 +24,10 @@ interface PowersTypes {
         uint48 latestFulfillment;
         bool active;
         Conditions conditions;
-        uint256[] actionIds; 
+        uint256[] actionIds;
     }
 
-    /// @notice struct used in adopting mandates. 
+    /// @notice struct used in adopting mandates.
     struct MandateInitData {
         string nameDescription; // 32 bytes
         address targetMandate; // 20 bytes
@@ -83,7 +83,7 @@ interface PowersTypes {
         Active, // - 3: calculate this
         Defeated, // - 4: calculate this
         Succeeded, // - 5: calculate this
-        Requested, // - 6: log this 
+        Requested, // - 6: log this
         Fulfilled, // - 7: log this
         Failed // - 8: log this
     }
@@ -108,6 +108,6 @@ interface PowersTypes {
         mapping(address account => uint256 index) members;
         Member[] membersArray;
         string label;
-        string metadata; 
+        string metadata;
     }
 }

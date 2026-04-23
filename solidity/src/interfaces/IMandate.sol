@@ -12,7 +12,7 @@ interface IMandate is IERC165 {
     //////////////////////////////////////////////////////////////
     //                        ERRORS                            //
     //////////////////////////////////////////////////////////////
-    
+
     error OnlyPowers();
 
     //////////////////////////////////////////////////////////////
@@ -41,7 +41,12 @@ interface IMandate is IERC165 {
     /// @param config Configurations parameters for the mandate
     /// @param oracle Address of the oracle for the async mandate
     event AsyncMandate__Initialized(
-        address indexed powers, uint16 indexed index, string nameDescription, bytes inputParams, bytes config, address oracle
+        address indexed powers,
+        uint16 indexed index,
+        string nameDescription,
+        bytes inputParams,
+        bytes config,
+        address oracle
     );
 
     //////////////////////////////////////////////////////////////
@@ -90,12 +95,11 @@ interface IMandate is IERC165 {
         external
         view
         returns (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas);
-    
-    
+
     //////////////////////////////////////////////////////////////
     //                       GETTERS                            //
     //////////////////////////////////////////////////////////////
- 
+
     /// @notice Retrieves the name and description for a specific mandate
     /// @param powers Address of the Powers protocol
     /// @param mandateId The id of the mandate
@@ -115,6 +119,8 @@ interface IMandate is IERC165 {
     function getConfig(address powers, uint16 mandateId) external view returns (bytes memory config);
 
     /// @notice Retrieves the version of the mandate contract
-    function version() external pure returns (string memory);
-     
+    /// @return major The major version number
+    /// @return minor The minor version number
+    /// @return patch The patch version number
+    function version() external pure returns (uint16 major, uint16 minor, uint16 patch);
 }

@@ -142,10 +142,10 @@ interface PowersErrors {
 
     /// @notice Emitted when trying to set an invalid mandate in a flow.
     error Powers__InvalidMandateId();
-    
+
     /// @notice Emitted when trying to set an invalid flow.
     error Powers__InvalidFlowIndex();
-    
+
     /// @notice Emitted when trying to adapt a flow with an invalid mandate index.
     error Powers__InvalidMandateIndex();
 }

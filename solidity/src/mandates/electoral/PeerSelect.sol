@@ -20,12 +20,12 @@ import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol
 
 contract PeerSelect is Mandate {
     struct Mem {
-        address caller; 
+        address caller;
         address[] nominees;
         string[] nomineeList;
         bool[] selection;
         uint256 numSelections;
-        uint256 i;      
+        uint256 i;
         uint256 currentRoleHolders;
         uint256 roleId;
         uint8 numberToSelect;
@@ -34,8 +34,7 @@ contract PeerSelect is Mandate {
 
     /// @notice Constructor for PeerSelect mandate
     constructor() {
-        bytes memory configParams =
-            abi.encode("uint8 numberToSelect", "uint256 roleId", "address NomineesContract");
+        bytes memory configParams = abi.encode("uint8 numberToSelect", "uint256 roleId", "address NomineesContract");
         emit Mandate__Deployed(configParams);
     }
 
@@ -46,7 +45,7 @@ contract PeerSelect is Mandate {
         bytes memory config
     ) public override {
         Mem memory mem;
-        (,,mem.nomineesContract) = abi.decode(config, (uint8, uint256, address));
+        (,, mem.nomineesContract) = abi.decode(config, (uint8, uint256, address));
 
         // Get nominees from the Nominees contract
         mem.nominees = Nominees(mem.nomineesContract).getNominees();
@@ -85,7 +84,7 @@ contract PeerSelect is Mandate {
 
         (mem.numberToSelect, mem.roleId, mem.nomineesContract) =
             abi.decode(getConfig(powers, mandateId), (uint8, uint256, address));
-        
+
         // Get current nominees from Nominees contract
         mem.nominees = Nominees(mem.nomineesContract).getNominees();
 
@@ -115,20 +114,20 @@ contract PeerSelect is Mandate {
                 mem.numSelections++;
             }
         }
-        
+
         // We must select exactly numberToSelect (seats)
         if (mem.numSelections != mem.numberToSelect) {
-                revert("Must select exactly numberToSelect options.");
+            revert("Must select exactly numberToSelect options.");
         }
 
         // 1. Remove all existing role holders
         mem.currentRoleHolders = IPowers(payable(powers)).getAmountRoleHolders(mem.roleId);
-        
-        // We need to fetch all current holders first because we can't iterate and revoke (indices shift) 
-        // effectively without multiple calls. 
+
+        // We need to fetch all current holders first because we can't iterate and revoke (indices shift)
+        // effectively without multiple calls.
         // We will generate `revokeRole` calls for all current holders.
         address[] memory currentHolders = new address[](mem.currentRoleHolders);
-        for(mem.i = 0; mem.i < mem.currentRoleHolders; mem.i++) {
+        for (mem.i = 0; mem.i < mem.currentRoleHolders; mem.i++) {
             currentHolders[mem.i] = IPowers(payable(powers)).getRoleHolderAtIndex(mem.roleId, mem.i);
         }
 
@@ -148,7 +147,8 @@ contract PeerSelect is Mandate {
         for (mem.i = 0; mem.i < mem.selection.length; mem.i++) {
             if (mem.selection[mem.i]) {
                 targets[currentCallIndex] = powers;
-                calldatas[currentCallIndex] = abi.encodeWithSelector(IPowers.assignRole.selector, mem.roleId, mem.nominees[mem.i]);
+                calldatas[currentCallIndex] =
+                    abi.encodeWithSelector(IPowers.assignRole.selector, mem.roleId, mem.nominees[mem.i]);
                 currentCallIndex++;
             }
         }

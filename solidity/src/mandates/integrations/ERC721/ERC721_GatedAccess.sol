@@ -12,7 +12,6 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
  * @dev Checks if caller holds a minimum balance of ERC721 tokens and assigns a role.
  */
 contract ERC721_GatedAccess is Mandate {
-
     struct Config {
         address erc721Address;
         uint256 assignRoleId;
@@ -22,8 +21,8 @@ contract ERC721_GatedAccess is Mandate {
     constructor() {
         bytes memory configParams = abi.encode(
             "address erc721Address", // The ERC721 contract address
-            "uint256 assignRoleId",  // The role Id to assign if checks pass
-            "uint256 minBalance"     // Minimum balance required
+            "uint256 assignRoleId", // The role Id to assign if checks pass
+            "uint256 minBalance" // Minimum balance required
         );
         emit Mandate__Deployed(configParams);
     }

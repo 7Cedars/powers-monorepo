@@ -30,6 +30,22 @@ contract PauseMandates is Mandate {
         PowersTypes.MandateInitData initData;
     }
 
+    struct Mem {
+        uint16 currentMandateCounter;
+        MandateLocation[] locations;
+        uint256 totalLocations;
+        RestartInfo[] restartInfos;
+        uint256 validCount;
+        uint16 oldMandateId;
+        address targetMandate;
+        bool active;
+        PowersTypes.Conditions conditions;
+        bytes config;
+        string nameDescription;
+        uint256 i;
+        uint16 newMandateId;
+    }
+
     constructor() {
         emit Mandate__Deployed("");
     }
@@ -42,7 +58,7 @@ contract PauseMandates is Mandate {
     ) public override {
         // Validate that the config arrays have the same length
         (uint8[] memory indexFlow, uint8[] memory indexMandate) = abi.decode(config, (uint8[], uint8[]));
-        
+
         if (indexFlow.length != indexMandate.length) {
             revert("Array length mismatch");
         }
@@ -70,9 +86,9 @@ contract PauseMandates is Mandate {
 
         // Decode input parameter
         (bool paused) = abi.decode(mandateCalldata, (bool));
-        
+
         // Decode config parameters
-        (uint8[] memory indexFlow, uint8[] memory indexMandate) = 
+        (uint8[] memory indexFlow, uint8[] memory indexMandate) =
             abi.decode(getConfig(powers, mandateId), (uint8[], uint8[]));
 
         if (paused) {
@@ -85,124 +101,109 @@ contract PauseMandates is Mandate {
     }
 
     /// @notice Internal function to pause (revoke) mandates at specified positions
-    function _pauseMandates(
-        address powers,
-        uint8[] memory indexFlow,
-        uint8[] memory indexMandate,
-        uint256 actionId
-    )
+    function _pauseMandates(address powers, uint8[] memory indexFlow, uint8[] memory indexMandate, uint256 actionId)
         internal
         view
         returns (uint256, address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
         // Find valid mandates to revoke
         (MandateLocation[] memory locations, uint256 validCount) = _findValidMandates(powers, indexFlow, indexMandate);
-        
+
         // Create arrays for the calls
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(validCount);
-        
+
         // Build revoke calls
         for (uint256 i = 0; i < validCount; i++) {
             targets[i] = powers;
             calldatas[i] = abi.encodeWithSelector(IPowers.revokeMandate.selector, locations[i].mandateId);
         }
-        
+
         return (actionId, targets, values, calldatas);
     }
 
     /// @notice Internal function to restart (redeploy) mandates at specified positions
-    function _restartMandates(
-        address powers,
-        uint8[] memory indexFlow,
-        uint8[] memory indexMandate,
-        uint256 actionId
-    )
+    function _restartMandates(address powers, uint8[] memory indexFlow, uint8[] memory indexMandate, uint256 actionId)
         internal
         view
         returns (uint256, address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
+        Mem memory mem;
+
         // Get current mandate counter to predict new mandate IDs
-        uint16 currentMandateCounter = IPowers(powers).getMandateCounter();
-        
+        mem.currentMandateCounter = IPowers(powers).getMandateCounter();
+
         // Find valid mandates
-        (MandateLocation[] memory locations, uint256 totalLocations) = _findValidMandates(powers, indexFlow, indexMandate);
-        
-        RestartInfo[] memory restartInfos = new RestartInfo[](totalLocations);
-        uint256 validCount = 0;
-        
+        (mem.locations, mem.totalLocations) = _findValidMandates(powers, indexFlow, indexMandate);
+
+        mem.restartInfos = new RestartInfo[](mem.totalLocations);
+        mem.validCount = 0;
+
         // Filter for inactive mandates and gather their data
-        for (uint256 i = 0; i < totalLocations; i++) {
-            uint16 oldMandateId = locations[i].mandateId;
-            
+        for (mem.i = 0; mem.i < mem.totalLocations; mem.i++) {
+            mem.oldMandateId = mem.locations[mem.i].mandateId;
+
             // Check if mandate is already active
-            (address targetMandate, , bool active) = IPowers(powers).getAdoptedMandate(oldMandateId);
-            if (active) {
+            (mem.targetMandate,, mem.active) = IPowers(powers).getAdoptedMandate(mem.oldMandateId);
+            if (mem.active) {
                 // Already active, skip silently
                 continue;
             }
-            
+
             // Retrieve mandate information
-            PowersTypes.Conditions memory conditions = IPowers(powers).getConditions(oldMandateId);
-            bytes memory config = IMandate(targetMandate).getConfig(powers, oldMandateId);
-            string memory nameDescription = IMandate(targetMandate).getNameDescription(powers, oldMandateId);
-            
+            mem.conditions = IPowers(powers).getConditions(mem.oldMandateId);
+            mem.config = IMandate(mem.targetMandate).getConfig(powers, mem.oldMandateId);
+            mem.nameDescription = IMandate(mem.targetMandate).getNameDescription(powers, mem.oldMandateId);
+
             // Store restart info
-            restartInfos[validCount] = RestartInfo({
-                flowIndex: locations[i].flowIndex,
-                mandateIndex: locations[i].mandateIndex,
-                oldMandateId: oldMandateId,
-                targetMandate: targetMandate,
+            mem.restartInfos[mem.validCount] = RestartInfo({
+                flowIndex: mem.locations[mem.i].flowIndex,
+                mandateIndex: mem.locations[mem.i].mandateIndex,
+                oldMandateId: mem.oldMandateId,
+                targetMandate: mem.targetMandate,
                 initData: PowersTypes.MandateInitData({
-                    nameDescription: nameDescription,
-                    targetMandate: targetMandate,
-                    config: config,
-                    conditions: conditions
+                    nameDescription: mem.nameDescription,
+                    targetMandate: mem.targetMandate,
+                    config: mem.config,
+                    conditions: mem.conditions
                 })
             });
-            validCount++;
+            mem.validCount++;
         }
-        
+
         // Create arrays for the calls (adoptMandate + editFlowByIndex for each valid restart)
-        (targets, values, calldatas) = MandateUtilities.createEmptyArrays(validCount * 2);
-        
+        (targets, values, calldatas) = MandateUtilities.createEmptyArrays(mem.validCount * 2);
+
         // Build calls: alternating adoptMandate and editFlowByIndex
-        for (uint256 i = 0; i < validCount; i++) {
-            RestartInfo memory info = restartInfos[i];
-            
+        for (mem.i = 0; mem.i < mem.validCount; mem.i++) {
+            RestartInfo memory info = mem.restartInfos[mem.i];
+
             // Predict the new mandate ID
-            uint16 newMandateId = currentMandateCounter + uint16(i);
-            
+            mem.newMandateId = mem.currentMandateCounter + uint16(mem.i);
+
             // Call 1: adoptMandate
-            targets[i * 2] = powers;
-            calldatas[i * 2] = abi.encodeWithSelector(IPowers.adoptMandate.selector, info.initData);
-            
+            targets[mem.i * 2] = powers;
+            calldatas[mem.i * 2] = abi.encodeWithSelector(IPowers.adoptMandate.selector, info.initData);
+
             // Call 2: editFlowByIndex to update the flow with new mandate ID
-            targets[i * 2 + 1] = powers;
-            calldatas[i * 2 + 1] = abi.encodeWithSelector(
-                IPowers.editFlowByIndex.selector,
-                info.flowIndex,
-                info.mandateIndex,
-                newMandateId
+            targets[mem.i * 2 + 1] = powers;
+            calldatas[mem.i * 2 + 1] = abi.encodeWithSelector(
+                IPowers.editFlowByIndex.selector, info.flowIndex, info.mandateIndex, mem.newMandateId
             );
         }
-        
+
         return (actionId, targets, values, calldatas);
     }
 
-      /// @notice Internal function to find valid mandates at specified flow positions
+    /// @notice Internal function to find valid mandates at specified flow positions
     /// @dev Skips invalid indices, out-of-bounds positions, and zero mandateIds
-    function _findValidMandates(
-        address powers,
-        uint8[] memory indexFlow,
-        uint8[] memory indexMandate
-    )
+    function _findValidMandates(address powers, uint8[] memory indexFlow, uint8[] memory indexMandate)
         internal
         view
         returns (MandateLocation[] memory locations, uint256 validCount)
     {
         locations = new MandateLocation[](indexFlow.length);
         validCount = 0;
-        
+
         for (uint256 i = 0; i < indexFlow.length; i++) {
             // Get flow at index
             uint16[] memory flow;
@@ -212,29 +213,26 @@ contract PauseMandates is Mandate {
                 // Invalid flow index, skip silently
                 continue;
             }
-            
+
             // Check if mandate index is valid
             if (indexMandate[i] >= flow.length) {
                 // Index out of bounds, skip silently
                 continue;
             }
-            
+
             uint16 mandateId = flow[indexMandate[i]];
-            
+
             // Skip if mandate is address(0) (represented as mandateId == 0)
             if (mandateId == 0) {
                 continue;
             }
-            
+
             // Store valid mandate location
-            locations[validCount] = MandateLocation({
-                flowIndex: indexFlow[i],
-                mandateIndex: indexMandate[i],
-                mandateId: mandateId
-            });
+            locations[validCount] =
+                MandateLocation({ flowIndex: indexFlow[i], mandateIndex: indexMandate[i], mandateId: mandateId });
             validCount++;
         }
-        
+
         return (locations, validCount);
     }
 }

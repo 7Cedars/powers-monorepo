@@ -76,11 +76,7 @@ contract OpenActionTest is TestSetupExecutive {
     function testOpenActionExecuteExternal() public {
         // 1. Prepare calldata for external action (Mint coins on SimpleErc1155)
         mintAmount = 100;
-        callData = abi.encodeWithSelector(
-            bytes4(keccak256("mint(uint256,address)")),
-            mintAmount,
-            alice
-        );
+        callData = abi.encodeWithSelector(bytes4(keccak256("mint(uint256,address)")), mintAmount, alice);
 
         // 2. Prepare mandate inputs
         targets = new address[](1);

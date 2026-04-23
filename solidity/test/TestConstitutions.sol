@@ -45,7 +45,7 @@ contract TestConstitutions is Test {
     string[] descriptions;
     string[] params;
 
-    Configurations helperConfig = new Configurations(); 
+    Configurations helperConfig = new Configurations();
 
     constructor(string[] memory _mandateNames, address[] memory _mandateAddresses) {
         mandateNames = _mandateNames;
@@ -117,7 +117,7 @@ contract TestConstitutions is Test {
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
         conditions.votingPeriod = 1200; // = number of blocks
         conditions.throttleExecution = 5000;
-        // NOTE: the timelock starts counting after proposal has been made, NOT after vote has passed! 
+        // NOTE: the timelock starts counting after proposal has been made, NOT after vote has passed!
         conditions.timelock = 2500; // = 2500 blocks to wait after success before execution
         constitution.push(
             PowersTypes.MandateInitData({
@@ -328,8 +328,7 @@ contract TestConstitutions is Test {
         address nominees,
         address openElection,
         address erc20DelegateElection,
-        address erc20Taxed,
-        address flagActions
+        address erc20Taxed
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
         delete constitution; // restart constitution array.
 
@@ -339,7 +338,7 @@ contract TestConstitutions is Test {
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate: Nominate yourself for a role.",
                 targetMandate: getInitialisedAddress("Nominate"), // Nominate (electoral mandate)
-                config: abi.encode( nominees ),
+                config: abi.encode(nominees),
                 conditions: conditions
             })
         );
@@ -437,9 +436,9 @@ contract TestConstitutions is Test {
                 targetMandate: getInitialisedAddress("RevokeInactiveAccounts"), // presetSingleAction
                 config: abi.encode(
                     3, // roleId to monitor
-                    1,  // minimum actions in period
+                    1, // minimum actions in period
                     5 // number of latest actions to check
-                    ),
+                ),
                 conditions: conditions
             })
         );
@@ -646,7 +645,7 @@ contract TestConstitutions is Test {
         address simpleGovernor,
         address powersFactory,
         address soulbound1155,
-        address electionList, 
+        address electionList,
         address erc20Taxed,
         address zkPassportRegistry
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
@@ -685,14 +684,14 @@ contract TestConstitutions is Test {
         inputParams[0] = "address sub-DAO";
 
         mandateCounter++;
-        conditions.allowedRole = type(uint256).max; // Public 
+        conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Delegate status: Assign delegate status at Safe treasury to a sub-DAO",
                 targetMandate: getInitialisedAddress("Safe_ExecTransaction"),
-                config: abi.encode( 
+                config: abi.encode(
                     inputParams,
-                    bytes4(0xe71bdf41), // addDelegate(address)   
+                    bytes4(0xe71bdf41), // addDelegate(address)
                     helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions
@@ -728,7 +727,7 @@ contract TestConstitutions is Test {
         inputParams = new string[](2);
         inputParams[0] = "address To";
         inputParams[1] = "uint256 Value";
-       
+
         mandateCounter++;
         conditions.allowedRole = 1;
         constitution.push(
@@ -814,18 +813,15 @@ contract TestConstitutions is Test {
         // burn to access mandate //
         inputParams = new string[](2);
         inputParams[0] = "uint256 TokenId";
-        inputParams[1] = "uint256 Amount"; 
-        
+        inputParams[1] = "uint256 Amount";
+
         mandateCounter++;
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Burn to Access: Burn a soulbound ERC1155 token to gain access.",
                 targetMandate: getInitialisedAddress("GovernedToken_BurnToAccess"),
-                config: abi.encode(
-                    inputParams,
-                    soulbound1155
-                ),
+                config: abi.encode(inputParams, soulbound1155),
                 conditions: conditions
             })
         );
@@ -855,7 +851,7 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
-        uint16 createElectionId = mandateCounter; 
+        uint16 createElectionId = mandateCounter;
 
         // Members: Nominate for Executive election (ID 10)
         mandateCounter++;
@@ -872,7 +868,7 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
-        uint16 nominateId = mandateCounter;  
+        uint16 nominateId = mandateCounter;
 
         // Members revoke nomination for Executive election. (ID 11)
         mandateCounter++;
@@ -950,7 +946,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ZKPassport Check Above 18  
+        // ZKPassport Check Above 18
         mandateCounter++;
         inputParams = new string[](1);
         inputParams[0] = "address AccountToCheck";
@@ -962,7 +958,7 @@ contract TestConstitutions is Test {
                 config: abi.encode(
                     inputParams,
                     zkPassportRegistry, // Registry address
-                    5 * 60 * 60, // stale after five hours (input in seconds). 
+                    5 * 60 * 60, // stale after five hours (input in seconds).
                     false, // facematch not required
                     bytes4(keccak256("isAgeAbove(uint8)")), // isAgeAbove(uint8)
                     abi.encode(18) // age to check
@@ -972,8 +968,8 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ZKPassport Check below 18  
-        mandateCounter++; 
+        // ZKPassport Check below 18
+        mandateCounter++;
         conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
             PowersTypes.MandateInitData({
@@ -982,8 +978,8 @@ contract TestConstitutions is Test {
                 config: abi.encode(
                     inputParams,
                     zkPassportRegistry, // Registry address
-                    5 * 60 * 60, // stale after five hours (input in seconds)  
-                    false, // facematch not required 
+                    5 * 60 * 60, // stale after five hours (input in seconds)
+                    false, // facematch not required
                     bytes4(keccak256("isAgeBelow(uint8)")), // isAgeBelow(uint8)
                     abi.encode(18) // age to check
                 ),
@@ -1009,7 +1005,7 @@ contract TestConstitutions is Test {
                     inputParams,
                     zkPassportRegistry, // Registry address
                     5 * 60 * 60, // stale after five hours (input in seconds).
-                    false, // facematch not required  
+                    false, // facematch not required
                     bytes4(keccak256("isNationalityIn(string[])")), // isNationalityIn(string[],bytes)
                     abi.encode(nationalitiesToCheck) // nationality to check
                 ),
@@ -1035,7 +1031,7 @@ contract TestConstitutions is Test {
                 nameDescription: "Execute Allowance Transaction: Execute a transaction from the Safe Treasury within the allowance set.",
                 targetMandate: getInitialisedAddress("SafeAllowance_Transfer"),
                 config: abi.encode(
-                    helperConfig.getSafeAllowanceModule(block.chainid), 
+                    helperConfig.getSafeAllowanceModule(block.chainid),
                     IPowers(daoMock).getTreasury() // This is the SafeProxyTreasury!
                 ),
                 conditions: conditions

@@ -9,205 +9,343 @@ import { IMandate } from "../interfaces/IMandate.sol";
 /// @notice Maintains a version-controlled registry of approved mandate implementations
 /// @dev All functions are restricted to the contract owner
 /// @author 7Cedars
+
+interface IMandateRegistry {
+    struct MandateEntry {
+        address mandateAddress;
+        uint48 registeredAt;
+        bool isActive;
+    }
+
+    function registerMandate(string calldata mandateName, address mandateAddress) external;
+    function deactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName) external;
+    function reactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName) external;
+    function batchRegisterMandates(string[] calldata mandateNames, address[] calldata mandateAddresses) external;
+    function getMandateEntry(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+        external
+        view
+        returns (MandateEntry memory);
+    function getMandateAddress(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+        external
+        view
+        returns (address);
+    function isMandateRegistered(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
+        external
+        view
+        returns (bool);
+    function isVersionActive(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
+        external
+        view
+        returns (bool);
+    function getBatchMandateEntries(
+        uint16 major,
+        uint16 minor,
+        uint16 patch,
+        bool strict,
+        string[] calldata mandateNames
+    ) external view returns (MandateEntry[] memory entries);
+}
+
 contract MandateRegistry is Ownable {
     //////////////////////////////////////////////////////////////
     //                        STORAGE                           //
     //////////////////////////////////////////////////////////////
-    
+
     /// @notice Structure containing mandate registration details
     struct MandateEntry {
         address mandateAddress;
-        uint48 registeredAt;  // Block number when registered
-        bool isActive;  // Optional field for future use (e.g., security audits)
+        uint48 registeredAt; // Block number when registered
+        bool isActive; // Optional field for future use (e.g., security audits)
     }
 
-    /// @notice Mapping from version string to mandate nameHash to entry
-    mapping(string version => mapping(bytes32 nameHash => MandateEntry)) public registry;
+    /// @notice Mapping from mandate nameHash to packed version to entry
+    mapping(bytes32 nameHash => mapping(uint48 packedVersion => MandateEntry)) public registry;
+
+    /// @notice Ordered list of versions registered for each mandate name
+    mapping(bytes32 nameHash => uint48[]) public mandateVersions;
 
     //////////////////////////////////////////////////////////////
     //                        EVENTS                            //
     //////////////////////////////////////////////////////////////
-    
+
     /// @notice Emitted when a new mandate is registered
     event MandateRegistered(
-        string indexed version,
+        uint16 major,
+        uint16 minor,
+        uint16 patch,
         address indexed mandateAddress,
         string mandateName,
         uint256 registeredAt
     );
-    
+
     /// @notice Emitted when a mandate is updated
     event MandateUpdated(
-        string indexed version,
+        uint16 major,
+        uint16 minor,
+        uint16 patch,
         address indexed oldAddress,
         address indexed newAddress,
         string mandateName
     );
-    
+
     /// @notice Emitted when a mandate is deactivated
-    event MandateDeactivated(string indexed version, string mandateName, uint256 deactivatedAt);
-    
+    event MandateDeactivated(uint16 major, uint16 minor, uint16 patch, string mandateName, uint256 deactivatedAt);
+
     /// @notice Emitted when a mandate is reactivated
-    event MandateReactivated(string indexed version, string mandateName, uint256 reactivatedAt);
+    event MandateReactivated(uint16 major, uint16 minor, uint16 patch, string mandateName, uint256 reactivatedAt);
 
     //////////////////////////////////////////////////////////////
     //                        ERRORS                            //
     //////////////////////////////////////////////////////////////
-    
-    error MandateAlreadyRegistered(string version, string mandateName);
-    error MandateNotFound(string version, string mandateName);
-    error MandateInactive(string version, string mandateName);
+
+    error MandateAlreadyRegistered(uint16 major, uint16 minor, uint16 patch, string mandateName);
+    error MandateNotFound(uint16 major, uint16 minor, uint16 patch, string mandateName);
+    error MandateInactive(uint16 major, uint16 minor, uint16 patch, string mandateName);
     error InvalidMandateAddress();
     error InvalidMandateInterface(address mandateAddress);
     error InvalidNameLength();
-    error InvalidVersionString();
+    error InvalidVersionSequence(uint16 major, uint16 minor, uint16 patch, string mandateName);
 
     //////////////////////////////////////////////////////////////
     //                      CONSTRUCTOR                         //
     //////////////////////////////////////////////////////////////
-    
+
     /// @notice Initializes the registry with the deployer as owner
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) { }
 
     //////////////////////////////////////////////////////////////
     //                   REGISTRATION LOGIC                     //
     //////////////////////////////////////////////////////////////
-    
-    /// @notice Registers a new mandate under a specific version
+
+    /// @notice Registers a new mandate under its contract's specific version
     /// @dev Validates address, interface implementation, and uniqueness
-    /// @param version The version string (e.g., "v1.0")
     /// @param mandateName Human-readable name for the mandate
     /// @param mandateAddress Address of the mandate contract
-    function registerMandate(
-        string calldata version,
-        string calldata mandateName,
-        address mandateAddress
-    ) external onlyOwner {
+    function registerMandate(string calldata mandateName, address mandateAddress) external onlyOwner {
         // Validate inputs
-        if (bytes(version).length == 0) revert InvalidVersionString();
         if (bytes(mandateName).length == 0 || bytes(mandateName).length > 255) {
             revert InvalidNameLength();
         }
         if (mandateAddress == address(0)) revert InvalidMandateAddress();
-        
-        bytes32 nameHash = keccak256(bytes(mandateName));
 
-        // Check if mandate already exists in this version
-        if (registry[version][nameHash].registeredAt != 0) {
-            if (registry[version][nameHash].isActive) {
-                revert MandateAlreadyRegistered(version, mandateName);
-            } else {
-                revert MandateInactive(version, mandateName);
-            }
-        }
-        
         // Validate that address implements IMandate interface
         if (!ERC165Checker.supportsInterface(mandateAddress, type(IMandate).interfaceId)) {
             revert InvalidMandateInterface(mandateAddress);
         }
 
+        (uint16 major, uint16 minor, uint16 patch) = IMandate(mandateAddress).version();
+        uint48 packedVersion = packVersion(major, minor, patch);
+        bytes32 nameHash = keccak256(bytes(mandateName));
+
+        // Check if mandate already exists in this version
+        if (registry[nameHash][packedVersion].registeredAt != 0) {
+            if (registry[nameHash][packedVersion].isActive) {
+                revert MandateAlreadyRegistered(major, minor, patch, mandateName);
+            } else {
+                revert MandateInactive(major, minor, patch, mandateName);
+            }
+        }
+
         // Register the mandate
-        registry[version][nameHash] = MandateEntry({
-            mandateAddress: mandateAddress,
-            registeredAt: uint48(block.number),
-            isActive: true
-        });
-        
-        emit MandateRegistered(version, mandateAddress, mandateName, block.number);
+        registry[nameHash][packedVersion] =
+            MandateEntry({ mandateAddress: mandateAddress, registeredAt: uint48(block.number), isActive: true });
+
+        _addVersion(nameHash, packedVersion, major, minor, patch, mandateName);
+
+        emit MandateRegistered(major, minor, patch, mandateAddress, mandateName, block.number);
     }
 
     /// @notice Deactivates a mandate (soft delete)
-    /// @param version The version string
-    /// @param mandateName The mandate name
-    function deactivateMandate(string calldata version, string calldata mandateName) external onlyOwner {
+    function deactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
+        external
+        onlyOwner
+    {
         bytes32 nameHash = keccak256(bytes(mandateName));
-        
-        if (registry[version][nameHash].registeredAt == 0) revert MandateNotFound(version, mandateName);
-        
-        MandateEntry storage entry = registry[version][nameHash];
-        if (!entry.isActive) revert MandateInactive(version, mandateName);
-        
-        entry.isActive = false;
-        
-        emit MandateDeactivated(version, mandateName, block.number);
-    }
-    
-    /// @notice Reactivates a previously deactivated mandate
-    /// @param version The version string
-    /// @param mandateName The mandate name
-    function reactivateMandate(string calldata version, string calldata mandateName) external onlyOwner {
-        bytes32 nameHash = keccak256(bytes(mandateName));
+        uint48 packedVersion = packVersion(major, minor, patch);
 
-        if (registry[version][nameHash].registeredAt == 0) revert MandateNotFound(version, mandateName);
-        
-        MandateEntry storage entry = registry[version][nameHash];
-        if (entry.isActive) revert MandateAlreadyRegistered(version, mandateName);
-        
-        entry.isActive = true;
-        
-        emit MandateReactivated(version, mandateName, block.number);
+        if (registry[nameHash][packedVersion].registeredAt == 0) {
+            revert MandateNotFound(major, minor, patch, mandateName);
+        }
+
+        MandateEntry storage entry = registry[nameHash][packedVersion];
+        if (!entry.isActive) revert MandateInactive(major, minor, patch, mandateName);
+
+        entry.isActive = false;
+
+        emit MandateDeactivated(major, minor, patch, mandateName, block.number);
     }
-    
-    /// @notice Batch registers multiple mandates in a single transaction under a specific version
-    /// @param version The version string
+
+    /// @notice Reactivates a previously deactivated mandate
+    function reactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
+        external
+        onlyOwner
+    {
+        bytes32 nameHash = keccak256(bytes(mandateName));
+        uint48 packedVersion = packVersion(major, minor, patch);
+
+        if (registry[nameHash][packedVersion].registeredAt == 0) {
+            revert MandateNotFound(major, minor, patch, mandateName);
+        }
+
+        MandateEntry storage entry = registry[nameHash][packedVersion];
+        if (entry.isActive) revert MandateAlreadyRegistered(major, minor, patch, mandateName);
+
+        entry.isActive = true;
+
+        emit MandateReactivated(major, minor, patch, mandateName, block.number);
+    }
+
+    /// @notice Batch registers multiple mandates in a single transaction
     /// @param mandateNames Array of mandate names
     /// @param mandateAddresses Array of mandate addresses
-    function batchRegisterMandates(
-        string calldata version,
-        string[] calldata mandateNames,
-        address[] calldata mandateAddresses
-    ) external onlyOwner {
+    function batchRegisterMandates(string[] calldata mandateNames, address[] calldata mandateAddresses)
+        external
+        onlyOwner
+    {
         if (mandateNames.length != mandateAddresses.length) {
             revert("Array lengths must match");
         }
 
         for (uint256 i = 0; i < mandateNames.length; i++) {
-            this.registerMandate(version, mandateNames[i], mandateAddresses[i]);
+            this.registerMandate(mandateNames[i], mandateAddresses[i]);
+        }
+    }
+
+    //////////////////////////////////////////////////////////////
+    //                   HELPERS                                //
+    //////////////////////////////////////////////////////////////
+
+    function packVersion(uint16 major, uint16 minor, uint16 patch) public pure returns (uint48) {
+        return (uint48(major) << 32) | (uint48(minor) << 16) | uint48(patch);
+    }
+
+    function _addVersion(
+        bytes32 nameHash,
+        uint48 packedVersion,
+        uint16 major,
+        uint16 minor,
+        uint16 patch,
+        string calldata mandateName
+    ) internal {
+        uint48[] storage versions = mandateVersions[nameHash];
+        uint256 len = versions.length;
+
+        if (len > 0 && packedVersion <= versions[len - 1]) {
+            revert InvalidVersionSequence(major, minor, patch, mandateName);
+        }
+
+        versions.push(packedVersion);
+    }
+
+    function _getMandateEntryInternal(
+        uint16 major,
+        uint16 minor,
+        uint16 patch,
+        string calldata mandateName,
+        bool strict
+    ) internal view returns (MandateEntry memory) {
+        bytes32 nameHash = keccak256(bytes(mandateName));
+        uint48 targetVersion = packVersion(major, minor, patch);
+
+        if (strict) {
+            MandateEntry memory entry = registry[nameHash][targetVersion];
+            if (entry.registeredAt == 0) revert MandateNotFound(major, minor, patch, mandateName);
+            return entry;
+        } else {
+            uint48 highestBelow = 0;
+            bool found = false;
+            uint48[] storage versions = mandateVersions[nameHash];
+
+            for (uint256 i = versions.length; i > 0; i--) {
+                uint48 v = versions[i - 1];
+                if (v <= targetVersion) {
+                    highestBelow = v;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) revert MandateNotFound(major, minor, patch, mandateName);
+            return registry[nameHash][highestBelow];
         }
     }
 
     //////////////////////////////////////////////////////////////
     //                   VIEW FUNCTIONS                         //
     //////////////////////////////////////////////////////////////
-    
     /// @notice Gets the complete mandate entry
-    function getMandateEntry(string calldata version, string calldata mandateName) external view returns (MandateEntry memory) {
-        bytes32 nameHash = keccak256(bytes(mandateName));
-        if (registry[version][nameHash].registeredAt == 0) revert MandateNotFound(version, mandateName);
-        return registry[version][nameHash];
-    }
-    
-    /// @notice Gets the mandate address
-    function getMandateAddress(string calldata version, string calldata mandateName) external view returns (address) {
-        bytes32 nameHash = keccak256(bytes(mandateName));
-        if (registry[version][nameHash].registeredAt == 0) revert MandateNotFound(version, mandateName);
-        return registry[version][nameHash].mandateAddress;
-    }
-    
-    /// @notice Checks if a mandate is registered
-    function isMandateRegistered(string calldata version, string calldata mandateName) external view returns (bool) {
-        bytes32 nameHash = keccak256(bytes(mandateName));
-        return registry[version][nameHash].registeredAt != 0;
-    }
-    
-    /// @notice Checks if a mandate is active
-    function isVersionActive(string calldata version, string calldata mandateName) external view returns (bool) {
-        bytes32 nameHash = keccak256(bytes(mandateName));
-        if (registry[version][nameHash].registeredAt == 0) return false;
-        return registry[version][nameHash].isActive;
-    }
-    
-    /// @notice Gets mandate details for multiple names in a single version
-    function getBatchMandateEntries(string calldata version, string[] calldata mandateNames) 
-        external 
-        view 
-        returns (MandateEntry[] memory entries) 
+    function getMandateEntry(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+        external
+        view
+        returns (MandateEntry memory)
     {
+        return _getMandateEntryInternal(major, minor, patch, mandateName, strict);
+    }
+
+    /// @notice Gets the mandate address
+    function getMandateAddress(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+        external
+        view
+        returns (address)
+    {
+        return _getMandateEntryInternal(major, minor, patch, mandateName, strict).mandateAddress;
+    }
+
+    /// @notice Checks if a mandate is registered
+    function isMandateRegistered(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
+        external
+        view
+        returns (bool)
+    {
+        bytes32 nameHash = keccak256(bytes(mandateName));
+        uint48 targetVersion = packVersion(major, minor, patch);
+        return registry[nameHash][targetVersion].registeredAt != 0;
+    }
+
+    /// @notice Checks if a mandate is active
+    function isVersionActive(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
+        external
+        view
+        returns (bool)
+    {
+        bytes32 nameHash = keccak256(bytes(mandateName));
+        uint48 targetVersion = packVersion(major, minor, patch);
+        if (registry[nameHash][targetVersion].registeredAt == 0) return false;
+        return registry[nameHash][targetVersion].isActive;
+    }
+
+    /// @notice Gets mandate details for multiple names
+    function getBatchMandateEntries(
+        uint16 major,
+        uint16 minor,
+        uint16 patch,
+        bool strict,
+        string[] calldata mandateNames
+    ) external view returns (MandateEntry[] memory entries) {
         entries = new MandateEntry[](mandateNames.length);
+        uint48 targetVersion = packVersion(major, minor, patch);
+
         for (uint256 i = 0; i < mandateNames.length; i++) {
             bytes32 nameHash = keccak256(bytes(mandateNames[i]));
-            if (registry[version][nameHash].registeredAt != 0) {
-                entries[i] = registry[version][nameHash];
+            if (strict) {
+                if (registry[nameHash][targetVersion].registeredAt != 0) {
+                    entries[i] = registry[nameHash][targetVersion];
+                }
+            } else {
+                uint48 highestBelow = 0;
+                bool found = false;
+                uint48[] storage versions = mandateVersions[nameHash];
+
+                for (uint256 j = versions.length; j > 0; j--) {
+                    uint48 v = versions[j - 1];
+                    if (v <= targetVersion) {
+                        highestBelow = v;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    entries[i] = registry[nameHash][highestBelow];
+                }
             }
         }
         return entries;

@@ -64,7 +64,7 @@ pragma solidity ^0.8.26;
 //         // Send the calldata to the target function
 //         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
 //         // if no target contract specified, call the function on the Powers contract
-//         targets[0] = mem.targetContract == address(0) ? address(powers) : mem.targetContract; 
+//         targets[0] = mem.targetContract == address(0) ? address(powers) : mem.targetContract;
 //         calldatas[0] = abi.encodePacked(mem.functionSelector, mem.staticParamsBefore, mandateCalldata, mem.staticParamsAfter);
 
 //         return (actionId, targets, values, calldatas);

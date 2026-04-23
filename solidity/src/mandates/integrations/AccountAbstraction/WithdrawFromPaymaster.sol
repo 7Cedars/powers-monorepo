@@ -38,7 +38,8 @@ contract WithdrawFromPaymaster is Mandate {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 
         // Decode the parameters
-        (address paymaster, address withdrawAddress, uint256 amount) = abi.decode(mandateCalldata, (address, address, uint256));
+        (address paymaster, address withdrawAddress, uint256 amount) =
+            abi.decode(mandateCalldata, (address, address, uint256));
 
         // Format execution arrays to call withdrawTo on the paymaster
         targets = new address[](1);

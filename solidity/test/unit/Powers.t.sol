@@ -560,7 +560,7 @@ contract ConstituteTest is TestSetupPowers {
 
         mandateInitData[0] = MandateInitData({
             nameDescription: "Test mandate: Test mandate description",
-            targetMandate: initialisePowers.getInitialisedAddress("OpenAction"), // = openAction
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"), // = openAction
             config: abi.encode(),
             conditions: conditions
         });
@@ -580,7 +580,7 @@ contract ConstituteTest is TestSetupPowers {
         MandateInitData[] memory mandateInitData = new MandateInitData[](1);
         mandateInitData[0] = MandateInitData({
             nameDescription: "Test mandate: Test mandate description",
-            targetMandate: initialisePowers.getInitialisedAddress("OpenAction"), // = openAction
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"), // = openAction
             config: abi.encode(),
             conditions: conditions
         });
@@ -602,7 +602,7 @@ contract ConstituteTest is TestSetupPowers {
         MandateInitData[] memory mandateInitData = new MandateInitData[](1);
         mandateInitData[0] = MandateInitData({
             nameDescription: "Test mandate: Test mandate description",
-            targetMandate: initialisePowers.getInitialisedAddress("OpenAction"), // mandateAddresses[3],
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"), // mandateAddresses[3],
             config: abi.encode(),
             conditions: conditions
         });

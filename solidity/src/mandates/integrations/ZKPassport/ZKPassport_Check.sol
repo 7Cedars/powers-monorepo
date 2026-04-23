@@ -10,7 +10,7 @@ import { DisclosedData } from "@lib/circuits/src/solidity/src/Types.sol";
 /// @notice Checks if a caller has a valid ZKPassport proof registered with specific data.
 /// @author 7Cedars
 
-/// NB: a list of available checks and their functionSelectors is appended below. 
+/// NB: a list of available checks and their functionSelectors is appended below.
 /// NB 2: You can only run one check at a time on the registry. If you want to run multiple checks, you need to create multiple mandates with different configs in a single chain.
 contract ZKPassport_Check is Mandate {
     //////////////////////////////////////////////////////////////
@@ -25,24 +25,23 @@ contract ZKPassport_Check is Mandate {
         bytes4 functionSelector;
         bytes input;
         address accountToCheck;
-        uint256 proofTimestamp; 
+        uint256 proofTimestamp;
         bool success;
-        DisclosedData disclosedData; 
+        DisclosedData disclosedData;
     }
-         
+
     //////////////////////////////////////////////////////////////
     //                   MANDATE EXECUTION                      //
     //////////////////////////////////////////////////////////////
     constructor() {
-        bytes memory configParams =
-            abi.encode(
-                "string[] inputParams", // NB: these input params are not used in the actual contract. By changing the inputParams, the mandate can be places in a broader governance flow. See StatementOfIntent.sol for a similar approach.  
-                "address registry", 
-                "uint256 staleAfterSeconds", 
-                "bool facematchRequired",
-                "bytes4 functionSelector", 
-                "bytes input"
-                );
+        bytes memory configParams = abi.encode(
+            "string[] inputParams", // NB: these input params are not used in the actual contract. By changing the inputParams, the mandate can be places in a broader governance flow. See StatementOfIntent.sol for a similar approach.
+            "address registry",
+            "uint256 staleAfterSeconds",
+            "bool facematchRequired",
+            "bytes4 functionSelector",
+            "bytes input"
+        );
         emit Mandate__Deployed(configParams);
     }
 
@@ -52,16 +51,16 @@ contract ZKPassport_Check is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        (string[] memory params_ , , , , , ) = abi.decode(config, (string[], address, uint256, bool, bytes4, bytes));
-        
+        (string[] memory params_,,,,,) = abi.decode(config, (string[], address, uint256, bool, bytes4, bytes));
+
         string[] memory newParams_ = new string[](params_.length + 1);
         for (uint256 i; i < params_.length; i++) {
             newParams_[i] = params_[i];
         }
-        newParams_[params_.length] = "address AccountToCheck"; 
+        newParams_[params_.length] = "address AccountToCheck";
         super.initializeMandate(index, nameDescription, abi.encode(newParams_), config);
     }
-    
+
     /// @inheritdoc Mandate
     function handleRequest(
         address caller,
@@ -77,18 +76,19 @@ contract ZKPassport_Check is Mandate {
     {
         // Decode config
         Mem memory mem;
-        ( , mem.registry, mem.staleAfterSeconds, mem.facematchRequired, mem.functionSelector, mem.input) = abi.decode(getConfig(powers, mandateId), (string[], address, uint256, bool, bytes4, bytes));
-        mem.accountToCheck = abi.decode(mandateCalldata, (address)); 
+        (, mem.registry, mem.staleAfterSeconds, mem.facematchRequired, mem.functionSelector, mem.input) =
+            abi.decode(getConfig(powers, mandateId), (string[], address, uint256, bool, bytes4, bytes));
+        mem.accountToCheck = abi.decode(mandateCalldata, (address));
 
         // 1. validate inputs
-        if (mem.registry == address(0)) revert ("ZKPassport: Invalid registry address");
-        if (mem.accountToCheck == address(0)) revert ("ZKPassport: Invalid zero address for account to check");
-        if (mem.accountToCheck != caller) revert ("ZKPassport: Caller is not the account to check");
+        if (mem.registry == address(0)) revert("ZKPassport: Invalid registry address");
+        if (mem.accountToCheck == address(0)) revert("ZKPassport: Invalid zero address for account to check");
+        if (mem.accountToCheck != caller) revert("ZKPassport: Caller is not the account to check");
 
         ZKPassport_PowersRegistry registry = ZKPassport_PowersRegistry(mem.registry);
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 
-        // 2. check that the proof is not stale  
+        // 2. check that the proof is not stale
         mem.proofTimestamp = registry.getProofTimestamp(mem.accountToCheck);
         require(block.timestamp - mem.proofTimestamp < mem.staleAfterSeconds, "Proof is stale");
 
@@ -120,10 +120,10 @@ contract ZKPassport_Check is Mandate {
         } else if (mem.functionSelector == bytes4(keccak256("isBirthdateBefore(uint256)"))) {
             mem.success = _verifyBirthdateBefore(mem.input, mem.disclosedData);
         } else if (mem.functionSelector == bytes4(keccak256("isBirthdateBeforeOrEqual(uint256)"))) {
-           mem.success = _verifyBirthdateBeforeOrEqual(mem.input, mem.disclosedData);
+            mem.success = _verifyBirthdateBeforeOrEqual(mem.input, mem.disclosedData);
         } else if (mem.functionSelector == bytes4(keccak256("isBirthdateBetween(uint256,uint256)"))) {
             mem.success = _verifyBirthdateBetween(mem.input, mem.disclosedData);
-        } else if (mem.functionSelector == bytes4(keccak256("isBirthdateEqual(uint256)"))) { 
+        } else if (mem.functionSelector == bytes4(keccak256("isBirthdateEqual(uint256)"))) {
             mem.success = _verifyBirthdateEqual(mem.input, mem.disclosedData);
         } else if (mem.functionSelector == bytes4(keccak256("isExpiryDateAfter(uint256)"))) {
             mem.success = _verifyExpiryDateAfter(mem.input, mem.disclosedData);
@@ -152,8 +152,8 @@ contract ZKPassport_Check is Mandate {
         if (!mem.success) {
             revert("ZKPassport: Proof verification failed");
         }
-        
-        (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);       
+
+        (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         return (actionId, targets, values, calldatas);
     }
 
@@ -189,7 +189,7 @@ contract ZKPassport_Check is Mandate {
     function _verifyAgeEqual(bytes memory input, DisclosedData memory data) internal view returns (bool) {
         uint8 threshold = abi.decode(input, (uint8));
         return _calculateAge(data.birthDate) == threshold;
-     }
+    }
 
     function _verifyBirthdateAfter(bytes memory input, DisclosedData memory data) internal view returns (bool) {
         uint256 timestamp = abi.decode(input, (uint256));
@@ -218,12 +218,12 @@ contract ZKPassport_Check is Mandate {
     }
 
     function _verifyBirthdateEqual(bytes memory input, DisclosedData memory data) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
+        uint256 timestamp = abi.decode(input, (uint256));
         return _mrzToYYYYMMDD(data.birthDate, false) == _timestampToYYYYMMDD(timestamp);
     }
 
     function _verifyExpiryDateAfter(bytes memory input, DisclosedData memory data) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
+        uint256 timestamp = abi.decode(input, (uint256));
         return _mrzToYYYYMMDD(data.expiryDate, true) > _timestampToYYYYMMDD(timestamp);
     }
 
@@ -233,29 +233,33 @@ contract ZKPassport_Check is Mandate {
     }
 
     function _verifyExpiryDateBefore(bytes memory input, DisclosedData memory data) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
+        uint256 timestamp = abi.decode(input, (uint256));
         return _mrzToYYYYMMDD(data.expiryDate, true) < _timestampToYYYYMMDD(timestamp);
     }
 
-    function _verifyExpiryDateBeforeOrEqual(bytes memory input, DisclosedData memory data) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
+    function _verifyExpiryDateBeforeOrEqual(bytes memory input, DisclosedData memory data)
+        internal
+        view
+        returns (bool)
+    {
+        uint256 timestamp = abi.decode(input, (uint256));
         return _mrzToYYYYMMDD(data.expiryDate, true) <= _timestampToYYYYMMDD(timestamp);
     }
 
     function _verifyExpiryDateBetween(bytes memory input, DisclosedData memory data) internal view returns (bool) {
-        (uint256 tLower, uint256 tUpper) = abi.decode(input, (uint256, uint256)); 
+        (uint256 tLower, uint256 tUpper) = abi.decode(input, (uint256, uint256));
         uint256 eYYYYMMDD = _mrzToYYYYMMDD(data.expiryDate, true);
         return eYYYYMMDD >= _timestampToYYYYMMDD(tLower) && eYYYYMMDD <= _timestampToYYYYMMDD(tUpper);
     }
 
     function _verifyExpiryDateEqual(bytes memory input, DisclosedData memory data) internal view returns (bool) {
-        uint256 timestamp = abi.decode(input, (uint256)); 
+        uint256 timestamp = abi.decode(input, (uint256));
         return _mrzToYYYYMMDD(data.expiryDate, true) == _timestampToYYYYMMDD(timestamp);
     }
 
     function _verifyIssuingCountryIn(bytes memory input, DisclosedData memory data) internal pure returns (bool) {
-        string[] memory countries = abi.decode(input, (string[])); 
-        for (uint i = 0; i < countries.length; i++) {
+        string[] memory countries = abi.decode(input, (string[]));
+        for (uint256 i = 0; i < countries.length; i++) {
             if (keccak256(bytes(countries[i])) == keccak256(bytes(data.issuingCountry))) {
                 return true;
             }
@@ -264,8 +268,8 @@ contract ZKPassport_Check is Mandate {
     }
 
     function _verifyIssuingCountryOut(bytes memory input, DisclosedData memory data) internal pure returns (bool) {
-        string[] memory countries = abi.decode(input, (string[])); 
-        for (uint i = 0; i < countries.length; i++) {
+        string[] memory countries = abi.decode(input, (string[]));
+        for (uint256 i = 0; i < countries.length; i++) {
             if (keccak256(bytes(countries[i])) == keccak256(bytes(data.issuingCountry))) {
                 return false;
             }
@@ -274,8 +278,8 @@ contract ZKPassport_Check is Mandate {
     }
 
     function _verifyNationalityIn(bytes memory input, DisclosedData memory data) internal pure returns (bool) {
-        string[] memory nationalities = abi.decode(input, (string[])); 
-        for (uint i = 0; i < nationalities.length; i++) {
+        string[] memory nationalities = abi.decode(input, (string[]));
+        for (uint256 i = 0; i < nationalities.length; i++) {
             if (keccak256(bytes(nationalities[i])) == keccak256(bytes(data.nationality))) {
                 return true;
             }
@@ -284,8 +288,8 @@ contract ZKPassport_Check is Mandate {
     }
 
     function _verifyNationalityOut(bytes memory input, DisclosedData memory data) internal pure returns (bool) {
-        string[] memory nationalities = abi.decode(input, (string[])); 
-        for (uint i = 0; i < nationalities.length; i++) {
+        string[] memory nationalities = abi.decode(input, (string[]));
+        for (uint256 i = 0; i < nationalities.length; i++) {
             if (keccak256(bytes(nationalities[i])) == keccak256(bytes(data.nationality))) {
                 return false;
             }
@@ -300,30 +304,30 @@ contract ZKPassport_Check is Mandate {
     function _calculateAge(string memory birthDate) internal view returns (uint256) {
         uint256 bYYYYMMDD = _mrzToYYYYMMDD(birthDate, false);
         uint256 cYYYYMMDD = _timestampToYYYYMMDD(block.timestamp);
-        
+
         if (cYYYYMMDD < bYYYYMMDD) return 0; // Should not happen
-        return (cYYYYMMDD - bYYYYMMDD) / 10000;
+        return (cYYYYMMDD - bYYYYMMDD) / 10_000;
     }
 
-    function _mrzToYYYYMMDD(string memory mrz, bool isExpiry) internal view returns (uint256) { 
+    function _mrzToYYYYMMDD(string memory mrz, bool isExpiry) internal view returns (uint256) {
         bytes memory d = bytes(mrz);
         require(d.length == 6, "Invalid MRZ date length");
         uint256 yy = _stringToUint(string(abi.encodePacked(d[0], d[1])));
         uint256 mm = _stringToUint(string(abi.encodePacked(d[2], d[3])));
         uint256 dd = _stringToUint(string(abi.encodePacked(d[4], d[5])));
-        
+
         uint256 currentYYYYMMDD = _timestampToYYYYMMDD(block.timestamp);
-        uint256 currentYY = (currentYYYYMMDD / 10000) % 100;
-        
+        uint256 currentYY = (currentYYYYMMDD / 10_000) % 100;
+
         uint256 year;
         if (isExpiry) {
-             // Expiry: assume 2000+ if yy is within reasonable future/past window relative to currentYY
-             // If yy < currentYY + 50, assume 2000+yy. Else 1900+yy.
-             if (yy < currentYY + 50) {
-                 year = 2000 + yy;
-             } else {
-                 year = 1900 + yy;
-             }
+            // Expiry: assume 2000+ if yy is within reasonable future/past window relative to currentYY
+            // If yy < currentYY + 50, assume 2000+yy. Else 1900+yy.
+            if (yy < currentYY + 50) {
+                year = 2000 + yy;
+            } else {
+                year = 1900 + yy;
+            }
         } else {
             // Birthdate: assume 1900+ if yy > currentYY, else 2000+
             if (yy > currentYY) {
@@ -332,20 +336,20 @@ contract ZKPassport_Check is Mandate {
                 year = 2000 + yy;
             }
         }
-        
-        return year * 10000 + mm * 100 + dd;
+
+        return year * 10_000 + mm * 100 + dd;
     }
 
     function _timestampToYYYYMMDD(uint256 timestamp) internal pure returns (uint256) {
         (uint256 y, uint256 m, uint256 d) = _timestampToDate(timestamp);
-        return y * 10000 + m * 100 + d;
+        return y * 10_000 + m * 100 + d;
     }
 
     function _timestampToDate(uint256 timestamp) internal pure returns (uint256 year, uint256 month, uint256 day) {
-        uint256 z = timestamp / 86400 + 719468;
-        uint256 era = (z >= 0 ? z : z - 146096) / 146097;
-        uint256 doe = z - era * 146097;
-        uint256 ydoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+        uint256 z = timestamp / 86_400 + 719_468;
+        uint256 era = (z >= 0 ? z : z - 146_096) / 146_097;
+        uint256 doe = z - era * 146_097;
+        uint256 ydoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
         uint256 y = ydoe + era * 400;
         uint256 doy = doe - (365 * ydoe + ydoe / 4 - ydoe / 100);
         uint256 mp = (5 * doy + 2) / 153;
