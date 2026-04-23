@@ -22,7 +22,7 @@ contract Nominees is Ownable {
     event NominationRevoked(address indexed nominee);
 
     constructor() Ownable(msg.sender) { }
- 
+
     function nominate(address nominee, bool shouldNominate) public onlyOwner {
         if (shouldNominate) {
             if (nominations[nominee] == true) revert("already nominated");

@@ -9,10 +9,9 @@ import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
 import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
 import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
 import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol";
-import { FlagActions } from "@src/helpers/FlagActions.sol"; 
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersMock } from "../../mocks/PowersMock.sol";
-import { Nominees } from "@src/helpers/Nominees.sol"; 
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 
@@ -36,7 +35,7 @@ contract PeerSelectTest is TestSetupElectoral {
     function testPeerSelectInitialization() public {
         (uint8 numberToSelect, uint256 roleId, address configuredNominees) =
             abi.decode(peerSelect.getConfig(address(daoMock), mandateId), (uint8, uint256, address));
-        
+
         assertEq(numberToSelect, 2);
         assertEq(roleId, 4);
         assertEq(configuredNominees, address(nomineesContract));
@@ -158,7 +157,8 @@ contract RoleByRolesTest is TestSetupElectoral {
 
     function setUp() public override {
         super.setUp();
-        mandateId = findMandateIdInOrg("RoleByRoles: A mandate to assign roles based on existing role holders.", daoMock);
+        mandateId =
+            findMandateIdInOrg("RoleByRoles: A mandate to assign roles based on existing role holders.", daoMock);
         roleByRoles = RoleByRoles(findMandateAddress("RoleByRoles"));
     }
 
@@ -213,8 +213,7 @@ contract SelfSelectTest is TestSetupElectoral {
 
     function testSelfSelectInitialization() public {
         // Verify mandate data is stored correctly
-        (uint256 roleId) =
-            abi.decode(selfSelect.getConfig(address(daoMock), mandateId), (uint256));
+        (uint256 roleId) = abi.decode(selfSelect.getConfig(address(daoMock), mandateId), (uint256));
         assertEq(roleId, 4);
     }
 
@@ -286,7 +285,6 @@ contract RenounceRoleTest is TestSetupElectoral {
         daoMock.request(mandateId, abi.encode(3), nonce, "Test renounce role");
     }
 }
-
 
 //////////////////////////////////////////////////
 //          REVOKE INACTIVE ACCOUNTS TESTS      //

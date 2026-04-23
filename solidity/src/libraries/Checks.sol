@@ -77,9 +77,9 @@ library Checks {
 
         // Check execution delay after proposal
         if (conditions.timelock != 0) {
-            ( , uint48 proposedAt, , , , , ) =
+            (, uint48 proposedAt,,,,,) =
                 Powers(payable(powers)).getActionData(computeActionId(mandateId, mandateCalldata, nonce));
-            
+
             if (proposedAt == 0) {
                 revert Checks__ProposalRequired();
             }

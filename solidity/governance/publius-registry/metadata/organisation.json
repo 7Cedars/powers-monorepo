@@ -1,8 +1,8 @@
 {
   "icon": "",
-  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifn5tpugbezqlsjlueszegzs6tbe22of5mqb4qqio5lmnvklu7dsm",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidthzndgfzrn3djawsnithqroy6edmbjvrauftglyeuveka75yanm",
   "description": 
-    "Nested Governance demonstrates how the Powers protocol can be used to layer governance within each other to create complex decision-making hierarchies. This example is a single child organisation that is governed by a parent, but any type of complex structure can be created. The notion of sub-DAOs is similar to nested governance.",
+    "Mandate Registry for the Powers Protocol. This registry serves as a comprehensive directory of mandates within the Powers ecosystem, providing transparency and accessibility to all stakeholders. It allows users to easily discover and understand the various mandates that govern the operations of the Powers Protocol, fostering trust and engagement within the community.",
   "website": "",
   "codeOfConduct": "", 
   "disputeResolution": "", 
@@ -13,16 +13,11 @@
       "paragraph": "",
       "youtube": "",
       "facebook": "",
-      "github": "https://github.com/7Cedars/powers/blob/develop/frontend/organisations/NestedGovernanceChild.ts",
+      "github": "https://github.com/publius-projects/powers-monorepo",
       "forum": "",
       "documentation": ""
   },
-  "parentContracts": [ 
-    {
-      "title": "Nested Parent",
-      "address": "0x3F8a05F88e7074253a270aA03a0D90155150514C"
-    }
-  ],
+  "parentContracts": [ ],
   "childContracts": [ ],
   "attributes": [ ]
 }

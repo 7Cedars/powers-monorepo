@@ -15,15 +15,12 @@ import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
 /**
  * @title GovernedToken_BurnToAccess
- * @notice A mandate in which a user has to burn a token to pass the mandate checks and gain access to a subsequent mandate. It can be used to throttle access to any kind of action. 
+ * @notice A mandate in which a user has to burn a token to pass the mandate checks and gain access to a subsequent mandate. It can be used to throttle access to any kind of action.
  * @dev Integrates with Soulbound1155.sol and Governed721.sol to create flexible gated access to roleId in Powers organisations.
  */
 contract GovernedToken_BurnToAccess is Mandate {
     constructor() {
-        bytes memory configParams = abi.encode(
-            "string[] inputParams",
-            "address governedTokenAddress"
-        );
+        bytes memory configParams = abi.encode("string[] inputParams", "address governedTokenAddress");
         emit Mandate__Deployed(configParams);
     }
 
@@ -34,7 +31,7 @@ contract GovernedToken_BurnToAccess is Mandate {
         bytes memory config
     ) public override {
         console2.log("waypoint 1");
-        (string[] memory params, ) = abi.decode(config, (string[], address));
+        (string[] memory params,) = abi.decode(config, (string[], address));
         console2.log("waypoint 2");
         string[] memory newParams = new string[](params.length + 1);
         console2.log("waypoint 3");
@@ -63,7 +60,7 @@ contract GovernedToken_BurnToAccess is Mandate {
 
         // 1. Get config
         (, address governedTokenAddress) = abi.decode(getConfig(powers, mandateId), (string[], address));
-        
+
         // 2. Decode input params
         uint256 tokenId = abi.decode(mandateCalldata, (uint256));
 

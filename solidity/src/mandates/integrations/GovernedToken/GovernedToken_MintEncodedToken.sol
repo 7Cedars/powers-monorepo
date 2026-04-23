@@ -2,9 +2,9 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
-import { IPowers } from "../../../interfaces/IPowers.sol"; 
+import { IPowers } from "../../../interfaces/IPowers.sol";
 import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol"; 
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
@@ -61,10 +61,12 @@ contract GovernedToken_MintEncodedToken is Mandate {
 
         mem.blockNumber = uint48(block.number);
         mem.tokenId = (uint256(uint160(caller)) << 48) | uint256(mem.blockNumber);
-    
+
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         targets[0] = mem.governedToken;
-        calldatas[0] = abi.encodeWithSignature("mint(address,uint256,address,string)", mem.to, mem.tokenId, mem.artist, mem.tokenURI);
+        calldatas[0] = abi.encodeWithSignature(
+            "mint(address,uint256,address,string)", mem.to, mem.tokenId, mem.artist, mem.tokenURI
+        );
 
         return (actionId, targets, values, calldatas);
     }

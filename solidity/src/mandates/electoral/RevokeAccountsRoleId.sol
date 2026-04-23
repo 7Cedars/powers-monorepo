@@ -50,16 +50,16 @@ contract RevokeAccountsRoleId is Mandate {
         returns (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
         Mem memory mem;
-        
+
         // Decode configuration
-        (mem.roleId, ) = abi.decode(getConfig(powers, mandateId), (uint256, string[]));
-        
+        (mem.roleId,) = abi.decode(getConfig(powers, mandateId), (uint256, string[]));
+
         // Compute action ID
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 
         // Get current role holders
         mem.amountRoleHolders = IPowers(payable(powers)).getAmountRoleHolders(mem.roleId);
-        
+
         // If no role holders, return empty arrays
         if (mem.amountRoleHolders == 0) {
             (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
@@ -76,11 +76,7 @@ contract RevokeAccountsRoleId is Mandate {
 
         for (mem.i = 0; mem.i < mem.amountRoleHolders; mem.i++) {
             targets[mem.i] = powers;
-            calldatas[mem.i] = abi.encodeWithSelector(
-                IPowers.revokeRole.selector, 
-                mem.roleId, 
-                mem.roleHolders[mem.i]
-            );
+            calldatas[mem.i] = abi.encodeWithSelector(IPowers.revokeRole.selector, mem.roleId, mem.roleHolders[mem.i]);
         }
 
         return (actionId, targets, values, calldatas);

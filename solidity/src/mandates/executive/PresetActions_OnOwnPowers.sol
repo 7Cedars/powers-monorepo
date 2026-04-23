@@ -17,7 +17,7 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 contract PresetActions_OnOwnPowers is Mandate {
     struct Mem {
         uint256 i;
-        uint256 j; 
+        uint256 j;
         bytes[] callDatas;
         uint256[] valuesConfig;
         bytes[] calldatasConfig;
@@ -30,7 +30,7 @@ contract PresetActions_OnOwnPowers is Mandate {
         bytes memory configParams = abi.encode("bytes[] callDatas[]");
         emit Mandate__Deployed(configParams);
     }
- 
+
     /// @notice Execute the mandate by executing selected preset actions
     function handleRequest(
         address, /*caller*/
@@ -51,7 +51,7 @@ contract PresetActions_OnOwnPowers is Mandate {
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(mem.callDatas.length);
 
         for (mem.i = 0; mem.i < mem.callDatas.length; mem.i++) {
-            targets[mem.i] = powers;    
+            targets[mem.i] = powers;
             calldatas[mem.i] = mem.callDatas[mem.i];
         }
 

@@ -25,7 +25,6 @@ library MandateUtilities {
         }
     }
 
-
     //////////////////////////////////////////////////////////////
     //                      HELPER FUNCTIONS                    //
     //////////////////////////////////////////////////////////////
@@ -119,5 +118,4 @@ library MandateUtilities {
         }
         revert("Invalid hex character");
     }
- 
 }
