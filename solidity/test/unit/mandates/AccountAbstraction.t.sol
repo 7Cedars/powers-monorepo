@@ -11,28 +11,57 @@ import { PackedUserOperation } from "@lib/account-abstraction/contracts/interfac
 import { ISenderCreator } from "@lib/account-abstraction/contracts/interfaces/ISenderCreator.sol";
 
 contract MockEntryPoint is IEntryPoint {
-    function depositTo(address /*account*/) external payable {}
-    function withdrawTo(address payable /*withdrawAddress*/, uint256 /*withdrawAmount*/) external {}
+    function depositTo(
+        address /*account*/
+    )
+        external
+        payable { }
+    function withdrawTo(
+        address payable,
+        /*withdrawAddress*/
+        uint256 /*withdrawAmount*/
+    )
+        external { }
     // Stub other functions
-    function handleOps(PackedUserOperation[] calldata, address payable) external {}
-    function handleAggregatedOps(UserOpsPerAggregator[] calldata, address payable) external {}
-    function getSenderAddress(bytes memory) external {}
-    function simulateValidation(PackedUserOperation calldata) external {}
-    function simulateHandleOp(PackedUserOperation calldata, address, bytes calldata) external {}
-    function balanceOf(address) external view returns (uint256) { return 0; }
-    function deposit() external view returns (uint256) { return 0; }
-    function getDepositInfo(address) external view returns (DepositInfo memory) {
-        return DepositInfo({deposit: 100, staked: true, stake: 100, unstakeDelaySec: 100, withdrawTime: 0});
+    function handleOps(PackedUserOperation[] calldata, address payable) external { }
+    function handleAggregatedOps(UserOpsPerAggregator[] calldata, address payable) external { }
+    function getSenderAddress(bytes memory) external { }
+    function simulateValidation(PackedUserOperation calldata) external { }
+    function simulateHandleOp(PackedUserOperation calldata, address, bytes calldata) external { }
+
+    function balanceOf(address) external view returns (uint256) {
+        return 0;
     }
-    function getNonce(address, uint192) external view returns (uint256) { return 0; }
-    function incrementNonce(uint192) external {}
-    function addStake(uint32) external payable {}
-    function unlockStake() external {}
-    function withdrawStake(address payable) external {}
-    function delegateAndRevert(address, bytes calldata) external {}
-    function getCurrentUserOpHash() external view returns (bytes32) { return bytes32(0); }
-    function getUserOpHash(PackedUserOperation calldata) external view returns (bytes32) { return bytes32(0); }
-    function senderCreator() external view returns (ISenderCreator) { return ISenderCreator(address(0)); }
+
+    function deposit() external view returns (uint256) {
+        return 0;
+    }
+
+    function getDepositInfo(address) external view returns (DepositInfo memory) {
+        return DepositInfo({ deposit: 100, staked: true, stake: 100, unstakeDelaySec: 100, withdrawTime: 0 });
+    }
+
+    function getNonce(address, uint192) external view returns (uint256) {
+        return 0;
+    }
+    function incrementNonce(uint192) external { }
+    function addStake(uint32) external payable { }
+    function unlockStake() external { }
+    function withdrawStake(address payable) external { }
+    function delegateAndRevert(address, bytes calldata) external { }
+
+    function getCurrentUserOpHash() external view returns (bytes32) {
+        return bytes32(0);
+    }
+
+    function getUserOpHash(PackedUserOperation calldata) external view returns (bytes32) {
+        return bytes32(0);
+    }
+
+    function senderCreator() external view returns (ISenderCreator) {
+        return ISenderCreator(address(0));
+    }
+
     function supportsInterface(bytes4 interfaceId) external view returns (bool) {
         return interfaceId == type(IEntryPoint).interfaceId || interfaceId == 0x01ffc9a7; // ERC165
     }
@@ -42,7 +71,7 @@ contract AccountAbstractionTest is Test {
     PowersPaymaster public paymaster;
     FundPaymaster public fundPaymaster;
     WithdrawFromPaymaster public withdrawPaymaster;
-    
+
     address public powersAddress = address(0x1234);
     MockEntryPoint public entryPoint;
     address public owner = address(this);
@@ -55,7 +84,10 @@ contract AccountAbstractionTest is Test {
     }
 
     // Helper to simulate calling _validatePaymasterUserOp since it's internal and we can only call external validatePaymasterUserOp as entryPoint
-    function callValidatePaymasterUserOp(PackedUserOperation memory userOp) public returns (bytes memory context, uint256 validationData) {
+    function callValidatePaymasterUserOp(PackedUserOperation memory userOp)
+        public
+        returns (bytes memory context, uint256 validationData)
+    {
         vm.prank(address(entryPoint));
         return paymaster.validatePaymasterUserOp(userOp, bytes32(0), 1000);
     }
@@ -143,14 +175,9 @@ contract AccountAbstractionTest is Test {
 
     function test_FundPaymaster_HandleRequest() public {
         bytes memory mandateCalldata = abi.encode(address(paymaster), 1 ether);
-        
-        (, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) = fundPaymaster.handleRequest(
-            address(0),
-            address(0),
-            1,
-            mandateCalldata,
-            0
-        );
+
+        (, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) =
+            fundPaymaster.handleRequest(address(0), address(0), 1, mandateCalldata, 0);
 
         assertEq(targets.length, 1);
         assertEq(targets[0], address(paymaster));
@@ -160,14 +187,9 @@ contract AccountAbstractionTest is Test {
 
     function test_WithdrawFromPaymaster_HandleRequest() public {
         bytes memory mandateCalldata = abi.encode(address(paymaster), address(this), 1 ether);
-        
-        (, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) = withdrawPaymaster.handleRequest(
-            address(0),
-            address(0),
-            1,
-            mandateCalldata,
-            0
-        );
+
+        (, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) =
+            withdrawPaymaster.handleRequest(address(0), address(0), 1, mandateCalldata, 0);
 
         assertEq(targets.length, 1);
         assertEq(targets[0], address(paymaster));

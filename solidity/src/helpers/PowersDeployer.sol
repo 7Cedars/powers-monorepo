@@ -10,7 +10,7 @@ import { PowersTypes } from "../interfaces/PowersTypes.sol";
 contract PowersDeployer is PowersTypes {
     function deploy(
         string memory name,
-        string memory uri, 
+        string memory uri,
         uint256 maxCallDataLength,
         uint256 maxReturnDataLength,
         uint256 maxExecutionsLength,

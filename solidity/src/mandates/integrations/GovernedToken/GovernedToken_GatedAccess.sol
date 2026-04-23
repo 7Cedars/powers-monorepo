@@ -89,7 +89,7 @@ contract GovernedToken_GatedAccess is Mandate {
                 try IERC721(mem.governedTokenAddress).ownerOf(mem.tokenId) returns (address owner) {
                     if (owner == caller) isOwner = true;
                 } catch {
-                    revert ("Invalid token address or tokenId") ; // Token not supported or doesn't exist
+                    revert("Invalid token address or tokenId"); // Token not supported or doesn't exist
                 }
             }
 

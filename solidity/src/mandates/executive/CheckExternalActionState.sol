@@ -57,7 +57,7 @@ contract CheckExternalActionState is Mandate {
         // Compute the expected action ID on the parent contract
         // This assumes the action was created with the same calldata and nonce
         mem.remoteActionId = MandateUtilities.computeActionId(mem.configMandateId, mandateCalldata, nonce);
-        
+
         // Check state
         PowersTypes.ActionState state = IPowers(mem.parentPowers).getActionState(mem.remoteActionId);
         if (state != PowersTypes.ActionState.Fulfilled) {

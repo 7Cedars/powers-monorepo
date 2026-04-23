@@ -13,11 +13,11 @@
 //     function run() external returns (address allowanceModuleAddress) {
 //         // Use timestamp to ensure unique salt and fresh deployment address
 //         bytes32 salt = keccak256(abi.encodePacked("PowersSalt", vm.unixTime()));
-        
+
 //         vm.startBroadcast();
 //         allowanceModule = new AllowanceModule{ salt: salt }();
 //         vm.stopBroadcast();
-        
+
 //         console.log("AllowanceModule deployed at:", address(allowanceModule));
 //         return address(allowanceModule);
 //     }

@@ -20,20 +20,22 @@ contract PowersPaymaster is BasePaymaster {
     error PowersPaymaster__InvalidCallData();
     error PowersPaymaster__UnsupportedSelector();
 
-    constructor(
-        IEntryPoint _entryPoint,
-        address _powersContract,
-        address _owner
-    ) BasePaymaster(_entryPoint, _owner) {
+    constructor(IEntryPoint _entryPoint, address _powersContract, address _owner) BasePaymaster(_entryPoint, _owner) {
         POWERS_CONTRACT = _powersContract;
     }
 
     /// @notice Validates that the UserOperation targets the POWERS_CONTRACT
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
-        bytes32 /*userOpHash*/,
+        bytes32,
+        /*userOpHash*/
         uint256 /*maxCost*/
-    ) internal view override returns (bytes memory context, uint256 validationData) {
+    )
+        internal
+        view
+        override
+        returns (bytes memory context, uint256 validationData)
+    {
         if (userOp.callData.length < 4) {
             revert PowersPaymaster__InvalidCallData();
         }
@@ -46,15 +48,15 @@ contract PowersPaymaster is BasePaymaster {
                 revert PowersPaymaster__InvalidCallData();
             }
             address target = abi.decode(userOp.callData[4:36], (address));
-            
+
             if (target != POWERS_CONTRACT) {
                 revert PowersPaymaster__TargetNotAuthorized();
             }
         } else if (selector == EXECUTE_BATCH_SELECTOR) {
             // executeBatch(address[],uint256[],bytes[])
             // For batches, we ensure ALL targets are the POWERS_CONTRACT
-            (address[] memory targets, , ) = abi.decode(userOp.callData[4:], (address[], uint256[], bytes[]));
-            
+            (address[] memory targets,,) = abi.decode(userOp.callData[4:], (address[], uint256[], bytes[]));
+
             for (uint256 i = 0; i < targets.length; i++) {
                 if (targets[i] != POWERS_CONTRACT) {
                     revert PowersPaymaster__TargetNotAuthorized();

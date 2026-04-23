@@ -16,7 +16,7 @@ contract BespokeAction_Advanced is Mandate {
         bytes4 targetFunction;
         bytes staticParamsBefore;
         string[] dynamicParams;
-        bytes staticParamsAfter; 
+        bytes staticParamsAfter;
     }
 
     /// @notice Constructor of the BespokeAction_Advanced mandate

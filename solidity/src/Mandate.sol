@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 /*
-  _____   ____  __          __ ______  _____    _____ 
+  _____   ____  __          __ ______  _____    _____
  |  __ \ / __ \ \ \        / /|  ____||  __ \  / ____|
- | |__) | |  | | \ \  /\  / / | |__   | |__) || (___  
- |  ___/| |  | |  \ \/  \/ /  |  __|  |  _  /  \___ \ 
+ | |__) | |  | | \ \  /\  / / | |__   | |__) || (___
+ |  ___/| |  | |  \ \/  \/ /  |  __|  |  _  /  \___ \
  | |    | |__| |   \  /\  /   | |____ | | \ \  ____) |
- |_|     \____/     \/  \/    |______||_|  \_\|_____/ 
-                                                      
+ |_|     \____/     \/  \/    |______||_|  \_\|_____/
+
 */
 /// @title Mandate - Base Implementation for Powers Protocol Mandates. v0.4.
 /// @notice Base contract for implementing role-restricted governance actions
@@ -127,12 +127,12 @@ abstract contract Mandate is ERC165, IMandate {
         return mandates[MandateUtilities.hashMandate(powers, mandateId)].config;
     }
 
-    function version() public pure returns (string memory) {
-        return "v0.6.1";
+    function version() public pure virtual returns (uint16 major, uint16 minor, uint16 patch) {
+        return (0, 6, 1);
     }
 
-    // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate. 
-    // this function would then be virtual, so that when not overridden, it returns an empty string or a default uri. 
+    // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate.
+    // this function would then be virtual, so that when not overridden, it returns an empty string or a default uri.
 
     //////////////////////////////////////////////////////////////
     //                      UTILITIES                           //

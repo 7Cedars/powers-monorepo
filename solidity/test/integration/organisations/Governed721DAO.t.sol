@@ -34,7 +34,7 @@ contract Governed721DAO_IntegrationTest is Test {
 
     function setUp() public {
         // Deploy the script
-        deployScript = new Deploy(); 
+        deployScript = new Deploy();
         deployScript.run();
 
         // Get the deployed contracts
@@ -48,7 +48,7 @@ contract Governed721DAO_IntegrationTest is Test {
     function test_Deployment() public {
         // Verify Powers deployment
         assertTrue(address(powers) != address(0), "Powers contract should be deployed");
-        
+
         // Verify Governed721 deployment
         assertTrue(address(governed721) != address(0), "Governed721 contract should be deployed");
 
@@ -58,7 +58,7 @@ contract Governed721DAO_IntegrationTest is Test {
         // Verify Payment Mandate ID is set (not 0)
         assertTrue(governed721.paymentMandateId() != 0, "Payment Mandate ID should be set");
 
-        // verify roles have been set after running setup mandate 
+        // verify roles have been set after running setup mandate
         powers.getAmountRoleHolders(1); // Role 1 = Artist
         powers.getAmountRoleHolders(5); // Role 5 = Executive
         assertTrue(powers.getAmountRoleHolders(1) == 1, "Should have one Artist");
@@ -71,7 +71,7 @@ contract Governed721DAO_IntegrationTest is Test {
     function findMandateIdInOrg(string memory description, Powers org) public view returns (uint16) {
         uint16 counter = org.mandateCounter();
         for (uint16 i = 1; i < counter; i++) {
-            (address mandateAddress, , ) = org.getAdoptedMandate(i);
+            (address mandateAddress,,) = org.getAdoptedMandate(i);
             string memory mandateDesc = Mandate(mandateAddress).getNameDescription(address(org), i);
             // using keccak256 for string comparison
             if (keccak256(abi.encodePacked(mandateDesc)) == keccak256(abi.encodePacked(description))) {
@@ -82,16 +82,20 @@ contract Governed721DAO_IntegrationTest is Test {
     }
 
     function test_SplitGovernanceFlow() public {
-        // step 0: loading relevant mandate Ids to memory. 
-        mem.proposeSplitId = findMandateIdInOrg("Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.", powers);
+        // step 0: loading relevant mandate Ids to memory.
+        mem.proposeSplitId = findMandateIdInOrg(
+            "Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.",
+            powers
+        );
         mem.vetoMinterId = findMandateIdInOrg("Veto Split (Minter): Minter can veto split change.", powers);
         mem.vetoOwnerId = findMandateIdInOrg("Veto Split (Owner): Owner can veto split change.", powers);
-        mem.vetoIntermediaryId = findMandateIdInOrg("Veto Split (Intermediary): Intermediary can veto split change.", powers);
+        mem.vetoIntermediaryId =
+            findMandateIdInOrg("Veto Split (Intermediary): Intermediary can veto split change.", powers);
         mem.splitCheckpoint1 = findMandateIdInOrg("Split Checkpoint 1: Confirm no Minter veto.", powers);
         mem.splitCheckpoint2 = findMandateIdInOrg("Split Checkpoint 2: Confirm no Owner veto.", powers);
         mem.splitCheckpoint3 = findMandateIdInOrg("Execute Split Payment: Set new split payment.", powers);
 
-        // step 1: fetching address executive. 
+        // step 1: fetching address executive.
         mem.executive = powers.getRoleHolderAtIndex(5, 0);
         assertTrue(mem.executive != address(0), "Should have an executive");
 
@@ -103,8 +107,9 @@ contract Governed721DAO_IntegrationTest is Test {
         mem.nonce = 1;
 
         // Propose new split for Artist
-        mem.actionIdArtist = powers.propose(mem.proposeSplitId, mem.splitArtistParams, mem.nonce, "Propose 10% for Artist");
-        
+        mem.actionIdArtist =
+            powers.propose(mem.proposeSplitId, mem.splitArtistParams, mem.nonce, "Propose 10% for Artist");
+
         // Execute the Statement of Intent
         powers.request(mem.proposeSplitId, mem.splitArtistParams, mem.nonce, "Propose 10% for Artist");
         vm.stopPrank();
@@ -131,7 +136,7 @@ contract Governed721DAO_IntegrationTest is Test {
         vm.startPrank(mem.executive);
         mem.nonce++;
         mem.splitIntermediaryParams = abi.encode(uint8(3), uint8(5));
-        
+
         powers.request(mem.proposeSplitId, mem.splitIntermediaryParams, mem.nonce, "Propose 5% for Intermediary");
         vm.stopPrank();
 
@@ -140,7 +145,8 @@ contract Governed721DAO_IntegrationTest is Test {
         assertTrue(mem.minter != address(0), "Should have a minter");
 
         vm.startPrank(mem.minter);
-        mem.vetoActionId = powers.propose(mem.vetoMinterId, mem.splitIntermediaryParams, mem.nonce, "Veto Intermediary Split");
+        mem.vetoActionId =
+            powers.propose(mem.vetoMinterId, mem.splitIntermediaryParams, mem.nonce, "Veto Intermediary Split");
         powers.castVote(mem.vetoActionId, 1); // 1 = For
         vm.stopPrank();
 
@@ -154,7 +160,7 @@ contract Governed721DAO_IntegrationTest is Test {
         // Now the executive tries to pass checkpoints, but it should fail at checkpoint 1 because vetoMinterId is fulfilled
         vm.prank(mem.executive);
         powers.propose(mem.splitCheckpoint1, mem.splitIntermediaryParams, mem.nonce, "Checkpoint 1 after veto");
-        
+
         vm.roll(block.number + mem.timelock + 1);
 
         vm.startPrank(mem.executive);
