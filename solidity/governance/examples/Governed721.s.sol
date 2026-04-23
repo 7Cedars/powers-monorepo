@@ -33,6 +33,7 @@ contract Deploy is DeployHelpers {
     Powers public powers;
     PowersTypes.Flow[] flows;
     Governed721 public governed721;
+    ElectionList public openElection;
 
     uint256 constant PACKAGE_SIZE = 10; // number of mandates per packaged mandate.
     address treasury;
@@ -62,6 +63,7 @@ contract Deploy is DeployHelpers {
     function run() external {
         // step 0, setup. 
         helperConfig = new Configurations();
+        openElection = new ElectionList();
         registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Governed721 Powers
@@ -689,7 +691,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Create Executive Election: Voters can create election.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList"),
+                    address(openElection), // target contract (ElectionList)
                     ElectionList.createElection.selector,
                     inputParams
                 ),
@@ -707,7 +709,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Open Executive Vote: Open voting.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_CreateVoteMandate"),
                 config: abi.encode(
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList"),
+                    address(openElection),
                     registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Vote"),
                     1, // votes per voter
                     4 // allowed role to vote (Voter)
@@ -726,7 +728,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Tally Executive Election: Tally votes.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Tally"),
                 config: abi.encode(
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList"),
+                    address(openElection),
                     5, // RoleId for Executives
                     5 // Max role holders
                 ),
@@ -764,7 +766,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Nominate for Executive: Voters can nominate.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
                 config: abi.encode(
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList"),
+                    address(openElection),
                     true
                 ),
                 conditions: conditions
@@ -780,7 +782,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Revoke Nomination: Revoke self nomination.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
                 config: abi.encode(
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList"),
+                    address(openElection),
                     false
                 ),
                 conditions: conditions

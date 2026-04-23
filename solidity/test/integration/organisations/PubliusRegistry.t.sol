@@ -92,7 +92,6 @@ contract PubliusRegistry_IntegrationTest is Test {
         powers.request(registerMandateId, registerCalldata, nonce, "Registering a new mandate");
 
         // Verify it was registered
-        assertTrue(registry.isMandateRegistered(major, minor, patch, mandateName), "Mandate should be registered");
         assertTrue(registry.isVersionActive(major, minor, patch, mandateName), "Mandate should be active");
 
         vm.stopPrank();

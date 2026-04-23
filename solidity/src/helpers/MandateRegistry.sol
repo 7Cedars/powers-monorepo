@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
-import { IMandate } from "../interfaces/IMandate.sol";
+import { IMandate } from "../interfaces/IMandate.sol"; 
 
 /// @title MandateRegistry - Whitelist Registry for Powers Protocol Mandates
 /// @notice Maintains a version-controlled registry of approved mandate implementations
@@ -17,10 +17,10 @@ interface IMandateRegistry {
         bool isActive;
     }
 
-    function registerMandate(string calldata mandateName, address mandateAddress) external;
+    function registerMandate(string calldata mandateName, address mandateAddress, bytes32 creationCodeHash) external;
     function deactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName) external;
     function reactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName) external;
-    function batchRegisterMandates(string[] calldata mandateNames, address[] calldata mandateAddresses) external;
+    function batchRegisterMandates(string[] calldata mandateNames, address[] calldata mandateAddresses, bytes32[] calldata creationCodeHashes) external;
     function getMandateEntry(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
         external
         view
@@ -29,10 +29,7 @@ interface IMandateRegistry {
         external
         view
         returns (address);
-    function isMandateRegistered(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
-        external
-        view
-        returns (bool);
+    function isMandateRegistered(bytes32 creationCodeHash) external view returns (bool);
     function isVersionActive(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
         external
         view
@@ -63,6 +60,9 @@ contract MandateRegistry is Ownable {
 
     /// @notice Ordered list of versions registered for each mandate name
     mapping(bytes32 nameHash => uint48[]) public mandateVersions;
+
+    /// @notice Mapping of mandate creation code hashes to registration status
+    mapping(bytes32 creationCodeHash => bool) public registeredCreationCodes;
 
     //////////////////////////////////////////////////////////////
     //                        EVENTS                            //
@@ -111,7 +111,7 @@ contract MandateRegistry is Ownable {
     //////////////////////////////////////////////////////////////
 
     /// @notice Initializes the registry with the deployer as owner
-    constructor() Ownable(msg.sender) { }
+    constructor() Ownable(_msgSender()) { }
 
     //////////////////////////////////////////////////////////////
     //                   REGISTRATION LOGIC                     //
@@ -121,7 +121,8 @@ contract MandateRegistry is Ownable {
     /// @dev Validates address, interface implementation, and uniqueness
     /// @param mandateName Human-readable name for the mandate
     /// @param mandateAddress Address of the mandate contract
-    function registerMandate(string calldata mandateName, address mandateAddress) external onlyOwner {
+    /// @param creationCodeHash Hash of the mandate's creation code
+    function registerMandate(string calldata mandateName, address mandateAddress, bytes32 creationCodeHash) public onlyOwner {
         // Validate inputs
         if (bytes(mandateName).length == 0 || bytes(mandateName).length > 255) {
             revert InvalidNameLength();
@@ -149,6 +150,7 @@ contract MandateRegistry is Ownable {
         // Register the mandate
         registry[nameHash][packedVersion] =
             MandateEntry({ mandateAddress: mandateAddress, registeredAt: uint48(block.number), isActive: true });
+        registeredCreationCodes[creationCodeHash] = true;
 
         _addVersion(nameHash, packedVersion, major, minor, patch, mandateName);
 
@@ -198,7 +200,7 @@ contract MandateRegistry is Ownable {
     /// @notice Batch registers multiple mandates in a single transaction
     /// @param mandateNames Array of mandate names
     /// @param mandateAddresses Array of mandate addresses
-    function batchRegisterMandates(string[] calldata mandateNames, address[] calldata mandateAddresses)
+    function batchRegisterMandates(string[] calldata mandateNames, address[] calldata mandateAddresses, bytes32[] calldata creationCodeHashes)
         external
         onlyOwner
     {
@@ -207,7 +209,7 @@ contract MandateRegistry is Ownable {
         }
 
         for (uint256 i = 0; i < mandateNames.length; i++) {
-            this.registerMandate(mandateNames[i], mandateAddresses[i]);
+            registerMandate(mandateNames[i], mandateAddresses[i], creationCodeHashes[i]);
         }
     }
 
@@ -291,15 +293,13 @@ contract MandateRegistry is Ownable {
     }
 
     /// @notice Checks if a mandate is registered
-    function isMandateRegistered(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
+    function isMandateRegistered(bytes32 creationCodeHash)
         external
         view
         returns (bool)
     {
-        bytes32 nameHash = keccak256(bytes(mandateName));
-        uint48 targetVersion = packVersion(major, minor, patch);
-        return registry[nameHash][targetVersion].registeredAt != 0;
-    }
+        return registeredCreationCodes[creationCodeHash];
+    } 
 
     /// @notice Checks if a mandate is active
     function isVersionActive(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)

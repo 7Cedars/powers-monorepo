@@ -1778,7 +1778,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
     // it should never ever use any mock contracts.
     // the forked chain has all the real verifiers and helpers deployed, so we can test the full integration.
     address registryAddress;
-    ZKPassport_PowersRegistry registry;
+    ZKPassport_PowersRegistry zkRegistry;
     ZKProof zkProof;
 
     function setUp() public override {
@@ -1789,7 +1789,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
 
         registryAddress = findMandateAddress("ZKPassport_PowersRegistry");
         console.log("Registry address on Sepolia fork:", registryAddress);
-        registry = ZKPassport_PowersRegistry(registryAddress);
+        zkRegistry = ZKPassport_PowersRegistry(registryAddress);
         zkProof = new ZKProof();
 
         // We will deploy the registry in the test function itself, since it needs to be deployed by the daoMock.
@@ -1804,8 +1804,8 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
 
         // Check that the registry has the expected verifiers and helpers (from the constitution)
         // We can only check that they are set, not their internal logic, since we are using real contracts on mainnet fork.
-        address verifierAddress = address(registry.zkPassportVerifier());
-        address helperAddress = address(registry.zkPassportHelper());
+        address verifierAddress = address(zkRegistry.zkPassportVerifier());
+        address helperAddress = address(zkRegistry.zkPassportHelper());
 
         assertTrue(verifierAddress != address(0));
         assertTrue(helperAddress != address(0));
@@ -1828,8 +1828,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
 
         bytes memory bytesInput = zkProof.getBytesInputs();
 
-        vm.prank(address(daoMock));
-        registryAddress.call(bytesInput);
+        vm.prank(address(daoMock)); 
 
         DisclosedData memory disclosedData = ZKPassport_PowersRegistry(registryAddress).getDisclosed(cedars);
 

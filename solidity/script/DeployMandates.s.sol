@@ -107,16 +107,25 @@ import { PauseMandates } from "@src/mandates/reform/PauseMandates.sol";
 /// and registers them to the MandateRegistry via the Powers protocol.
 contract DeployMandates is Script {
     Configurations helperConfig;
+    MandateRegistry registry;
     string[] names;
     bytes[] creationCodes;
     bytes[] constructorArgs;
+    uint48[] versions;
     address[] addresses;
 
-    function run() external {
+    function run() external returns (address) {
         helperConfig = new Configurations();
 
-        // address registryAddr = helperConfig.getMandateRegistry(block.chainid);
-        MandateRegistry registry = new MandateRegistry();
+        address registryAddr = helperConfig.getMandateRegistry(block.chainid);
+        if (registryAddr != address(0)) {
+            registry = MandateRegistry(registryAddr); 
+        } else {
+            console2.log("No existing MandateRegistry found for this network. Deploying new MandateRegistry...");
+        }
+        vm.startBroadcast();
+            registry = new MandateRegistry();
+        vm.stopBroadcast();
         // MandateRegistry registry = MandateRegistry(registryAddr);
         // IPowers powers = IPowers(registry.owner());
         // uint16 submitMandateId = helperConfig.getSubmitMandateId(block.chainid);
@@ -125,34 +134,29 @@ contract DeployMandates is Script {
 
         string[] memory regNames = new string[](names.length);
         address[] memory regAddresses = new address[](names.length);
+        bytes32[] memory regCreationCodeHashes = new bytes32[](names.length);
         uint256 regCount = 0;
 
         for (uint256 i = 0; i < names.length; i++) {
-            console2.log("Deploying:", names[i]);
-
+            bool isRegistered = registry.isMandateRegistered(bytes32(keccak256(creationCodes[i])));
+            if (isRegistered) {
+                console2.log("Mandate already registered, skipping:", names[i]);
+                continue;
+            }
             address mandateAddr = deploy(creationCodes[i], constructorArgs[i]);
-            console2.log("Deployed at:", mandateAddr);
-
             addresses.push(mandateAddr);
 
             regNames[regCount] = names[i];
             regAddresses[regCount] = mandateAddr;
+            regCreationCodeHashes[regCount] = bytes32(keccak256(creationCodes[i]));
             regCount++;
         }
 
         // Create exactly-sized arrays for the registration payload
-        string[] memory finalNames = new string[](regCount);
-        address[] memory finalAddresses = new address[](regCount);
-        for (uint256 i = 0; i < regCount; i++) {
-            finalNames[i] = regNames[i];
-            finalAddresses[i] = regAddresses[i];
-        }
-
         if (regCount > 0) {
             // bytes memory dynamicParams = abi.encode(finalNames, finalAddresses);
-
-            vm.startBroadcast();
-            registry.batchRegisterMandates(finalNames, finalAddresses);
+            vm.startBroadcast(); 
+            registry.batchRegisterMandates(regNames, regAddresses, regCreationCodeHashes);
             // powers.request(submitMandateId, dynamicParams, 0, "Batch Register Mandates");
             vm.stopBroadcast();
 
@@ -162,9 +166,12 @@ contract DeployMandates is Script {
         }
 
         console2.log("-----------------------------------------");
+        console2.log("Registry Address:", address(registry));
         console2.log("Total contracts deployed:", names.length);
         console2.log("Total mandates registered:", regCount);
         console2.log("-----------------------------------------");
+
+        return address(registry);
     }
 
     /// @dev Deploys a mandate normally (no CREATE2).
@@ -180,6 +187,10 @@ contract DeployMandates is Script {
 
         require(deployedAddress != address(0), "Error: Deployment failed.");
         return deployedAddress;
+    }
+
+    function _packVersion(uint16 major, uint16 minor, uint16 patch) public pure returns (uint48) {
+        return (uint48(major) << 32) | (uint48(minor) << 16) | uint48(patch);
     }
 
     function _recordMandates() internal {

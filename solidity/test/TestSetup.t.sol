@@ -8,6 +8,7 @@ import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol
 // protocol
 import { Powers } from "@src/Powers.sol";
 import { Mandate } from "@src/Mandate.sol";
+import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
@@ -15,8 +16,7 @@ import { Configurations } from "@script/Configurations.s.sol";
 import { TestConstitutions } from "./TestConstitutions.sol";
 import { console2 } from "forge-std/console2.sol";
 
-// deploy scripts
-import { DeployMandates } from "@script/DeployMandates.s.sol";
+// deploy scripts 
 import { PowersMock } from "./mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 
@@ -46,11 +46,11 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // protocol and mocks
     Powers powers;
     Configurations helperConfig;
+    MandateRegistry registry;
     PowersMock daoMock;
     PowersMock daoMockChild1;
     PowersMock daoMockChild2;
-    ElectionListsDAO openElections;
-    DeployMandates deployMandates;
+    ElectionListsDAO openElections; 
     string[] mandateNames;
     address[] mandateAddresses;
     TestConstitutions testConstitutions;
@@ -80,6 +80,11 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     uint8 constant AGAINST = 0;
     uint8 constant FOR = 1;
     uint8 constant ABSTAIN = 2;
+
+    // versioning
+    uint16 constant MAJOR = 0; 
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
 
     address[] targets;
     uint256[] values;
@@ -450,15 +455,9 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         daoMockChild1 = new PowersMock();
         daoMockChild2 = new PowersMock();
 
-        // deploy external contracts
-        deployMandates = new DeployMandates();
-        (mandateNames, mandateAddresses) = deployMandates.getDeployed();
+        // deploy external contracts  
         helperConfig = new Configurations();
-
-        // deploy constitutions mock
-        vm.startPrank(address(daoMock));
-        testConstitutions = new TestConstitutions(mandateNames, mandateAddresses);
-        vm.stopPrank();
+        testConstitutions = new TestConstitutions();
     }
 }
 

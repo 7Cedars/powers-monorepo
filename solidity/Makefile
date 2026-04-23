@@ -315,7 +315,7 @@ registry-deploy :
 
 example-deploy : 
 	@echo "Deploying example contracts..."
-	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 organisation-deploy : 
 	@echo "Deploying organisation..."
