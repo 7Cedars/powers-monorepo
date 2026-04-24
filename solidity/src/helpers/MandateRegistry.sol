@@ -111,7 +111,7 @@ contract MandateRegistry is Ownable {
     //////////////////////////////////////////////////////////////
 
     /// @notice Initializes the registry with the deployer as owner
-    constructor() Ownable(_msgSender()) { }
+    constructor(address initialOwner) Ownable(initialOwner) { }
 
     //////////////////////////////////////////////////////////////
     //                   REGISTRATION LOGIC                     //

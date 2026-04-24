@@ -122,10 +122,10 @@ contract DeployMandates is Script {
             registry = MandateRegistry(registryAddr); 
         } else {
             console2.log("No existing MandateRegistry found for this network. Deploying new MandateRegistry...");
+            vm.startBroadcast();
+            registry = new MandateRegistry{salt: keccak256("MandateRegistry")}(msg.sender);
+            vm.stopBroadcast();
         }
-        vm.startBroadcast();
-            registry = new MandateRegistry();
-        vm.stopBroadcast();
         // MandateRegistry registry = MandateRegistry(registryAddr);
         // IPowers powers = IPowers(registry.owner());
         // uint16 submitMandateId = helperConfig.getSubmitMandateId(block.chainid);
