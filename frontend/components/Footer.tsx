@@ -11,7 +11,7 @@ export function Footer() {
   const pathname = usePathname();
 
   return (
-    <section className="w-full flex flex-col justify-between items-center sm:items-start min-h-fit bg-background snap-end py-6 px-2 border-t border-border snap-end">
+    <section className="w-full flex flex-col justify-between items-center sm:items-start min-h-fit bg-background snap-end py-6 border-t border-border snap-end">
         
         <div className="max-w-7xl w-full h-full flex md:flex-row flex-col justify-between items-center sm:items-start md:items-start text-foreground text-sm px-4 gap-8 md:gap-16 font-mono">
             <div className="grid md:grid-cols-2 grid-cols-2 gap-8 md:gap-28">
@@ -97,7 +97,7 @@ export function Footer() {
             <div className="text-sm font-bold flex flex-row gap-1">
                 <p>Made with</p> 
                 <HeartIcon className="w-4 h-4 text-red-700" />
-                <p>by Publius Projects</p>
+                <p>by 7Cedars</p>
             </div>
             <div className="flex flex-row gap-2">
                 <a
