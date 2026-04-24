@@ -8,10 +8,8 @@ export function ThemeColorMeta() {
 
   useEffect(() => {
     // Remove any existing theme-color meta tags
-    const existingMeta = document.querySelector('meta[name="theme-color"]');
-    if (existingMeta) {
-      existingMeta.remove();
-    }
+    const existingMetaTags = document.querySelectorAll('meta[name="theme-color"]');
+    existingMetaTags.forEach((tag) => tag.remove());
 
     // Create new meta tag with the appropriate color
     const meta = document.createElement("meta");
