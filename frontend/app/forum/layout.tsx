@@ -210,7 +210,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         </div>
       </div>
       
-      <main className="flex-1 overflow-y-auto min-h-0 pb-12">
+      <main className="flex-1 overflow-y-auto min-h-0 pb-24">
         {children}
         {/* <Footer /> */}
       </main>
