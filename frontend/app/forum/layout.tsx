@@ -19,6 +19,7 @@ import { useXmtpClient } from "@/hooks/useXmtpClient";
 import { ForumModal } from "@/components/ForumModal";
 
 import { parseChainId } from "@/utils/parsers";
+import { Footer } from "@/components/Footer";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
@@ -209,9 +210,12 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         </div>
       </div>
       
-      <main className="flex-1 overflow-y-auto min-h-0">
+      <main className="flex-1 overflow-y-auto min-h-0 pb-12">
         {children}
+        {/* <Footer /> */}
       </main>
+
+      
 
       {/* XMTP Login Modal */}
       <ForumModal 
