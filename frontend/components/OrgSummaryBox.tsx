@@ -50,12 +50,12 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
     return ( 
         <div
         key={powers.contractAddress}
-        className={`border border-border transition-colors relative cursor-pointer hover:bg-muted/50`}
+        className={`transition-colors relative cursor-pointer hover:bg-muted/50`}
         onClick={() => router.push(getNavigationPath())}>
         
             {/* Banner - always the same layout */}
             <div 
-                className="h-36 px-4 py-2 border-b border-border relative overflow-hidden"
+                className="h-36 px-4 py-2 relative overflow-hidden"
                 style={{
                     backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
                     backgroundSize: 'cover',
@@ -66,7 +66,7 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
 
             {/* Top row - only visible when showHeader is true */}
             {showHeader && (
-                <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/50">
+                <div className="flex items-center justify-between px-6 py-2 bg-muted/50">
                     <h3 className="text-foreground uppercase tracking-wider text-sm">{powers.name}</h3>
                     {onArchive && (
                         <button

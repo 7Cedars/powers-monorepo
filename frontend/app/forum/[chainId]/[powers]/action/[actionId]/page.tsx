@@ -129,15 +129,15 @@ export default function ActionPage() {
           </div>
 
           {/* Three Component Section - Responsive Layout */}
-          <div className="border-b border-border p-4">
-            <div className="flex flex-col lg:flex-row gap-4 w-full">
+          <div className="border-b border-border px-6 py-6">
+            <div className="flex flex-col lg:flex-row gap-6 w-full">
               {/* Action Overview Section (Left) */}
-              <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-3">
                   <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm text-foreground tracking-wider">Details</h4>
+                  <h4 className="text-sm text-foreground uppercase tracking-wider">Details</h4>
                 </div>
-                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[300px]">
+                <div className="lg:overflow-y-auto lg:max-h-[300px] pr-2">
                   <div className="space-y-6">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
@@ -151,23 +151,31 @@ export default function ActionPage() {
                 </div>
               </div>
 
+              {/* Separator */}
+              <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
               {/* Timeline Section (Middle) */}
               <Timeline action={action} mandate={mandate} chainId={chainId} />
 
               {/* Voting & Past Votes Section (Right) - Only show if mandate has voting */}
               {(mandate.conditions?.quorum ? BigInt(mandate.conditions.quorum) : 0n) > 0n && (
-                <div className="flex-1 min-w-0 border border-border bg-background">
-                  <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
-                    <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
-                    <h4 className="text-sm text-foreground tracking-wider">Voting</h4>
-                  </div>
-                  <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[300px]">
-                    <div className="space-y-8">
-                      <Vote action={action} mandate={mandate} />
-                      <PastVotes action={action} mandate={mandate} powers={powers} />
+                <>
+                  {/* Separator */}
+                  <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
+                      <h4 className="text-sm text-foreground uppercase tracking-wider">Voting</h4>
+                    </div>
+                    <div className="lg:overflow-y-auto lg:max-h-[300px] pr-2">
+                      <div className="space-y-8">
+                        <Vote action={action} mandate={mandate} />
+                        <PastVotes action={action} mandate={mandate} powers={powers} />
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>

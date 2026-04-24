@@ -61,18 +61,18 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col border border-border min-h-0">
-      <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
         <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">GOVERNANCE OVERVIEW</span>
         <SearchFilterSort 
           onSearchChange={(query) => console.log('Search:', query)}
           onFilterChange={(filter) => console.log('Filter:', filter)}
           onSortChange={(sort) => console.log('Sort:', sort)}
         />
-      </div>
+      </div> */}
 
       {/* Was bg-muted/10 */}
-      <div className="flex-1 overflow-auto p-4"> 
+      <div className="flex-1 overflow-auto p-0"> 
         <div className="flex flex-wrap gap-4">
           {flowBoxes.map((box, idx) => (
             <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[21rem] max-w-2xl">
@@ -112,7 +112,7 @@ function FlowSummaryBox({
       className="border border-border bg-background transition-colors relative hover:border-primary/50 cursor-pointer max-w-2xl"
       onClick={() => box.flowIndex && router.push(`/forum/${chainId}/${powersAddress}/flow/${box.flowIndex}`)}
     >
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-b border-border bg-muted/50 transition-colors">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 bg-muted/50 transition-colors">
         <h3 className="text-foreground tracking-wider text-sm">{name.trim() || 'Unnamed Flow'}</h3>
       </div>
       
@@ -129,7 +129,7 @@ function FlowSummaryBox({
               return (
                 <div 
                   key={m.index.toString()} 
-                  className={`flex items-center text-xs font-mono ${!m.active ? 'opacity-50 cursor-not-allowed' : 'group cursor-pointer'}`}
+                  className={`flex items-center px-3 py-2 bg-background border border-border transition-colors ${!m.active ? 'opacity-50 cursor-not-allowed text-foreground' : 'cursor-pointer hover:bg-muted/50 text-foreground hover:text-primary'}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (m.active) {
@@ -137,7 +137,7 @@ function FlowSummaryBox({
                     }
                   }}
                 >
-                  <span className={`text-foreground truncate transition-colors ${!m.active ? '' : 'group-hover:text-primary group-hover:underline'}`}>
+                  <span className="text-xs font-mono tracking-wider truncate">
                     #{m.index.toString()} {m.nameDescription?.split(':')[0] || 'Unnamed Mandate'} - {roleName}
                   </span>
                 </div>
