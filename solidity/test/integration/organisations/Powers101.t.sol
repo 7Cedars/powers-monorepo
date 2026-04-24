@@ -2,20 +2,20 @@
 pragma solidity ^0.8.26;
 
 // import { Test, console, console2 } from "lib/forge-std/src/Test.sol";
-// import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+// import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
-// import { Powers } from "../../../src/Powers.sol";
-// import { IPowers } from "../../../src/interfaces/IPowers.sol";
-// import { PowersTypes } from "../../../src/interfaces/PowersTypes.sol";
-// import { PowersEvents } from "../../../src/interfaces/PowersEvents.sol";
-// import { Mandate } from "../../../src/Mandate.sol";
-// import { IMandate } from "../../../src/interfaces/IMandate.sol";
+// import { Powers } from "@src/Powers.sol";
+// import { IPowers } from "@src/interfaces/IPowers.sol";
+// import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+// import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
+// import { Mandate } from "@src/Mandate.sol";
+// import { IMandate } from "@src/interfaces/IMandate.sol";
 
 // import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
 // import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
 
 // import { TestSetupPowers101 } from "../../../test/TestSetup.t.sol";
-// import { Configurations } from "../../../script/Configurations.s.sol";
+// import { Configurations } from "@script/Configurations.s.sol";
 
 // contract Powers101_fuzzIntegrationTest is TestSetupPowers101 {
 //     //////////////////////////////////////////////////////////////

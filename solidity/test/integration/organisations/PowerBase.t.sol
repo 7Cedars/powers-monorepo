@@ -2,11 +2,11 @@
 pragma solidity ^0.8.26;
 
 // import { Test, console, console2 } from "lib/forge-std/src/Test.sol";
-// import { Powers } from "../../../src/Powers.sol";
-// import { Mandate } from "../../../src/Mandate.sol";
+// import { Powers } from "@src/Powers.sol";
+// import { Mandate } from "@src/Mandate.sol";
 // import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
 
-// import { SafeL2 } from "lib/safe-smart-account/contracts/SafeL2.sol";
+// import { SafeL2 } from "@lib/safe-smart-account/contracts/SafeL2.sol";
 
 // contract PowerLabs_IntegrationTest is TestSetupPowerLabsSafes {
 //     // IMPORTANT NOTE: These tests are meant to be executed on a forked mainnet (sepolia) anvil chain.

@@ -5,13 +5,15 @@ import { Test } from "forge-std/Test.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
+import { DeployMandates } from "@script/DeployMandates.s.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
-import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
-import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
+import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
+import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
 import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
 import { ISoulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract TestConstitutions is Test {
     uint256[] milestoneDisbursements;
@@ -23,6 +25,7 @@ contract TestConstitutions is Test {
 
     // State variables to avoid stack too deep errors
     PowersTypes.Conditions conditions;
+
     address[] targets;
     uint256[] values;
     bytes[] calldatas;
@@ -45,12 +48,18 @@ contract TestConstitutions is Test {
     string[] descriptions;
     string[] params;
 
-    Configurations helperConfig = new Configurations(); 
+    // minimum mandate version to be used in testing. 
+    uint16 constant MAJOR = 0;
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
 
-    constructor(string[] memory _mandateNames, address[] memory _mandateAddresses) {
-        mandateNames = _mandateNames;
-        mandateAddresses = _mandateAddresses;
-    }
+    // function setUp() public {
+        // Set up any common state or variables needed for the tests
+    Configurations helperConfig = new Configurations();
+    DeployMandates deployMandates = new DeployMandates();
+    IMandateRegistry registry = IMandateRegistry(deployMandates.run());
+
+    // }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +92,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Self select as community member: Self select as a community member. Anyone can call this mandate.",
-                targetMandate: getInitialisedAddress("SelfSelect"), // selfSelct
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SelfSelect"), // selfSelct
                 config: abi.encode(
                     1 // community member role ID
                 ),
@@ -97,7 +106,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Self select as delegate: Self select as a delegate. Only community members can call this mandate.",
-                targetMandate: getInitialisedAddress("SelfSelect"), // selfSelct
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SelfSelect"), // selfSelct
                 config: abi.encode(
                     2 // delegeate member role ID
                 ),
@@ -117,12 +126,12 @@ contract TestConstitutions is Test {
         conditions.succeedAt = 66; // = 51% simple majority needed for assigning and revoking members.
         conditions.votingPeriod = 1200; // = number of blocks
         conditions.throttleExecution = 5000;
-        // NOTE: the timelock starts counting after proposal has been made, NOT after vote has passed! 
+        // NOTE: the timelock starts counting after proposal has been made, NOT after vote has passed!
         conditions.timelock = 2500; // = 2500 blocks to wait after success before execution
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "StatementOfIntent: Propose any kind of action.",
-                targetMandate: getInitialisedAddress("StatementOfIntent"), // statementOfIntent
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"), // statementOfIntent
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -134,7 +143,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto an action: Veto an action that has been proposed by the community.",
-                targetMandate: getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -147,14 +156,14 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute an action: Execute an action that has been proposed by the community and should not have been vetoed by an admin.",
-                targetMandate: getInitialisedAddress("OpenAction"), // openAction.
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"), // openAction.
                 config: abi.encode(), // empty config.
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // PresetActions_Single
+        // PresetActions
         // Set config
         targets = new address[](4);
         values = new uint256[](4);
@@ -172,7 +181,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A Single Action: to assign labels to roles. It self-destructs after execution.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -208,7 +217,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "StatementOfIntent: Needs Proposal Vote to pass",
-                targetMandate: getInitialisedAddress("StatementOfIntent"), // statementOfIntent
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"), // statementOfIntent
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -221,8 +230,8 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Needs Parent Completed to pass",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Needs Parent Completed to pass",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -235,8 +244,8 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Parent can block a mandate, making it impossible to pass",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Parent can block a mandate, making it impossible to pass",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -252,8 +261,8 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Delay execution of a mandate, by a preset number of blocks",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Delay execution of a mandate, by a preset number of blocks",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -266,15 +275,15 @@ contract TestConstitutions is Test {
         // initiating mandate.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Singles: Throttle the number of executions of a mandate.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetAction
+                nameDescription: "PresetActionss: Throttle the number of executions of a mandate.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // PresetActions_Single
+        // PresetActions
         // Set config
         targets = new address[](3);
         values = new uint256[](3);
@@ -291,7 +300,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A Single Action: to assign labels to roles. It self-destructs after execution.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -328,8 +337,7 @@ contract TestConstitutions is Test {
         address nominees,
         address openElection,
         address erc20DelegateElection,
-        address erc20Taxed,
-        address flagActions
+        address erc20Taxed
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
         delete constitution; // restart constitution array.
 
@@ -338,8 +346,8 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate: Nominate yourself for a role.",
-                targetMandate: getInitialisedAddress("Nominate"), // Nominate (electoral mandate)
-                config: abi.encode( nominees ),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Nominate"), // Nominate (electoral mandate)
+                config: abi.encode(nominees),
                 conditions: conditions
             })
         );
@@ -350,27 +358,11 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "PeerSelect: A mandate to select roles by peer votes from nominees.",
-                targetMandate: getInitialisedAddress("PeerSelect"), // PeerSelect (electoral mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PeerSelect"), // PeerSelect (electoral mandate)
                 config: abi.encode(
                     uint8(2), // numberToSelect
                     uint256(4), // roleId to assign (e.g. 4)
                     nominees // Nominees contract
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
- 
-        // TaxSelect - for tax-based role assignment
-        conditions.allowedRole = type(uint256).max;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "TaxSelect: A mandate to assign roles based on tax payments.",
-                targetMandate: getInitialisedAddress("TaxSelect"), // TaxSelect (electoral mandate)
-                config: abi.encode(
-                    erc20Taxed, // Erc20Taxed mock
-                    1000, // threshold tax paid
-                    4 // roleId to be assigned
                 ),
                 conditions: conditions
             })
@@ -382,7 +374,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "SelfSelect: A mandate to self-assign a role.",
-                targetMandate: getInitialisedAddress("SelfSelect"), // SelfSelect (electoral mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SelfSelect"), // SelfSelect (electoral mandate)
                 config: abi.encode(4), // roleId to be assigned
                 conditions: conditions
             })
@@ -397,23 +389,8 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "RenounceRole: A mandate to renounce specific roles.",
-                targetMandate: getInitialisedAddress("RenounceRole"), // RenounceRole (electoral mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "RenounceRole"), // RenounceRole (electoral mandate)
                 config: abi.encode(roles), // roles that can be renounced
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        conditions.allowedRole = type(uint256).max;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "NStrikesRevokesRoles: A mandate to revoke roles after N strikes.",
-                targetMandate: getInitialisedAddress("NStrikesRevokesRoles"), // NStrikesRevokesRoles (electoral mandate)
-                config: abi.encode(
-                    3, // roleId to be revoked.
-                    2, // number of strikes needed to be revoked.
-                    flagActions // FlagActions contract
-                ),
                 conditions: conditions
             })
         );
@@ -427,7 +404,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "RoleByRoles: A mandate to assign roles based on existing role holders.",
-                targetMandate: getInitialisedAddress("RoleByRoles"), // RoleByRoles (electoral mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "RoleByRoles"), // RoleByRoles (electoral mandate)
                 config: abi.encode(
                     4, // target role (what gets assigned)
                     roleIdsNeeded // roles that are needed to be assigned
@@ -437,7 +414,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // PresetActions_Single
+        // PresetActions
         // Set config
         targets = new address[](3);
         values = new uint256[](3);
@@ -454,7 +431,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A Single Action: to assign labels to roles. It self-destructs after execution.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // presetSingleAction
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -465,12 +442,12 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "RevokeInactiveAccounts: A mandate to revoke roles from inactive accounts.",
-                targetMandate: getInitialisedAddress("RevokeInactiveAccounts"), // presetSingleAction
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "RevokeInactiveAccounts"), // presetSingleAction
                 config: abi.encode(
                     3, // roleId to monitor
-                    1,  // minimum actions in period
+                    1, // minimum actions in period
                     5 // number of latest actions to check
-                    ),
+                ),
                 conditions: conditions
             })
         );
@@ -493,7 +470,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "StatementOfIntent: A mandate to propose actions without execution.",
-                targetMandate: getInitialisedAddress("StatementOfIntent"), // StatementOfIntent (multi mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"), // StatementOfIntent (multi mandate)
                 config: abi.encode(), // empty config
                 conditions: conditions
             })
@@ -505,7 +482,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "OpenAction: A mandate to execute any action with full power.",
-                targetMandate: getInitialisedAddress("OpenAction"), // OpenAction (multi mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"), // OpenAction (multi mandate)
                 config: abi.encode(), // empty config
                 conditions: conditions
             })
@@ -520,7 +497,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "BespokeAction_Simple: A mandate to execute a simple function call.",
-                targetMandate: getInitialisedAddress("BespokeAction_Simple"), // BespokeAction_Simple (multi mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"), // BespokeAction_Simple (multi mandate)
                 config: abi.encode(
                     simpleErc1155, // SimpleErc1155 mock
                     bytes4(keccak256("mint(uint256,address)")),
@@ -539,7 +516,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "BespokeAction_Advanced: A mandate to execute complex function calls with mixed parameters.",
-                targetMandate: getInitialisedAddress("BespokeAction_Advanced"), // BespokeAction_Advanced (multi mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Advanced"), // BespokeAction_Advanced (multi mandate)
                 config: abi.encode(
                     daoMock, // Powers contract
                     IPowers.assignRole.selector,
@@ -552,7 +529,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // PresetActions_Single - for executing preset actions
+        // PresetActions - for executing preset actions
         targets = new address[](2);
         values = new uint256[](2);
         calldatas = new bytes[](2);
@@ -567,25 +544,9 @@ contract TestConstitutions is Test {
         conditions.allowedRole = 1;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Single: A mandate to execute preset actions.",
-                targetMandate: getInitialisedAddress("PresetActions_Single"), // PresetActions_Single (multi mandate)
+                nameDescription: "PresetActions: A mandate to execute preset actions.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // PresetActions (multi mandate)
                 config: abi.encode(targets, values, calldatas),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // PresetActions_Multiple - for executing multiple preset actions
-        descriptions = new string[](2);
-        descriptions[0] = "Assign Member Role";
-        descriptions[1] = "Assign Delegate Role";
-
-        conditions.allowedRole = 1;
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "PresetActions_Multiple: A mandate to execute multiple preset actions.",
-                targetMandate: getInitialisedAddress("PresetActions_Multiple"), // PresetActions_Multiple (multi mandate)
-                config: abi.encode(descriptions, targets, values, calldatas),
                 conditions: conditions
             })
         );
@@ -601,7 +562,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "CheckExternalActionState: Checks if an action is fulfilled on a parent contract.",
-                targetMandate: getInitialisedAddress("CheckExternalActionState"), // CheckExternalActionState
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "CheckExternalActionState"), // CheckExternalActionState
                 config: abi.encode(
                     daoMock, // parentPowers (self for test)
                     1, // mandateId on parent (OpenAction)
@@ -612,14 +573,14 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // Mandates_Adopt - for adopting new mandates
+        // Adopt_Mandates - for adopting new mandates
         mandatesToAdopt = new address[](1);
         mandateInitDatas = new bytes[](1);
 
         // Create a simple mandate init data for adoption
         PowersTypes.MandateInitData({
             nameDescription: "Test Adopted Mandate",
-            targetMandate: getInitialisedAddress("PresetActions_Single"), // PresetActions_Single
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // PresetActions
             config: abi.encode(
                 new address[](1), // empty targets
                 new uint256[](1), // empty values
@@ -640,8 +601,8 @@ contract TestConstitutions is Test {
         conditions.allowedRole = type(uint256).max; // public role can adopt mandates
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Mandates_Adopt: A mandate to adopt new mandates into the DAO.",
-                targetMandate: getInitialisedAddress("Mandates_Adopt"), // Mandates_Adopt (executive mandate)
+                nameDescription: "Adopt_Mandates: A mandate to adopt new mandates into the DAO.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Adopt_Mandates"), // Adopt_Mandates (executive mandate)
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -653,7 +614,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "BespokeActionReturner: Returns a value for testing.",
-                targetMandate: getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(returnDataMock, ReturnDataMock.getValue.selector, new string[](0)),
                 conditions: conditions
             })
@@ -668,7 +629,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "BespokeAction_OnReturnValue: Execute a call using return value of previous mandate call.",
-                targetMandate: getInitialisedAddress("BespokeAction_OnReturnValue"), // BespokeAction_OnReturnValue (executive mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"), // BespokeAction_OnReturnValue (executive mandate)
                 config: abi.encode(
                     returnDataMock,
                     ReturnDataMock.consume.selector,
@@ -693,7 +654,7 @@ contract TestConstitutions is Test {
         address simpleGovernor,
         address powersFactory,
         address soulbound1155,
-        address electionList, 
+        address electionList,
         address erc20Taxed,
         address zkPassportRegistry
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
@@ -707,7 +668,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Governor_CreateProposal: A mandate to create governance proposals on a Governor contract.",
-                targetMandate: getInitialisedAddress("Governor_CreateProposal"), // Governor_CreateProposal (executive mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Governor_CreateProposal"), // Governor_CreateProposal (executive mandate)
                 config: abi.encode(simpleGovernor), // SimpleGovernor mock address
                 conditions: conditions
             })
@@ -720,26 +681,8 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Governor_ExecuteProposal: A mandate to execute governance proposals on a Governor contract.",
-                targetMandate: getInitialisedAddress("Governor_ExecuteProposal"), // Governor_ExecuteProposal (executive mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Governor_ExecuteProposal"), // Governor_ExecuteProposal (executive mandate)
                 config: abi.encode(simpleGovernor), // SimpleGovernor mock address
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // Safe Allowance Integration //
-        // Safe_Setup
-        mandateCounter++;
-        conditions.allowedRole = type(uint256).max; // Public
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Setup Safe: Create a SafeProxy and register it as treasury.",
-                targetMandate: getInitialisedAddress("Safe_Setup"),
-                config: abi.encode(
-                    helperConfig.getSafeProxyFactory(block.chainid),
-                    helperConfig.getSafeL2Canonical(block.chainid), 
-                    helperConfig.getSafeAllowanceModule(block.chainid)
-                    ),
                 conditions: conditions
             })
         );
@@ -750,14 +693,14 @@ contract TestConstitutions is Test {
         inputParams[0] = "address sub-DAO";
 
         mandateCounter++;
-        conditions.allowedRole = type(uint256).max; // Public 
+        conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Delegate status: Assign delegate status at Safe treasury to a sub-DAO",
-                targetMandate: getInitialisedAddress("Safe_ExecTransaction"),
-                config: abi.encode( 
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Safe_ExecTransaction"),
+                config: abi.encode(
                     inputParams,
-                    bytes4(0xe71bdf41), // addDelegate(address)   
+                    bytes4(0xe71bdf41), // addDelegate(address)
                     helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions
@@ -778,7 +721,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Set Allowance: Execute and set allowance for a sub-DAO.",
-                targetMandate: getInitialisedAddress("Safe_ExecTransaction"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Safe_ExecTransaction"),
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
@@ -793,13 +736,13 @@ contract TestConstitutions is Test {
         inputParams = new string[](2);
         inputParams[0] = "address To";
         inputParams[1] = "uint256 Value";
-       
+
         mandateCounter++;
         conditions.allowedRole = 1;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Transfer tokens from the Safe treasury.",
-                targetMandate: getInitialisedAddress("Safe_ExecTransaction"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Safe_ExecTransaction"),
                 config: abi.encode(inputParams, IERC20.transfer.selector, erc20Taxed),
                 conditions: conditions
             })
@@ -820,7 +763,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create new Powers: call Powers Factory to spawn new powers.",
-                targetMandate: getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(powersFactory, IPowersFactory.createPowers.selector, inputParams),
                 conditions: conditions
             })
@@ -832,7 +775,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute and set allowance for a Powers Child at the Safe Treasury.",
-                targetMandate: getInitialisedAddress("PowersFactory_AssignRole"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PowersFactory_AssignRole"),
                 config: abi.encode(
                     5, // mandateId of the createPowers action above.
                     roleIdnewOrg,
@@ -850,7 +793,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Mint soulbound token: mint a soulbound ERC1155 token and send it to an address of choice.",
-                targetMandate: getInitialisedAddress("GovernedToken_MintEncodedToken"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "GovernedToken_MintEncodedToken"),
                 config: abi.encode(soulbound1155),
                 conditions: conditions
             })
@@ -863,7 +806,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Soulbound1155 Access: Get roleId through soulbound ERC1155 token.",
-                targetMandate: getInitialisedAddress("GovernedToken_GatedAccess"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "GovernedToken_GatedAccess"),
                 config: abi.encode(
                     soulbound1155,
                     9, // roleId to be assigned upon holding the soulbound token.
@@ -879,18 +822,15 @@ contract TestConstitutions is Test {
         // burn to access mandate //
         inputParams = new string[](2);
         inputParams[0] = "uint256 TokenId";
-        inputParams[1] = "uint256 Amount"; 
-        
+        inputParams[1] = "uint256 Amount";
+
         mandateCounter++;
         conditions.allowedRole = 1; //
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Burn to Access: Burn a soulbound ERC1155 token to gain access.",
-                targetMandate: getInitialisedAddress("GovernedToken_BurnToAccess"),
-                config: abi.encode(
-                    inputParams,
-                    soulbound1155
-                ),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "GovernedToken_BurnToAccess"),
+                config: abi.encode(inputParams, soulbound1155),
                 conditions: conditions
             })
         );
@@ -910,7 +850,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create an election: an election can be initiated be any member.",
-                targetMandate: getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(electionList), // election list contract
                     ElectionList.createElection.selector, // selector
@@ -920,7 +860,7 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
-        uint16 createElectionId = mandateCounter; 
+        uint16 createElectionId = mandateCounter;
 
         // Members: Nominate for Executive election (ID 10)
         mandateCounter++;
@@ -928,7 +868,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for election: any member can nominate for an election.",
-                targetMandate: getInitialisedAddress("ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
                 config: abi.encode(
                     address(electionList), // election list contract
                     true // nominate as candidate
@@ -937,7 +877,7 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
-        uint16 nominateId = mandateCounter;  
+        uint16 nominateId = mandateCounter;
 
         // Members revoke nomination for Executive election. (ID 11)
         mandateCounter++;
@@ -946,7 +886,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: any member can revoke their nomination for an election.",
-                targetMandate: getInitialisedAddress("ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
                 config: abi.encode(
                     address(electionList), // election list contract
                     false // revoke nomination
@@ -963,10 +903,10 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
-                targetMandate: getInitialisedAddress("ElectionList_CreateVoteMandate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_CreateVoteMandate"),
                 config: abi.encode(
                     address(electionList), // election list contract
-                    getInitialisedAddress("ElectionList_Vote"), // the vote mandate address
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Vote"), // the vote mandate address
                     1, // the max number of votes a voter can cast
                     1 // the role Id allowed to vote (Members)
                 ),
@@ -983,7 +923,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally elections: After an election has finished, assign the Executive role to the winners.",
-                targetMandate: getInitialisedAddress("ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Tally"),
                 config: abi.encode(
                     address(electionList),
                     2, // RoleId for Executives
@@ -1001,7 +941,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
-                targetMandate: getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(daoMock), // target contract (primaryDAO in original but here it seems we are testing on daoMock)
                     IPowers.revokeMandate.selector, // function selector to call
@@ -1015,7 +955,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ZKPassport Check Above 18  
+        // ZKPassport Check Above 18
         mandateCounter++;
         inputParams = new string[](1);
         inputParams[0] = "address AccountToCheck";
@@ -1023,11 +963,11 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "ZKPassport Check: Check if a user is above 18 years old.",
-                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ZKPassport_Check"),
                 config: abi.encode(
                     inputParams,
                     zkPassportRegistry, // Registry address
-                    5 * 60 * 60, // stale after five hours (input in seconds). 
+                    5 * 60 * 60, // stale after five hours (input in seconds).
                     false, // facematch not required
                     bytes4(keccak256("isAgeAbove(uint8)")), // isAgeAbove(uint8)
                     abi.encode(18) // age to check
@@ -1037,18 +977,18 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ZKPassport Check below 18  
-        mandateCounter++; 
+        // ZKPassport Check below 18
+        mandateCounter++;
         conditions.allowedRole = type(uint256).max; // Public
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "ZKPassport Check: Check if a user is below 18 years old.",
-                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ZKPassport_Check"),
                 config: abi.encode(
                     inputParams,
                     zkPassportRegistry, // Registry address
-                    5 * 60 * 60, // stale after five hours (input in seconds)  
-                    false, // facematch not required 
+                    5 * 60 * 60, // stale after five hours (input in seconds)
+                    false, // facematch not required
                     bytes4(keccak256("isAgeBelow(uint8)")), // isAgeBelow(uint8)
                     abi.encode(18) // age to check
                 ),
@@ -1069,12 +1009,12 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "ZKPassport Check: Check if a user is from GBR.",
-                targetMandate: getInitialisedAddress("ZKPassport_Check"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ZKPassport_Check"),
                 config: abi.encode(
                     inputParams,
                     zkPassportRegistry, // Registry address
                     5 * 60 * 60, // stale after five hours (input in seconds).
-                    false, // facematch not required  
+                    false, // facematch not required
                     bytes4(keccak256("isNationalityIn(string[])")), // isNationalityIn(string[],bytes)
                     abi.encode(nationalitiesToCheck) // nationality to check
                 ),
@@ -1098,9 +1038,9 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Allowance Transaction: Execute a transaction from the Safe Treasury within the allowance set.",
-                targetMandate: getInitialisedAddress("SafeAllowance_Transfer"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Transfer"),
                 config: abi.encode(
-                    helperConfig.getSafeAllowanceModule(block.chainid), 
+                    helperConfig.getSafeAllowanceModule(block.chainid),
                     IPowers(daoMock).getTreasury() // This is the SafeProxyTreasury!
                 ),
                 conditions: conditions
@@ -1134,7 +1074,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for Delegates: Members can nominate themselves for the Token Delegate role.",
-                targetMandate: getInitialisedAddress("Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Nominate"),
                 config: abi.encode(nominees),
                 conditions: conditions
             })
@@ -1147,7 +1087,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Elect Delegates: Run the election for delegates. In this demo, the top 3 nominees by token delegation of token VOTES_TOKEN become Delegates.",
-                targetMandate: getInitialisedAddress("DelegateTokenSelect"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "DelegateTokenSelect"),
                 config: abi.encode(
                     simpleErc20Votes,
                     nominees,
@@ -1174,7 +1114,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for Delegates: Members can nominate themselves for the Token Delegate role.",
-                targetMandate: getInitialisedAddress("Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Nominate"),
                 config: abi.encode(openElection),
                 conditions: conditions
             })
@@ -1186,10 +1126,10 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Start an election: an election can be initiated be voters once every 2 hours. The election will last 10 minutes.",
-                targetMandate: getInitialisedAddress("ElectionList_Create"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Create"),
                 config: abi.encode(
                     openElection,
-                    getInitialisedAddress("ElectionList_Vote"), // Voting mandate
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Vote"), // Voting mandate
                     600, // 10 minutes in blocks (approx)
                     1 // Voter role id
                 ),
@@ -1204,7 +1144,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "End and Tally elections: After an election has finished, assign the Delegate role to the winners.",
-                targetMandate: getInitialisedAddress("ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Tally"),
                 config: abi.encode(
                     openElection,
                     2, // RoleId for Delegates
@@ -1214,32 +1154,6 @@ contract TestConstitutions is Test {
             })
         );
         delete conditions;
-
-        return constitution;
-    }
-
-    // Role By Transaction flow
-    function roleByTransaction_IntegrationTestConstitution(
-        address /*daoMock*/
-    )
-        external
-        returns (PowersTypes.MandateInitData[] memory mandateInitData)
-    {
-        delete constitution; // restart constitution array.
-
-        // RoleByTransaction
-        // conditions.allowedRole = type(uint256).max; // == PUBLIC_ROLE: anyone can call this mandate.
-        // mandateInitData = PowersTypes.MandateInitData({
-        //     nameDescription: "Buy Funder Role: Make a contribution of more than 0.1 ether (written in its smallest denomination) in TAX token (0x93d94e8D5DC29C6610946C3226e5Be4e4FB503Ce) to be granted a funder role.",
-        //     targetMandate: mandateAddresses[4], // RoleByTransaction
-        //     config: abi.encode(
-        //         0x93d94e8D5DC29C6610946C3226e5Be4e4FB503Ce, // token = TAX token
-        //         1 ether / 10, // amount = 0.1 Ether minimum
-        //         1, // newRoleId = Funder role
-        //         mem.safeProxy // safeProxy == treasury
-        //     ),
-        //     conditions: conditions
-        // });
 
         return constitution;
     }
@@ -1260,7 +1174,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
-                targetMandate: getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(daoMock, IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -1284,7 +1198,7 @@ contract TestConstitutions is Test {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Role 1: Anyone that has role 1 at the parent organization can adopt the same role here.",
-                targetMandate: getInitialisedAddress("AssignExternalRole"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "AssignExternalRole"),
                 config: abi.encode(
                     parent,
                     1 //
@@ -1320,7 +1234,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "StatementOfIntent: Propose any kind of action.",
-                targetMandate: getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -1332,7 +1246,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto an action: Veto an action that has been proposed by the community.",
-                targetMandate: getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -1348,7 +1262,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute an action: Execute an action that has been proposed by the community and should not have been vetoed by an admin.",
-                targetMandate: getInitialisedAddress("OpenAction"), // openAction.
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"), // openAction.
                 config: abi.encode(), // empty config.
                 conditions: conditions
             })
@@ -1372,7 +1286,7 @@ contract TestConstitutions is Test {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt a Child Mandate: Admin adopts the new mandate for a Powers' child",
-                targetMandate: getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -1396,7 +1310,7 @@ contract TestConstitutions is Test {
         // conditions.allowedRole = 0; // Admin
         // childConstitution.push(PowersTypes.MandateInitData({
         //     nameDescription: "Adopt a Child Mandate: Admin adopts the new mandate for a Powers' child",
-        //     targetMandate: getInitialisedAddress("StatementOfIntent"),
+        //     targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
         //     config: abi.encode(),
         //     conditions: conditions
         // }));
@@ -1420,7 +1334,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Governor_CreateProposal: A mandate to create governance proposals on a Governor contract.",
-                targetMandate: getInitialisedAddress("Governor_CreateProposal"), // Governor_CreateProposal (executive mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Governor_CreateProposal"), // Governor_CreateProposal (executive mandate)
                 config: abi.encode(simpleGovernor), // SimpleGovernor mock address
                 conditions: conditions
             })
@@ -1432,7 +1346,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Governor_ExecuteProposal: A mandate to execute governance proposals on a Governor contract.",
-                targetMandate: getInitialisedAddress("Governor_ExecuteProposal"), // Governor_ExecuteProposal (executive mandate)
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Governor_ExecuteProposal"), // Governor_ExecuteProposal (executive mandate)
                 config: abi.encode(simpleGovernor), // SimpleGovernor mock address
                 conditions: conditions
             })
@@ -1449,22 +1363,6 @@ contract TestConstitutions is Test {
     {
         delete primaryConstitution; // restart primaryConstitution array.
 
-        // Safe_Setup
-        conditions.allowedRole = type(uint256).max; // Public
-        primaryConstitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Setup Safe: Create a SafeProxy and register it as treasury.",
-                targetMandate: getInitialisedAddress("Safe_Setup"),
-                config: abi.encode(
-                    helperConfig.getSafeProxyFactory(block.chainid),
-                    helperConfig.getSafeL2Canonical(block.chainid), 
-                    allowanceModule
-                ), 
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
         // Allow for child to be set as delegate
         inputParams = new string[](1);
         inputParams[0] = "address NewChildPowers";
@@ -1472,7 +1370,7 @@ contract TestConstitutions is Test {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Delegate status: Assign delegate status at Safe treasury to the sub-DAO",
-                targetMandate: getInitialisedAddress("Safe_ExecTransaction"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Safe_ExecTransaction"),
                 config: abi.encode(
                     inputParams,
                     bytes4(0xe71bdf41), // == AllowanceModule.addDelegate.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
@@ -1495,7 +1393,7 @@ contract TestConstitutions is Test {
         primaryConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Set Allowance: Set allowance for sub-DAO.",
-                targetMandate: getInitialisedAddress("SafeAllowance_Action"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Action"),
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
@@ -1520,7 +1418,7 @@ contract TestConstitutions is Test {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Allowance Transaction: Execute a transaction from the Safe Treasury within the allowance set.",
-                targetMandate: getInitialisedAddress("SafeAllowance_Transfer"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Transfer"),
                 config: abi.encode(
                     allowanceModule,
                     treasury // This is the SafeProxyTreasury!
@@ -1554,7 +1452,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open Action: Execute any action.",
-                targetMandate: getInitialisedAddress("OpenAction"), // openAction
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"), // openAction
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -1562,17 +1460,5 @@ contract TestConstitutions is Test {
         delete conditions;
 
         return constitution;
-    }
-
-    //////////////////////////////////////////////////////////////
-    //                         HELPERS                          //
-    //////////////////////////////////////////////////////////////
-    function getInitialisedAddress(string memory name) public view returns (address mandateAddress) {
-        for (uint256 i = 0; i < mandateNames.length; i++) {
-            if (keccak256(abi.encodePacked(mandateNames[i])) == keccak256(abi.encodePacked(name))) {
-                return mandateAddresses[i];
-            }
-        }
-        revert("Mandate not found");
     }
 }

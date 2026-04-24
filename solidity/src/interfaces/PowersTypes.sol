@@ -5,6 +5,7 @@
 pragma solidity ^0.8.26;
 
 interface PowersTypes {
+    /// @notice struct to keep track of a mandate.
     struct Conditions {
         uint256 allowedRole; // Takes its own slot
         // --- All of the following can be packed into a single slot (144 bits total) ---
@@ -17,19 +18,27 @@ interface PowersTypes {
         uint8 succeedAt;
     }
 
+    /// @notice struct to keep track of an adopted mandate.
     struct AdoptedMandate {
         address targetMandate;
         uint48 latestFulfillment;
         bool active;
         Conditions conditions;
-        uint256[] actionIds; 
+        uint256[] actionIds;
     }
 
+    /// @notice struct used in adopting mandates.
     struct MandateInitData {
         string nameDescription; // 32 bytes
         address targetMandate; // 20 bytes
         bytes config; // 32 bytes
         Conditions conditions; // 104 bytes
+    }
+
+    /// @notice struct to keep track of a flow.
+    struct Flow {
+        uint16[] mandateIds;
+        string nameDescription;
     }
 
     /// @notice struct to keep track of a proposal.
@@ -45,6 +54,7 @@ interface PowersTypes {
         uint48 requestedAt;
         uint48 fulfilledAt;
         uint48 cancelledAt;
+        uint48 failedAt;
         uint48 voteStart;
         uint16 mandateId;
         // --- Packed Slot 2 (128 bits used) ---
@@ -74,7 +84,8 @@ interface PowersTypes {
         Defeated, // - 4: calculate this
         Succeeded, // - 5: calculate this
         Requested, // - 6: log this
-        Fulfilled // - 7: log this
+        Fulfilled, // - 7: log this
+        Failed // - 8: log this
     }
 
     /// @notice Supported vote types. Matches Governor Bravo ordering.
@@ -97,6 +108,6 @@ interface PowersTypes {
         mapping(address account => uint256 index) members;
         Member[] membersArray;
         string label;
-        string metadata; 
+        string metadata;
     }
 }

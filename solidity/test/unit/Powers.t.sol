@@ -2,18 +2,18 @@
 pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
-import { Powers } from "../../src/Powers.sol";
-import { Mandate } from "../../src/Mandate.sol";
-import { MandateUtilities } from "../../src/libraries/MandateUtilities.sol";
-import { Checks } from "../../src/libraries/Checks.sol";
-import { IMandate } from "../../src/interfaces/IMandate.sol";
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { PowersErrors } from "../../src/interfaces/PowersErrors.sol";
+import { Powers } from "@src/Powers.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { Checks } from "@src/libraries/Checks.sol";
+import { IMandate } from "@src/interfaces/IMandate.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { TestSetupPowers } from "../TestSetup.t.sol";
 import { PowersMock } from "../mocks/PowersMock.sol";
-import { OpenAction } from "../../src/mandates/executive/OpenAction.sol";
+import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
 
-import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
+import { SimpleErc1155 } from "../mocks/SimpleErc1155.sol";
 
 /// @notice Unit tests for the core Powers protocol (updated v0.4)
 
@@ -27,7 +27,7 @@ contract DeployTest is TestSetupPowers {
             daoMock.uri(),
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibd3qgeohyjeamqtfgk66lr427gpp4ify5q4civ2khcgkwyvz5hcq"
         );
-        assertEq(daoMock.version(), "0.5");
+        assertEq(daoMock.version(), "v0.6.1");
         assertNotEq(daoMock.mandateCounter(), 0);
 
         assertNotEq(daoMock.hasRoleSince(alice, ROLE_ONE), 0);
@@ -136,7 +136,7 @@ contract ProposeTest is TestSetupPowers {
         vm.prank(bob);
         daoMock.propose(mandateId, mandateCalldata, nonce, description);
 
-        vm.expectRevert(Powers__UnexpectedActionState.selector);
+        vm.expectRevert(Powers__ActionAlreadyInitiated.selector);
         vm.prank(bob);
         daoMock.propose(mandateId, mandateCalldata, nonce, description);
     }
@@ -412,7 +412,7 @@ contract VoteTest is TestSetupPowers {
 contract ExecuteTest is TestSetupPowers {
     function testExecuteCanChangeState() public {
         mandateId = 6; // A Single Action: to assign labels to roles. It self-destructs after execution.
-        mandateCalldata = abi.encode(true); // PresetActions_Single doesn't use this parameter, but we need to provide something
+        mandateCalldata = abi.encode(true); // PresetActions doesn't use this parameter, but we need to provide something
 
         // Check initial state - role labels should be empty
         assertEq(daoMock.getRoleLabel(ROLE_ONE), "");
@@ -429,7 +429,7 @@ contract ExecuteTest is TestSetupPowers {
 
     function testExecuteSuccessSetsStateToFulfilled() public {
         mandateId = 6; // A Single Action: to assign labels to roles. It self-destructs after execution.
-        mandateCalldata = abi.encode(true); // PresetActions_Single doesn't use this parameter, but we need to provide something
+        mandateCalldata = abi.encode(true); // PresetActions doesn't use this parameter, but we need to provide something
 
         vm.prank(alice);
         daoMock.request(mandateId, mandateCalldata, nonce, description);
@@ -486,7 +486,7 @@ contract ExecuteTest is TestSetupPowers {
 
     function testExecuteRevertsIfMandateNotActive() public {
         mandateId = 6; // A Single Action: to assign labels to roles. It self-destructs after execution.
-        mandateCalldata = abi.encode(true); // PresetActions_Single doesn't use this parameter, but we need to provide something
+        mandateCalldata = abi.encode(true); // PresetActions doesn't use this parameter, but we need to provide something
 
         vm.prank(address(daoMock));
         daoMock.revokeMandate(mandateId);
@@ -545,71 +545,6 @@ contract ExecuteTest is TestSetupPowers {
         vm.expectRevert(Powers__ActionCancelled.selector);
         vm.prank(bob);
         daoMock.request(mandateId, mandateCalldata, nonce, description);
-    }
-}
-
-//////////////////////////////////////////////////////////////
-//                  ROLE AND LAW ADMIN                      //
-//////////////////////////////////////////////////////////////
-contract ConstituteTest is TestSetupPowers {
-    function testConstituteSetsMandatesToActive() public {
-        vm.prank(alice);
-        PowersMock daoMockTest = new PowersMock();
-
-        MandateInitData[] memory mandateInitData = new MandateInitData[](1);
-
-        mandateInitData[0] = MandateInitData({
-            nameDescription: "Test mandate: Test mandate description",
-            targetMandate: initialisePowers.getInitialisedAddress("OpenAction"), // = openAction
-            config: abi.encode(),
-            conditions: conditions
-        });
-
-        vm.prank(alice);
-        daoMockTest.constitute(mandateInitData);
-
-        for (i = 1; i <= mandateInitData.length; i++) {
-            daoMockTest.getAdoptedMandate(uint16(i));
-        }
-    }
-
-    function testConstituteRevertsWhenClosed() public {
-        vm.prank(alice);
-        PowersMock daoMockTest = new PowersMock();
-
-        MandateInitData[] memory mandateInitData = new MandateInitData[](1);
-        mandateInitData[0] = MandateInitData({
-            nameDescription: "Test mandate: Test mandate description",
-            targetMandate: initialisePowers.getInitialisedAddress("OpenAction"), // = openAction
-            config: abi.encode(),
-            conditions: conditions
-        });
-
-        vm.startPrank(alice);
-        daoMockTest.constitute(mandateInitData);
-        daoMockTest.closeConstitute();
-        vm.stopPrank();
-
-        vm.expectRevert(Powers__ConstituteClosed.selector);
-        vm.prank(alice);
-        daoMockTest.constitute(mandateInitData);
-    }
-
-    function testConstituteCannotBeCalledByNonAdmin() public {
-        vm.prank(alice);
-        PowersMock daoMockTest = new PowersMock();
-
-        MandateInitData[] memory mandateInitData = new MandateInitData[](1);
-        mandateInitData[0] = MandateInitData({
-            nameDescription: "Test mandate: Test mandate description",
-            targetMandate: initialisePowers.getInitialisedAddress("OpenAction"), // mandateAddresses[3],
-            config: abi.encode(),
-            conditions: conditions
-        });
-
-        vm.expectRevert(Powers__OnlyAdmin.selector);
-        vm.prank(bob);
-        daoMockTest.constitute(mandateInitData);
     }
 }
 

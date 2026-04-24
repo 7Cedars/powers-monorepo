@@ -1,5 +1,13 @@
 // SPDX-License-Identifier: MIT
+/*
+  _____   ____  __          __ ______  _____    _____
+ |  __ \ / __ \ \ \        / /|  ____||  __ \  / ____|
+ | |__) | |  | | \ \  /\  / / | |__   | |__) || (___
+ |  ___/| |  | |  \ \/  \/ /  |  __|  |  _  /  \___ \
+ | |    | |__| |   \  /\  /   | |____ | | \ \  ____) |
+ |_|     \____/     \/  \/    |______||_|  \_\|_____/
 
+*/
 /// @title Mandate - Base Implementation for Powers Protocol Mandates. v0.4.
 /// @notice Base contract for implementing role-restricted governance actions
 /// @dev Provides core functionality for creating institutional mandates in the Powers protocol
@@ -10,8 +18,7 @@
 /// 3. Calling external contracts and validating return data.
 /// 4. Returning of data to the Powers protocol
 ///
-/// Mandates can be customized through:
-/// - Inheriting and implementing bespoke logic in the {handleRequest} {_replyPowers} and {_externalCall} functions.
+/// Mandates can be customized through inheriting and implementing bespoke logic in the {handleRequest}
 ///
 /// @author 7Cedars
 pragma solidity ^0.8.26;
@@ -19,8 +26,8 @@ pragma solidity ^0.8.26;
 import { IPowers } from "./interfaces/IPowers.sol";
 import { MandateUtilities } from "./libraries/MandateUtilities.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
-import { ERC165 } from "../lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
-import { IERC165 } from "../lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import { ERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying
 
@@ -68,16 +75,14 @@ abstract contract Mandate is ERC165, IMandate {
     {
         bytes32 mandateHash = MandateUtilities.hashMandate(msg.sender, mandateId);
         if (mandates[mandateHash].powers != msg.sender) {
-            revert IMandate.OnlyPowers();
+            revert OnlyPowers();
         }
 
         // Simulate and execute the mandate's logic. This might include additional conditional checks.
         (uint256 actionId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) =
             handleRequest(caller, payable(msg.sender), mandateId, mandateCalldata, nonce);
 
-        _externalCall(mandateId, actionId, targets, values, calldatas);
-
-        _replyPowers(mandateId, actionId, targets, values, calldatas);
+        IPowers(msg.sender).fulfill(mandateId, actionId, targets, values, calldatas);
 
         return true;
     }
@@ -107,44 +112,6 @@ abstract contract Mandate is ERC165, IMandate {
         // Empty implementation - must be overridden
     }
 
-    /// @notice Meant to be used to call an external contract. Especially usefull in the case of async mandates.
-    /// @dev Can be overridden by implementing contracts.
-    /// @param mandateId The id of the mandate
-    /// @param actionId The action ID
-    /// @param targets Target contract addresses for calls
-    /// @param values ETH values to send with calls
-    /// @param calldatas Encoded function calls
-    function _externalCall(
-        uint16 mandateId,
-        uint256 actionId,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas
-    ) internal virtual {
-        // optional override by implementing contracts
-    }
-
-    /// @notice Meant to be used to reply to the Powers protocol. Can be overridden by implementing contracts.
-    /// @dev Can be overridden by implementing contracts.
-    /// @param mandateId The id of the mandate
-    /// @param actionId The action ID
-    /// @param targets Target contract addresses for calls
-    /// @param values ETH values to send with calls
-    /// @param calldatas Encoded function calls
-    function _replyPowers(
-        uint16 mandateId,
-        uint256 actionId,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas
-    ) internal virtual {
-        // NB Important for async calls! Leave the targets array empty in the replyPowers function and thereby disallow _replyPowers returning data to Powers.
-        // If data is send to Powers, the actionId will be set to fulfilled and the callback function will fail.
-        if (targets.length > 0) {
-            IPowers(msg.sender).fulfill(mandateId, actionId, targets, values, calldatas);
-        }
-    }
-
     //////////////////////////////////////////////////////////////
     //                      HELPER FUNCTIONS                    //
     //////////////////////////////////////////////////////////////
@@ -160,8 +127,12 @@ abstract contract Mandate is ERC165, IMandate {
         return mandates[MandateUtilities.hashMandate(powers, mandateId)].config;
     }
 
-    // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate. 
-    // this function would then be virtual, so that when not overridden, it returns an empty string or a default uri. 
+    function version() public pure virtual returns (uint16 major, uint16 minor, uint16 patch) {
+        return (0, 6, 1);
+    }
+
+    // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate.
+    // this function would then be virtual, so that when not overridden, it returns an empty string or a default uri.
 
     //////////////////////////////////////////////////////////////
     //                      UTILITIES                           //

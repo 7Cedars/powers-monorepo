@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
@@ -22,7 +22,7 @@ contract Nominees is Ownable {
     event NominationRevoked(address indexed nominee);
 
     constructor() Ownable(msg.sender) { }
- 
+
     function nominate(address nominee, bool shouldNominate) public onlyOwner {
         if (shouldNominate) {
             if (nominations[nominee] == true) revert("already nominated");

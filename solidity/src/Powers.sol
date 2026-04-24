@@ -1,33 +1,38 @@
 // SPDX-License-Identifier: MIT
 /*
-  _____   ____  __          __ ______  _____    _____ 
+  _____   ____  __          __ ______  _____    _____
  |  __ \ / __ \ \ \        / /|  ____||  __ \  / ____|
- | |__) | |  | | \ \  /\  / / | |__   | |__) || (___  
- |  ___/| |  | |  \ \/  \/ /  |  __|  |  _  /  \___ \ 
+ | |__) | |  | | \ \  /\  / / | |__   | |__) || (___
+ |  ___/| |  | |  \ \/  \/ /  |  __|  |  _  /  \___ \
  | |    | |__| |   \  /\  /   | |____ | | \ \  ____) |
- |_|     \____/     \/  \/    |______||_|  \_\|_____/ 
-                                                      
+ |_|     \____/     \/  \/    |______||_|  \_\|_____/
+
 */
-/// @title Powers Protocol v.0.5
-/// @notice Institutional governance for on-chain communities. 
+/// @title Powers Protocol v.0.6.1
+/// @notice A modular governance protocol enabling institutional design for on-chain organizations through role-based access control and separation of powers.
 ///
-/// @dev This contract is the core engine of the protocol. It is meant to be used in combination with implementations of {Mandate.sol}. The contract should be used as is, making changes to this contract should be avoided.
-/// @dev Code is derived from OpenZeppelin's Governor.sol and AccessManager contracts, in addition to Haberdasher Labs Hats protocol.
-/// @dev note that Powers prefers to save as much data as possible on-chain. This reduces reliance on off-chain data that needs to be indexed and (often centrally) stored.
+/// @dev Powers is built around three core concepts:
+/// @dev 1. **Roles**: Define access identifiers for different participants in the organization.
+/// @dev 2. **Mandates**: Modular smart contracts that transform governance proposals into executable actions. Each mandate is role-restricted and can include conditional logic (voting, delays, parent mandates, etc.).
+/// @dev 3. **Actions**: The governance lifecycle (propose → vote → execute) that flows through this central Powers contract.
 ///
-/// Note several key differences from openzeppelin's {Governor.sol}.
-/// 1 - Any DAO action needs to be encoded in role restricted external contracts, or mandates, that follow the {IMandate} interface.
-/// 2 - Proposing, voting, cancelling and executing actions are role restricted along the target mandate that is called.
-/// 3 - All DAO actions need to run through the governance flow provided by Powers.sol. Calls to mandates that do not need a proposedAction vote, for instance, still need to be executed through the {execute} function.
-/// 4 - The core protocol uses a non-weighted voting mechanism: one account has one vote. Accounts vote with their roles, not with their tokens.
-/// 5 - The core protocol is intentionally minimalistic. Any complexities (multi-chain governance, oracle based governance, timelocks, delayed execution, guardian roles, weighted votes, staking, etc.) has to be integrated through mandates.
+/// @dev Key Protocol Features:
+/// @dev - Role-Based Governance: All governance actions are restricted by role assignments, enabling fine-grained access control.
+/// @dev - Separation of Powers: Different roles can propose, vote on, veto, and execute actions, creating institutional checks and balances.
+/// @dev - Modular Architecture: Governance logic lives in external mandate contracts, keeping the core protocol minimal and extensible.
+/// @dev - Non-Weighted Voting: The core protocol uses one-account-one-vote. Accounts vote with their roles, not tokens.
+/// @dev - On-Chain Data Preference: Maximizes on-chain storage to reduce reliance on indexers and centralized off-chain infrastructure.
 ///
-/// For example organisational implementations, see the script/organisations folder.
+/// @dev Implementation Notes:
+/// @dev - This contract is the core engine and should be used as-is. Customizations should be implemented through mandates.
+/// @dev - All DAO actions flow through Powers.sol governance functions, even non-voting actions.
+/// @dev - Complex features (multi-chain governance, oracle-based governance, timelocks, weighted voting, staking, etc.) are added via mandates, not by modifying this core contract.
 ///
-/// Note This protocol is a work in progress. A number of features are planned to be added in the future.
-/// - Gas efficiency improvements.
-/// - Integration with new ENS standards to log organisational data on-chain.
-/// - And more.
+/// @dev For example organizational implementations, see the script/organisations folder.
+///
+/// @dev Roadmap:
+/// @dev - Integration with new ENS standards for on-chain organizational metadata
+/// @dev - Additional governance primitives and mandate templates
 ///
 /// @author 7Cedars
 
@@ -37,10 +42,10 @@ import { Mandate } from "./Mandate.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
 import { IPowers } from "./interfaces/IPowers.sol";
 import { Checks } from "./libraries/Checks.sol";
-import { ERC165Checker } from "../lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
-import { Address } from "../lib/openzeppelin-contracts/contracts/utils/Address.sol";
-import { EIP712 } from "../lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
-import { Context } from "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
+import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
+import { Address } from "@lib/openzeppelin-contracts/contracts/utils/Address.sol";
+import { EIP712 } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
+import { Context } from "@lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
@@ -56,8 +61,10 @@ contract Powers is EIP712, IPowers, Context {
     mapping(uint256 roleId => Role) internal roles;
     /// @dev Mapping from account to blacklisted status
     mapping(address account => bool blacklisted) internal _blacklist;
+    /// @dev Mapping of trusted forwarders for meta-transactions (ERC-2771)
+    mapping(address forwarder => bool trusted) public trustedForwarders;
 
-    // two roles are preset: ADMIN_ROLE == 0 and PUBLIC_ROLE == type(uint256).max.
+    // two roles are preset: ADMIN_ROLE == 0 and PUBLIC_ROLE == type(uint256).max. These values should be avoided in any arythmetic operations with roleIds, to avoid overflow/underflow issues.
     /// @notice Role identifier for the admin role
     uint256 public constant ADMIN_ROLE = type(uint256).min;
     /// @notice Role identifier for the public role (everyone)
@@ -71,6 +78,8 @@ contract Powers is EIP712, IPowers, Context {
     uint256 public immutable MAX_RETURN_DATA_LENGTH;
     /// @notice Maximum number of execution targets per action
     uint256 public immutable MAX_EXECUTIONS_LENGTH;
+    /// @notice block number at which the Powers contract was deployed.
+    uint256 public immutable FOUNDED_AT;
 
     /// @notice Name of the DAO
     string public name;
@@ -82,6 +91,8 @@ contract Powers is EIP712, IPowers, Context {
     // NB! this is a gotcha: mandates start counting a 1, NOT 0!. 0 is used as a default 'false' value.
     /// @notice Number of mandates that have been initiated throughout the life of the organisation
     uint16 public mandateCounter = 1;
+    /// @notice array of flows to provide human and mandate readable structure to governance.
+    Flow[] public flows;
     /// @dev Is the constitute phase closed? Note: no actions can be started when the constitute phase is open.
     bool private _constituteClosed;
 
@@ -107,7 +118,7 @@ contract Powers is EIP712, IPowers, Context {
 
     /// @dev Internal check for onlyAdmin modifier.
     function _onlyAdmin() internal view {
-        if (_msgSender() != getRoleHolderAtIndex(ADMIN_ROLE, 0)) revert Powers__OnlyAdmin();
+        if (hasRoleSince(_msgSender(), ADMIN_ROLE) == 0) revert Powers__OnlyAdmin();
     }
 
     //////////////////////////////////////////////////////////////
@@ -139,12 +150,13 @@ contract Powers is EIP712, IPowers, Context {
         MAX_CALLDATA_LENGTH = maxCallDataLength_;
         MAX_RETURN_DATA_LENGTH = maxReturnDataLength_;
         MAX_EXECUTIONS_LENGTH = maxExecutionsLength_;
+        FOUNDED_AT = block.number;
 
         emit Powers__Initialized(address(this), name, uri);
     }
 
     /// @notice Function to receive Ether. Emits a {PowersEvents::FundsReceived} event.
-    /// @dev If the protocol does not have a mandate to handle transfers of native currency (and is not upgradable) it will be stuck in the contract. 
+    /// @dev If the protocol does not have a mandate to handle transfers of native currency (and is not upgradable) it will be stuck in the contract.
     receive() external payable {
         emit FundsReceived(_msgSender(), msg.value);
     }
@@ -152,41 +164,55 @@ contract Powers is EIP712, IPowers, Context {
     //////////////////////////////////////////////////////////////
     //                  CONSTITUTE LOGIC                        //
     //////////////////////////////////////////////////////////////
+    /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation.
     /// @inheritdoc IPowers
     function constitute(MandateInitData[] memory constituentMandates) external onlyAdmin {
         if (_constituteClosed) revert Powers__ConstituteClosed();
-        
+
         uint16 currentId = mandateCounter;
         //  set mandates as active.
         for (uint256 i = 0; i < constituentMandates.length; i++) {
             // note: ignore empty slots in MandateInitData array.
             if (constituentMandates[i].targetMandate != address(0)) {
                 _storeMandate(currentId, constituentMandates[i]);
-                unchecked { ++currentId; }
+                unchecked {
+                    ++currentId;
+                }
             }
         }
         mandateCounter = currentId;
     }
 
     /// @inheritdoc IPowers
-    function closeConstitute() external onlyAdmin() { 
-        _closeConstitute(_msgSender());
+    function closeConstitute() external onlyAdmin {
+        _closeConstitute(_msgSender(), new Flow[](0));
     }
 
     /// @inheritdoc IPowers
-    function closeConstitute(address newAdmin) external onlyAdmin() { 
-        _closeConstitute(newAdmin);
+    function closeConstitute(address newAdmin) external onlyAdmin {
+        _closeConstitute(newAdmin, new Flow[](0));
+    }
+
+    /// @inheritdoc IPowers
+    function closeConstitute(address newAdmin, Flow[] memory _flows) external onlyAdmin {
+        _closeConstitute(newAdmin, _flows);
     }
 
     /// @dev Internal function to close constitution phase.
     /// @param newAdmin Address of the new admin.
-    function _closeConstitute(address newAdmin) internal {
+    /// @param _flows The initial governance flows to set in the protocol.
+    function _closeConstitute(address newAdmin, Flow[] memory _flows) internal {
         // if newAdmin is different from current admin, set new admin...
         if (_msgSender() != newAdmin) {
             _setRole(ADMIN_ROLE, _msgSender(), false);
             _setRole(ADMIN_ROLE, newAdmin, true);
         }
-
+        // save flows if provided.
+        if (_flows.length > 0) {
+            for (uint256 i = 0; i < _flows.length; i++) {
+                flows.push(_flows[i]);
+            }
+        }
         _constituteClosed = true;
     }
 
@@ -200,7 +226,7 @@ contract Powers is EIP712, IPowers, Context {
     {
         // check 0: is constitution closed?
         if (!_constituteClosed) revert Powers__ConstituteOpen();
-        
+
         AdoptedMandate storage mandate = mandates[mandateId];
 
         // check 1: is targetMandate is an active mandate?
@@ -223,16 +249,16 @@ contract Powers is EIP712, IPowers, Context {
 
         // check 5: do we have an action with the same targetMandate and mandateCalldata?
         Action storage action = _actions[actionId];
-        if (action.voteStart != 0) revert Powers__UnexpectedActionState();
+        if (action.mandateId != 0) revert Powers__ActionAlreadyInitiated();
 
         // register actionId at mandate.
-        if (action.mandateId == 0) mandate.actionIds.push(actionId);
+        mandate.actionIds.push(actionId);
 
         // if checks pass: create proposedAction
         action.mandateCalldata = mandateCalldata;
         action.proposedAt = uint48(block.number);
         action.mandateId = mandateId;
-        action.voteStart = quorum > 0 ? uint48(block.number) : 0; // note that the moment proposedAction is made, voting start. Delay functionality has to be implemeted at the mandate level.
+        action.voteStart = quorum > 0 ? uint48(block.number) : 0;
         action.voteDuration = votingPeriod;
         action.caller = _msgSender();
         action.uri = uriAction;
@@ -252,7 +278,6 @@ contract Powers is EIP712, IPowers, Context {
 
         return actionId;
     }
-
 
     /// @inheritdoc IPowers
     /// @dev The request -> fulfill functions follow a call-and-return mechanism. This allows for async execution of mandates.
@@ -275,14 +300,14 @@ contract Powers is EIP712, IPowers, Context {
 
         // check 2: does caller have access to mandate being executed?
         if (!canCallMandate(_msgSender(), mandateId)) revert Powers__CannotCallMandate();
- 
+
         Action storage action = _actions[actionId];
 
         // check 3: has action already been set as requested or fulfilled?
         if (action.requestedAt > 0 || action.fulfilledAt > 0) revert Powers__ActionAlreadyInitiated();
 
         // check 4: is proposedAction cancelled?
-        if (action.cancelledAt > 0) revert Powers__ActionCancelled();  
+        if (action.cancelledAt > 0) revert Powers__ActionCancelled();
 
         // check 5: do checks pass?
         Checks.check(mandateId, mandateCalldata, address(this), nonce, mandate.latestFulfillment);
@@ -349,6 +374,8 @@ contract Powers is EIP712, IPowers, Context {
 
             (bool success, bytes memory returndata) = targets[i].call{ value: values[i] }(calldatas[i]);
             if (!success) {
+                // logging block number of failed action.
+                action.failedAt = uint48(block.number); // log time of failure.
                 // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
                 if (returndata.length > 0) {
                     assembly {
@@ -364,7 +391,9 @@ contract Powers is EIP712, IPowers, Context {
             } else {
                 action.returnDatas.push(abi.encode(0));
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         // emit event. -- commented out to save gas, can be re-enabled if needed.
@@ -376,10 +405,7 @@ contract Powers is EIP712, IPowers, Context {
 
     /// @inheritdoc IPowers
     /// @dev the account to cancel must be the account that created the proposedAction.
-    function cancel(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce)
-        external
-        returns (uint256)
-    {
+    function cancel(uint16 mandateId, bytes calldata mandateCalldata, uint256 nonce) external returns (uint256) {
         AdoptedMandate storage mandate = mandates[mandateId];
         if (!mandate.active) revert Powers__MandateNotActive();
 
@@ -428,12 +454,10 @@ contract Powers is EIP712, IPowers, Context {
         Action storage action = _actions[actionId];
 
         // Check that the proposal is active, that it has not been paused, cancelled or ended yet.
-        if (action.proposedAt == 0 ||
-            action.fulfilledAt > 0 ||
-            action.cancelledAt > 0 ||
-            action.requestedAt > 0 ||
-            action.voteStart + action.voteDuration < block.number)
-        {
+        if (
+            action.proposedAt == 0 || action.fulfilledAt > 0 || action.cancelledAt > 0 || action.requestedAt > 0
+                || action.voteStart + action.voteDuration < block.number
+        ) {
             revert Powers__ProposedActionNotActive();
         }
 
@@ -450,14 +474,15 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     //////////////////////////////////////////////////////////////
-    //                  ROLE AND LAW ADMIN                      //
+    //             ROLE, MANDATE AND FLOW ADMIN                 //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
-    function adoptMandate(MandateInitData memory mandateInitData) external onlyPowers returns (uint16 mandateId) {
-        mandateId = _adoptMandate(mandateInitData);
-        // emit event.
-        emit MandateAdopted(mandateCounter - 1);
-
+    function adoptMandate(MandateInitData memory mandateInitData) public onlyPowers returns (uint16 mandateId) {
+        mandateId = mandateCounter;
+        _storeMandate(mandateId, mandateInitData);
+        unchecked {
+            mandateCounter++;
+        }
         return mandateId;
     }
 
@@ -469,18 +494,7 @@ contract Powers is EIP712, IPowers, Context {
         emit MandateRevoked(mandateId);
     }
 
-    /// @notice Internal function to set a mandate or revoke it.
-    /// @param mandateInitData Data of the mandate to adopt.
-    /// @return mandateId The ID of the newly adopted mandate.
-    ///
-    /// Emits a {PowersEvents::MandateAdopted} event.
-    function _adoptMandate(MandateInitData memory mandateInitData) internal returns (uint16 mandateId) {
-        mandateId = mandateCounter;
-        _storeMandate(mandateId, mandateInitData);
-        unchecked { mandateCounter++; }
-        return mandateId;
-    }
-
+    /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation.
     /// @dev Internal helper to store mandate data and initialize it.
     function _storeMandate(uint16 mandateId, MandateInitData memory mandateInitData) internal {
         // check if added address is indeed a mandate. Note that this will also revert with address(0).
@@ -503,6 +517,40 @@ contract Powers is EIP712, IPowers, Context {
 
         Mandate(mandateInitData.targetMandate)
             .initializeMandate(mandateId, mandateInitData.nameDescription, "", mandateInitData.config);
+
+        emit MandateAdopted(mandateId);
+    }
+
+    /// @inheritdoc IPowers
+    function addFlow(Flow memory flow) external onlyPowers {
+        flows.push(flow);
+        emit FlowAdded(flow.mandateIds, flow.nameDescription);
+    }
+
+    /// @inheritdoc IPowers
+    function removeFlow(uint8 index) external onlyPowers {
+        if (index >= flows.length) revert Powers__InvalidFlowIndex();
+
+        // delete flow by replacing it with the last flow and popping the last flow.
+        uint256 lastIndex = flows.length - 1;
+        if (index != lastIndex) {
+            flows[index] = flows[lastIndex];
+        }
+        flows.pop();
+
+        emit FlowDeleted(index);
+    }
+
+    /// @inheritdoc IPowers
+    function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external onlyPowers {
+        if (mandateId >= mandateCounter) revert Powers__InvalidMandateId();
+        if (index1 >= flows.length) revert Powers__InvalidFlowIndex();
+        Flow storage flow = flows[index1];
+        if (index2 >= flow.mandateIds.length) revert Powers__InvalidMandateIndex();
+
+        flow.mandateIds[index2] = mandateId;
+
+        emit FlowAdapted(index1, index2, mandateId);
     }
 
     /// @inheritdoc IPowers
@@ -510,12 +558,11 @@ contract Powers is EIP712, IPowers, Context {
         if (bytes(label).length == 0) revert Powers__InvalidLabel();
         if (bytes(label).length > 255) revert Powers__LabelTooLong();
         if (bytes(metadata).length > 255) revert Powers__UriTooLong();
-        
+
         roles[roleId].label = label;
         roles[roleId].metadata = metadata;
         emit RoleLabel(roleId, label);
     }
-
 
     /// @inheritdoc IPowers
     function assignRole(uint256 roleId, address account) external onlyPowers {
@@ -543,6 +590,8 @@ contract Powers is EIP712, IPowers, Context {
         if (roleId == PUBLIC_ROLE) revert Powers__CannotSetPublicRole();
         // check 2: Zero address is not allowed.
         if (account == address(0)) revert Powers__CannotAddZeroAddress();
+        // check 3: The organisation itself cannot be assigned a role. This to avoid re-entrancy attacks.
+        if (account == address(this)) revert Powers__CannotAddPowersAddressAsMember();
 
         Role storage role = roles[roleId];
         uint256 index = role.members[account];
@@ -552,7 +601,7 @@ contract Powers is EIP712, IPowers, Context {
         if (access && !hasRole) {
             role.membersArray.push(Member({ account: account, since: uint48(block.number) }));
             role.members[account] = role.membersArray.length; // 'index of new member is length of array (which is 1-based index).
-        // remove role if access set to false and account has role.
+            // remove role if access set to false and account has role.
         } else if (!access && hasRole) {
             uint256 indexEnd = role.membersArray.length - 1;
             Member memory memberEnd = role.membersArray[indexEnd];
@@ -570,7 +619,6 @@ contract Powers is EIP712, IPowers, Context {
         emit RoleSet(roleId, account, access);
     }
 
-
     /// @inheritdoc IPowers
     function blacklistAddress(address account, bool blacklisted) external onlyPowers {
         _blacklist[account] = blacklisted;
@@ -586,6 +634,12 @@ contract Powers is EIP712, IPowers, Context {
     function setTreasury(address payable newTreasury) external onlyPowers {
         if (newTreasury == address(0)) revert Powers__CannotSetZeroAddress();
         treasury = newTreasury;
+    }
+
+    /// @inheritdoc IPowers
+    function setTrustedForwarder(address forwarder, bool trusted) external onlyPowers {
+        if (forwarder == address(0)) revert Powers__CannotSetZeroAddress();
+        trustedForwarders[forwarder] = trusted;
     }
 
     //////////////////////////////////////////////////////////////
@@ -662,12 +716,53 @@ contract Powers is EIP712, IPowers, Context {
         return roles[roleId].membersArray.length;
     }
 
+    /// @dev ERC-2771: Override to extract sender from calldata if caller is a trusted forwarder
+    function _msgSender() internal view override returns (address sender) {
+        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    /// @dev ERC-2771: Override to extract data from calldata if caller is a trusted forwarder
+    function _msgData() internal view override returns (bytes calldata) {
+        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
     //////////////////////////////////////////////////////////////
     //                 VIEW / GETTER FUNCTIONS                  //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
     function version() public pure returns (string memory) {
-        return "0.5";
+        return "v0.6.1";
+    }
+
+    /// @inheritdoc IPowers
+    function getAmountFlows() public view returns (uint256) {
+        return flows.length;
+    }
+
+    /// @inheritdoc IPowers
+    function getFlowMandatesAtIndex(uint8 index) public view returns (uint16[] memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].mandateIds;
+    }
+
+    /// @inheritdoc IPowers
+    function getFlowDescriptionAtIndex(uint8 index) public view returns (string memory) {
+        if (index >= flows.length) {
+            revert Powers__InvalidIndex();
+        }
+        return flows[index].nameDescription;
     }
 
     /// @inheritdoc IPowers
@@ -719,6 +814,9 @@ contract Powers is EIP712, IPowers, Context {
 
         if (action.proposedAt == 0 && action.requestedAt == 0 && action.fulfilledAt == 0 && action.cancelledAt == 0) {
             return ActionState.NonExistent;
+        }
+        if (action.failedAt > 0) {
+            return ActionState.Failed;
         }
         if (action.fulfilledAt > 0) {
             return ActionState.Fulfilled;
@@ -799,11 +897,7 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function getActionReturnData(uint256 actionId, uint256 index)
-        public
-        view
-        returns (bytes memory returnData)
-    {
+    function getActionReturnData(uint256 actionId, uint256 index) public view returns (bytes memory returnData) {
         return _actions[actionId].returnDatas[index];
     }
 

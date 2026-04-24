@@ -87,6 +87,21 @@ interface PowersEvents {
     /// @param mandateId the id of the mandate
     event MandateRevoked(uint16 indexed mandateId);
 
+    /// @notice Emitted when a flow is added.
+    /// @param mandateIds the ids of the mandates in the flow
+    /// @param nameDescription the name and description of the flow
+    event FlowAdded(uint16[] mandateIds, string nameDescription);
+
+    /// @notice Emitted when a flow is deleted.
+    /// @param index the index of the flow in the flows array
+    event FlowDeleted(uint8 indexed index);
+
+    /// @notice Emitted when a flow is adapted.
+    /// @param index1 the index of the flow before adaptation
+    /// @param index2 the index of the mandate within the flow
+    /// @param mandateId the id of the mandate that will be placed at index2 in flow of index1.
+    event FlowAdapted(uint8 index1, uint8 index2, uint16 mandateId);
+
     /// @notice Emitted when a address is blacklisted.
     /// @param account the address of the account
     /// @param blacklisted the blacklisted status of the account

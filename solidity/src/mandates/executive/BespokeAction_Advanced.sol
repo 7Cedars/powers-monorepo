@@ -6,7 +6,7 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 // import { console } from "forge-std/console.sol"; // only for testing purposes.
 
@@ -16,7 +16,7 @@ contract BespokeAction_Advanced is Mandate {
         bytes4 targetFunction;
         bytes staticParamsBefore;
         string[] dynamicParams;
-        bytes staticParamsAfter; 
+        bytes staticParamsAfter;
     }
 
     /// @notice Constructor of the BespokeAction_Advanced mandate

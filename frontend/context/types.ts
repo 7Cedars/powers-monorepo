@@ -1,5 +1,6 @@
 import { GetBlockReturnType } from '@wagmi/core';
 import { Log } from "viem";
+import { wagmiConfig } from './wagmiConfig';
 
 export type Status = "idle" | "pending" | "error" | "success" 
 export type Vote = 0n | 1n | 2n  // = against, FOR, ABSTAIN  
@@ -8,6 +9,8 @@ export type OrganizationType = 'Powers 101' | 'Bridging Off-Chain Governance' | 
 export type InputType = boolean | string | number | bigint | `0x${string}`
 export type DataType = "uint8" | "uint16" | "uint32" | "uint48" | "uint64" | "uint128" | "uint256" | "address" | "bytes" | "string" | "bytes32" | "bool" |
                        "uint8[]" | "uint16[]" | "uint32[]" | "uint48[]" | "uint64[]" | "uint128[]" | "uint256[]" | "address[]" | "bytes[]" | "string[]" | "bytes32[]" | "bool[]" | "unsupported" | "empty" 
+
+export type ChainId = (typeof wagmiConfig)['chains'][number]['id']
 export type MandateSimulation = [
       bigint, 
       `0x${string}`[], 
@@ -71,6 +74,7 @@ export type Mandate = {
   inputParams?: `0x${string}`; 
   params ?: {varName: string, dataType: DataType}[]; 
   active: boolean;
+  xmtpAgentAddress?: `0x${string}`;
 }
 
 export type CommunicationChannels = {
@@ -97,6 +101,7 @@ export type Metadata = {
   website?: string;
   codeOfConduct?: string;
   disputeResolution?: string;
+  xmtpAgentAddress?: `0x${string}`;
   communicationChannels?: CommunicationChannels;
   parentContracts?: familyMember[];
   childContracts?: familyMember[];
@@ -106,6 +111,11 @@ export type Metadata = {
 export type BlockRange = {
   from: bigint;
   to: bigint;
+}
+
+export type Flow = {
+  nameDescription: string;
+  mandateIds: bigint[];
 }
 
 export type ActionVote = {
@@ -123,12 +133,14 @@ export type Powers = {
   contractAddress: `0x${string}`;
   chainId: bigint;
   name?: string;
+  foundedAt?: bigint;
   uri?: string;
   treasury?: `0x${string}`;
   metadatas?: Metadata; 
   mandateCount?: bigint;
   mandates?: Mandate[];
   roles?: Role[];
+  flows?: Flow[];
   layout?: Record<string, { x: number; y: number }>; // Graph layout positions
 }
 

@@ -9,9 +9,14 @@ import {
   CodeBracketIcon,
   BookOpenIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  CpuChipIcon
 } from '@heroicons/react/24/outline'
 import { CommunicationChannels, familyMember } from '@/context/types'
+import { useParams } from 'next/navigation'
+import { useAccount, useSignMessage, useReadContract } from 'wagmi'
+import { powersAbi } from '@/context/abi'
+import { useState } from 'react'
 
 // SVG icons for social platforms (as heroicons doesn't have them all)
 // Note: AI generated these SVGs
@@ -65,6 +70,7 @@ type MetadataLinksProps = {
   parentContracts?: familyMember[];
   childContracts?: familyMember[];
   chainId?: bigint | number;
+  isEditorView?: boolean;
 }
 
 export function MetadataLinks({ 
@@ -74,8 +80,69 @@ export function MetadataLinks({
   communicationChannels,
   parentContracts,
   childContracts,
-  chainId
+  chainId,
+  isEditorView = false
 }: MetadataLinksProps) {
+  const params = useParams<{ chainId?: string; powers?: string }>() || {};
+  const { address: userAddress } = useAccount()
+  const { signMessageAsync } = useSignMessage()
+  const [isRegistering, setIsRegistering] = useState(false)
+
+  const contractAddress = params?.powers;
+  const currentChainId = chainId || params?.chainId;
+
+  const { data: adminSince } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: powersAbi,
+    functionName: 'hasRoleSince',
+    args: userAddress ? [userAddress, 0n] : undefined,
+    chainId: currentChainId ? Number(currentChainId) : undefined,
+    query: {
+      enabled: !!userAddress && !!contractAddress
+    }
+  })
+
+  const isAdmin = adminSince ? (adminSince as bigint) > 0n : false;
+
+  const handleRegisterAgent = async () => {
+    if (!userAddress || !contractAddress || !currentChainId) return;
+    
+    try {
+      setIsRegistering(true);
+      const message = `Register Powers ${contractAddress} on chain ${currentChainId}`;
+      const signature = await signMessageAsync({ message });
+      
+      const rpcUrl = process.env.NEXT_PUBLIC_XMTP_AGENT_RPC_URL;
+      if (!rpcUrl) throw new Error("XMTP Agent RPC URL not configured in .env");
+
+      const response = await fetch(`${rpcUrl}/api/powers/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          address: contractAddress,
+          chainId: Number(currentChainId),
+          signerAddress: userAddress,
+          signature,
+          message
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to register');
+      }
+      
+      alert(data.message || 'Successfully registered with XMTP Agent!');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      alert(`Error: ${err.message}`);
+    } finally {
+      setIsRegistering(false);
+    }
+  }
+
   // Extract the first communication communicationChannels object (if it exists)
 
   // Helper function to check if a value is a valid link
@@ -107,94 +174,99 @@ export function MetadataLinks({
   const validParents = parentContracts?.filter(parent => parent.address && parent.title) || []
   const validChildren = childContracts?.filter(child => child.address && child.title) || []
 
-  // Don't render anything if there are no valid links
-  if (mainLinks.length === 0 && socialLinks.length === 0 && validParents.length === 0 && validChildren.length === 0) {
+  // Don't render anything if there are no valid links and not admin
+  if (mainLinks.length === 0 && socialLinks.length === 0 && validParents.length === 0 && validChildren.length === 0 && !isAdmin) {
     return null
   }
 
   return (
-    <section className="w-full h-fit flex flex-col gap-3 justify-left items-start border border-slate-300 rounded-md bg-slate-50 lg:max-w-full max-w-3xl p-4">
-      {/* Main Links */}
-      {mainLinks.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {mainLinks.map((link, index) => {
-            const Icon = link.icon
-            return (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
-                title={link.label}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm font-medium">{link.label}</span>
-              </a>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Communication communicationChannels */}
-      {socialLinks.length > 0 && (
-        <div className="w-full">
-          {/* <div className="text-sm font-medium text-slate-600 mb-2">
-            Communication communicationChannels
-          </div> */}
-          <div className="flex flex-wrap gap-2 items-center">
-            {socialLinks.map((link, index) => {
-              const Icon = link.icon
-              return (
-                <a
-                  key={index}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-600 hover:text-slate-900"
-                  title={link.label}
-                >
-                  <Icon className="w-5 h-5" />
-                </a>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Parent Contracts */}
-      {validParents.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {validParents.map((parent, index) => (
+    <section className="w-full border border-border bg-muted/50 p-4">
+      <div className="flex flex-wrap gap-3 items-center">
+        {/* Main Links */}
+        {mainLinks.map((link, index) => {
+          const Icon = link.icon
+          return (
             <a
-              key={index}
-              href={`/protocol/${chainId ? Number(chainId) : ''}/${parent.address}`}
-              className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
+              key={`main-${index}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+              title={link.label}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{link.label}</span>
+            </a>
+          )
+        })}
+
+        {/* Communication channels */}
+        {socialLinks.map((link, index) => {
+          const Icon = link.icon
+          return (
+            <a
+              key={`social-${index}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-background border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-primary"
+              title={link.label}
+            >
+              <Icon className="w-4 h-4" />
+            </a>
+          )
+        })}
+
+        {/* Parent Contracts */}
+        {validParents.map((parent, index) => {
+          const basePath = isEditorView ? '/editor' : '/forum'
+          const suffix = isEditorView ? '/home' : ''
+          const href = `${basePath}/${chainId ? Number(chainId) : ''}/${parent.address}${suffix}`
+          
+          return (
+            <a
+              key={`parent-${index}`}
+              href={href}
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
               title={`Parent: ${parent.title}`}
             >
-              <ArrowUpIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">{parent.title}</span>
+              <ArrowUpIcon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{parent.title}</span>
             </a>
-          ))}
-        </div>
-      )}
+          )
+        })}
 
-      {/* Child Contracts */}
-      {validChildren.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {validChildren.map((child, index) => (
+        {/* Child Contracts */}
+        {validChildren.map((child, index) => {
+          const basePath = isEditorView ? '/editor' : '/forum'
+          const suffix = isEditorView ? '/home' : ''
+          const href = `${basePath}/${chainId ? Number(chainId) : ''}/${child.address}${suffix}`
+          
+          return (
             <a
-              key={index}
-              href={`/protocol/${chainId ? Number(chainId) : ''}/${child.address}`}
-              className="flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 hover:border-slate-400 hover:shadow-sm transition-all duration-200 text-slate-700 hover:text-slate-900"
+              key={`child-${index}`}
+              href={href}
+              className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
               title={`Child: ${child.title}`}
             >
-              <ArrowDownIcon className="w-5 h-5" />
-              <span className="text-sm font-medium">{child.title}</span>
+              <ArrowDownIcon className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-wider">{child.title}</span>
             </a>
-          ))}
-        </div>
-      )}
+          )
+        })}
+
+        {/* XMTP Agent Registration (Admin Only) */}
+        {isAdmin && (
+          <button
+            onClick={handleRegisterAgent}
+            disabled={isRegistering}
+            className={`flex items-center gap-2 px-3 py-2 ml-auto bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary ${isRegistering ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title="Register with XMTP Agent"
+          >
+            <CpuChipIcon className={`w-4 h-4 ${isRegistering ? 'animate-pulse' : ''}`} />
+          </button>
+        )}
+      </div>
     </section>
   )
 }

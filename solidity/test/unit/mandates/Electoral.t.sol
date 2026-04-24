@@ -5,16 +5,13 @@ import { BaseSetup } from "../../TestSetup.t.sol";
 import { TestSetupElectoral } from "../../TestSetup.t.sol";
 
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
-import { NStrikesRevokesRoles } from "@src/mandates/electoral/NStrikesRevokesRoles.sol";
 import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
 import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
 import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
 import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol";
-import { FlagActions } from "@src/helpers/FlagActions.sol";
-import { RoleByTransaction } from "@src/mandates/electoral/RoleByTransaction.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { PowersMock } from "@mocks/PowersMock.sol";
-import { Nominees } from "@src/helpers/Nominees.sol"; 
+import { PowersMock } from "../../mocks/PowersMock.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 
@@ -38,7 +35,7 @@ contract PeerSelectTest is TestSetupElectoral {
     function testPeerSelectInitialization() public {
         (uint8 numberToSelect, uint256 roleId, address configuredNominees) =
             abi.decode(peerSelect.getConfig(address(daoMock), mandateId), (uint8, uint256, address));
-        
+
         assertEq(numberToSelect, 2);
         assertEq(roleId, 4);
         assertEq(configuredNominees, address(nomineesContract));
@@ -153,67 +150,6 @@ contract PeerSelectTest is TestSetupElectoral {
 }
 
 //////////////////////////////////////////////////
-//            N STRIKES REVOKES ROLES TESTS    //
-//////////////////////////////////////////////////
-contract NStrikesRevokesRolesTest is TestSetupElectoral {
-    NStrikesRevokesRoles nStrikesRevokesRoles;
-    // FlagActions inherited from TestVariables
-
-    function setUp() public override {
-        super.setUp();
-        nStrikesRevokesRoles = NStrikesRevokesRoles(findMandateAddress("NStrikesRevokesRoles"));
-        mandateId = findMandateIdInOrg("NStrikesRevokesRoles: A mandate to revoke roles after N strikes.", daoMock);
-
-        // Mock getActionState to always return Fulfilled
-        vm.mockCall(
-            address(daoMock), abi.encodeWithSelector(daoMock.getActionState.selector), abi.encode(PowersTypes.ActionState.Fulfilled)
-        );
-    }
-
-    function testNStrikesRevokesRolesInitialization() public {
-        // Verify mandate data is stored correctly
-        mandateHash = keccak256(abi.encode(address(daoMock), mandateId));
-
-        // Verify mandate data is stored correctly 
-        (uint256 roleId, uint256 numberOfStrikes, address flagActionsAddress) =
-            abi.decode(nStrikesRevokesRoles.getConfig(address(daoMock), mandateId), (uint256, uint256, address));
-
-        assertEq(roleId, 3);
-        assertEq(numberOfStrikes, 2);
-        assertEq(flagActionsAddress, address(flagActions));
-    }
-
-    function testNStrikesRevokesRolesWithInsufficientStrikes() public {
-        // Execute without enough strikes
-        vm.prank(alice);
-        vm.expectRevert("Not enough strikes to revoke roles.");
-        daoMock.request(mandateId, abi.encode(), nonce, "Test strikes");
-    }
-
-    function testNStrikesRevokesRolesWithSufficientStrikes() public {
-        // Add some role holders
-        vm.prank(address(daoMock));
-        daoMock.assignRole(3, alice);
-        vm.prank(address(daoMock));
-        daoMock.assignRole(3, bob);
-
-        // Add strikes
-        vm.prank(address(daoMock));
-        flagActions.flag(1, 3, alice, 1);
-        vm.prank(address(daoMock));
-        flagActions.flag(2, 3, bob, 1);
-
-        // Execute with sufficient strikes
-        vm.prank(alice);
-        daoMock.request(mandateId, abi.encode(), nonce, "Test strikes");
-
-        // Should succeed
-        actionId = uint256(keccak256(abi.encode(mandateId, abi.encode(), nonce)));
-        assertTrue(daoMock.getActionState(actionId) == PowersTypes.ActionState.Fulfilled);
-    }
-}
-
-//////////////////////////////////////////////////
 //              ROLE BY ROLES TESTS            //
 //////////////////////////////////////////////////
 contract RoleByRolesTest is TestSetupElectoral {
@@ -221,7 +157,8 @@ contract RoleByRolesTest is TestSetupElectoral {
 
     function setUp() public override {
         super.setUp();
-        mandateId = findMandateIdInOrg("RoleByRoles: A mandate to assign roles based on existing role holders.", daoMock);
+        mandateId =
+            findMandateIdInOrg("RoleByRoles: A mandate to assign roles based on existing role holders.", daoMock);
         roleByRoles = RoleByRoles(findMandateAddress("RoleByRoles"));
     }
 
@@ -276,8 +213,7 @@ contract SelfSelectTest is TestSetupElectoral {
 
     function testSelfSelectInitialization() public {
         // Verify mandate data is stored correctly
-        (uint256 roleId) =
-            abi.decode(selfSelect.getConfig(address(daoMock), mandateId), (uint256));
+        (uint256 roleId) = abi.decode(selfSelect.getConfig(address(daoMock), mandateId), (uint256));
         assertEq(roleId, 4);
     }
 
@@ -349,7 +285,6 @@ contract RenounceRoleTest is TestSetupElectoral {
         daoMock.request(mandateId, abi.encode(3), nonce, "Test renounce role");
     }
 }
-
 
 //////////////////////////////////////////////////
 //          REVOKE INACTIVE ACCOUNTS TESTS      //

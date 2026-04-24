@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useReadContract } from 'wagmi'
 import { mandateAbi } from "@/context/abi";
 import { bytesToParams, parseParamValues } from "@/utils/parsers";
@@ -15,6 +15,9 @@ type SimulationBoxProps = {
 export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
   // console.log("@SimulationBox: waypoint 1", {mandate, simulation})
   const [jsxSimulation, setJsxSimulation] = useState<React.JSX.Element[][]> ([]); 
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
   const { data } = useReadContract({
         abi: mandateAbi,
         address: mandate.mandateAddress,
@@ -25,6 +28,21 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
 
   // console.log("@SimulationBox: waypoint 2", {jsxSimulation})
     
+  // Check for overflow
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (scrollContainerRef.current) {
+        const hasHorizontalOverflow = 
+          scrollContainerRef.current.scrollWidth > scrollContainerRef.current.clientWidth;
+        setHasOverflow(hasHorizontalOverflow);
+      }
+    };
+
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [jsxSimulation]);
+
   useEffect(() => {
 
     let jsxElements0: React.JSX.Element[] = []; 
@@ -36,16 +54,15 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
           ... jsxElements0, 
           <tr
             key={i}
-            className={`text-xs font-mono text-slate-800 h-16 p-2 overflow-x-scroll`}
+            className="text-xs font-mono text-foreground whitespace-nowrap"
           >
-            {/*  */}
-            <td className="ps-6 text-left font-mono text-slate-500"> {simulation[1][i]} </td> 
-            <td className="text-center font-mono text-slate-500"> {String(simulation[2][i])} </td>
-            <td className="pe-4 text-left font-mono text-slate-500"> {simulation[3][i]} </td>
+            <td className="px-3 py-2 text-left">{simulation[1][i]}</td> 
+            <td className="px-3 py-2 text-left">{String(simulation[2][i])}</td>
+            <td className="px-3 py-2 text-left">{simulation[3][i]}</td>
           </tr>
         ];
       }
-    }  
+    }
   
     if (simulation && simulation[4] && simulation[4] != "0x") {
         const stateVars = dataTypes.length > 0 ? decodeAbiParameters(parseAbiParameters(dataTypes.toString()), simulation[4]) : [];
@@ -55,41 +72,93 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
           ... jsxElements1, 
           <tr
             key={i}
-            className={`text-xs font-mono text-slate-800 h-16 p-2 overflow-x-scroll`}
+            className="text-xs font-mono text-foreground"
           >
-            {/*  */}
-            <td className="ps-6 text-left font-mono text-slate-500"> {dataTypes[i]} </td> 
-            <td className="text-left font-mono text-slate-500"> {String(stateVarsParsed[i])} </td>
-            </tr>
+            <td className="px-3 py-2 text-left">{dataTypes[i]}</td> 
+            <td className="px-3 py-2 text-left">{String(stateVarsParsed[i])}</td>
+          </tr>
         ];
       }
-    }  
+    }
     const sim = [jsxElements1, jsxElements0]
     setJsxSimulation(sim)
   }, [simulation])
 
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <section className="w-full mx-auto flex flex-col gap-6 justify-start items-center px-6 pt-4">
-      <div className="w-full flex flex-col gap-0 justify-start items-center bg-slate-50 border rounded-md border-slate-300 overflow-hidden">
-        <div className="w-full text-xs text-center font-medium text-slate-600 p-2 bg-slate-100 border-b border-slate-300">
-          Calls to be executed by Powers  
+    <div className="w-full flex flex-col">
+      <div className="w-full flex flex-col bg-background border border-border overflow-hidden">
+        <div className="w-full flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground px-3 py-2 bg-muted/50 border-b border-border">
+          <span className="flex-1 text-center">Calls to be executed by Powers</span>
+          {hasOverflow && (
+            <div className="flex gap-1">
+              <button
+                onClick={scrollLeft}
+                className="p-1 hover:bg-muted transition-colors"
+                aria-label="Scroll left"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button
+                onClick={scrollRight}
+                className="p-1 hover:bg-muted  transition-colors"
+                aria-label="Scroll right"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
-        <div className="w-full h-fit overflow-scroll">
-          <table className="table-auto w-full ">
-            <thead className="w-full border-b border-slate-300">
-              <tr className="w-96 bg-slate-50 text-xs font-light text-left text-slate-600">
-                  <th className="ps-6 py-2 font-light"> Target contracts </th>
-                  <th className="font-light pe-4"> Value </th>
-                  <th className="font-light"> Calldata </th>
+        <div ref={scrollContainerRef} className="w-full overflow-x-auto">
+          <table className="table-auto w-full">
+            <thead className="w-full border-b border-border">
+              <tr className="bg-background text-[10px] uppercase tracking-wider text-left text-muted-foreground">
+                  <th className="px-3 py-2 font-normal">Target contracts</th>
+                  <th className="px-3 py-2 font-normal">Value</th>
+                  <th className="px-3 py-2 font-normal">Calldata</th>
               </tr>
             </thead>
-              <tbody className="w-full text-xs text-right text-slate-500 bg-slate-50 divide-y divide-slate-200">
-                { jsxSimulation[1] && jsxSimulation[1].map(row => {return (row)} ) } 
-              </tbody>
-            </table>
-          </div>
-          
+            <tbody className="w-full text-xs text-foreground bg-background divide-y divide-border">
+              {jsxSimulation[1] && jsxSimulation[1].map(row => {return (row)})} 
+            </tbody>
+          </table>
+        </div>
       </div>
-    </section>
+    </div>
   )
 }

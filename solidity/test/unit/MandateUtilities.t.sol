@@ -8,12 +8,12 @@
 pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
-import { MandateUtilities } from "../../src/libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { TestSetupMandate } from "../TestSetup.t.sol";
-import { IMandate } from "../../src/interfaces/IMandate.sol";
-import { Mandate } from "../../src/Mandate.sol";
+import { IMandate } from "@src/interfaces/IMandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 
-import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
+import { SimpleErc1155 } from "../mocks/SimpleErc1155.sol";
 
 contract MandateUtilitiesTest is TestSetupMandate {
     //////////////////////////////////////////////////////////////

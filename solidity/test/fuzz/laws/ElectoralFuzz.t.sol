@@ -2,22 +2,22 @@
 pragma solidity ^0.8.26;
 
 // import "forge-std/Test.sol";
-// import { MandateUtilities } from "../../../src/libraries/MandateUtilities.sol";
+// import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 // import { TestSetupElectoral } from "../../TestSetup.t.sol";
-// import { ElectionList_Tally } from "../../../src/mandates/integrations/ElectionList_Tally.sol";
-// import { PeerSelect } from "../../../src/mandates/electoral/PeerSelect.sol";
-// import { ElectionList_Vote } from "../../../src/mandates/integrations/ElectionList_Vote.sol";
-// import { TaxSelect } from "../../../src/mandates/electoral/TaxSelect.sol";
-// import { SelfSelect } from "../../../src/mandates/electoral/SelfSelect.sol";
-// import { RenounceRole } from "../../../src/mandates/electoral/RenounceRole.sol";
-// import { NStrikesRevokesRoles } from "../../../src/mandates/electoral/NStrikesRevokesRoles.sol";
-// import { RoleByRoles } from "../../../src/mandates/electoral/RoleByRoles.sol";
-// import { PowersTypes } from "../../../src/interfaces/PowersTypes.sol";
+// import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList_Tally.sol";
+// import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
+// import { ElectionList_Vote } from "@src/mandates/integrations/ElectionList_Vote.sol";
+// import { TaxSelect } from "@src/mandates/electoral/TaxSelect.sol";
+// import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
+// import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
+// import { NStrikesRevokesRoles } from "@src/mandates/electoral/NStrikesRevokesRoles.sol";
+// import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
+// import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 // import { Erc20DelegateElection } from "@mocks/Erc20DelegateElection.sol";
-// import { ElectionList } from "../../../src/helpers/ElectionList.sol";
-// import { Nominees } from "../../../src/helpers/Nominees.sol";
+// import { ElectionList } from "@src/helpers/ElectionList.sol";
+// import { Nominees } from "@src/helpers/Nominees.sol";
 // import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
-// import { FlagActions } from "../../../src/helpers/FlagActions.sol";
+// import { FlagActions } from "@src/helpers/FlagActions.sol";
 
 // /// @title Electoral Mandate Fuzz Tests
 // /// @notice Comprehensive fuzz testing for all electoral mandate implementations using pre-initialized mandates
@@ -30,7 +30,7 @@ pragma solidity ^0.8.26;
 // ///      mandateId 7: RenounceRole (roles=[1,2])
 // ///      mandateId 8: NStrikesRevokesRoles (roleId=3, strikes=2, FlagActions)
 // ///      mandateId 9: RoleByRoles (targetRole=4, neededRoles=[1,2])
-// ///      mandateId 10: PresetActions_Single (label roles)
+// ///      mandateId 10: PresetActions (label roles)
 // contract ElectoralFuzzTest is TestSetupElectoral {
 //     // Mandate instances for testing
 //     ElectionList_Tally openElectionEnd;

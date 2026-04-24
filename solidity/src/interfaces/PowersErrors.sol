@@ -62,6 +62,9 @@ interface PowersErrors {
     /// @notice Emitted when a zero address is added.
     error Powers__CannotAddZeroAddress();
 
+    /// @notice Emitted when the Powers contract itself is added as a member of a role.
+    error Powers__CannotAddPowersAddressAsMember();
+
     /// @notice Emitted when a name is invalid.
     error Powers__InvalidName();
 
@@ -134,6 +137,15 @@ interface PowersErrors {
     /// @notice Emitted when an index is invalid.
     error Powers__InvalidIndex();
 
-    /// notice Emitted when trying to set the treasury to the zero address.
+    /// @notice Emitted when trying to set the treasury to the zero address.
     error Powers__CannotSetZeroAddress();
+
+    /// @notice Emitted when trying to set an invalid mandate in a flow.
+    error Powers__InvalidMandateId();
+
+    /// @notice Emitted when trying to set an invalid flow.
+    error Powers__InvalidFlowIndex();
+
+    /// @notice Emitted when trying to adapt a flow with an invalid mandate index.
+    error Powers__InvalidMandateIndex();
 }

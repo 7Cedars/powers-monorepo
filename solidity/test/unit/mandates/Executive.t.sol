@@ -9,12 +9,11 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
-
-import { PowersMock } from "@mocks/PowersMock.sol";
+import { PowersMock } from "../../mocks/PowersMock.sol";
 import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
-import { PresetActions_Single } from "@src/mandates/executive/PresetActions_Single.sol";
-import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
-import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
+import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
+import { SimpleErc1155 } from "../../mocks/SimpleErc1155.sol";
+import { ReturnDataMock } from "../../mocks/ReturnDataMock.sol";
 
 contract StatementOfIntentTest is TestSetupExecutive {
     function setUp() public override {
@@ -77,11 +76,7 @@ contract OpenActionTest is TestSetupExecutive {
     function testOpenActionExecuteExternal() public {
         // 1. Prepare calldata for external action (Mint coins on SimpleErc1155)
         mintAmount = 100;
-        callData = abi.encodeWithSelector(
-            bytes4(keccak256("mint(uint256,address)")),
-            mintAmount,
-            alice
-        );
+        callData = abi.encodeWithSelector(bytes4(keccak256("mint(uint256,address)")), mintAmount, alice);
 
         // 2. Prepare mandate inputs
         targets = new address[](1);
@@ -213,10 +208,10 @@ contract BespokeAction_AdvancedTest is TestSetupExecutive {
     }
 }
 
-contract PresetActions_SingleTest is TestSetupExecutive {
+contract PresetActionsTest is TestSetupExecutive {
     function setUp() public override {
         super.setUp();
-        mandateId = findMandateIdInOrg("PresetActions_Single: A mandate to execute preset actions.", daoMock);
+        mandateId = findMandateIdInOrg("PresetActions: A mandate to execute preset actions.", daoMock);
     }
 
     function testPresetExecute() public {
@@ -224,7 +219,7 @@ contract PresetActions_SingleTest is TestSetupExecutive {
         assertEq(daoMock.getRoleLabel(ROLE_ONE), "");
         assertEq(daoMock.getRoleLabel(ROLE_TWO), "");
 
-        // PresetActions_Single ignores the content of calldata (except for hashing)
+        // PresetActions ignores the content of calldata (except for hashing)
         mandateCalldata = abi.encode(true);
 
         vm.prank(alice); // Alice has Role 1
@@ -247,11 +242,6 @@ contract PresetActions_SingleTest is TestSetupExecutive {
         daoMock.request(mandateId, mandateCalldata, nonce, "Unauthorized");
     }
 }
-
-contract PresetActions_MultipleTest is TestSetupExecutive {
-    // Placeholder for PresetActions_Multiple specific tests
-
-    }
 
 contract BespokeAction_OnReturnValueTest is TestSetupExecutive {
     event Consumed(uint256 value);

@@ -17,7 +17,7 @@ import { LoadingBox } from "@/components/LoadingBox"
 import { useMandate } from "@/hooks/useMandate";
 
 // Helper function to truncate addresses, preferring ENS names
-const truncateAddress = (address: string | undefined, ensName: string | null | undefined): string => {
+const parseAddress = (address: string | undefined, ensName: string | null | undefined): string => {
   if (ensName) return ensName
   if (!address) return 'Unknown'
   if (address.length < 10) return address
@@ -39,7 +39,7 @@ const getVoteTypeColor = (support: number): string => {
     case 0: return 'text-red-600' // Against
     case 1: return 'text-green-600' // For
     case 2: return 'text-yellow-600' // Abstain
-    default: return 'text-slate-600'
+    default: return 'text-muted-foreground'
   }
 }
 
@@ -80,7 +80,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
   const quorum = roleHolders > 0 ? Math.ceil((roleHolders * Number(mandate?.conditions?.quorum || 0)) / 100) : 0
   const threshold = roleHolders > 0 ? Math.ceil((roleHolders * Number(mandate?.conditions?.succeedAt || 0)) / 100) : 0
   const deadline = Number(actionVote?.voteEnd || 0)
-  const layout = `w-full flex flex-row justify-center items-center px-2 py-1 text-bold rounded-md`
+  const layout = `w-full flex flex-row justify-center items-center px-2 py-1 text-bold `
 
   // resetting action state when action is changed,
   useEffect(() => {
@@ -167,33 +167,33 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
   }
 
   return (
-      <div className="w-full h-fit flex flex-col gap-3 justify-start items-center bg-slate-50">
-      <section className="w-full flex flex-col divide-y divide-slate-300 text-sm text-slate-600 border border-slate-300 rounded-md overflow-hidden" > 
-        <div className="w-full p-2 bg-slate-100">
+      <div className="w-full h-fit flex flex-col gap-3 justify-start items-center">
+      <section className="w-full flex flex-col divide-y divide-border border border-border overflow-hidden" > 
+        <div className="w-full px-4 py-2 bg-muted/50">
           <div className="w-full flex flex-row gap-6 items-center justify-between">
-            <div className="text-left text-sm text-slate-600">
-              Voting
-            </div>
+            <span className="font-mono text-muted-foreground uppercase tracking-wider text-sm">
+              VOTING
+            </span>
               <button
               onClick={fetchVotes}
               disabled={loading}
-              className="flex items-center justify-center rounded-md p-1.5 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center p-1.5 hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refresh Votes"
             >
               <ArrowPathIcon 
-                className={`w-4 h-4 text-slate-600 ${loading ? 'animate-spin' : ''}`}
+                className={`w-4 h-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`}
               />
             </button>
           </div>
         </div>
 
-        <div className = "w-full h-full flex flex-col lg:min-h-fit overflow-x-scroll divide-y divide-slate-300 max-h-full overflow-y-scroll">
+        <div className = "w-full h-full flex flex-col lg:min-h-fit overflow-x-scroll divide-y divide-border max-h-full overflow-y-scroll">
         
         {/* Proposal state block */}
         <div className = "w-full flex flex-col justify-center items-center p-4 py-3"> 
             { 
               populatedAction?.state === undefined || populatedAction?.state === null ? 
-                <div className={`${layout} text-slate-500 bg-slate-100`}> No Proposal Found </div>
+                <div className={`${layout} text-muted-foreground bg-muted`}> No Proposal Found </div>
               :
               populatedAction?.state === 3 ? 
                 <div className={`${layout} text-blue-500 bg-blue-100`}> Active </div>
@@ -208,13 +208,13 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
                 <div className={`${layout} text-green-500 bg-green-100`}> Succeeded </div>
               :
               populatedAction?.state === 6 ? 
-                <div className={`${layout} text-slate-700 bg-slate-200`}> Requested </div>
+                <div className={`${layout} text-blue-600 bg-blue-100`}> Requested </div>
               :
               populatedAction?.state === 7 ? 
                 <div className={`${layout} text-green-800 bg-green-200`}> Fulfilled </div>
               :
               populatedAction?.state === 0 ? 
-                <div className={`${layout} text-slate-500 bg-slate-100`}> NonExistent </div>
+                <div className={`${layout} text-muted-foreground bg-muted`}> NonExistent </div>
               :
               null 
             }
@@ -230,13 +230,13 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
             { Number(actionVote?.forVotes || 0) + Number(actionVote?.abstainVotes || 0) >= quorum ? "Quorum passed" : "Quorum not passed"}
             </div>
           </div>
-          <div className={`relative w-full leading-none rounded-sm h-3 border border-slate-300 overflow-hidden`}>
+          <div className={`relative w-full leading-none  h-3 border border-border overflow-hidden`}>
             <div 
-              className={`absolute bottom-0 leading-none h-3 bg-slate-400`}
+              className={`absolute bottom-0 leading-none h-3 bg-muted-foreground/40`}
               style={{width:`${quorum > 0 ? ((Number(actionVote?.forVotes || 0) + Number(actionVote?.abstainVotes || 0)) * 100) / quorum : 0 }%`}}> 
             </div>
           </div>
-          <div className="w-full text-sm text-left text-slate-500"> 
+          <div className="w-full text-sm text-left text-muted-foreground font-mono"> 
            {roleHolders > 0 ? `${Number(actionVote?.forVotes || 0) + Number(actionVote?.abstainVotes || 0) } / ${quorum} votes` : "Loading..."}
           </div>
         </div>
@@ -249,7 +249,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
             { Number(actionVote?.forVotes || 0) >= threshold ? "Threshold passed" : "Threshold not passed"}
             </div>
           </div>
-          <div className={`relative w-full flex flex-row justify-start leading-none rounded-sm h-3 border border-slate-300`}>
+          <div className={`relative w-full flex flex-row justify-start leading-none  h-3 border border-border`}>
             <div className={`absolute bottom-0 w-full leading-none h-3 bg-gray-400`} />
             <div className={`absolute bottom-0 w-full leading-none h-3 bg-red-400`} style={{width:`${allVotes > 0 ? ((Number(actionVote?.forVotes || 0) + Number(actionVote?.againstVotes || 0)) / allVotes)*100 : 0}%`}} />
             <div className={`absolute bottom-0 w-full leading-none h-3 bg-green-400`} style={{width:`${allVotes > 0 ? ((Number(actionVote?.forVotes || 0)) / allVotes)*100 : 0}%`}} />
@@ -288,12 +288,12 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
       </section>
 
       {/* Votes Cast Section */}
-      <section className="w-full flex flex-col divide-y divide-slate-300 text-sm text-slate-600 border border-slate-300 rounded-md overflow-hidden">
-        <div className="w-full p-2 bg-slate-100">
+      <section className="w-full flex flex-col divide-y divide-border border border-border overflow-hidden">
+        <div className="w-full px-4 py-2 bg-muted/50">
           <div className="w-full flex flex-row gap-6 items-center justify-between">
-            <div className="text-left text-sm text-slate-600">
-              Votes Cast ({votes.length})
-            </div>
+            <span className="font-mono text-muted-foreground uppercase tracking-wider text-sm">
+              VOTES CAST ({votes.length})
+            </span>
           </div>
         </div>
 
@@ -308,21 +308,21 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
         ) : votes.length > 0 ? (
           <div className="w-full h-fit max-h-56 flex flex-col justify-start items-center overflow-hidden">
             <div className="w-full overflow-x-auto overflow-y-auto">
-              <table className="w-full table-auto text-sm">
-                <thead className="w-full border-b border-slate-200 sticky top-0 bg-slate-50">
-                  <tr className="w-full text-xs font-light text-left text-slate-500">
-                    <th className="px-2 py-3 font-light w-32">Date</th>
-                    <th className="px-2 py-3 font-light w-24">Voter</th>
-                    <th className="px-2 py-3 font-light w-20">Vote</th>
-                    <th className="px-2 py-3 font-light w-24">Tx Hash</th>
+              <table className="w-full table-auto font-mono text-xs">
+                <thead className="w-full border-b border-border sticky top-0 bg-background">
+                  <tr className="w-full text-[10px] text-left text-muted-foreground uppercase tracking-wider">
+                    <th className="px-4 py-2 min-w-32">Date</th>
+                    <th className="px-4 py-2">Voter</th>
+                    <th className="px-4 py-2">Vote</th>
+                    <th className="px-4 py-2">Tx Hash</th>
                   </tr>
                 </thead>
-                <tbody className="w-full text-sm text-left text-slate-500 divide-y divide-slate-200">
+                <tbody className="w-full text-left divide-y divide-border">
                   {votes.map((vote, index) => (
-                    <tr key={index} className="text-sm text-left text-slate-800">
+                    <tr key={index} className="border-b border-border hover:bg-muted/50 transition-colors">
                       {/* Vote timestamp */}
-                      <td className="px-2 py-3 w-32">
-                        <div className="text-xs whitespace-nowrap">
+                      <td className="px-4 py-3">
+                        <div className="text-foreground whitespace-nowrap">
                           {(() => {
                             const timestampData = timestamps.get(`${chainId}:${vote.blockNumber}`)
                             const timestamp = timestampData?.timestamp
@@ -347,26 +347,26 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
                       </td>
 
                       {/* Voter */}
-                      <td className="px-2 py-3 w-24">
-                        <div className="truncate text-slate-500 text-xs font-mono">
-                          {truncateAddress(vote.voter, vote.ensName)}
-                        </div>
+                      <td className="px-4 py-3">
+                        <span className="text-muted-foreground">
+                          {parseAddress(vote.voter, vote.ensName)}
+                        </span>
                       </td>
 
                       {/* Vote type */}
-                      <td className="px-2 py-3 w-20">
-                        <div className={`text-xs font-medium ${getVoteTypeColor(vote.support)}`}>
+                      <td className="px-4 py-3">
+                        <span className={`font-medium ${getVoteTypeColor(vote.support)}`}>
                           {getVoteTypeLabel(vote.support)}
-                        </div>
+                        </span>
                       </td>
 
                       {/* Transaction hash */}
-                      <td className="px-2 py-3 w-24">
+                      <td className="px-4 py-3">
                         <a
                           href={`${supportedChain?.blockExplorers?.default.url}/tx/${vote.transactionHash}#code`} 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="truncate text-slate-600 hover:text-slate-700 text-xs font-mono underline"
+                          className="text-muted-foreground hover:text-foreground underline"
                         >
                           {vote.transactionHash.slice(0, 6)}...{vote.transactionHash.slice(-4)}
                         </a>
@@ -378,7 +378,7 @@ export const Voting = ({ powers }: {powers: Powers | undefined}) => {
             </div>
           </div>
         ) : (
-          <div className="w-full flex flex-row gap-1 text-sm text-slate-500 justify-center items-center text-center p-3">
+          <div className="w-full px-4 py-8 text-center text-muted-foreground font-mono text-sm">
             No votes cast yet
           </div>
         )}
