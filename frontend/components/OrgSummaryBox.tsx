@@ -50,7 +50,7 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
     return ( 
         <div
         key={powers.contractAddress}
-        className={`transition-colors relative cursor-pointer hover:bg-muted/50`}
+        className={`transition-colors relative cursor-pointer border border-border hover:bg-muted/50`}
         onClick={() => router.push(getNavigationPath())}>
         
             {/* Banner - always the same layout */}

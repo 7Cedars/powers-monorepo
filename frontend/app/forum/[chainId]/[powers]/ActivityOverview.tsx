@@ -75,7 +75,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
       <div className="flex-1 overflow-auto p-0"> 
         <div className="flex flex-wrap gap-4">
           {flowBoxes.map((box, idx) => (
-            <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[21rem] max-w-2xl">
+            <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[min(100%,21rem)] max-w-2xl">
               <FlowSummaryBox 
                 box={box}
                 powers={powers}
@@ -129,7 +129,7 @@ function FlowSummaryBox({
               return (
                 <div 
                   key={m.index.toString()} 
-                  className={`flex items-center px-3 py-2 bg-background border border-border transition-colors ${!m.active ? 'opacity-50 cursor-not-allowed text-foreground' : 'cursor-pointer hover:bg-muted/50 text-foreground hover:text-primary'}`}
+                  className={`flex items-center min-w-0 px-3 py-2 bg-background border border-border transition-colors ${!m.active ? 'opacity-50 cursor-not-allowed text-foreground' : 'cursor-pointer hover:bg-muted/50 text-foreground hover:text-primary'}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (m.active) {
@@ -137,7 +137,7 @@ function FlowSummaryBox({
                     }
                   }}
                 >
-                  <span className="text-xs font-mono tracking-wider truncate">
+                  <span className="flex-1 min-w-0 text-xs font-mono tracking-wider truncate">
                     #{m.index.toString()} {m.nameDescription?.split(':')[0] || 'Unnamed Mandate'} - {roleName}
                   </span>
                 </div>
