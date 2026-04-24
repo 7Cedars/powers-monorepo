@@ -180,7 +180,7 @@ export function MetadataLinks({
   }
 
   return (
-    <section className="w-full border border-border bg-muted/50 p-4">
+    <section className="w-full bg-muted/50 p-4">
       <div className="flex flex-wrap gap-3 items-center">
         {/* Main Links */}
         {mainLinks.map((link, index) => {
