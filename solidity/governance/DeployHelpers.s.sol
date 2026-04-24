@@ -12,6 +12,13 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { ReformMandate_Static } from "@src/mandates/reform/MandatePackage_Static.sol";
 
 contract DeployHelpers is Script {
+    // Struct to hold the result for each name lookup
+    struct IndexResult {
+        uint16 flowIndex;
+        uint16 mandateIndex;
+        bool found;
+    }
+
     function daysToBlocks(uint256 quantityDays, uint256 blocksPerHour) public pure returns (uint32) {
         return uint32(quantityDays * 24 * blocksPerHour);
     }
@@ -27,7 +34,62 @@ contract DeployHelpers is Script {
     function createPlaceholderAddress(string memory name) public pure returns (address) {
         // Create a unique placeholder address based on the name
         return address(uint160(uint256(keccak256(abi.encodePacked(name)))));
-    }    
+    }
+
+    function findIndices(
+        string[] memory targetNames, 
+        PowersTypes.MandateInitData[] memory mandateInitData, 
+        PowersTypes.Flow[] memory flows
+    )
+        public
+        pure
+        returns (uint16[] memory flowIndices, uint16[] memory mandateIndices)
+    {
+        // Temporary arrays with maximum possible size
+        uint16[] memory tempFlowIndices = new uint16[](targetNames.length);
+        uint16[] memory tempMandateIndices = new uint16[](targetNames.length);
+        uint16 foundCount = 0;
+        
+        for (uint16 n = 0; n < targetNames.length; n++) {
+            bool foundMandate = false;
+            uint16 mandateId;
+            
+            // Find the mandate by name
+            for (uint16 i = 0; i < mandateInitData.length; i++) {
+                if (keccak256(bytes(mandateInitData[i].nameDescription)) == keccak256(bytes(targetNames[n]))) {
+                    mandateId = i;
+                    foundMandate = true;
+                    break;
+                }
+            }
+            
+            if (foundMandate) {
+                // Find the flow containing this mandate
+                bool foundInFlow = false;
+                for (uint16 j = 0; j < flows.length; j++) {
+                    for (uint16 k = 0; k < flows[j].mandateIds.length; k++) {
+                        if (flows[j].mandateIds[k] == mandateId) {
+                            tempFlowIndices[foundCount] = j;
+                            tempMandateIndices[foundCount] = k;
+                            foundCount++;
+                            foundInFlow = true;
+                            break;
+                        }
+                    }
+                    if (foundInFlow) break;
+                }
+            }
+        }
+        
+        // Create final arrays with correct size
+        flowIndices = new uint16[](foundCount);
+        mandateIndices = new uint16[](foundCount);
+        
+        for (uint16 i = 0; i < foundCount; i++) {
+            flowIndices[i] = tempFlowIndices[i];
+            mandateIndices[i] = tempMandateIndices[i];
+        }
+    }
 
     // this function takes
     // as param a long list of MandateInitData,
