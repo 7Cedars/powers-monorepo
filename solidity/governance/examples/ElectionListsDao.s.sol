@@ -17,7 +17,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 
 /// @title Open Elections Deployment Script
 contract Deploy is DeployHelpers {
@@ -28,7 +28,7 @@ contract Deploy is DeployHelpers {
     PowersTypes.Conditions conditions;
     Powers powers;
 
-    ElectionList openElection;
+    ElectionRegistry openElection;
 
     address[] targets;
     uint256[] values;
@@ -40,13 +40,13 @@ contract Deploy is DeployHelpers {
     uint16 constant MINOR = 6;
     uint16 constant PATCH = 1;
 
-    function run() external returns (Powers, ElectionList) { 
+    function run() external returns (Powers, ElectionRegistry) { 
         helperConfig = new Configurations(); 
         registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Open Elections Powers
         vm.startBroadcast();
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry();
         powers = new Powers(
             "Open Election", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/electionListDao.json", // uri
@@ -126,7 +126,7 @@ contract Deploy is DeployHelpers {
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(openElection), // election list contract
-                    ElectionList.createElection.selector, // selector
+                    ElectionRegistry.createElection.selector, // selector
                     inputParams
                 ),
                 conditions: conditions
@@ -141,10 +141,10 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open voting for election: Voters can open the vote for an election. This will create a dedicated vote mandate.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_CreateVoteMandate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_CreateVoteMandate"),
                 config: abi.encode(
                     address(openElection), // election list contract
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Vote"), // the vote mandate address
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Vote"), // the vote mandate address
                     1, // the max number of votes a voter can cast
                     1 // the role Id allowed to vote (Voters)
                 ),
@@ -160,7 +160,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally elections: After an election has finished, assign the Delegate role to the winners.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Tally"),
                 config: abi.encode(
                     address(openElection),
                     2, // RoleId for Delegates
@@ -208,7 +208,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for election: any voter can nominate for an election.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(openElection), // election list contract
                     true // nominate as candidate
@@ -224,7 +224,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: any voter can revoke their nomination for an election.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(openElection), // election list contract
                     false // revoke nomination

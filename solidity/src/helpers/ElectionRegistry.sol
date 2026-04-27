@@ -4,10 +4,10 @@ pragma solidity ^0.8.26;
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
-/// @title ElectionList
+/// @title ElectionRegistry
 /// @notice A contract to manage multiple elections with nominee nominations and voting functionality.
 /// @author 7Cedars
-contract ElectionList {
+contract ElectionRegistry {
     // Election storage
     struct Election {
         address owner;

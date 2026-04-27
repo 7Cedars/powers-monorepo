@@ -331,7 +331,8 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           mandate,
           action.callData as `0x${string}`,
           BigInt(action.nonce),
-          action.description || ""
+          action.description || "",
+          powers
         );
       }
       

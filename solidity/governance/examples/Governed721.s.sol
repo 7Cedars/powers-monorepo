@@ -21,7 +21,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers 
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
 
 /// @title Governed721DAO Deployment Script
@@ -33,7 +33,7 @@ contract Deploy is DeployHelpers {
     Powers public powers;
     PowersTypes.Flow[] flows;
     Governed721 public governed721;
-    ElectionList public openElection;
+    ElectionRegistry public openElection;
 
     uint256 constant PACKAGE_SIZE = 10; // number of mandates per packaged mandate.
     address treasury;
@@ -63,7 +63,7 @@ contract Deploy is DeployHelpers {
     function run() external {
         // step 0, setup. 
         helperConfig = new Configurations();
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry();
         registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Governed721 Powers
@@ -691,8 +691,8 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Create Executive Election: Voters can create election.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
-                    address(openElection), // target contract (ElectionList)
-                    ElectionList.createElection.selector,
+                    address(openElection), // target contract (ElectionRegistry)
+                    ElectionRegistry.createElection.selector,
                     inputParams
                 ),
                 conditions: conditions
@@ -707,10 +707,10 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open Executive Vote: Open voting.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_CreateVoteMandate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_CreateVoteMandate"),
                 config: abi.encode(
                     address(openElection),
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Vote"),
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Vote"),
                     1, // votes per voter
                     4 // allowed role to vote (Voter)
                 ),
@@ -726,7 +726,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally Executive Election: Tally votes.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Tally"),
                 config: abi.encode(
                     address(openElection),
                     5, // RoleId for Executives
@@ -764,7 +764,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for Executive: Voters can nominate.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(openElection),
                     true
@@ -780,7 +780,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Nomination: Revoke self nomination.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(openElection),
                     false

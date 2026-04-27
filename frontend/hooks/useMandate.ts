@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { mandateAbi, powersAbi } from "../context/abi";
 import { MandateSimulation, Mandate, Powers, Action, ActionVote, Status } from "../context/types"
 import { readContract, readContracts, simulateContract, writeContract } from "@wagmi/core";
+import { encodeFunctionData } from "viem";
 import { wagmiConfig } from "@/context/wagmiConfig";
-import { useTransactionReceipt, useWaitForTransactionReceipt, useTransactionConfirmations } from "wagmi";
+import { useConnection, useTransactionConfirmations } from "wagmi";
+import { useWallets } from "@privy-io/react-auth";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { parseChainId } from "@/utils/parsers";
 import { useParams } from "next/navigation";
 import { setStatus, setError } from "@/context/store";
@@ -14,6 +17,12 @@ export const useMandate = () => {
   const { fetchPowers } = usePowers();
   const [simulation, setSimulation ] = useState<MandateSimulation>()  
   const [actionVote, setActionVote] = useState<ActionVote | undefined>() 
+
+  const { address } = useConnection();
+  const { wallets } = useWallets();
+  const { client } = useSmartWallets();
+  const activeWallet = wallets.find(w => w.address === address);
+  const isSmartWallet = activeWallet?.connectorType === 'smart_wallet';
  
   const [transactionHash, setTransactionHash ] = useState<`0x${string}` | undefined>()
   const {data: dataReceipt, error: errorReceipt, status: statusReceipt} = useTransactionConfirmations({
@@ -58,25 +67,38 @@ export const useMandate = () => {
     ): Promise<boolean> => {
         setStatus({status: "pending"})
         try {
-          const { request: simulatedRequest } = await simulateContract(wagmiConfig, {
-            abi: powersAbi,
-            address: powers.contractAddress,
-            functionName: 'propose',
-            args: [mandateId, mandateCalldata, nonce, description],
-            chainId: parseChainId(chainId)
-          })
-          if (simulatedRequest) {
-            const result = await writeContract(wagmiConfig, simulatedRequest)
-            setTransactionHash(result)
-            // setStatus({status: "success"})
-            return true
+          let result: `0x${string}`;
+          if (isSmartWallet && client) {
+            result = await client.sendTransaction({
+              to: powers.contractAddress,
+              data: encodeFunctionData({
+                abi: powersAbi,
+                functionName: 'propose',
+                args: [mandateId, mandateCalldata, nonce, description],
+              }),
+              value: BigInt(0),
+              // @ts-ignore: Depending on viem/privy setup, we attach custom paymaster here
+              paymaster: powers.paymaster,
+              paymasterAndData: powers.paymaster 
+            })
+          } else {
+            const { request: simulatedRequest } = await simulateContract(wagmiConfig, {
+              abi: powersAbi,
+              address: powers.contractAddress,
+              functionName: 'propose',
+              args: [mandateId, mandateCalldata, nonce, description],
+              chainId: parseChainId(chainId)
+            })
+            result = await writeContract(wagmiConfig, simulatedRequest)
           }
+          setTransactionHash(result)
+          return true
         } catch (error) {
             setStatus({status: "error"}) 
             setError({error: error as Error})
         }
         return false
-  }, [chainId])
+  }, [chainId, isSmartWallet, client])
 
   const cancel = useCallback( 
     async (
@@ -87,22 +109,37 @@ export const useMandate = () => {
     ): Promise<boolean> => {
         setStatus({status: "pending"})
         try {
-          const result = await writeContract(wagmiConfig, {
-            abi: powersAbi,
-            address: powers.contractAddress,
-            functionName: 'cancel', 
-            args: [mandateId, mandateCalldata, nonce],
-            chainId: parseChainId(chainId)
-          })
+          let result: `0x${string}`;
+          if (isSmartWallet && client) {
+            result = await client.sendTransaction({
+              to: powers.contractAddress,
+              data: encodeFunctionData({
+                abi: powersAbi,
+                functionName: 'cancel',
+                args: [mandateId, mandateCalldata, nonce],
+              }),
+              value: BigInt(0),
+              // @ts-ignore
+              paymaster: powers.paymaster,
+              paymasterAndData: powers.paymaster 
+            })
+          } else {
+            result = await writeContract(wagmiConfig, {
+              abi: powersAbi,
+              address: powers.contractAddress,
+              functionName: 'cancel', 
+              args: [mandateId, mandateCalldata, nonce],
+              chainId: parseChainId(chainId)
+            })
+          }
           setTransactionHash(result)
-          // setStatus({status: "success"})
           return true
       } catch (error) {
           setStatus({status: "error"}) 
           setError({error: error as Error})
           return false
       }
-  }, [chainId])
+  }, [chainId, isSmartWallet, client])
 
   // note: I did not implement castVoteWithReason -- to much work for now. 
   const castVote = useCallback( 
@@ -113,22 +150,37 @@ export const useMandate = () => {
     ): Promise<boolean> => {
         setStatus({status: "pending"})
         try {
-          const result = await writeContract(wagmiConfig, {
-            abi: powersAbi,
-            address: powers.contractAddress,
-            functionName: 'castVote', 
-            args: [actionId, support], 
-            chainId: parseChainId(chainId)
-          })
+          let result: `0x${string}`;
+          if (isSmartWallet && client) {
+            result = await client.sendTransaction({
+              to: powers.contractAddress,
+              data: encodeFunctionData({
+                abi: powersAbi,
+                functionName: 'castVote',
+                args: [actionId, support],
+              }),
+              value: BigInt(0),
+              // @ts-ignore
+              paymaster: powers.paymaster,
+              paymasterAndData: powers.paymaster 
+            })
+          } else {
+            result = await writeContract(wagmiConfig, {
+              abi: powersAbi,
+              address: powers.contractAddress,
+              functionName: 'castVote', 
+              args: [actionId, support], 
+              chainId: parseChainId(chainId)
+            })
+          }
           setTransactionHash(result)
-          // setStatus({status: "success"})
           return true
       } catch (error) {
           setStatus({status: "error"}) 
           setError({error: error as Error})
           return false
       }
-  }, [chainId])
+  }, [chainId, isSmartWallet, client])
 
   const fetchVoteData = useCallback(
     async (
@@ -222,26 +274,45 @@ export const useMandate = () => {
       mandate: Mandate,
       mandateCalldata: `0x${string}`,
       nonce: bigint,
-      description: string
+      description: string,
+      powers: Powers
     ): Promise<boolean> => {
         console.log("@execute: waypoint 1", {mandate, mandateCalldata, nonce, description})
         setError({error: null})
         setStatus({status: "pending"})
         try {
-          const { request: simulatedRequest } = await simulateContract(wagmiConfig, {
-            abi: powersAbi,
-            address: mandate.powers as `0x${string}`,
-            functionName: 'request',
-            args: [mandate.index, mandateCalldata, nonce, description],
-            chainId: parseChainId(chainId)
-          })
-          
-          if (simulatedRequest) {
-            console.log("@execute: waypoint 3", {request})
-            const result = await writeContract(wagmiConfig, simulatedRequest)
+          let result: `0x${string}`;
+          if (isSmartWallet && client) {
+            result = await client.sendTransaction({
+              to: mandate.powers,
+              data: encodeFunctionData({
+                abi: powersAbi,
+                functionName: 'request',
+                args: [mandate.index, mandateCalldata, nonce, description],
+              }),
+              value: BigInt(0),
+              // @ts-ignore
+              paymaster: powers.paymaster,
+              paymasterAndData: powers.paymaster 
+            })
             setTransactionHash(result)
-            console.log("@execute: waypoint 4", {result})
             return true
+          } else {
+            const { request: simulatedRequest } = await simulateContract(wagmiConfig, {
+              abi: powersAbi,
+              address: mandate.powers as `0x${string}`,
+              functionName: 'request',
+              args: [mandate.index, mandateCalldata, nonce, description],
+              chainId: parseChainId(chainId)
+            })
+            
+            if (simulatedRequest) {
+              console.log("@execute: waypoint 3", {request})
+              result = await writeContract(wagmiConfig, simulatedRequest)
+              setTransactionHash(result)
+              console.log("@execute: waypoint 4", {result})
+              return true
+            }
           }
         } catch (error) {
           setStatus({status: "error"}) 
@@ -251,7 +322,7 @@ export const useMandate = () => {
         }
         setStatus({status: "idle"})
         return false
-      }, [chainId])
+      }, [chainId, isSmartWallet, client])
 
   return {simulation, actionVote, transactionHash, resetStatus, simulate, request, propose, cancel, castVote, fetchVoteData}
 }

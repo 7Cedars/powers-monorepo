@@ -136,6 +136,7 @@ export type Powers = {
   foundedAt?: bigint;
   uri?: string;
   treasury?: `0x${string}`;
+  paymaster?: `0x${string}`;
   metadatas?: Metadata; 
   mandateCount?: bigint;
   mandates?: Mandate[];

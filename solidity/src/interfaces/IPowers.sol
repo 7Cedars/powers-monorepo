@@ -155,11 +155,10 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param newTreasury The new treasury address
     function setTreasury(address payable newTreasury) external;
 
-    /// @notice Sets a trusted forwarder for ERC-2771 meta-transactions
+    /// @notice Sets the paymaster address
     /// @dev Can only be called through the protocol itself
-    /// @param forwarder The address of the forwarder
-    /// @param trusted Whether the forwarder is trusted
-    function setTrustedForwarder(address forwarder, bool trusted) external;
+    /// @param newPaymaster The new paymaster address
+    function setPaymaster(address newPaymaster) external;
 
     /// @notice Blacklists an account
     /// @dev Can only be called through the protocol itself
@@ -322,6 +321,10 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @notice Getter for treasury address.
     /// @return The treasury address
     function getTreasury() external view returns (address payable);
+
+    /// @notice Getter for paymaster address.
+    /// @return The paymaster address
+    function paymaster() external view returns (address);
 
     /// @notice Checks if an account has permission to call a mandate
     /// @param caller The address attempting to call the mandate

@@ -22,12 +22,12 @@ import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 
 // organisations
 import { Deploy as Powers101 } from "../governance/examples/Powers101.s.sol";
-import { Deploy as ElectionListsDAO } from "../governance/examples/ElectionListsDao.s.sol";
+import { Deploy as ElectionRegistrysDAO } from "../governance/examples/ElectionRegistrysDao.s.sol";
 // import { Deploy } from "@governance/examples/CulturalStewardsDAO/Deploy.s.sol";
 
 // helpers
 import { Nominees } from "@src/helpers/Nominees.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { Erc20DelegateElection } from "./mocks/Erc20DelegateElection.sol";
 import { SimpleGovernor } from "./mocks/SimpleGovernor.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
@@ -39,7 +39,7 @@ import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
 import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
@@ -50,7 +50,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     PowersMock daoMock;
     PowersMock daoMockChild1;
     PowersMock daoMockChild2;
-    ElectionListsDAO openElections; 
+    ElectionRegistrysDAO openElections; 
     string[] mandateNames;
     address[] mandateAddresses;
     TestConstitutions testConstitutions;
@@ -63,13 +63,13 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     SimpleErc1155 simpleErc1155;
     ReturnDataMock returnDataMock;
     Nominees nominees;
-    ElectionList openElection;
+    ElectionRegistry openElection;
     Erc20DelegateElection erc20DelegateElection;
     SimpleGovernor simpleGovernor;
     AllowedTokens allowedTokens;
     PowersFactory powersFactory;
     Soulbound1155 soulbound1155;
-    ElectionList electionList;
+    ElectionRegistry electionList;
     ZKPassport_PowersRegistry zkPassportRegistry;
 
     uint256 sepoliaFork;
@@ -548,7 +548,7 @@ abstract contract TestSetupElectoral is BaseSetup {
 
         vm.startPrank(address(daoMock));
         nominees = new Nominees();
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry();
         erc20Taxed = new Erc20Taxed();
         erc20DelegateElection = new Erc20DelegateElection(address(erc20Taxed));
         vm.stopPrank();
@@ -613,7 +613,7 @@ abstract contract TestSetupIntegrations is BaseSetup {
         simpleGovernor = new SimpleGovernor(address(simpleErc20Votes));
         allowedTokens = new AllowedTokens();
         soulbound1155 = new Soulbound1155("this is a test uri");
-        electionList = new ElectionList();
+        electionList = new ElectionRegistry();
         PowersDeployer powersDeployer = new PowersDeployer();
         powersFactory = new PowersFactory(
             "Powers Factory", // name
@@ -675,7 +675,7 @@ abstract contract TestSetupDelegateTokenFlow is BaseSetup {
 
         vm.startPrank(address(daoMock));
         nominees = new Nominees();
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry();
         simpleErc20Votes = new SimpleErc20Votes();
         vm.stopPrank();
 
@@ -697,12 +697,12 @@ abstract contract TestSetupDelegateTokenFlow is BaseSetup {
     }
 }
 
-abstract contract TestSetupElectionListFlow is BaseSetup {
+abstract contract TestSetupElectionRegistryFlow is BaseSetup {
     function setUpVariables() public override {
         super.setUpVariables();
 
         vm.prank(address(daoMock));
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry();
 
         // initiate multi constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
@@ -888,7 +888,7 @@ abstract contract TestSetupPowers101 is BaseSetup {
 }
 
 // Open Elections Setup
-abstract contract TestSetupElectionListsDAO is BaseSetup {
+abstract contract TestSetupElectionRegistrysDAO is BaseSetup {
     function setUpVariables() public override {
         // Note: this test runs the full initalisation scripts. It takes a while to run.
         // But it is needed to be able to test the full deployment flow of an organisation.
@@ -896,7 +896,7 @@ abstract contract TestSetupElectionListsDAO is BaseSetup {
 
         super.setUpVariables();
 
-        ElectionListsDAO openElections = new ElectionListsDAO();
+        ElectionRegistrysDAO openElections = new ElectionRegistrysDAO();
         (powers, openElection) = openElections.run();
         daoMock = PowersMock(payable(address(powers)));
 

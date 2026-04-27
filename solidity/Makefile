@@ -315,7 +315,7 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 registry-deploy : 
 	@echo "Deploying mandate registry..."
-	forge script script/DeployMandates.s.sol:DeployMandates $(ANVIL_DEPLOY_ARGS)
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
 example-deploy : 
 	@echo "Deploying example contracts..."

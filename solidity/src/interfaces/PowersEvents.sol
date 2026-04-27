@@ -106,4 +106,8 @@ interface PowersEvents {
     /// @param account the address of the account
     /// @param blacklisted the blacklisted status of the account
     event BlacklistSet(address indexed account, bool indexed blacklisted);
+
+    /// @notice Emitted when the paymaster address is updated.
+    /// @param newPaymaster the address of the new paymaster
+    event PaymasterSet(address indexed newPaymaster);
 }

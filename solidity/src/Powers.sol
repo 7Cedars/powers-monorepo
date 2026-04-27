@@ -61,8 +61,6 @@ contract Powers is EIP712, IPowers, Context {
     mapping(uint256 roleId => Role) internal roles;
     /// @dev Mapping from account to blacklisted status
     mapping(address account => bool blacklisted) internal _blacklist;
-    /// @dev Mapping of trusted forwarders for meta-transactions (ERC-2771)
-    mapping(address forwarder => bool trusted) public trustedForwarders;
 
     // two roles are preset: ADMIN_ROLE == 0 and PUBLIC_ROLE == type(uint256).max. These values should be avoided in any arythmetic operations with roleIds, to avoid overflow/underflow issues.
     /// @notice Role identifier for the admin role
@@ -88,6 +86,8 @@ contract Powers is EIP712, IPowers, Context {
     string public uri;
     /// @notice Address to the treasury of the organisation
     address payable private treasury;
+    /// @notice Address to the paymaster of the organisation
+    address public paymaster;
     // NB! this is a gotcha: mandates start counting a 1, NOT 0!. 0 is used as a default 'false' value.
     /// @notice Number of mandates that have been initiated throughout the life of the organisation
     uint16 public mandateCounter = 1;
@@ -637,9 +637,10 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function setTrustedForwarder(address forwarder, bool trusted) external onlyPowers {
-        if (forwarder == address(0)) revert Powers__CannotSetZeroAddress();
-        trustedForwarders[forwarder] = trusted;
+    function setPaymaster(address newPaymaster) external onlyPowers {
+        if (newPaymaster == address(0)) revert Powers__CannotSetZeroAddress();
+        paymaster = newPaymaster;
+        emit PaymasterSet(newPaymaster);
     }
 
     //////////////////////////////////////////////////////////////
@@ -714,26 +715,6 @@ contract Powers is EIP712, IPowers, Context {
     /// @return amountMembers Number of members in the role.
     function _countMembersRole(uint256 roleId) internal view returns (uint256 amountMembers) {
         return roles[roleId].membersArray.length;
-    }
-
-    /// @dev ERC-2771: Override to extract sender from calldata if caller is a trusted forwarder
-    function _msgSender() internal view override returns (address sender) {
-        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
-            assembly {
-                sender := shr(96, calldataload(sub(calldatasize(), 20)))
-            }
-        } else {
-            return super._msgSender();
-        }
-    }
-
-    /// @dev ERC-2771: Override to extract data from calldata if caller is a trusted forwarder
-    function _msgData() internal view override returns (bytes calldata) {
-        if (trustedForwarders[msg.sender] && msg.data.length >= 20) {
-            return msg.data[:msg.data.length - 20];
-        } else {
-            return super._msgData();
-        }
     }
 
     //////////////////////////////////////////////////////////////

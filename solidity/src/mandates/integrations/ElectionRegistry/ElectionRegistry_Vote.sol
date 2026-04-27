@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-/// @notice Allows voters to vote on nominees from a standalone ElectionList contract.
+/// @notice Allows voters to vote on nominees from a standalone ElectionRegistry contract.
 ///
 /// The logic:
 /// - The inputParams are dynamic - as many bool options will appear as there are nominees.
 /// - When a voter selects more than one nominee, the mandate will revert.
-/// - When a vote is cast, the mandate calls the vote function in ElectionList contract.
+/// - When a vote is cast, the mandate calls the vote function in ElectionRegistry contract.
 /// - Only one vote per voter is allowed per election.
 ///
 /// @author 7Cedars
@@ -14,10 +14,10 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { ElectionList } from "../../../helpers/ElectionList.sol";
+import { ElectionRegistry } from "../../../helpers/ElectionRegistry.sol";
 import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
-contract ElectionList_Vote is Mandate {
+contract ElectionRegistry_Vote is Mandate {
     struct Mem {
         address caller;
         bytes32 mandateHash;
@@ -31,9 +31,9 @@ contract ElectionList_Vote is Mandate {
         uint256 electionId;
     }
 
-    /// @notice Constructor for ElectionList_Vote mandate
+    /// @notice Constructor for ElectionRegistry_Vote mandate
     constructor() {
-        bytes memory configParams = abi.encode("address ElectionListContract", "uint256 maxVotes", "uint256 electionId");
+        bytes memory configParams = abi.encode("address ElectionRegistryContract", "uint256 maxVotes", "uint256 electionId");
         emit Mandate__Deployed(configParams);
     }
 
@@ -47,12 +47,12 @@ contract ElectionList_Vote is Mandate {
         (mem.openElectionContract, mem.maxVotes, mem.electionId) = abi.decode(config, (address, uint256, uint256));
 
         // Check if election is open - otherwise revert.
-        if (!ElectionList(mem.openElectionContract).isElectionOpen(mem.electionId)) {
+        if (!ElectionRegistry(mem.openElectionContract).isElectionOpen(mem.electionId)) {
             revert("Election is not open.");
         }
 
-        // Get nominees from the ElectionList contract
-        mem.nominees = ElectionList(mem.openElectionContract).getNominees(mem.electionId);
+        // Get nominees from the ElectionRegistry contract
+        mem.nominees = ElectionRegistry(mem.openElectionContract).getNominees(mem.electionId);
 
         // Create dynamic inputParams based on nominees
         mem.nomineeList = new string[](mem.nominees.length);
@@ -63,7 +63,7 @@ contract ElectionList_Vote is Mandate {
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
-    /// @notice Build a call to cast a vote in the ElectionList contract
+    /// @notice Build a call to cast a vote in the ElectionRegistry contract
     /// @param caller The voter address
     /// @param powers The Powers contract address (unused here, forwarded in action context)
     /// @param mandateId The mandate identifier
@@ -87,10 +87,10 @@ contract ElectionList_Vote is Mandate {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         (mem.openElectionContract, mem.maxVotes, mem.electionId) =
             abi.decode(getConfig(powers, mandateId), (address, uint256, uint256));
-        mem.nominees = ElectionList(mem.openElectionContract).getNominees(mem.electionId);
+        mem.nominees = ElectionRegistry(mem.openElectionContract).getNominees(mem.electionId);
 
         // Check if election is open
-        if (!ElectionList(mem.openElectionContract).isElectionOpen(mem.electionId)) {
+        if (!ElectionRegistry(mem.openElectionContract).isElectionOpen(mem.electionId)) {
             revert("Election is not open.");
         }
 
@@ -122,7 +122,7 @@ contract ElectionList_Vote is Mandate {
         // create call for
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         targets[0] = mem.openElectionContract;
-        calldatas[0] = abi.encodeWithSelector(ElectionList.vote.selector, mem.electionId, caller, mem.vote);
+        calldatas[0] = abi.encodeWithSelector(ElectionRegistry.vote.selector, mem.electionId, caller, mem.vote);
 
         return (actionId, targets, values, calldatas);
     }

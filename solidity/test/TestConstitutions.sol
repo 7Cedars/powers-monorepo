@@ -12,7 +12,7 @@ import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
 import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
 import { ISoulbound1155 } from "@src/helpers/Soulbound1155.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract TestConstitutions is Test {
@@ -836,7 +836,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // ElectionList Integration //
+        // ElectionRegistry Integration //
         // create election mandate //
         inputParams = new string[](3);
         inputParams[0] = "string Title";
@@ -853,7 +853,7 @@ contract TestConstitutions is Test {
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(electionList), // election list contract
-                    ElectionList.createElection.selector, // selector
+                    ElectionRegistry.createElection.selector, // selector
                     inputParams
                 ),
                 conditions: conditions
@@ -868,7 +868,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for election: any member can nominate for an election.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(electionList), // election list contract
                     true // nominate as candidate
@@ -886,7 +886,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: any member can revoke their nomination for an election.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(electionList), // election list contract
                     false // revoke nomination
@@ -903,10 +903,10 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_CreateVoteMandate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_CreateVoteMandate"),
                 config: abi.encode(
                     address(electionList), // election list contract
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Vote"), // the vote mandate address
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Vote"), // the vote mandate address
                     1, // the max number of votes a voter can cast
                     1 // the role Id allowed to vote (Members)
                 ),
@@ -923,7 +923,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally elections: After an election has finished, assign the Executive role to the winners.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Tally"),
                 config: abi.encode(
                     address(electionList),
                     2, // RoleId for Executives
@@ -1126,10 +1126,10 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Start an election: an election can be initiated be voters once every 2 hours. The election will last 10 minutes.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Create"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Create"),
                 config: abi.encode(
                     openElection,
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Vote"), // Voting mandate
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Vote"), // Voting mandate
                     600, // 10 minutes in blocks (approx)
                     1 // Voter role id
                 ),
@@ -1144,7 +1144,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "End and Tally elections: After an election has finished, assign the Delegate role to the winners.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Tally"),
                 config: abi.encode(
                     openElection,
                     2, // RoleId for Delegates

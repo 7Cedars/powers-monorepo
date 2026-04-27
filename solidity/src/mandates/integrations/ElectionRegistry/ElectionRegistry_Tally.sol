@@ -5,8 +5,8 @@
 /// This mandate:
 /// - Checks if the election is closed (reverts if still open)
 /// - Fetches current role holders from Powers
-/// - Retrieves election results from ElectionList contract
-/// - Revokes the ElectionList_Vote mandate
+/// - Retrieves election results from ElectionRegistry contract
+/// - Revokes the ElectionRegistry_Vote mandate
 /// - Revokes roles from all current holders
 /// - Assigns roles to newly elected accounts
 ///
@@ -17,9 +17,9 @@ pragma solidity ^0.8.26;
 import { Mandate } from "../../../Mandate.sol";
 import { IPowers } from "../../../interfaces/IPowers.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { ElectionList } from "../../../helpers/ElectionList.sol";
+import { ElectionRegistry } from "../../../helpers/ElectionRegistry.sol";
 
-contract ElectionList_Tally is Mandate {
+contract ElectionRegistry_Tally is Mandate {
     struct Mem {
         uint16 voteContractId;
         uint256 amountRoleHolders;
@@ -41,7 +41,7 @@ contract ElectionList_Tally is Mandate {
         uint256 electionId;
     }
 
-    /// @notice Constructor for ElectionList_Tally mandate
+    /// @notice Constructor for ElectionRegistry_Tally mandate
     constructor() {
         bytes memory configParams = abi.encode("address electionContract", "uint256 RoleId", "uint256 MaxRoleHolders");
         emit Mandate__Deployed(configParams);
@@ -81,7 +81,7 @@ contract ElectionList_Tally is Mandate {
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 
         // Step 1: Check if election is closed - revert if still open
-        if (ElectionList(mem.electionContract).isElectionOpen(mem.electionId)) {
+        if (ElectionRegistry(mem.electionContract).isElectionOpen(mem.electionId)) {
             revert("Election is still open");
         }
 
@@ -95,7 +95,7 @@ contract ElectionList_Tally is Mandate {
         }
 
         // Step 4: Get nominee ranking and select top candidates
-        (mem.rankedNominees,) = ElectionList(mem.electionContract).getNomineeRanking(mem.electionId);
+        (mem.rankedNominees,) = ElectionRegistry(mem.electionContract).getNomineeRanking(mem.electionId);
         // Select top candidates based on maxRoleHolders
         mem.numNominees = mem.rankedNominees.length;
         mem.maxN = mem.maxRoleHolders;

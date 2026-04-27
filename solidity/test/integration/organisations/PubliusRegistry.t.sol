@@ -2,16 +2,18 @@
 pragma solidity ^0.8.26;
 
 import { Test, console } from "forge-std/Test.sol";
-import { Powers } from "@src/Powers.sol";
-import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { Configurations } from "@script/Configurations.s.sol";
+import { Powers } from "@src/Powers.sol"; 
 import { Deploy } from "@governance/publius-registry/Deploy.s.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
 contract PubliusRegistry_IntegrationTest is Test {
+    Configurations helperConfig; 
     Deploy deployScript;
     Powers powers;
-    MandateRegistry registry;
+    IMandateRegistry registry;
 
     address admin;
     uint16 registerMandateId;
@@ -20,8 +22,10 @@ contract PubliusRegistry_IntegrationTest is Test {
 
     function setUp() public {
         // Deploy the script
+        helperConfig = new Configurations();
         deployScript = new Deploy();
-        (powers, registry) = deployScript.run();
+        powers = deployScript.run();
+        registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // Run the first setup mandate to set roles and treasury
         // The deployer is the admin, let's get the admin address dynamically

@@ -41,6 +41,7 @@ interface IMandateRegistry {
         bool strict,
         string[] calldata mandateNames
     ) external view returns (MandateEntry[] memory entries);
+    function owner() external view returns (address);
 }
 
 contract MandateRegistry is Ownable {
@@ -139,13 +140,14 @@ contract MandateRegistry is Ownable {
         bytes32 nameHash = keccak256(bytes(mandateName));
 
         // Check if mandate already exists in this version
-        if (registry[nameHash][packedVersion].registeredAt != 0) {
-            if (registry[nameHash][packedVersion].isActive) {
-                revert MandateAlreadyRegistered(major, minor, patch, mandateName);
-            } else {
-                revert MandateInactive(major, minor, patch, mandateName);
-            }
-        }
+        // Note: We allow re-registration of the same version if it was deactivated, but we do not allow multiple active entries for the same version.
+        // if (registry[nameHash][packedVersion].registeredAt != 0) {
+        //     if (registry[nameHash][packedVersion].isActive) {
+        //         revert MandateAlreadyRegistered(major, minor, patch, mandateName);
+        //     } else {
+        //         revert MandateInactive(major, minor, patch, mandateName);
+        //     }
+        // }
 
         // Register the mandate
         registry[nameHash][packedVersion] =

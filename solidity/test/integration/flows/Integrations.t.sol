@@ -29,7 +29,7 @@ contract SafeProtocolFlowTest is TestSetupSafeProtocolFlow {
         daoMock.request(1, "", nonce, "");
         vm.stopPrank();
 
-        // Use getTreasury() from IPowers interface
+        // Use treasury() from IPowers interface
         safeTreasury = daoMock.getTreasury();
         console2.log("Safe Treasury deployed at:", safeTreasury);
         assertTrue(safeTreasury != address(0), "Safe treasury should be set");
