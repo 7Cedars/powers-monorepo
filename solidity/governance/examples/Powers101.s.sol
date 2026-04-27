@@ -4,22 +4,22 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "../../script/Configurations.s.sol";
-import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
+import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
 // external protocols
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol";
-import { Nominees } from "../../src/helpers/Nominees.sol";
-import { Strings } from "../../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
+import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 // powers contracts
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { Powers } from "../../src/Powers.sol";
-import { IPowers } from "../../src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { Powers } from "@src/Powers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helper contracts
-import { Nominees } from "../../src/helpers/Nominees.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { SimpleErc20Votes } from "../../test/mocks/SimpleErc20Votes.sol";
 import { Erc20DelegateElection } from "../../test/mocks/Erc20DelegateElection.sol";
 
@@ -28,11 +28,11 @@ contract Deploy is DeployHelpers {
     using Strings for address;
 
     Configurations helperConfig; 
-    PowersTypes.MandateInitData[] constitution;
-    InitialisePowers initialisePowers;
+    PowersTypes.MandateInitData[] constitution; 
     PowersTypes.Conditions conditions;
     PowersTypes.Flow[] flows;
     Powers powers;
+    IMandateRegistry registry;
 
     Nominees nominees;
     SimpleErc20Votes simpleErc20Votes;
@@ -43,12 +43,15 @@ contract Deploy is DeployHelpers {
     bytes[] calldatas;
     string[] dynamicParams;
     
+    // Select version mandates to be used.
+    uint16 constant MAJOR = 0;
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
 
     function run() external returns (Powers) {
-        // step 0, setup.
-        initialisePowers = new InitialisePowers();
-        initialisePowers.run();
+        // step 0, setup. 
         helperConfig = new Configurations(); 
+        registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Vanilla Powers
         vm.startBroadcast();
@@ -107,7 +110,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Setup:  assigns labels to roles and set the treasury. It self-destructs after execution.",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"), // presetSingleAction
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -140,7 +143,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Propose to Mint: Propose to mint tokens at ", address(simpleErc20Votes).toHexString(), ".")),
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -153,7 +156,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Veto a mint: Veto a proposed token mint at", address(simpleErc20Votes).toHexString(), ".")),
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -170,7 +173,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Execute a mint: Execute a mint at ", address(simpleErc20Votes).toHexString(), ". it has to be proposed first by the community and should not have been vetoed by an admin.")),
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(simpleErc20Votes), // target contract
                     bytes4(keccak256("mint(address,uint256)")), 
@@ -202,7 +205,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
-                targetMandate: initialisePowers.getInitialisedAddress("Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Nominate"),
                 config: abi.encode(
                     address(nominees)
                     ),
@@ -217,7 +220,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Call a delegate election: This can be done at any time. Nominations are elected on the amount of delegated tokens they have received. For",
-                targetMandate: initialisePowers.getInitialisedAddress("DelegateTokenSelect"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "DelegateTokenSelect"),
                 config: abi.encode(
                     address(erc20DelegateElection),
                     address(nominees),

@@ -6,13 +6,13 @@ contract MockRegistry {
         return 1;
     }
 
-    function reassignOwnershipOfList(uint120 id, address newOwner) external {}
+    function reassignOwnershipOfList(uint120 id, address newOwner) external { }
 
-    function addAccountsToBlacklist(uint120 id, address[] calldata accounts) external {}
+    function addAccountsToBlacklist(uint120 id, address[] calldata accounts) external { }
 
-    function removeAccountsFromBlacklist(uint120 id, address[] calldata accounts) external {}
+    function removeAccountsFromBlacklist(uint120 id, address[] calldata accounts) external { }
 
-    function addAccountsToWhitelist(uint120 id, address[] calldata accounts) external {}
+    function addAccountsToWhitelist(uint120 id, address[] calldata accounts) external { }
 
-    function removeAccountsFromWhitelist(uint120 id, address[] calldata accounts) external {}
+    function removeAccountsFromWhitelist(uint120 id, address[] calldata accounts) external { }
 }

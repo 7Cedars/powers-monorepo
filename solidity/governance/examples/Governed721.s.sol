@@ -4,35 +4,36 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "../../script/Configurations.s.sol";
-import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
+import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
 // external protocols
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol"; 
-import { SafeProxyFactory } from "../../lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
-import { Safe } from "../../lib/safe-smart-account/contracts/Safe.sol"; 
-import { ModuleManager } from "../../lib/safe-smart-account/contracts/base/ModuleManager.sol";
-import { IERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol"; 
+import { SafeProxyFactory } from "@lib/safe-smart-account/contracts/proxies/SafeProxyFactory.sol"; 
+import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol"; 
+import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
+import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 // powers contracts
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { Powers } from "../../src/Powers.sol";
-import { IPowers } from "../../src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { Powers } from "@src/Powers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers 
-import { ElectionList } from "../../src/helpers/ElectionList.sol";
-import { Governed721, IGoverned721 } from "../../src/helpers/Governed721.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
 
 /// @title Governed721DAO Deployment Script
 contract Deploy is DeployHelpers {
     Configurations helperConfig;
-    PowersTypes.MandateInitData[] constitution;
-    InitialisePowers initialisePowers;
+    IMandateRegistry registry;
+    PowersTypes.MandateInitData[] constitution; 
     PowersTypes.Conditions conditions;
     Powers public powers;
     PowersTypes.Flow[] flows;
     Governed721 public governed721;
+    ElectionRegistry public openElection;
 
     uint256 constant PACKAGE_SIZE = 10; // number of mandates per packaged mandate.
     address treasury;
@@ -54,12 +55,16 @@ contract Deploy is DeployHelpers {
     string[] dynamicParams;
  
     string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibcfc5dzcah2xxmvk3gjhij7t3sp5v6ppkub36jmtex2t75fcz22i/";
+    // Select version mandates to be used.
+    uint16 constant MAJOR = 0;
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
 
     function run() external {
-        // step 0, setup.
-        initialisePowers = new InitialisePowers();
-        initialisePowers.run();
+        // step 0, setup. 
         helperConfig = new Configurations();
+        openElection = new ElectionRegistry();
+        registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Governed721 Powers
         vm.startBroadcast();
@@ -130,7 +135,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels, setup treasury and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions_OnOwnPowers"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions_OnOwnPowers"),
                 config: abi.encode(calldatas),
                 conditions: conditions
             })
@@ -165,7 +170,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -184,7 +189,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Split (Minter): Minter can veto split change.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -202,7 +207,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Split (Owner): Owner can veto split change.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -220,7 +225,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Split (Intermediary): Intermediary can veto split change.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -238,7 +243,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Split Checkpoint 1: Confirm no Minter veto.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -254,7 +259,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Split Checkpoint 2: Confirm no Owner veto.",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -270,7 +275,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Split Payment: Set new split payment.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(governed721),
                     Governed721.setSplit.selector,
@@ -304,7 +309,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Add Allowed Token: Whitelist a token.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Advanced"),
                 config: abi.encode(
                     address(governed721),
                     Governed721.setWhitelist.selector,
@@ -327,7 +332,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Remove Allowed Token: De-whitelist a token.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Advanced"),
                 config: abi.encode(
                     address(governed721),
                     Governed721.setWhitelist.selector,
@@ -363,7 +368,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Add account to blacklist: Blacklist an account. They will not be able to transfer or mint NFTs.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Advanced"),
                 config: abi.encode(
                     address(0),
                     IPowers.blacklistAddress.selector,
@@ -385,7 +390,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Remove account from blacklist: Remove an account from the blacklist. They will be able to transfer or mint NFTs again.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Advanced"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Advanced"),
                 config: abi.encode(
                     address(0),
                     IPowers.blacklistAddress.selector,
@@ -421,7 +426,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Check ownership Token: This check is needed to assign the owner role to the NFT owner in the next mandate.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(governed721),
                     IERC721.ownerOf.selector,
@@ -439,7 +444,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Owner Role: Assigns Owner role to the owner of the NFT.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.assignRole.selector,
@@ -463,7 +468,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Owner Role: Revokes Owner role. In case of inactivity or lapsed ownership. Executives can revoke the owner role based on the same ownership check if needed.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.revokeRole.selector,
@@ -499,7 +504,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Check artist Token: This check is needed to assign the artist role to the NFT artist in the next mandate.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(governed721),
                     IGoverned721.getArtist.selector,
@@ -517,7 +522,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Artist Role: Assigns Artist role to the artist of the NFT.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.assignRole.selector,
@@ -541,7 +546,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Artist Role: Revokes Artist role. In case of inactivity or lapsed ownership. Executives can revoke the artist role based on the same artist check if needed.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.revokeRole.selector,
@@ -575,7 +580,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Check approved address Token: This check is needed to assign the intermediary role to the approved address of the NFT in the next mandate.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(governed721),
                     IERC721.getApproved.selector,
@@ -593,7 +598,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Intermediary Role: Assigns Intermediary role to the approved address of the NFT.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.assignRole.selector,
@@ -617,7 +622,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Intermediary Role: Revokes Intermediary role. In case of inactivity or lapsed ownership. Executives can revoke the intermediary role based on the same ownership check if needed.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.revokeRole.selector,
@@ -656,7 +661,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Claim Voter Role: Minters, Owners, and Intermediaries can claim voter role.",
-                targetMandate: initialisePowers.getInitialisedAddress("RoleByRoles"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "RoleByRoles"),
                 config: abi.encode(
                     4, // Voter role ID
                     voterRoleCriteria
@@ -684,10 +689,10 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create Executive Election: Voters can create election.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
-                    initialisePowers.getInitialisedAddress("ElectionList"),
-                    ElectionList.createElection.selector,
+                    address(openElection), // target contract (ElectionRegistry)
+                    ElectionRegistry.createElection.selector,
                     inputParams
                 ),
                 conditions: conditions
@@ -702,10 +707,10 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open Executive Vote: Open voting.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_CreateVoteMandate"),
                 config: abi.encode(
-                    initialisePowers.getInitialisedAddress("ElectionList"),
-                    initialisePowers.getInitialisedAddress("ElectionList_Vote"),
+                    address(openElection),
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Vote"),
                     1, // votes per voter
                     4 // allowed role to vote (Voter)
                 ),
@@ -721,9 +726,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally Executive Election: Tally votes.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Tally"),
                 config: abi.encode(
-                    initialisePowers.getInitialisedAddress("ElectionList"),
+                    address(openElection),
                     5, // RoleId for Executives
                     5 // Max role holders
                 ),
@@ -739,7 +744,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Cleanup Election: Cleanup mandates.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(powers), // target contract (this DAO)
                     IPowers.revokeMandate.selector,
@@ -759,9 +764,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for Executive: Voters can nominate.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
-                    initialisePowers.getInitialisedAddress("ElectionList"),
+                    address(openElection),
                     true
                 ),
                 conditions: conditions
@@ -775,9 +780,9 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Nomination: Revoke self nomination.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
-                    initialisePowers.getInitialisedAddress("ElectionList"),
+                    address(openElection),
                     false
                 ),
                 conditions: conditions
@@ -795,7 +800,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Collect Split Payment: Role holders can collect their split of payment.",
-                targetMandate: initialisePowers.getInitialisedAddress("GovernedToken_CollectSplitPayment"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "GovernedToken_CollectSplitPayment"),
                 config: abi.encode(
                     address(governed721) // Governed721 Address
                 ),
@@ -817,7 +822,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Executives can update URI: Executives can update the URI of the contract.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })

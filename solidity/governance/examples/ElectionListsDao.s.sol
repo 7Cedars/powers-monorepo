@@ -4,46 +4,49 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "../../script/Configurations.s.sol";
-import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
+import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
 // external protocols
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
 
 // powers contracts
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { Powers } from "../../src/Powers.sol";
-import { IPowers } from "../../src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { Powers } from "@src/Powers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { ElectionList } from "../../src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 
 /// @title Open Elections Deployment Script
 contract Deploy is DeployHelpers {
     Configurations helperConfig; 
+    IMandateRegistry registry;
     PowersTypes.MandateInitData[] constitution;
-    PowersTypes.Flow[] flows;
-    InitialisePowers initialisePowers;
+    PowersTypes.Flow[] flows; 
     PowersTypes.Conditions conditions;
     Powers powers;
 
-    ElectionList openElection;
+    ElectionRegistry openElection;
 
     address[] targets;
     uint256[] values;
     bytes[] calldatas;
     string[] dynamicParams;
 
-    function run() external returns (Powers, ElectionList) {
-        // step 0, setup.
-        initialisePowers = new InitialisePowers();
-        initialisePowers.run();
+    // Select version mandates to be used.
+    uint16 constant MAJOR = 0;
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
+
+    function run() external returns (Powers, ElectionRegistry) { 
         helperConfig = new Configurations(); 
+        registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Open Elections Powers
         vm.startBroadcast();
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry();
         powers = new Powers(
             "Open Election", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/electionListDao.json", // uri
@@ -89,7 +92,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels (Delegates, Funders) and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -120,10 +123,10 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create an election: an election can be initiated be any voter.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(openElection), // election list contract
-                    ElectionList.createElection.selector, // selector
+                    ElectionRegistry.createElection.selector, // selector
                     inputParams
                 ),
                 conditions: conditions
@@ -138,10 +141,10 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open voting for election: Voters can open the vote for an election. This will create a dedicated vote mandate.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_CreateVoteMandate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_CreateVoteMandate"),
                 config: abi.encode(
                     address(openElection), // election list contract
-                    initialisePowers.getInitialisedAddress("ElectionList_Vote"), // the vote mandate address
+                    registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Vote"), // the vote mandate address
                     1, // the max number of votes a voter can cast
                     1 // the role Id allowed to vote (Voters)
                 ),
@@ -157,7 +160,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally elections: After an election has finished, assign the Delegate role to the winners.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Tally"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Tally"),
                 config: abi.encode(
                     address(openElection),
                     2, // RoleId for Delegates
@@ -175,7 +178,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(powers), // target contract
                     IPowers.revokeMandate.selector, // function selector to call
@@ -205,7 +208,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for election: any voter can nominate for an election.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(openElection), // election list contract
                     true // nominate as candidate
@@ -221,7 +224,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: any voter can revoke their nomination for an election.",
-                targetMandate: initialisePowers.getInitialisedAddress("ElectionList_Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ElectionRegistry_Nominate"),
                 config: abi.encode(
                     address(openElection), // election list contract
                     false // revoke nomination
@@ -251,7 +254,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -265,7 +268,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })

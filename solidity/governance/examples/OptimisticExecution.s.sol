@@ -4,26 +4,26 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "../../script/Configurations.s.sol";
-import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
+import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
 // external protocols
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
 
 // powers contracts
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { Powers } from "../../src/Powers.sol";
-import { IPowers } from "../../src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { Powers } from "@src/Powers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 /// @title Optimistic Execution Deployment Script
 contract Deploy is DeployHelpers {
     Configurations helperConfig; 
-    PowersTypes.MandateInitData[] constitution;
-    InitialisePowers initialisePowers;
+    PowersTypes.MandateInitData[] constitution; 
     PowersTypes.Conditions conditions;
     Powers powers;
     PowersTypes.Flow[] flows;
+    IMandateRegistry registry;
 
     address[] targets;
     uint256[] values;
@@ -31,11 +31,14 @@ contract Deploy is DeployHelpers {
     string[] inputParams;
     string[] dynamicParams;
 
-    function run() external {
-        // step 0, setup.
-        initialisePowers = new InitialisePowers();
-        initialisePowers.run();
-        helperConfig = new Configurations(); 
+    // Select version mandates to be used.
+    uint16 constant MAJOR = 0;
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
+
+    function run() external { 
+        helperConfig = new Configurations();
+        registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid)); 
 
         // step 1: deploy Optimistic Execution Powers
 
@@ -83,7 +86,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels (Members, Executives) and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -114,7 +117,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Actions: Members can veto actions",
-                targetMandate: initialisePowers.getInitialisedAddress("StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -131,7 +134,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute an action: Executives can propose and execute actions, but members have veto power.",
-                targetMandate: initialisePowers.getInitialisedAddress("OpenAction"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"),
                 config: abi.encode(), // empty config
                 conditions: conditions
             })
@@ -158,7 +161,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -172,7 +175,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "An executive can revoke a role: For this demo, any executive can revoke previously assigned roles.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })

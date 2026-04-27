@@ -2,12 +2,16 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.26;
 
-import { Governor } from "../../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
-import { GovernorCountingSimple } from "../../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorCountingSimple.sol";
-import { GovernorSettings } from "../../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorSettings.sol";
-import { GovernorVotes } from "../../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotes.sol";
-import { GovernorVotesQuorumFraction } from "../../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
-import { IVotes } from "../../lib/openzeppelin-contracts/contracts/governance/utils/IVotes.sol";
+import { Governor } from "@lib/openzeppelin-contracts/contracts/governance/Governor.sol";
+import {
+    GovernorCountingSimple
+} from "@lib/openzeppelin-contracts/contracts/governance/extensions/GovernorCountingSimple.sol";
+import { GovernorSettings } from "@lib/openzeppelin-contracts/contracts/governance/extensions/GovernorSettings.sol";
+import { GovernorVotes } from "@lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotes.sol";
+import {
+    GovernorVotesQuorumFraction
+} from "@lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+import { IVotes } from "@lib/openzeppelin-contracts/contracts/governance/utils/IVotes.sol";
 
 contract SimpleGovernor is
     Governor,

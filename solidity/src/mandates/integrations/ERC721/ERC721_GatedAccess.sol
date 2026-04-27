@@ -3,8 +3,8 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
 import { IPowers } from "../../../interfaces/IPowers.sol";
-import { IERC721 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 /**
  * @title ERC721_GatedAccess
@@ -12,7 +12,6 @@ import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
  * @dev Checks if caller holds a minimum balance of ERC721 tokens and assigns a role.
  */
 contract ERC721_GatedAccess is Mandate {
-
     struct Config {
         address erc721Address;
         uint256 assignRoleId;
@@ -22,8 +21,8 @@ contract ERC721_GatedAccess is Mandate {
     constructor() {
         bytes memory configParams = abi.encode(
             "address erc721Address", // The ERC721 contract address
-            "uint256 assignRoleId",  // The role Id to assign if checks pass
-            "uint256 minBalance"     // Minimum balance required
+            "uint256 assignRoleId", // The role Id to assign if checks pass
+            "uint256 minBalance" // Minimum balance required
         );
         emit Mandate__Deployed(configParams);
     }

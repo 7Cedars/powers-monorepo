@@ -68,7 +68,7 @@ solidity/
 │    ├── DeployTestOrgs.s.sol                  # Deploys a test organisation
 │    ├── FundTreasury.s.sol                    # Funds a treasury
 │    ├── Configuration.s.sol                    # Helper configuration
-│    └── InitialisePowers.s.sol                # Initialises the Powers protocol
+│    └── DeployMandates.s.sol                # Initialises the Powers protocol
 │
 ├── src/                                       # Protocol resources
 │    ├── helpers/                              # Helper contracts

@@ -9,7 +9,7 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 contract RenounceRole is Mandate {
     struct Mem {

@@ -300,26 +300,30 @@ SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${D
 ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 421614 --verify --ffi -vv 
 OPT_SEPOLIA_DEPLOY_ARGS := --rpc-url $(OPT_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --ffi -vv
 
+# fund dev address on local chain.  
+fund-dev :
+	cast send --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) ${DEV2_ADDRESS} --value 1ether 
+
 # create forked anvil chain. 
 # included in .env are SEPOLIA_RPC_URL, ARB_SEPOLIA_RPC_URL, OPT_SEPOLIA_RPC_URL
 fork-anvil : 
-	anvil --fork-url $(OPT_SEPOLIA_RPC_URL) --block-time 1 --chain-id 31337   
+	anvil --fork-url $(SEPOLIA_RPC_URL) --block-time 12 --chain-id 31337   
 
 # Deploy an organisation to a single chain. 
 # Adjust the ANVIL_DEPLOY_ARGS, SEPOLIA_DEPLOY_ARGS, OPT_SEPOLIA_DEPLOY_ARGS, ARB_SEPOLIA_DEPLOY_ARGS variables above to change network and deployment settings.
 # Adjust the script path and contract name below to change which organisation is deployed.
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
+registry-deploy : 
+	@echo "Deploying mandate registry..."
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
+
 example-deploy : 
 	@echo "Deploying example contracts..."
-	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 organisation-deploy : 
-	@echo "Deploying example contracts..."
-	forge script governance/governed721DAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-
-powers-initialise :
-	@echo "Initialising Powers contract..."
-	forge script script/InitialisePowers.s.sol:InitialisePowers $(SEPOLIA_DEPLOY_ARGS)
+	@echo "Deploying organisation..."
+	forge script governance/publius-registry/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
 # deploy-zkregistry : 
 # 	@echo "Deploying ZKPassport Registry..."

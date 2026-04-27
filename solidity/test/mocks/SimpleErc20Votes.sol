@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { ERC20Votes } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import { ERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import { EIP712 } from "../../lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
+import { ERC20Votes } from "@lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { ERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { EIP712 } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
 
 contract SimpleErc20Votes is ERC20Votes {
     error Erc20Votes__NoZeroAmount();
@@ -18,7 +18,7 @@ contract SimpleErc20Votes is ERC20Votes {
     function mint(uint256 amount) public {
         if (amount == 0) {
             revert Erc20Votes__NoZeroAmount();
-        }
+        } 
         if (amount > MAX_AMOUNT_VOTES_TO_MINT) {
             revert Erc20Votes__AmountExceedsMax(amount, MAX_AMOUNT_VOTES_TO_MINT);
         }

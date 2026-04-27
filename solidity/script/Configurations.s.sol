@@ -24,36 +24,30 @@ contract Configurations is Script {
     }
 
     function getMaxReturnDataLength(uint256 chainId) public pure returns (uint256) {
-        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
-            chainId == ARB_SEPOLIA_CHAIN_ID || 
-            chainId == OPT_SEPOLIA_CHAIN_ID || 
-            chainId == BASE_SEPOLIA_CHAIN_ID || 
-            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
-            chainId == LOCAL_CHAIN_ID) {
+        if (
+            chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
+                || chainId == BASE_SEPOLIA_CHAIN_ID || chainId == MANTLE_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID
+        ) {
             return 10_000;
         }
         revert Configurations__UnsupportedChain();
     }
 
     function getMaxCallDataLength(uint256 chainId) public pure returns (uint256) {
-        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
-            chainId == ARB_SEPOLIA_CHAIN_ID || 
-            chainId == OPT_SEPOLIA_CHAIN_ID || 
-            chainId == BASE_SEPOLIA_CHAIN_ID || 
-            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
-            chainId == LOCAL_CHAIN_ID) {
+        if (
+            chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
+                || chainId == BASE_SEPOLIA_CHAIN_ID || chainId == MANTLE_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID
+        ) {
             return 10_000;
         }
         revert Configurations__UnsupportedChain();
     }
 
     function getMaxExecutionsLength(uint256 chainId) public pure returns (uint256) {
-        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
-            chainId == ARB_SEPOLIA_CHAIN_ID || 
-            chainId == OPT_SEPOLIA_CHAIN_ID || 
-            chainId == BASE_SEPOLIA_CHAIN_ID || 
-            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
-            chainId == LOCAL_CHAIN_ID) {
+        if (
+            chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
+                || chainId == BASE_SEPOLIA_CHAIN_ID || chainId == MANTLE_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID
+        ) {
             return 25;
         }
         revert Configurations__UnsupportedChain();
@@ -80,12 +74,10 @@ contract Configurations is Script {
     }
 
     function getChainlinkFunctionsGasLimit(uint256 chainId) public pure returns (uint32) {
-        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
-            chainId == ARB_SEPOLIA_CHAIN_ID || 
-            chainId == OPT_SEPOLIA_CHAIN_ID || 
-            chainId == BASE_SEPOLIA_CHAIN_ID || 
-            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
-            chainId == LOCAL_CHAIN_ID) {
+        if (
+            chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
+                || chainId == BASE_SEPOLIA_CHAIN_ID || chainId == MANTLE_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID
+        ) {
             return 300_000;
         }
         revert Configurations__UnsupportedChain();
@@ -95,19 +87,21 @@ contract Configurations is Script {
         if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000;
         if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x66756e2d617262697472756d2d7365706f6c69612d3100000000000000000000;
         if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
-        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000; // Using same as Optimism as per original file
-        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) {
+            return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000; // Using same as Optimism as per original file
+        }
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) {
+            return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
+        }
         if (chainId == LOCAL_CHAIN_ID) return 0x66756e2d6f7074696d69736d2d7365706f6c69612d3100000000000000000000;
         revert Configurations__UnsupportedChain();
     }
 
     function getChainlinkFunctionsEncryptedSecretsEndpoint(uint256 chainId) public pure returns (string memory) {
-        if (chainId == ETH_SEPOLIA_CHAIN_ID || 
-            chainId == ARB_SEPOLIA_CHAIN_ID || 
-            chainId == OPT_SEPOLIA_CHAIN_ID || 
-            chainId == BASE_SEPOLIA_CHAIN_ID || 
-            chainId == MANTLE_SEPOLIA_CHAIN_ID || 
-            chainId == LOCAL_CHAIN_ID) {
+        if (
+            chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
+                || chainId == BASE_SEPOLIA_CHAIN_ID || chainId == MANTLE_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID
+        ) {
             return "https://01.functions-gateway.testnet.chain.link/";
         }
         revert Configurations__UnsupportedChain();
@@ -153,7 +147,7 @@ contract Configurations is Script {
         revert Configurations__UnsupportedChain();
     }
 
-    // £todo: deploy and update this address. 
+    // £todo: deploy and update this address.
     function getGoverned721(uint256 chainId) public pure returns (address) {
         if (chainId == ETH_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID) {
             return 0x0000000000000000000000000000000000000123;
@@ -180,5 +174,25 @@ contract Configurations is Script {
             return 0xd76aA09811dE7c7871E9BFc25eB85F4634adA5C6;
         }
         return 0x0000000000000000000000000000000000000123;
+    }
+
+    function getMandateRegistry(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0x3153cbAAe8b1CF2beAdfc0a37270E3c6d836EDb6;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
+        if (chainId == LOCAL_CHAIN_ID) return 0xec0c18733ceE46c0d9871dE0625820CA87c4c09D; 
+        revert Configurations__UnsupportedChain();
+    }
+
+    function getSubmitMandateId(uint256 chainId) public pure returns (uint16) {
+        if (
+            chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
+                || chainId == BASE_SEPOLIA_CHAIN_ID || chainId == MANTLE_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID
+        ) {
+            return 4;
+        }
+        return 0;
     }
 }

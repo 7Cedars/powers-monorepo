@@ -6,13 +6,14 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
 
 contract ExternalAction_Simple is Mandate {
     /// @notice Constructor of the BespokeAction_Simple mandate
     constructor() {
-        bytes memory configParams = abi.encode("address PowersTarget", "uint16 MandateIdTarget", "string Description", "string[] Params");
+        bytes memory configParams =
+            abi.encode("address PowersTarget", "uint16 MandateIdTarget", "string Description", "string[] Params");
         emit Mandate__Deployed(configParams);
     }
 

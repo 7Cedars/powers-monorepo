@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
 /// @notice This mandate allows for flexible execution of any target mandate at another Powers instance.
-/// Note that Powers needs to have to correct roleID to be allowed to call the target mandate at the target Powers instance. 
+/// Note that Powers needs to have to correct roleID to be allowed to call the target mandate at the target Powers instance.
 /// Also note that the params are set, as such the mandate can only be used to call target functions with the same params.
 
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
 
 contract ExternalAction_Flexible is Mandate {

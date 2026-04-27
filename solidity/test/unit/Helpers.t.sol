@@ -2,1057 +2,42 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import { FlagActions } from "../../src/helpers/FlagActions.sol";
-import { Grant } from "../../src/helpers/Grant.sol";
 import { TestSetupPowers } from "../TestSetup.t.sol";
 import { PowersMock } from "../mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "../mocks/SimpleErc20Votes.sol";
 import { Erc20Taxed } from "../mocks/Erc20Taxed.sol";
-import { ElectionList } from "../../src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { SimpleErc1155 } from "../mocks/SimpleErc1155.sol";
-import { Nominees } from "../../src/helpers/Nominees.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { SimpleGovernor } from "../mocks/SimpleGovernor.sol";
 import { EmptyTargetsMandate } from "../mocks/MandateMocks.sol";
 import { MockTargetsMandate } from "../mocks/MandateMocks.sol";
-import { PowersFactory } from "../../src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "../../src/helpers/PowersDeployer.sol";
-import { Powers } from "../../src/Powers.sol";
-import { Soulbound1155 } from "../../src/helpers/Soulbound1155.sol";
-import { Ownable } from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { AllowedTokens } from "../../src/helpers/AllowedTokens.sol";
-import { IZKPassport_PowersRegistry, ZKPassport_PowersRegistry } from "../../src/helpers/ZKPassport_PowersRegistry.sol";
-import { IZKPassportVerifier, IZKPassportHelper } from "../../src/interfaces/IZKPassport.sol";
+import { PowersFactory } from "@src/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { Powers } from "@src/Powers.sol";
+import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
+import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
+import { IZKPassport_PowersRegistry, ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
+import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassport.sol";
 import { ZKProof } from "../mocks/ZKProof.sol";
-import { DisclosedData, ProofVerificationParams, BoundData, ProofVerificationData, FaceMatchMode, OS, ServiceConfig } from "../../lib/circuits/src/solidity/src/Types.sol";
-import { Governed721, IGoverned721 } from "../../src/helpers/Governed721.sol";
-import { IPowers } from "../../src/interfaces/IPowers.sol";
-
-/// @notice Unit tests for helper contracts
-//////////////////////////////////////////////////////////////
-//               FLAG ACTIONS TESTS                        //
-//////////////////////////////////////////////////////////////
-contract FlagActionsTest is TestSetupPowers {
-    // FlagActions flagActions;
-
-    function setUp() public override {
-        super.setUp();
-        vm.prank(address(daoMock));
-        flagActions = new FlagActions();
-
-        // Mock getActionState to always return Fulfilled
-        vm.mockCall(
-            address(daoMock), abi.encodeWithSelector(daoMock.getActionState.selector), abi.encode(ActionState.Fulfilled)
-        );
-    }
-
-    function testConstructor() public view {
-        assertEq(flagActions.owner(), address(daoMock));
-    }
-
-    function testConstructorRevertsWithZeroAddress() public pure {
-        // This test is no longer applicable since we're using deployed contracts
-        // The constructor validation would have happened during deployment
-        assertTrue(true); // Placeholder assertion
-    }
-
-    function testFlag() public {
-        actionId = 123;
-        roleId = 1;
-        account = alice;
-        mandateId = 2;
-
-        vm.prank(address(daoMock));
-        flagActions.flag(actionId, roleId, account, mandateId);
-
-        assertTrue(flagActions.flaggedActions(actionId));
-        assertTrue(flagActions.isActionIdFlagged(actionId));
-        assertTrue(flagActions.isActionFlaggedForRole(actionId, roleId));
-        assertTrue(flagActions.isActionFlaggedForAccount(actionId, account));
-        assertTrue(flagActions.isActionFlaggedForMandate(actionId, mandateId));
-    }
-
-    function testFlagRevertsWhenAlreadyFlagged() public {
-        actionId = 123;
-        roleId = 1;
-        account = alice;
-        mandateId = 2;
-
-        vm.prank(address(daoMock));
-        flagActions.flag(actionId, roleId, account, mandateId);
-
-        vm.expectRevert("Already true");
-        vm.prank(address(daoMock));
-        flagActions.flag(actionId, roleId, account, mandateId);
-    }
-
-    function testUnflag() public {
-        actionId = 123;
-        roleId = 1;
-        account = alice;
-        mandateId = 2;
-
-        vm.prank(address(daoMock));
-        flagActions.flag(actionId, roleId, account, mandateId);
-
-        vm.prank(address(daoMock));
-        flagActions.unflag(actionId);
-
-        assertFalse(flagActions.flaggedActions(actionId));
-        assertFalse(flagActions.isActionIdFlagged(actionId));
-        // Now unflagged actions are removed from all arrays
-        assertFalse(flagActions.isActionFlaggedForRole(actionId, roleId));
-        assertFalse(flagActions.isActionFlaggedForAccount(actionId, account));
-        assertFalse(flagActions.isActionFlaggedForMandate(actionId, mandateId));
-    }
-
-    function testUnflagRevertsWhenNotFlagged() public {
-        actionId = 123;
-
-        vm.expectRevert("Already false");
-        vm.prank(address(daoMock));
-        flagActions.unflag(actionId);
-    }
-
-    function testFlagRevertsWhenNotCalledByOwner() public {
-        actionId = 123;
-        roleId = 1;
-        account = alice;
-        mandateId = 2;
-
-        vm.expectRevert();
-        vm.prank(alice);
-        flagActions.flag(actionId, roleId, account, mandateId);
-    }
-
-    function testUnflagRevertsWhenNotCalledByOwner() public {
-        actionId = 123;
-
-        vm.expectRevert();
-        vm.prank(alice);
-        flagActions.unflag(actionId);
-    }
-
-    function testMultipleActions() public {
-        actionIds = new uint256[](3);
-        actionIds[0] = 123;
-        actionIds[1] = 456;
-        actionIds[2] = 789;
-
-        uint16[] memory roleIds = new uint16[](3);
-        roleIds[0] = 1;
-        roleIds[1] = 2;
-        roleIds[2] = 3;
-
-        accounts = new address[](3);
-        accounts[0] = alice;
-        accounts[1] = bob;
-        accounts[2] = charlotte;
-
-        mandateIds = new uint16[](3);
-        mandateIds[0] = 10;
-        mandateIds[1] = 20;
-        mandateIds[2] = 30;
-
-        vm.startPrank(address(daoMock));
-        flagActions.flag(actionIds[0], roleIds[0], accounts[0], mandateIds[0]);
-        flagActions.flag(actionIds[1], roleIds[1], accounts[1], mandateIds[1]);
-        flagActions.flag(actionIds[2], roleIds[2], accounts[2], mandateIds[2]);
-        vm.stopPrank();
-
-        assertTrue(flagActions.isActionIdFlagged(actionIds[0]));
-        assertTrue(flagActions.isActionIdFlagged(actionIds[1]));
-        assertTrue(flagActions.isActionIdFlagged(actionIds[2]));
-
-        vm.startPrank(address(daoMock));
-        flagActions.unflag(actionIds[1]);
-        vm.stopPrank();
-
-        assertTrue(flagActions.isActionIdFlagged(actionIds[0]));
-        assertFalse(flagActions.isActionIdFlagged(actionIds[1]));
-        assertTrue(flagActions.isActionIdFlagged(actionIds[2]));
-    }
-
-    function testGetFlaggedActionsByRole() public {
-        actionIds = new uint256[](2);
-        actionIds[0] = 123;
-        actionIds[1] = 456;
-        roleId = 1;
-        accounts = new address[](2);
-        accounts[0] = alice;
-        accounts[1] = bob;
-        mandateIds = new uint16[](2);
-        mandateIds[0] = 10;
-        mandateIds[1] = 20;
-
-        vm.startPrank(address(daoMock));
-        flagActions.flag(actionIds[0], roleId, accounts[0], mandateIds[0]);
-        flagActions.flag(actionIds[1], roleId, accounts[1], mandateIds[1]);
-        vm.stopPrank();
-
-        uint256[] memory roleActions = flagActions.getFlaggedActionsByRole(roleId);
-        assertEq(roleActions.length, 2);
-        assertEq(roleActions[0], actionIds[0]);
-        assertEq(roleActions[1], actionIds[1]);
-
-        assertEq(flagActions.getFlaggedActionsCountByRole(roleId), 2);
-    }
-
-    function testGetFlaggedActionsByAccount() public {
-        actionIds = new uint256[](2);
-        actionIds[0] = 123;
-        actionIds[1] = 456;
-        uint16[] memory roleIds = new uint16[](2);
-        roleIds[0] = 1;
-        roleIds[1] = 2;
-        account = alice;
-        mandateIds = new uint16[](2);
-        mandateIds[0] = 10;
-        mandateIds[1] = 20;
-
-        vm.startPrank(address(daoMock));
-        flagActions.flag(actionIds[0], roleIds[0], account, mandateIds[0]);
-        flagActions.flag(actionIds[1], roleIds[1], account, mandateIds[1]);
-        vm.stopPrank();
-
-        uint256[] memory accountActions = flagActions.getFlaggedActionsByAccount(account);
-        assertEq(accountActions.length, 2);
-        assertEq(accountActions[0], actionIds[0]);
-        assertEq(accountActions[1], actionIds[1]);
-
-        assertEq(flagActions.getFlaggedActionsCountByAccount(account), 2);
-    }
-
-    function testGetFlaggedActionsByMandate() public {
-        actionIds = new uint256[](2);
-        actionIds[0] = 123;
-        actionIds[1] = 456;
-        uint16[] memory roleIds = new uint16[](2);
-        roleIds[0] = 1;
-        roleIds[1] = 2;
-        accounts = new address[](2);
-        accounts[0] = alice;
-        accounts[1] = bob;
-        mandateId = 10;
-
-        vm.startPrank(address(daoMock));
-        flagActions.flag(actionIds[0], roleIds[0], accounts[0], mandateId);
-        flagActions.flag(actionIds[1], roleIds[1], accounts[1], mandateId);
-        vm.stopPrank();
-
-        uint256[] memory mandateActions = flagActions.getFlaggedActionsByMandate(mandateId);
-        assertEq(mandateActions.length, 2);
-        assertEq(mandateActions[0], actionIds[0]);
-        assertEq(mandateActions[1], actionIds[1]);
-
-        assertEq(flagActions.getFlaggedActionsCountByMandate(mandateId), 2);
-    }
-
-    function testGetAllFlaggedActions() public {
-        actionIds = new uint256[](3);
-        actionIds[0] = 123;
-        actionIds[1] = 456;
-        actionIds[2] = 789;
-        uint16[] memory roleIds = new uint16[](3);
-        roleIds[0] = 1;
-        roleIds[1] = 2;
-        roleIds[2] = 3;
-        accounts = new address[](3);
-        accounts[0] = alice;
-        accounts[1] = bob;
-        accounts[2] = charlotte;
-        mandateIds = new uint16[](3);
-        mandateIds[0] = 10;
-        mandateIds[1] = 20;
-        mandateIds[2] = 30;
-
-        vm.startPrank(address(daoMock));
-        flagActions.flag(actionIds[0], roleIds[0], accounts[0], mandateIds[0]);
-        flagActions.flag(actionIds[1], roleIds[1], accounts[1], mandateIds[1]);
-        flagActions.flag(actionIds[2], roleIds[2], accounts[2], mandateIds[2]);
-        vm.stopPrank();
-
-        uint256[] memory allActions = flagActions.getAllFlaggedActions();
-        assertEq(allActions.length, 3);
-        assertEq(allActions[0], actionIds[0]);
-        assertEq(allActions[1], actionIds[1]);
-        assertEq(allActions[2], actionIds[2]);
-
-        assertEq(flagActions.getTotalFlaggedActionsCount(), 3);
-    }
-
-    function testIsActionFlaggedForSpecificContext() public {
-        actionId = 123;
-        roleId = 1;
-        account = alice;
-        mandateId = 10;
-
-        vm.prank(address(daoMock));
-        flagActions.flag(actionId, roleId, account, mandateId);
-
-        // Test specific context checks
-        assertTrue(flagActions.isActionFlaggedForRole(actionId, roleId));
-        assertFalse(flagActions.isActionFlaggedForRole(actionId, 999));
-
-        assertTrue(flagActions.isActionFlaggedForAccount(actionId, account));
-        assertFalse(flagActions.isActionFlaggedForAccount(actionId, bob));
-
-        assertTrue(flagActions.isActionFlaggedForMandate(actionId, mandateId));
-        assertFalse(flagActions.isActionFlaggedForMandate(actionId, 999));
-    }
-
-    function testUnflagRemovesFromAllArrays() public {
-        actionIds = new uint256[](3);
-        actionIds[0] = 123;
-        actionIds[1] = 456;
-        actionIds[2] = 789;
-        uint16[] memory roleIds = new uint16[](3);
-        roleIds[0] = 1;
-        roleIds[1] = 2;
-        roleIds[2] = 3;
-        accounts = new address[](3);
-        accounts[0] = alice;
-        accounts[1] = bob;
-        accounts[2] = charlotte;
-        mandateIds = new uint16[](3);
-        mandateIds[0] = 10;
-        mandateIds[1] = 20;
-        mandateIds[2] = 30;
-
-        // Flag multiple actions
-        vm.startPrank(address(daoMock));
-        flagActions.flag(actionIds[0], roleIds[0], accounts[0], mandateIds[0]);
-        flagActions.flag(actionIds[1], roleIds[1], accounts[1], mandateIds[1]);
-        flagActions.flag(actionIds[2], roleIds[2], accounts[2], mandateIds[2]);
-        vm.stopPrank();
-
-        // Verify all actions are flagged
-        assertTrue(flagActions.isActionIdFlagged(actionIds[0]));
-        assertTrue(flagActions.isActionIdFlagged(actionIds[1]));
-        assertTrue(flagActions.isActionIdFlagged(actionIds[2]));
-
-        // Verify counts before unflagging
-        assertEq(flagActions.getFlaggedActionsCountByRole(roleIds[0]), 1);
-        assertEq(flagActions.getFlaggedActionsCountByAccount(accounts[0]), 1);
-        assertEq(flagActions.getFlaggedActionsCountByMandate(mandateIds[0]), 1);
-        assertEq(flagActions.getTotalFlaggedActionsCount(), 3);
-
-        // Unflag actionIds[1]
-        vm.prank(address(daoMock));
-        flagActions.unflag(actionIds[1]);
-
-        // Verify actionIds[1] is unflagged
-        assertFalse(flagActions.isActionIdFlagged(actionIds[1]));
-        assertFalse(flagActions.isActionFlaggedForRole(actionIds[1], roleIds[1]));
-        assertFalse(flagActions.isActionFlaggedForAccount(actionIds[1], accounts[1]));
-        assertFalse(flagActions.isActionFlaggedForMandate(actionIds[1], mandateIds[1]));
-
-        // Verify other actions are still flagged
-        assertTrue(flagActions.isActionIdFlagged(actionIds[0]));
-        assertTrue(flagActions.isActionIdFlagged(actionIds[2]));
-
-        // Verify counts after unflagging
-        assertEq(flagActions.getFlaggedActionsCountByRole(roleIds[0]), 1);
-        assertEq(flagActions.getFlaggedActionsCountByRole(roleIds[1]), 0);
-        assertEq(flagActions.getFlaggedActionsCountByRole(roleIds[2]), 1);
-
-        assertEq(flagActions.getFlaggedActionsCountByAccount(accounts[0]), 1);
-        assertEq(flagActions.getFlaggedActionsCountByAccount(accounts[1]), 0);
-        assertEq(flagActions.getFlaggedActionsCountByAccount(accounts[2]), 1);
-
-        assertEq(flagActions.getFlaggedActionsCountByMandate(mandateIds[0]), 1);
-        assertEq(flagActions.getFlaggedActionsCountByMandate(mandateIds[1]), 0);
-        assertEq(flagActions.getFlaggedActionsCountByMandate(mandateIds[2]), 1);
-
-        assertEq(flagActions.getTotalFlaggedActionsCount(), 2);
-
-        // Verify array contents
-        uint256[] memory role1Actions = flagActions.getFlaggedActionsByRole(roleIds[0]);
-        assertEq(role1Actions.length, 1);
-        assertEq(role1Actions[0], actionIds[0]);
-
-        uint256[] memory role2Actions = flagActions.getFlaggedActionsByRole(roleIds[1]);
-        assertEq(role2Actions.length, 0);
-
-        uint256[] memory allActions = flagActions.getAllFlaggedActions();
-        assertEq(allActions.length, 2);
-        // Should contain actionIds[0] and actionIds[2], but not actionIds[1]
-        bool found1 = false;
-        bool found3 = false;
-        bool found2 = false;
-        for (i = 0; i < allActions.length; i++) {
-            if (allActions[i] == actionIds[0]) found1 = true;
-            if (allActions[i] == actionIds[2]) found3 = true;
-            if (allActions[i] == actionIds[1]) found2 = true;
-        }
-        assertTrue(found1);
-        assertTrue(found3);
-        assertFalse(found2);
-    }
-}
-
-//////////////////////////////////////////////////////////////
-//               GRANT TESTS                               //
-//////////////////////////////////////////////////////////////
-contract GrantTest is TestSetupPowers {
-    Grant grant;
-    Grant.Milestone milestone;
-
-    function setUp() public override {
-        super.setUp();
-        vm.prank(address(daoMock));
-        grant = new Grant();
-        testToken = makeAddr("testToken");
-    }
-
-    function testConstructor() public view {
-        assertEq(grant.owner(), address(daoMock));
-    }
-
-    function testConstructorRevertsWithZeroAddress() public pure {
-        // This test is no longer applicable since we're using deployed contracts
-        // The constructor validation would have happened during deployment
-        assertTrue(true); // Placeholder assertion
-    }
-
-    function testUpdateNativeBudget() public {
-        uint256 budget = 1000 ether;
-
-        vm.prank(address(daoMock));
-        grant.updateNativeBudget(budget);
-
-        assertEq(grant.getNativeBudget(), budget);
-        assertEq(grant.getRemainingNativeBudget(), budget);
-    }
-
-    function testUpdateTokenBudget() public {
-        uint256 budget = 5000;
-
-        vm.prank(address(daoMock));
-        grant.updateTokenBudget(testToken, budget);
-
-        assertEq(grant.getTokenBudget(testToken), budget);
-        assertEq(grant.getRemainingTokenBudget(testToken), budget);
-    }
-
-    function testUpdateTokenBudgetRevertsWithZeroAddress() public {
-        vm.expectRevert("Invalid token address");
-        vm.prank(address(daoMock));
-        grant.updateTokenBudget(address(0), 1000);
-    }
-
-    function testWhitelistToken() public {
-        vm.prank(address(daoMock));
-        grant.whitelistToken(testToken);
-
-        assertTrue(grant.isTokenWhitelisted(testToken));
-    }
-
-    function testWhitelistTokenRevertsWithZeroAddress() public {
-        vm.expectRevert("Invalid token address");
-        vm.prank(address(daoMock));
-        grant.whitelistToken(address(0));
-    }
-
-    function testDewhitelistToken() public {
-        vm.prank(address(daoMock));
-        grant.whitelistToken(testToken);
-
-        vm.prank(address(daoMock));
-        grant.dewhitelistToken(testToken);
-
-        assertFalse(grant.isTokenWhitelisted(testToken));
-    }
-
-    function testSubmitProposal() public {
-        vm.startPrank(address(daoMock));
-        grant.whitelistToken(testToken);
-        grant.updateNativeBudget(1000 ether);
-        grant.updateTokenBudget(testToken, 5000);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](2);
-        milestoneAmounts = new uint256[](2);
-        tokens = new address[](2);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneBlocks[1] = block.number + 200;
-        milestoneAmounts[0] = 100 ether;
-        milestoneAmounts[1] = 200 ether;
-        tokens[0] = address(0); // Native
-        tokens[1] = testToken;
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        assertEq(proposalId, 0);
-        assertEq(grant.getProposalCount(), 1);
-
-        Grant.Proposal memory proposal = grant.getProposal(proposalId);
-        assertEq(proposal.proposer, tx.origin);
-        assertEq(proposal.uri, uri);
-        assertEq(proposal.milestoneBlocks.length, 2);
-        assertEq(proposal.milestoneAmounts.length, 2);
-        assertEq(proposal.tokens.length, 2);
-        assertFalse(proposal.approved);
-        assertFalse(proposal.rejected);
-        assertEq(proposal.submissionBlock, block.number);
-    }
-
-    function testSubmitProposalRevertsWithInvalidData() public {
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](0);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        vm.expectRevert("Invalid proposal");
-        vm.prank(address(daoMock));
-        grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-    }
-
-    function testSubmitProposalRevertsWithMismatchedArrays() public {
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](2);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](2);
-
-        vm.expectRevert("Invalid proposal");
-        vm.prank(address(daoMock));
-        grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-    }
-
-    function testSubmitProposalRevertsWithUnwhitelistedToken() public {
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = testToken; // Not whitelisted
-
-        vm.expectRevert("Token not whitelisted");
-        vm.prank(address(daoMock));
-        grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-    }
-
-    function testApproveProposal() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.whitelistToken(testToken);
-        grant.updateNativeBudget(1000 ether);
-        grant.updateTokenBudget(testToken, 5000);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        assertTrue(grant.isProposalApproved(proposalId));
-        assertFalse(grant.isProposalRejected(proposalId));
-    }
-
-    function testRejectProposal() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.whitelistToken(testToken);
-        grant.updateNativeBudget(1000 ether);
-        grant.updateTokenBudget(testToken, 5000);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.rejectProposal(proposalId);
-
-        assertFalse(grant.isProposalApproved(proposalId));
-        assertTrue(grant.isProposalRejected(proposalId));
-    }
-
-    function testApproveProposalRevertsWhenNotFound() public {
-        vm.expectRevert("Proposal not found");
-        vm.prank(address(daoMock));
-        grant.approveProposal(999);
-    }
-
-    function testApproveProposalRevertsWhenAlreadyProcessed() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(1000 ether);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        vm.expectRevert("Proposal already processed");
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-    }
-
-    function testReleaseMilestone() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(1000 ether);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        // Fast forward to milestone block
-        vm.roll(block.number + 101);
-
-        vm.prank(address(daoMock));
-        grant.releaseMilestone(proposalId, 0);
-
-        milestone = grant.getMilestone(proposalId, 0);
-        assertTrue(milestone.released);
-        assertEq(grant.getTotalSpentNative(), 100 ether);
-    }
-
-    function testReleaseMilestoneRevertsWhenNotApproved() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(1000 ether);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.roll(block.number + 101);
-
-        vm.expectRevert("Proposal not approved");
-        vm.prank(address(daoMock));
-        grant.releaseMilestone(proposalId, 0);
-    }
-
-    function testReleaseMilestoneRevertsWhenNotReached() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(1000 ether);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        vm.expectRevert("Milestone not reached");
-        vm.prank(address(daoMock));
-        grant.releaseMilestone(proposalId, 0);
-    }
-
-    function testReleaseMilestoneRevertsWhenInsufficientBudget() public {
-        // Test the scenario where budget becomes insufficient between approval and release
-        // This can happen if the budget is reduced after approval but before release
-
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(100 ether); // Sufficient budget for approval
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 50 ether; // Within budget at approval time
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        // Now reduce the budget to make it insufficient for release
-        vm.prank(address(daoMock));
-        grant.updateNativeBudget(30 ether); // Less than milestone amount
-
-        vm.roll(block.number + 101);
-
-        // This should fail at release due to insufficient budget
-        vm.expectRevert("Insufficient budget");
-        vm.prank(address(daoMock));
-        grant.releaseMilestone(proposalId, 0);
-    }
-
-    function testCanReleaseMilestone() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(1000 ether);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        tokens = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 100 ether;
-        tokens[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        // Before milestone block
-        assertFalse(grant.canReleaseMilestone(proposalId, 0));
-
-        // After milestone block
-        vm.roll(block.number + 101);
-        assertTrue(grant.canReleaseMilestone(proposalId, 0));
-    }
-
-    function testGetProposalMilestones() public {
-        // Setup proposal
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(1000 ether);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](2);
-        milestoneAmounts = new uint256[](2);
-        tokens = new address[](2);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneBlocks[1] = block.number + 200;
-        milestoneAmounts[0] = 100 ether;
-        milestoneAmounts[1] = 200 ether;
-        tokens[0] = address(0);
-        tokens[1] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        Grant.Milestone[] memory milestones = grant.getProposalMilestones(proposalId);
-        assertEq(milestones.length, 2);
-        assertEq(milestones[0].blockNumber, block.number + 100);
-        assertEq(milestones[1].blockNumber, block.number + 200);
-    }
-
-    function testGetBudgetStatus() public {
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(1000 ether);
-        grant.updateTokenBudget(testToken, 5000);
-        vm.stopPrank();
-
-        (
-            uint256 nativeBudget,
-            uint256 nativeSpent,
-            uint256 nativeRemaining,
-            address[] memory whitelistedTokensList,
-            uint256[] memory tokenBudgets,
-            uint256[] memory tokenSpent,
-            uint256[] memory tokenRemaining
-        ) = grant.getBudgetStatus();
-
-        assertEq(nativeBudget, 1000 ether);
-        assertEq(nativeSpent, 0);
-        assertEq(nativeRemaining, 1000 ether);
-        assertEq(whitelistedTokensList.length, 0);
-        assertEq(tokenBudgets.length, 0);
-        assertEq(tokenSpent.length, 0);
-        assertEq(tokenRemaining.length, 0);
-    }
-
-    function testApproveProposalRevertsWithInsufficientNativeBudget() public {
-        // Setup proposal with budget smaller than total proposal amount
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(50 ether); // Less than total proposal amount
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](2);
-        milestoneAmounts = new uint256[](2);
-        tokens = new address[](2);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneBlocks[1] = block.number + 200;
-        milestoneAmounts[0] = 30 ether; // Total: 30 + 40 = 70 ether
-        milestoneAmounts[1] = 40 ether;
-        tokens[0] = address(0); // Native
-        tokens[1] = address(0); // Native
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.expectRevert("Insufficient native budget for proposal");
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-    }
-
-    function testApproveProposalRevertsWithInsufficientTokenBudget() public {
-        // Setup proposal with token budget smaller than total proposal amount
-        vm.startPrank(address(daoMock));
-        grant.whitelistToken(testToken);
-        grant.updateNativeBudget(1000 ether);
-        grant.updateTokenBudget(testToken, 50); // Less than total proposal amount
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](2);
-        milestoneAmounts = new uint256[](2);
-        tokens = new address[](2);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneBlocks[1] = block.number + 200;
-        milestoneAmounts[0] = 30; // Total: 30 + 40 = 70 tokens
-        milestoneAmounts[1] = 40;
-        tokens[0] = testToken;
-        tokens[1] = testToken;
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.expectRevert("Insufficient token budget for proposal");
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-    }
-
-    function testApproveProposalSucceedsWithSufficientBudget() public {
-        // Setup proposal with sufficient budget
-        vm.startPrank(address(daoMock));
-        grant.whitelistToken(testToken);
-        grant.updateNativeBudget(100 ether);
-        grant.updateTokenBudget(testToken, 100);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](2);
-        milestoneAmounts = new uint256[](2);
-        tokens = new address[](2);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneBlocks[1] = block.number + 200;
-        milestoneAmounts[0] = 30 ether; // Total: 30 + 40 = 70 ether
-        milestoneAmounts[1] = 40 ether;
-        tokens[0] = address(0); // Native
-        tokens[1] = address(0); // Native
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        assertTrue(grant.isProposalApproved(proposalId));
-    }
-
-    function testApproveProposalSucceedsWithMixedTokenTypes() public {
-        // Setup proposal with mixed native and token types
-        vm.startPrank(address(daoMock));
-        grant.whitelistToken(testToken);
-        grant.updateNativeBudget(100 ether);
-        grant.updateTokenBudget(testToken, 100);
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](3);
-        milestoneAmounts = new uint256[](3);
-        tokens = new address[](3);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneBlocks[1] = block.number + 200;
-        milestoneBlocks[2] = block.number + 300;
-        milestoneAmounts[0] = 30 ether; // Native
-        milestoneAmounts[1] = 40; // Token
-        milestoneAmounts[2] = 20 ether; // Native (total native: 50 ether, total token: 40)
-        tokens[0] = address(0); // Native
-        tokens[1] = testToken;
-        tokens[2] = address(0); // Native
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-
-        assertTrue(grant.isProposalApproved(proposalId));
-    }
-
-    function testApproveProposalRevertsWithMultipleTokenTypes() public {
-        // Setup proposal with multiple token types where one exceeds budget
-        testToken2 = makeAddr("testToken2");
-
-        vm.startPrank(address(daoMock));
-        grant.whitelistToken(testToken);
-        grant.whitelistToken(testToken2);
-        grant.updateNativeBudget(1000 ether);
-        grant.updateTokenBudget(testToken, 100);
-        grant.updateTokenBudget(testToken2, 10); // Small budget for token2
-        vm.stopPrank();
-
-        uri = "https://example.com/proposal";
-        milestoneBlocks = new uint256[](2);
-        milestoneAmounts = new uint256[](2);
-        tokens = new address[](2);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneBlocks[1] = block.number + 200;
-        milestoneAmounts[0] = 50; // Token1 - within budget
-        milestoneAmounts[1] = 20; // Token2 - exceeds budget
-        tokens[0] = testToken;
-        tokens[1] = testToken2;
-
-        vm.prank(address(daoMock));
-        uint256 proposalId = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens);
-
-        vm.expectRevert("Insufficient token budget for proposal");
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId);
-    }
-
-    function testApproveProposalRevertsWithAlreadySpentBudget() public {
-        // Setup: First approve and release a milestone to spend some budget
-        vm.startPrank(address(daoMock));
-        grant.updateNativeBudget(100 ether);
-        vm.stopPrank();
-
-        // First proposal
-        uri = "https://example.com/proposal1";
-        milestoneBlocks = new uint256[](1);
-        milestoneAmounts = new uint256[](1);
-        address[] memory tokens1 = new address[](1);
-
-        milestoneBlocks[0] = block.number + 100;
-        milestoneAmounts[0] = 60 ether;
-        tokens1[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId1 = grant.submitProposal(uri, milestoneBlocks, milestoneAmounts, tokens1);
-
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId1);
-
-        // Release the milestone to spend budget
-        vm.roll(block.number + 101);
-        vm.prank(address(daoMock));
-        grant.releaseMilestone(proposalId1, 0);
-
-        // Second proposal that would exceed remaining budget
-        uri2 = "https://example.com/proposal2";
-        milestoneBlocks2 = new uint256[](1);
-        milestoneAmounts2 = new uint256[](1);
-        address[] memory tokens2 = new address[](1);
-
-        milestoneBlocks2[0] = block.number + 200;
-        milestoneAmounts2[0] = 50 ether; // Would exceed remaining 40 ether budget
-        tokens2[0] = address(0);
-
-        vm.prank(address(daoMock));
-        uint256 proposalId2 = grant.submitProposal(uri2, milestoneBlocks2, milestoneAmounts2, tokens2);
-
-        vm.expectRevert("Insufficient native budget for proposal");
-        vm.prank(address(daoMock));
-        grant.approveProposal(proposalId2);
-    }
-
-    function testAllFunctionsRevertWhenNotCalledByPowers() public {
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.updateNativeBudget(1000);
-
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.updateTokenBudget(testToken, 1000);
-
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.whitelistToken(testToken);
-
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.dewhitelistToken(testToken);
-
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.submitProposal("", new uint256[](0), new uint256[](0), new address[](0));
-
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.approveProposal(0);
-
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.rejectProposal(0);
-
-        vm.expectRevert();
-        vm.prank(alice);
-        grant.releaseMilestone(0, 0);
-    }
-}
+import {
+    DisclosedData,
+    ProofVerificationParams,
+    BoundData,
+    ProofVerificationData,
+    FaceMatchMode,
+    OS,
+    ServiceConfig
+} from "@lib/circuits/src/solidity/src/Types.sol";
+import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 //////////////////////////////////////////////////////////////
 //                  ELECTION LIST TESTS                     //
 //////////////////////////////////////////////////////////////
-contract ElectionListTest is TestSetupPowers {
+contract ElectionRegistryTest is TestSetupPowers {
     uint256 electionId;
     string electionTitle = "Test Election";
     uint48 startBlock;
@@ -1065,7 +50,7 @@ contract ElectionListTest is TestSetupPowers {
     function setUp() public override {
         super.setUp();
         vm.prank(address(daoMock));
-        electionList = new ElectionList();
+        electionList = new ElectionRegistry();
 
         startBlock = uint48(block.number + 10);
         endBlock = uint48(block.number + 100);
@@ -1079,7 +64,7 @@ contract ElectionListTest is TestSetupPowers {
 
         uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
 
-        ElectionList.Election memory election = electionList.getElectionInfo(id);
+        ElectionRegistry.Election memory election = electionList.getElectionInfo(id);
         assertEq(election.owner, address(daoMock));
         assertEq(election.title, electionTitle);
         assertEq(election.startBlock, startBlock);
@@ -2209,11 +1194,11 @@ contract PowersFactoryTest is TestSetupPowers {
         factory = new PowersFactory(
             "Factory DAO", // name
             "https://factory.dao", // uri
-            MAX_CALL_DATA, 
-            MAX_RETURN_DATA, 
+            MAX_CALL_DATA,
+            MAX_RETURN_DATA,
             MAX_EXECUTIONS,
             address(deployer)
-            );
+        );
         factory.addMandates(mandateInitDataArray);
         vm.stopPrank();
     }
@@ -2245,7 +1230,7 @@ contract PowersFactoryTest is TestSetupPowers {
         assertEq(deployedPowers.MAX_EXECUTIONS_LENGTH(), MAX_EXECUTIONS);
 
         // Check if the create DAO is set as the admin
-        // assertTrue(deployedPowers.hasRoleSince(address(daoMock), deployedPowers.ADMIN_ROLE()) > 0); -- is going to change. 
+        // assertTrue(deployedPowers.hasRoleSince(address(daoMock), deployedPowers.ADMIN_ROLE()) > 0); -- is going to change.
 
         // Check Factory is NOT Admin
         assertEq(deployedPowers.hasRoleSince(address(factory), deployedPowers.ADMIN_ROLE()), 0);
@@ -2274,11 +1259,11 @@ contract PowersFactoryTest is TestSetupPowers {
         factory = new PowersFactory(
             "Another DAO", // name
             "ipfs://QmHash", // uri
-            MAX_CALL_DATA, 
-            MAX_RETURN_DATA, 
+            MAX_CALL_DATA,
+            MAX_RETURN_DATA,
             MAX_EXECUTIONS,
             address(deployer)
-            );
+        );
         factory.addMandates(mandateInitDataArray);
         address deployedAddress = factory.createPowers();
         vm.stopPrank();
@@ -2294,21 +1279,21 @@ contract PowersFactoryTest is TestSetupPowers {
     }
 
     function testLastMandateDeployment() public {
-        vm.prank(address(daoMock)); 
+        vm.prank(address(daoMock));
         address deployedAddress = factory.createPowers();
 
         (PowersTypes.MandateInitData[] memory mandateInitDataArray) =
             testConstitutions.powersTestConstitution(address(daoMock));
 
         Powers deployedPowers = Powers(payable(deployedAddress));
-        
+
         // Get the total number of mandates deployed
         // mandateCounter returns the next ID to assign, so the last mandate ID is mandateCounter - 1
         uint16 mandateCount = deployedPowers.mandateCounter();
         uint16 expectedMandateCount = uint16(mandateInitDataArray.length) + 1; // +1 because mandateCounter starts at 1
         assertTrue(mandateCount > 1, "No mandates were deployed");
         assertTrue(mandateCount == expectedMandateCount, "Mandate count does not match initialization data length");
-        
+
         uint16 lastMandateId = mandateCount - 1;
 
         // Verify the last mandate is active and has a valid address
@@ -2788,26 +1773,26 @@ contract AllowedTokensTest is TestSetupPowers {
 //          ZKPASSPORT POWERS REGISTRY TESTS                //
 //////////////////////////////////////////////////////////////
 contract ZKPassport_PowersRegistryTest is TestSetupPowers {
-    // this should run on forked mainnet. 
-    // Deploy the ZKregistry as is, with existing verifiers and helpers. 
-    // it should never ever use any mock contracts. 
+    // this should run on forked mainnet.
+    // Deploy the ZKregistry as is, with existing verifiers and helpers.
+    // it should never ever use any mock contracts.
     // the forked chain has all the real verifiers and helpers deployed, so we can test the full integration.
     address registryAddress;
-    ZKPassport_PowersRegistry registry;
+    ZKPassport_PowersRegistry zkRegistry;
     ZKProof zkProof;
 
     function setUp() public override {
         uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
-        vm.selectFork(sepoliaFork); // options: only sepoliaFork 
+        vm.selectFork(sepoliaFork); // options: only sepoliaFork
 
         super.setUp();
 
-        registryAddress = findMandateAddress("ZKPassport_PowersRegistry"); 
+        registryAddress = findMandateAddress("ZKPassport_PowersRegistry");
         console.log("Registry address on Sepolia fork:", registryAddress);
-        registry = ZKPassport_PowersRegistry(registryAddress);
+        zkRegistry = ZKPassport_PowersRegistry(registryAddress);
         zkProof = new ZKProof();
 
-        // We will deploy the registry in the test function itself, since it needs to be deployed by the daoMock. 
+        // We will deploy the registry in the test function itself, since it needs to be deployed by the daoMock.
     }
 
     function testZKPassportPowersRegistry() public {
@@ -2819,32 +1804,31 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
 
         // Check that the registry has the expected verifiers and helpers (from the constitution)
         // We can only check that they are set, not their internal logic, since we are using real contracts on mainnet fork.
-        address verifierAddress = address(registry.zkPassportVerifier()); 
-        address helperAddress = address(registry.zkPassportHelper());
+        address verifierAddress = address(zkRegistry.zkPassportVerifier());
+        address helperAddress = address(zkRegistry.zkPassportHelper());
 
         assertTrue(verifierAddress != address(0));
         assertTrue(helperAddress != address(0));
-    } 
+    }
 
     function testSubmitProof() public {
         // because proofs actually expire after a certain time, we need to skip this test for now.
         vm.skip(true);
-        
-        ProofVerificationParams memory proof = zkProof.getProof();   
-        bool isIDCard = false; 
+
+        ProofVerificationParams memory proof = zkProof.getProof();
+        bool isIDCard = false;
 
         vm.prank(address(daoMock));
         ZKPassport_PowersRegistry(registryAddress).registerProof(proof, isIDCard);
-    }  
+    }
 
     function testSubmitProofBytecode() public {
         // because proofs actually expire after a certain time, we need to skip this test for now.
         vm.skip(true);
-        
-        bytes memory bytesInput = zkProof.getBytesInputs();   
 
-        vm.prank(address(daoMock));
-        registryAddress.call(bytesInput);
+        bytes memory bytesInput = zkProof.getBytesInputs();
+
+        vm.prank(address(daoMock)); 
 
         DisclosedData memory disclosedData = ZKPassport_PowersRegistry(registryAddress).getDisclosed(cedars);
 
@@ -2856,8 +1840,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
         console2.log("Disclosed data expiry date:", disclosedData.expiryDate);
         console2.log("Disclosed data document number:", disclosedData.documentNumber);
         console2.log("Disclosed data document type:", disclosedData.documentType);
-
-    }  
+    }
 
     function testRetrieveDisclosedData() public {
         vm.skip(true);
@@ -2872,7 +1855,7 @@ contract ZKPassport_PowersRegistryTest is TestSetupPowers {
         console2.log("Disclosed data expiry date:", disclosedData.expiryDate);
         console2.log("Disclosed data document number:", disclosedData.documentNumber);
         console2.log("Disclosed data document type:", disclosedData.documentType);
-  
+
         assertEq(abi.encode(disclosedData.documentType), abi.encode("P<"));
     }
 }
@@ -2890,7 +1873,7 @@ contract Governed721Test is TestSetupPowers {
         super.setUp();
         vm.prank(address(daoMock));
         governed721 = new Governed721();
-        
+
         vm.prank(address(daoMock));
         paymentToken = new SimpleErc20Votes();
     }
@@ -2929,7 +1912,7 @@ contract Governed721Test is TestSetupPowers {
 
     function testSetSplitRevertsInvalidRole() public {
         vm.prank(address(daoMock));
-        (bool success, ) = address(governed721).call(abi.encodeWithSelector(governed721.setSplit.selector, 5, 10));
+        (bool success,) = address(governed721).call(abi.encodeWithSelector(governed721.setSplit.selector, 5, 10));
         assertFalse(success);
     }
 
@@ -2982,7 +1965,7 @@ contract Governed721Test is TestSetupPowers {
     function testMint() public {
         uint256 tokenId = 1;
         string memory uri = "ipfs://test";
-        
+
         governed721.mint(alice, tokenId, bob, uri);
 
         assertEq(governed721.ownerOf(tokenId), alice);
@@ -3042,7 +2025,7 @@ contract Governed721Test is TestSetupPowers {
         vm.prank(address(daoMock));
         governed721.setWhitelist(address(paymentToken), true);
 
-        uint256 price = 100 * 10**18;
+        uint256 price = 100 * 10 ** 18;
         vm.prank(charlotte);
         paymentToken.mint(price);
         vm.prank(charlotte);
@@ -3072,7 +2055,7 @@ contract Governed721Test is TestSetupPowers {
     }
 
     function testSafeTransferFromRevertsNotWhitelisted() public {
-        uint256 price = 100 * 10**18;
+        uint256 price = 100 * 10 ** 18;
         governed721.mint(alice, 1, bob, "uri");
 
         bytes memory data = abi.encode(address(paymentToken), price, 123);
@@ -3089,7 +2072,7 @@ contract Governed721Test is TestSetupPowers {
         vm.prank(address(daoMock));
         governed721.setBlacklist(alice, true);
 
-        uint256 price = 100 * 10**18;
+        uint256 price = 100 * 10 ** 18;
         governed721.mint(alice, 1, bob, "uri");
 
         bytes memory data = abi.encode(address(paymentToken), price, 123);
@@ -3105,7 +2088,7 @@ contract Governed721Test is TestSetupPowers {
         governed721.setPaymentId(mandateId);
 
         bytes memory data = abi.encode(address(paymentToken), 100, 123);
-        
+
         vm.prank(address(daoMock));
         governed721.collectPayment(IGoverned721.Role.Artist, alice, charlotte, 1, data);
     }

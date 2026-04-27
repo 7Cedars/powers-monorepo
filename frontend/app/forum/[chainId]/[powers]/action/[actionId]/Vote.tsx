@@ -152,7 +152,8 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
       mandate as Mandate,
       action.callData as `0x${string}`,
       BigInt(action.nonce as string),
-      action.description as string
+      action.description as string,
+      powers as Powers
     );
   };
 

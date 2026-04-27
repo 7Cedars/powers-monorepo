@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { ERC1155 } from "../../lib/openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
-import { Ownable } from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol";
+import { ERC1155 } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
+import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
 
 /**
  * @dev Soulbound1155 is meant as a soulbound ERC 1155 token that has a dynamic token ID, allowing for encoding data into the token ID.
  */
 interface ISoulbound1155 {
-    function mint(address to, uint256 tokenId) external; 
-    function mint(address to, uint256 tokenId, address artist, string memory uri) external; 
+    function mint(address to, uint256 tokenId) external;
+    function mint(address to, uint256 tokenId, address artist, string memory uri) external;
     function burn(address from, uint256 tokenId) external;
 }
 
-// deterministic deployment factory for the Soulbound1155 contract. 
+// deterministic deployment factory for the Soulbound1155 contract.
 contract Soulbound1155Factory {
     function createSoulbound1155(string memory uri) external returns (address) {
         bytes32 salt = bytes32(abi.encodePacked(msg.sender));
@@ -25,24 +25,34 @@ contract Soulbound1155Factory {
         address deployedAddress = Create2.deploy(0, salt, deploymentData);
 
         Soulbound1155 soulbound = Soulbound1155(deployedAddress);
-        soulbound.transferOwnership(msg.sender); // transfer ownership to the caller, so they can mint tokens. 
+        soulbound.transferOwnership(msg.sender); // transfer ownership to the caller, so they can mint tokens.
         return deployedAddress;
     }
 }
 
-// It is FAR more logical to use ERC721 here! 
+// It is FAR more logical to use ERC721 here!
 contract Soulbound1155 is ERC1155, ISoulbound1155, Ownable {
     // the dao address receives half of mintable coins.
     constructor(string memory uri_) ERC1155(uri_) Ownable(msg.sender) { }
 
-    // Mint token with the same selector as Governed721.mint. 
-    function mint(address to, uint256 tokenId, address /* artists */, string memory /* uri */) public virtual onlyOwner {
-        _mint(to, tokenId, 1, ""); 
+    // Mint token with the same selector as Governed721.mint.
+    function mint(
+        address to,
+        uint256 tokenId,
+        address,
+        /* artists */
+        string memory /* uri */
+    )
+        public
+        virtual
+        onlyOwner
+    {
+        _mint(to, tokenId, 1, "");
     }
 
     // Mint tokenIds that encode the minter address and block number.
     function mint(address to, uint256 tokenId) public virtual onlyOwner {
-        _mint(to, tokenId, 1, ""); 
+        _mint(to, tokenId, 1, "");
     }
 
     function burn(address from, uint256 tokenId) public onlyOwner {

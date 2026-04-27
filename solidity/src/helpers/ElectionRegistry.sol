@@ -4,10 +4,10 @@ pragma solidity ^0.8.26;
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
-/// @title ElectionList
+/// @title ElectionRegistry
 /// @notice A contract to manage multiple elections with nominee nominations and voting functionality.
 /// @author 7Cedars
-contract ElectionList {
+contract ElectionRegistry {
     // Election storage
     struct Election {
         address owner;
@@ -138,12 +138,10 @@ contract ElectionList {
     }
 
     function getVoteCount(uint256 electionId, address nominee) external view returns (uint256) {
-        Election storage currentElection = elections[electionId];
         return votesCount[electionId][nominee];
     }
 
     function hasUserVoted(address voter, uint256 electionId) external view returns (bool) {
-        Election storage currentElection = elections[electionId];
         return hasVoted[electionId][voter];
     }
 
@@ -165,7 +163,6 @@ contract ElectionList {
         view
         returns (address[] memory rankedNominees, uint256[] memory votes)
     {
-        Election storage currentElection = elections[electionId];
         uint256 numNominees = getNominees(electionId).length;
         if (numNominees == 0) return (new address[](0), new uint256[](0));
 

@@ -4,43 +4,47 @@ pragma solidity ^0.8.26;
 // scripts
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
-import { Configurations } from "../../script/Configurations.s.sol";
-import { InitialisePowers } from "../../script/InitialisePowers.s.sol";
+import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
+import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
 // external protocols
-import { Create2 } from "../../lib/openzeppelin-contracts/contracts/utils/Create2.sol";
+import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
 
 // powers contracts
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
-import { Powers } from "../../src/Powers.sol";
-import { IPowers } from "../../src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { Powers } from "@src/Powers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { Nominees } from "../../src/helpers/Nominees.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { SimpleErc20Votes } from "../../test/mocks/SimpleErc20Votes.sol";
 
 /// @title Token Delegates Deployment Script
 contract Deploy is DeployHelpers {
     Configurations helperConfig; 
     PowersTypes.MandateInitData[] constitution;
-    InitialisePowers initialisePowers;
     PowersTypes.Conditions conditions;
     Powers powers;
     PowersTypes.Flow[] flows;
     Nominees nominees;
     SimpleErc20Votes simpleErc20Votes;
+    IMandateRegistry registry;
 
     address[] targets;
     uint256[] values;
     bytes[] calldatas;
     string[] dynamicParams;
 
+    // Select version mandates to be used.
+    uint16 constant MAJOR = 0;
+    uint16 constant MINOR = 6;
+    uint16 constant PATCH = 1;
+
     function run() external {
-        // step 0, setup.
-        initialisePowers = new InitialisePowers();
-        initialisePowers.run();
+        // step 0, setup.  
         helperConfig = new Configurations(); 
+        registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Token Delegates Powers
         vm.startBroadcast();
@@ -90,7 +94,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels (Delegates, Funders) and revokes itself after execution",
-                targetMandate: initialisePowers.getInitialisedAddress("PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -113,7 +117,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for Delegates: Members can nominate themselves for the Token Delegate role.",
-                targetMandate: initialisePowers.getInitialisedAddress("Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Nominate"),
                 config: abi.encode(address(nominees)),
                 conditions: conditions
             })
@@ -127,7 +131,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Elect Delegates: Run the election for delegates. In this demo, the top 3 nominees by token delegation of token VOTES_TOKEN become Delegates.",
-                targetMandate: initialisePowers.getInitialisedAddress("DelegateTokenSelect"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "DelegateTokenSelect"),
                 config: abi.encode(
                     address(simpleErc20Votes),
                     address(nominees),
@@ -159,7 +163,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -173,7 +177,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
-                targetMandate: initialisePowers.getInitialisedAddress("BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })

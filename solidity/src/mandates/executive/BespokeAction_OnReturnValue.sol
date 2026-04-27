@@ -6,7 +6,7 @@ pragma solidity ^0.8.26;
 /// @author 7Cedars,
 
 import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
 
 contract BespokeAction_OnReturnValue is Mandate {
@@ -63,7 +63,7 @@ contract BespokeAction_OnReturnValue is Mandate {
         // Send the calldata to the target function
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         // if no target contract specified, call the function on the Powers contract
-        targets[0] = targetContract == address(0) ? address(powers) : targetContract; 
+        targets[0] = targetContract == address(0) ? address(powers) : targetContract;
         calldatas[0] = abi.encodePacked(targetFunction, paramsBefore, returnData, paramsAfter);
 
         return (actionId, targets, values, calldatas);

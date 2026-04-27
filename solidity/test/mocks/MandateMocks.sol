@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../src/Mandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 
 /// @notice Mock mandate contract that returns empty targets for testing
 contract EmptyTargetsMandate is Mandate {

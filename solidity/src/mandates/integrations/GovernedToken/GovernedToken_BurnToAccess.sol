@@ -3,27 +3,24 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
 import { IPowers } from "../../../interfaces/IPowers.sol";
-import { IERC1155 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
+import { IERC1155 } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import { ISoulbound1155 } from "../../../helpers/Soulbound1155.sol";
 import { IGoverned721 } from "../../../helpers/Governed721.sol";
-import { IERC721 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import { IERC165 } from "../../../../lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
-import { Strings } from "../../../../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
 /**
  * @title GovernedToken_BurnToAccess
- * @notice A mandate in which a user has to burn a token to pass the mandate checks and gain access to a subsequent mandate. It can be used to throttle access to any kind of action. 
+ * @notice A mandate in which a user has to burn a token to pass the mandate checks and gain access to a subsequent mandate. It can be used to throttle access to any kind of action.
  * @dev Integrates with Soulbound1155.sol and Governed721.sol to create flexible gated access to roleId in Powers organisations.
  */
 contract GovernedToken_BurnToAccess is Mandate {
     constructor() {
-        bytes memory configParams = abi.encode(
-            "string[] inputParams",
-            "address governedTokenAddress"
-        );
+        bytes memory configParams = abi.encode("string[] inputParams", "address governedTokenAddress");
         emit Mandate__Deployed(configParams);
     }
 
@@ -34,7 +31,7 @@ contract GovernedToken_BurnToAccess is Mandate {
         bytes memory config
     ) public override {
         console2.log("waypoint 1");
-        (string[] memory params, ) = abi.decode(config, (string[], address));
+        (string[] memory params,) = abi.decode(config, (string[], address));
         console2.log("waypoint 2");
         string[] memory newParams = new string[](params.length + 1);
         console2.log("waypoint 3");
@@ -63,7 +60,7 @@ contract GovernedToken_BurnToAccess is Mandate {
 
         // 1. Get config
         (, address governedTokenAddress) = abi.decode(getConfig(powers, mandateId), (string[], address));
-        
+
         // 2. Decode input params
         uint256 tokenId = abi.decode(mandateCalldata, (uint256));
 

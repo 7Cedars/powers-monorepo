@@ -4,14 +4,14 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 import { TestSetupExecutive } from "../../TestSetup.t.sol";
 
-import { Powers } from "../../../src/Powers.sol";
-import { MandateUtilities } from "../../../src/libraries/MandateUtilities.sol";
-import { PowersTypes } from "../../../src/interfaces/PowersTypes.sol";
-import { PowersEvents } from "../../../src/interfaces/PowersEvents.sol";
-import { PowersErrors } from "../../../src/interfaces/PowersErrors.sol";
+import { Powers } from "@src/Powers.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
+import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { PowersMock } from "../../mocks/PowersMock.sol";
-import { OpenAction } from "../../../src/mandates/executive/OpenAction.sol";
-import { PresetActions } from "../../../src/mandates/executive/PresetActions.sol";
+import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
 import { SimpleErc1155 } from "../../mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "../../mocks/ReturnDataMock.sol";
 
@@ -76,11 +76,7 @@ contract OpenActionTest is TestSetupExecutive {
     function testOpenActionExecuteExternal() public {
         // 1. Prepare calldata for external action (Mint coins on SimpleErc1155)
         mintAmount = 100;
-        callData = abi.encodeWithSelector(
-            bytes4(keccak256("mint(uint256,address)")),
-            mintAmount,
-            alice
-        );
+        callData = abi.encodeWithSelector(bytes4(keccak256("mint(uint256,address)")), mintAmount, alice);
 
         // 2. Prepare mandate inputs
         targets = new address[](1);

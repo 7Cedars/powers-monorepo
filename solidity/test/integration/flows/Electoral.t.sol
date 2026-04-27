@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Test, console, console2 } from "../../../lib/forge-std/src/Test.sol";
-import { Powers } from "../../../src/Powers.sol";
-import { Mandate } from "../../../src/Mandate.sol";
-import { Nominees } from "../../../src/helpers/Nominees.sol";
-import { ElectionList } from "../../../src/helpers/ElectionList.sol";
+import { Test, console, console2 } from "@lib/forge-std/src/Test.sol";
+import { Powers } from "@src/Powers.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import {
     TestSetupDelegateTokenFlow,
-    TestSetupElectionListFlow,
+    TestSetupElectionRegistryFlow,
     TestSetupAssignExternalRoleParentFlow
 } from "../../TestSetup.t.sol";
 
-import { Nominees } from "../../../src/helpers/Nominees.sol";
+import { Nominees } from "@src/helpers/Nominees.sol";
 import { SimpleErc20Votes } from "../../mocks/SimpleErc20Votes.sol";
 
 contract DelegateTokenFlow_IntegrationTest is TestSetupDelegateTokenFlow {
@@ -178,13 +178,13 @@ contract DelegateTokenFlow_IntegrationTest is TestSetupDelegateTokenFlow {
     }
 }
 
-// contract ElectionListFlow_IntegrationTest is TestSetupElectionListFlow {
+// contract ElectionRegistryFlow_IntegrationTest is TestSetupElectionRegistryFlow {
 //     uint16 constant MANDATE_NOMINATE = 1;
 //     uint16 constant MANDATE_START_ELECTION = 2;
 //     uint16 constant MANDATE_END_ELECTION = 3;
 //     uint16 constant VOTE_MANDATE_ID = 4; // Expected ID for the dynamically deployed vote mandate
 
-//     function testElectionListFlow_FullInteraction() public {
+//     function testElectionRegistryFlow_FullInteraction() public {
 //         // --- 1. NOMINATION FLOW ---
 //         console2.log("--- Step 1: Nomination ---");
 
@@ -333,7 +333,7 @@ contract DelegateTokenFlow_IntegrationTest is TestSetupDelegateTokenFlow {
 //         assertEq(openElection.getVoteCount(frank, electionId), 0, "Frank should have 0 votes");
 
 //         // Test Double Voting (Alice tries to vote again)
-//         vm.expectRevert(); // ElectionList already voted check or Mandate check
+//         vm.expectRevert(); // ElectionRegistry already voted check or Mandate check
 //         vm.prank(alice);
 //         daoMock.request(
 //             VOTE_MANDATE_ID,

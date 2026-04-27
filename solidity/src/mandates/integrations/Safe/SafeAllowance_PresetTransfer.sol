@@ -2,8 +2,8 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
-import { Enum } from "../../../../lib/safe-smart-account/contracts/common/Enum.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
+import { Enum } from "@lib/safe-smart-account/contracts/common/Enum.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // only for testing/debugging
 
@@ -33,7 +33,8 @@ contract SafeAllowance_PresetTransfer is Mandate {
     /// @notice Constructor function
     constructor() {
         // Expose expected input parameters for UIs.
-        bytes memory configParams = abi.encode("address Token", "uint256 Amount", "address allowanceModule", "address safeProxy");
+        bytes memory configParams =
+            abi.encode("address Token", "uint256 Amount", "address allowanceModule", "address safeProxy");
         emit Mandate__Deployed(configParams);
     }
 
@@ -43,9 +44,7 @@ contract SafeAllowance_PresetTransfer is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        super.initializeMandate(
-            index, nameDescription, abi.encode("address PayableTo"), config
-        );
+        super.initializeMandate(index, nameDescription, abi.encode("address PayableTo"), config);
     }
 
     /// @notice Prepares the call to the Allowance Module
@@ -86,7 +85,7 @@ contract SafeAllowance_PresetTransfer is Mandate {
         returns (bytes memory)
     {
         Mem memory mem;
-        (mem.token, mem.amount, , mem.safeProxy) =
+        (mem.token, mem.amount,, mem.safeProxy) =
             abi.decode(getConfig(powers, mandateId), (address, uint256, address, address));
         (mem.payableTo) = abi.decode(mandateCalldata, (address));
 

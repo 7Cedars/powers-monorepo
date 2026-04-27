@@ -3,22 +3,21 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
 import { IPowers } from "../../../interfaces/IPowers.sol";
-import { IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import { MandateUtilities } from "../../../libraries/MandateUtilities.sol";
+import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IGoverned721 } from "../../../helpers/Governed721.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
 /**
  * @title GovernedToken_CollectSplitPayment
- * @notice Mandate to gate split a payment when a token is sold. 
+ * @notice Mandate to gate split a payment when a token is sold.
  * This is meant to be used in conjunction with the Governed721 contract.
  */
 contract GovernedToken_CollectSplitPayment is Mandate {
-    
     struct Mem {
-        address governed721Address; 
+        address governed721Address;
         address treasury;
         IGoverned721.Role role;
         address oldOwner;
@@ -27,7 +26,7 @@ contract GovernedToken_CollectSplitPayment is Mandate {
         bytes data;
         address paymentToken;
         uint256 quantity;
-        uint256 nonce; 
+        uint256 nonce;
         uint256 transferId;
         IGoverned721.TransferData transferData;
         uint16 percentage;
@@ -65,10 +64,10 @@ contract GovernedToken_CollectSplitPayment is Mandate {
     {
         Mem memory mem;
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
-        
+
         // 1. Get config
         (mem.governed721Address) = abi.decode(getConfig(powers, mandateId), (address));
-        
+
         // mem.treasury = IPowers(payable(powers)).getTreasury();
         // if (mem.treasury == address(0)) revert("Treasury not set");
 
@@ -81,13 +80,10 @@ contract GovernedToken_CollectSplitPayment is Mandate {
 
         // 4. Verify transfer data matches input (sanity check, mainly checks if transfer exists)
         if (
-            mem.transferData.oldOwner == address(0) || 
-            mem.transferData.newOwner == address(0) || 
-            mem.transferData.tokenId == 0 ||
-            mem.transferData.quantity == 0 || 
-            mem.transferData.paymentToken == address(0) ||
-            mem.transferData.nonce == 0 
-            ) {
+            mem.transferData.oldOwner == address(0) || mem.transferData.newOwner == address(0)
+                || mem.transferData.tokenId == 0 || mem.transferData.quantity == 0
+                || mem.transferData.paymentToken == address(0) || mem.transferData.nonce == 0
+        ) {
             revert("Transfer data mismatch or not found");
         }
 
@@ -111,7 +107,7 @@ contract GovernedToken_CollectSplitPayment is Mandate {
 
         // 8. Create Call to Transfer from Treasury to Caller
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
-        
+
         // Since Powers instance is set as its own treasury, it holds the funds.
         // The instruction for Powers is to call transfer on the ERC20 token contract or transfer native currency.
         // if (mem.transferData.paymentToken != address(0)) {

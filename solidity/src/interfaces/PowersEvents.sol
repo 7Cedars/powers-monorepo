@@ -99,11 +99,15 @@ interface PowersEvents {
     /// @notice Emitted when a flow is adapted.
     /// @param index1 the index of the flow before adaptation
     /// @param index2 the index of the mandate within the flow
-    /// @param mandateId the id of the mandate that will be placed at index2 in flow of index1. 
+    /// @param mandateId the id of the mandate that will be placed at index2 in flow of index1.
     event FlowAdapted(uint8 index1, uint8 index2, uint16 mandateId);
 
     /// @notice Emitted when a address is blacklisted.
     /// @param account the address of the account
     /// @param blacklisted the blacklisted status of the account
     event BlacklistSet(address indexed account, bool indexed blacklisted);
+
+    /// @notice Emitted when the paymaster address is updated.
+    /// @param newPaymaster the address of the new paymaster
+    event PaymasterSet(address indexed newPaymaster);
 }
