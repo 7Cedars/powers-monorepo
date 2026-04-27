@@ -152,12 +152,30 @@ contract DeployMandates is Script {
             regCount++;
         }
 
+        console2.log("Deployment complete. Registering mandates to MandateRegistry...");
+        console2.log("Total mandates to register:", regCount);
+        console2.log("Total mandates deployed:", names.length);
+
         // Create exactly-sized arrays for the registration payload
         if (regCount > 0) {
-            // bytes memory dynamicParams = abi.encode(finalNames, finalAddresses);
+            // Create properly-sized arrays with only regCount elements
+            string[] memory finalNames = new string[](regCount);
+            address[] memory finalAddresses = new address[](regCount);
+            bytes32[] memory finalCreationCodeHashes = new bytes32[](regCount);
+            
+            for (uint256 i = 0; i < regCount; i++) {
+                finalNames[i] = regNames[i];
+                finalAddresses[i] = regAddresses[i];
+                finalCreationCodeHashes[i] = regCreationCodeHashes[i];
+            }
+
+            console2.log("Registering the following mandates:");
+            for (uint256 i = 0; i < regCount; i++) {
+                console2.log(" - ", finalNames[i], " at ", finalAddresses[i]);
+            }
+
             vm.startBroadcast(); 
-            registry.batchRegisterMandates(regNames, regAddresses, regCreationCodeHashes);
-            // powers.request(submitMandateId, dynamicParams, 0, "Batch Register Mandates");
+            registry.batchRegisterMandates(finalNames, finalAddresses, finalCreationCodeHashes);
             vm.stopBroadcast();
 
             console2.log("Successfully registered mandates to MandateRegistry.");

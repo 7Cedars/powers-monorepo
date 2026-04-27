@@ -8,7 +8,6 @@ import { FundPaymaster } from "@src/mandates/integrations/AccountAbstraction/Fun
 import { WithdrawFromPaymaster } from "@src/mandates/integrations/AccountAbstraction/WithdrawFromPaymaster.sol";
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "@lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { ISenderCreator } from "@lib/account-abstraction/contracts/interfaces/ISenderCreator.sol";
 
 contract MockEntryPoint is IEntryPoint {
     function depositTo(
@@ -56,10 +55,6 @@ contract MockEntryPoint is IEntryPoint {
 
     function getUserOpHash(PackedUserOperation calldata) external view returns (bytes32) {
         return bytes32(0);
-    }
-
-    function senderCreator() external view returns (ISenderCreator) {
-        return ISenderCreator(address(0));
     }
 
     function supportsInterface(bytes4 interfaceId) external view returns (bool) {

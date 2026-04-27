@@ -31,14 +31,18 @@ export function Providers({children}: {children: React.ReactNode}) {
       arbitrumSepolia,
       ...(isLocalhost ? [foundry] : [])
     ],
-    loginMethods: ['wallet'],
+    loginMethods: ['wallet', 'email' ],
     appearance: {
         theme: (mounted ? resolvedTheme : 'light') as 'light' | 'dark',
         accentColor: '#676FFF',
         logo: '/logo1_notext.png', 
         walletList: ["metamask", "rainbow", "detected_wallets", "wallet_connect"]
     },
-    embeddedWallets: { }
+    embeddedWallets: {
+      ethereum: {
+        createOnLogin: 'users-without-wallets',
+      },
+    }
   };
 
   return (  

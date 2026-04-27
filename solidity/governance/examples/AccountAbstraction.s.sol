@@ -49,7 +49,7 @@ contract Deploy is DeployHelpers {
     uint16 constant MINOR = 6;
     uint16 constant PATCH = 1;
 
-    address constant ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
     function run() external returns (Powers) {
         // step 0, setup. 
@@ -64,7 +64,7 @@ contract Deploy is DeployHelpers {
 
         powers = new Powers(
             "Account Abstracted Powers", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/accountAbstraction.json", // uri (dummy uri for now)
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/bicameralism.json",  // Using the bicameralism example as dummy for now. 
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length

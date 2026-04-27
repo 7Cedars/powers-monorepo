@@ -74,9 +74,9 @@ export const usePowers = () => {
       }) as [string, string, bigint, `0x${string}`, bigint, `0x${string}` ]
 
       // console.log("@fetchPowersData, waypoint 1", {namePowers, uriPowers, mandateCountPowers})
-      powersPopulated.mandateCount = mandateCountPowers as bigint
       powersPopulated.name = namePowers as string
       powersPopulated.uri = uriPowers as string
+      powersPopulated.mandateCount = mandateCountPowers as bigint
       powersPopulated.treasury = treasuryPowers as `0x${string}`
       powersPopulated.foundedAt = foundedAtPowers as bigint
       powersPopulated.paymaster = paymasterPowers as `0x${string}`

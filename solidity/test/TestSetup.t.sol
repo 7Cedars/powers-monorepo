@@ -22,7 +22,7 @@ import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 
 // organisations
 import { Deploy as Powers101 } from "../governance/examples/Powers101.s.sol";
-import { Deploy as ElectionRegistrysDAO } from "../governance/examples/ElectionRegistrysDao.s.sol";
+import { Deploy as ElectionRegistrysDAO } from "../governance/examples/ElectionListsDao.s.sol";
 // import { Deploy } from "@governance/examples/CulturalStewardsDAO/Deploy.s.sol";
 
 // helpers
