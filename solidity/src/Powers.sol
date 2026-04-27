@@ -661,17 +661,6 @@ contract Powers is EIP712, IPowers, Context {
                     <= (proposedAction.forVotes + proposedAction.abstainVotes) * DENOMINATOR);
     }
 
-    /// @notice Internal function to check if a given action has been requested.
-    /// @param actionId The ID of the action.
-    /// @return True if the action has been requested or fulfilled, false otherwise.
-    function _hasBeenRequested(uint256 actionId) internal view returns (bool) {
-        ActionState state = getActionState(actionId);
-        if (state == ActionState.Requested || state == ActionState.Fulfilled) {
-            return true;
-        }
-        return false;
-    }
-
     /// @notice Internal function to check if a vote for a given proposal has succeeded.
     /// @param actionId The ID of the proposal.
     /// @return True if the vote succeeded, false otherwise.
