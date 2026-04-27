@@ -4,6 +4,10 @@ import { Powers, Mandate } from '@/context/types';
 import { bigintToRole } from "@/utils/bigintTo";
 import { useRouter, useParams } from 'next/navigation';
 import { SearchFilterSort } from '@/components/SearchFilterSort';
+import { useUIStateStore } from '@/context/store';
+import { useAccount, useReadContracts } from 'wagmi';
+import { EyeIcon } from '@heroicons/react/24/outline';
+import { powersAbi } from '@/context/abi';
 
 interface ActivityOverviewProps {
   powers: Powers;
@@ -11,6 +15,47 @@ interface ActivityOverviewProps {
 
 export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>();
+  const { address: userAddress } = useAccount();
+  const showAllMandates = useUIStateStore((state) => state.showAllMandates);
+  const toggleShowAllMandates = useUIStateStore((state) => state.toggleShowAllMandates);
+
+  // Get unique role IDs from powers.roles
+  const roleIdsToCheck = useMemo(() => {
+    return powers.roles?.map(r => r.roleId) || [];
+  }, [powers.roles]);
+
+  // Use multicall to check hasRoleSince for all roles at once
+  const { data: roleSinceResults } = useReadContracts({
+    contracts: roleIdsToCheck.map(roleId => ({
+      address: powersAddress as `0x${string}`,
+      abi: powersAbi,
+      functionName: 'hasRoleSince' as const,
+      args: [userAddress as `0x${string}`, roleId] as const,
+      chainId: Number(chainId)
+    })),
+    query: { 
+      enabled: !!userAddress && !!powersAddress && roleIdsToCheck.length > 0 
+    }
+  });
+
+  // Build Set of roles the user has
+  const userRoleIds = useMemo(() => {
+    if (!roleSinceResults || roleIdsToCheck.length === 0) return new Set<string>();
+    
+    const roleIds = new Set<string>();
+    roleSinceResults.forEach((result, idx) => {
+      if (result.status === 'success' && (result.result as bigint) > 0n) {
+        roleIds.add(roleIdsToCheck[idx].toString());
+      }
+    });
+    return roleIds;
+  }, [roleSinceResults, roleIdsToCheck]);
+
+  // Check if a mandate's allowedRole matches any of the user's roles
+  const userHasRoleForMandate = (mandate: Mandate): boolean => {
+    const allowedRole = mandate.conditions?.allowedRole?.toString();
+    return allowedRole !== undefined && userRoleIds.has(allowedRole);
+  };
 
   // Extract flows and mandates
   const flowBoxes = useMemo(() => {
@@ -47,6 +92,19 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
     return boxes;
   }, [powers]);
 
+  // Filter flows based on user's roles when showAllMandates is false
+  const filteredFlowBoxes = useMemo(() => {
+    if (showAllMandates) return flowBoxes;
+    
+    // Filter to only show flows that contain at least one mandate with a role the user has
+    return flowBoxes.filter(box => 
+      box.mandates.some(m => userHasRoleForMandate(m))
+    );
+  }, [flowBoxes, showAllMandates, userRoleIds]);
+
+  // Check if user has no roles at all and showAllMandates is false
+  const showEmptyState = !showAllMandates && filteredFlowBoxes.length === 0 && flowBoxes.length > 0;
+
   if (flowBoxes.length === 0) {
     return (
       <div className="border border-border flex flex-col h-full">
@@ -55,6 +113,27 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
         </div>
         <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm">
           No mandates found
+        </div>
+      </div>
+    );
+  }
+
+  if (showEmptyState) {
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-auto p-0">
+          <div className="border border-border bg-background p-8 text-center">
+            <p className="text-muted-foreground font-mono text-sm mb-4">
+              You don't have any roles in this organisation that allow you to participate in governance flows.
+            </p>
+            <button
+              onClick={toggleShowAllMandates}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary font-mono text-sm"
+            >
+              <EyeIcon className="w-4 h-4" />
+              <span>Show all mandates</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -74,13 +153,15 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
       {/* Was bg-muted/10 */}
       <div className="flex-1 overflow-auto p-0"> 
         <div className="flex flex-wrap gap-4">
-          {flowBoxes.map((box, idx) => (
+          {filteredFlowBoxes.map((box, idx) => (
             <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[min(100%,21rem)] max-w-2xl">
               <FlowSummaryBox 
                 box={box}
                 powers={powers}
                 chainId={chainId}
                 powersAddress={powersAddress}
+                userRoleIds={userRoleIds}
+                showAllMandates={showAllMandates}
               />
             </div>
           ))}
@@ -95,12 +176,16 @@ function FlowSummaryBox({
   box, 
   powers, 
   chainId, 
-  powersAddress 
+  powersAddress,
+  userRoleIds,
+  showAllMandates
 }: {
   box: { flowIndex?: string; nameDescription: string; mandates: Mandate[] };
   powers: Powers;
   chainId: string;
   powersAddress: string;
+  userRoleIds: Set<string>;
+  showAllMandates: boolean;
 }) {
   const router = useRouter();
   
@@ -126,13 +211,18 @@ function FlowSummaryBox({
             {box.mandates.map(m => {
               const roleId = m.conditions?.allowedRole?.toString() || 'N/A';
               const roleName = bigintToRole(BigInt(roleId), powers);
+              const userHasRole = roleId !== 'N/A' && userRoleIds.has(roleId);
+              const isDisabled = !m.active || (!showAllMandates && !userHasRole);
+              const shouldDim = !showAllMandates && !userHasRole;
+              
               return (
                 <div 
                   key={m.index.toString()} 
-                  className={`flex items-center min-w-0 px-3 py-2 bg-background border border-border transition-colors ${!m.active ? 'opacity-50 cursor-not-allowed text-foreground' : 'cursor-pointer hover:bg-muted/50 text-foreground hover:text-primary'}`}
+                  className={`flex items-center min-w-0 px-3 py-2 bg-background border border-border transition-colors ${isDisabled ? 'opacity-50 cursor-not-allowed text-foreground' : 'cursor-pointer hover:bg-muted/50 text-foreground hover:text-primary'}`}
+                  style={shouldDim ? { opacity: 0.5 } : undefined}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (m.active) {
+                    if (!isDisabled) {
                       router.push(`/forum/${chainId}/${powersAddress}/mandate/${m.index}`);
                     }
                   }}

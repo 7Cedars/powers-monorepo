@@ -104,6 +104,20 @@ type SavedProtocolsStore = {
   updateProtocol: (contractAddress: `0x${string}`, updates: Partial<Powers>) => void
 }
 
+// UI State Store - for global UI toggles
+type UIStateStore = {
+  showAllMandates: boolean;
+  setShowAllMandates: (value: boolean) => void;
+  toggleShowAllMandates: () => void;
+}
+
+export const useUIStateStore = create<UIStateStore>((set) => ({
+  showAllMandates: false, // Default to false - only show user's roles
+  setShowAllMandates: (value: boolean) => set({ showAllMandates: value }),
+  toggleShowAllMandates: () => set((state) => ({ showAllMandates: !state.showAllMandates })),
+}));
+
+// Saved Protocols Store
 export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => ({
   savedProtocols: [],
   
