@@ -49,7 +49,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 6;
-    uint16 constant PATCH = 1;
+    uint16 constant PATCH = 2;
 
     function run() external returns (Powers, PowersFactory) { 
         helperConfig = new Configurations();

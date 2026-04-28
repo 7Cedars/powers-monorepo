@@ -112,7 +112,7 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @return The address of the deployed Powers contract.
     function createPowers() external onlyOwner returns (address) {
         address powers = PowersDeployer(deployer)
-            .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, msg.sender);
+            .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, msg.sender);
         latestDeployment = powers;
 
         return powers;
@@ -123,7 +123,7 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @return The address of the deployed Powers contract.
     function createPowers(address admin) external onlyOwner returns (address) {
         address powers = PowersDeployer(deployer)
-            .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, admin);
+            .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, admin);
         latestDeployment = powers;
 
         return powers;
