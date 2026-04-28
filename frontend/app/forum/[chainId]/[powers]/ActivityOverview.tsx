@@ -9,6 +9,9 @@ import { useAccount, useReadContracts } from 'wagmi';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { powersAbi } from '@/context/abi';
 
+// PUBLIC_ROLE is max uint256 - mandates with this role are accessible to everyone
+const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+
 interface ActivityOverviewProps {
   powers: Powers;
 }
@@ -51,10 +54,20 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
     return roleIds;
   }, [roleSinceResults, roleIdsToCheck]);
 
+  // Check if a mandate is public (allowedRole is PUBLIC_ROLE, meaning accessible to everyone)
+  const isMandatePublic = (mandate: Mandate): boolean => {
+    return mandate.conditions?.allowedRole === PUBLIC_ROLE;
+  };
+
   // Check if a mandate's allowedRole matches any of the user's roles
   const userHasRoleForMandate = (mandate: Mandate): boolean => {
     const allowedRole = mandate.conditions?.allowedRole?.toString();
     return allowedRole !== undefined && userRoleIds.has(allowedRole);
+  };
+
+  // Check if user can access a mandate (either has the role or it's public)
+  const userCanAccessMandate = (mandate: Mandate): boolean => {
+    return isMandatePublic(mandate) || userHasRoleForMandate(mandate);
   };
 
   // Extract flows and mandates
@@ -96,9 +109,9 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const filteredFlowBoxes = useMemo(() => {
     if (showAllMandates) return flowBoxes;
     
-    // Filter to only show flows that contain at least one mandate with a role the user has
+    // Filter to only show flows that contain at least one mandate the user can access (has role or is public)
     return flowBoxes.filter(box => 
-      box.mandates.some(m => userHasRoleForMandate(m))
+      box.mandates.some(m => userCanAccessMandate(m))
     );
   }, [flowBoxes, showAllMandates, userRoleIds]);
 
@@ -212,8 +225,10 @@ function FlowSummaryBox({
               const roleId = m.conditions?.allowedRole?.toString() || 'N/A';
               const roleName = bigintToRole(BigInt(roleId), powers);
               const userHasRole = roleId !== 'N/A' && userRoleIds.has(roleId);
-              const isDisabled = !m.active || (!showAllMandates && !userHasRole);
-              const shouldDim = !showAllMandates && !userHasRole;
+              const isPublic = m.conditions?.allowedRole === PUBLIC_ROLE;
+              const canAccess = isPublic || userHasRole;
+              const isDisabled = !m.active || (!showAllMandates && !canAccess);
+              const shouldDim = !showAllMandates && !canAccess;
               
               return (
                 <div 

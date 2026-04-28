@@ -36,7 +36,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const [logSupport, setLogSupport] = useState<bigint>();
   const [populatedAction, setPopulatedAction] = useState<Action | undefined>();
 
-  // console.log({action, actionVote, checks, checksStatus, pendingVote, logSupport})
+  console.log({checks, checksStatus })
 
   // Calculate vote parameters
   const roleHolders = Number(
@@ -100,6 +100,19 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
       fetchTimestamps([BigInt(populatedAction.proposedAt), voteEnd], chainId);
     }
   }, [populatedAction?.proposedAt, voteEnd, chainId]);
+
+  // Fetch checks (including hasVoted) on mount and after successful vote
+  useEffect(() => {
+    if (powers && mandate && action && wallets.length > 0 && action.callData && status.status !== "pending") {
+      fetchChecks(
+        mandate,
+        action.callData as `0x${string}`,
+        BigInt(action.nonce || 0),
+        wallets,
+        powers as Powers
+      );
+    }
+  }, [populatedAction?.actionId, status.status]);
 
   const handleVoteClick = (support: bigint) => {
     setPendingVote(support);
