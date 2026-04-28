@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Action, CommunicationChannels, Powers, Status } from '../context/types'
-import { Governed721DAO, CulturalStewardsDAO, defaultPowers101 } from './defaultProtocols';
+import { Governed721DAO, CulturalStewards, defaultPowers101 } from './defaultProtocols';
 import { stringifyWithBigInt, parseWithBigInt } from '../utils/localStorage';
 
 // Action Store
@@ -137,17 +137,17 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
       const powersGoverned721Exists = protocols.some(
         p => p.contractAddress.toLowerCase() === Governed721DAO.contractAddress.toLowerCase()
       )
-      const culturalStewardsDAOExists = protocols.some(
-        p => p.contractAddress.toLowerCase() === CulturalStewardsDAO.contractAddress.toLowerCase()
+      const CulturalStewardsExists = protocols.some(
+        p => p.contractAddress.toLowerCase() === CulturalStewards.contractAddress.toLowerCase()
       )
 
       if (!powersGoverned721Exists) {
         // Add Governed 721 DAO to the list
         protocols.unshift(Governed721DAO)
       }
-      if (!culturalStewardsDAOExists) {
+      if (!CulturalStewardsExists) {
         // Add Cultural Stewards DAO to the list
-        protocols.unshift(CulturalStewardsDAO)
+        protocols.unshift(CulturalStewards)
       }
       if (!powers101Exists) {
         // Add Powers 101 to the list

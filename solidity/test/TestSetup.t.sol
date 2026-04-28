@@ -23,7 +23,7 @@ import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 // organisations
 import { Deploy as Powers101 } from "../governance/examples/Powers101.s.sol";
 import { Deploy as ElectionRegistrysDAO } from "../governance/examples/ElectionListsDao.s.sol";
-// import { Deploy } from "@governance/examples/CulturalStewardsDAO/Deploy.s.sol";
+// import { Deploy } from "@governance/examples/CulturalStewards/Deploy.s.sol";
 
 // helpers
 import { Nominees } from "@src/helpers/Nominees.sol";
@@ -84,7 +84,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // versioning
     uint16 constant MAJOR = 0; 
     uint16 constant MINOR = 6;
-    uint16 constant PATCH = 1;
+    uint16 constant PATCH = 2;
 
     address[] targets;
     uint256[] values;
