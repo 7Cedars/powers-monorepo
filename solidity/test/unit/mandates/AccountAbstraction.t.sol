@@ -3,9 +3,7 @@ pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
-import { PowersPaymaster } from "@src/mandates/integrations/AccountAbstraction/PowersPaymaster.sol";
-import { FundPaymaster } from "@src/mandates/integrations/AccountAbstraction/FundPaymaster.sol";
-import { WithdrawFromPaymaster } from "@src/mandates/integrations/AccountAbstraction/WithdrawFromPaymaster.sol";
+import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol"; 
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "@lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
@@ -63,9 +61,7 @@ contract MockEntryPoint is IEntryPoint {
 }
 
 contract AccountAbstractionTest is Test {
-    PowersPaymaster public paymaster;
-    FundPaymaster public fundPaymaster;
-    WithdrawFromPaymaster public withdrawPaymaster;
+    PowersPaymaster public paymaster; 
 
     address public powersAddress = address(0x1234);
     MockEntryPoint public entryPoint;
@@ -73,9 +69,7 @@ contract AccountAbstractionTest is Test {
 
     function setUp() public {
         entryPoint = new MockEntryPoint();
-        paymaster = new PowersPaymaster(entryPoint, powersAddress, owner);
-        fundPaymaster = new FundPaymaster();
-        withdrawPaymaster = new WithdrawFromPaymaster();
+        paymaster = new PowersPaymaster(entryPoint, powersAddress, owner); 
     }
 
     // Helper to simulate calling _validatePaymasterUserOp since it's internal and we can only call external validatePaymasterUserOp as entryPoint
@@ -166,29 +160,5 @@ contract AccountAbstractionTest is Test {
 
         (bytes memory context, uint256 validationData) = callValidatePaymasterUserOp(userOp);
         assertEq(validationData, 0);
-    }
-
-    function test_FundPaymaster_HandleRequest() public {
-        bytes memory mandateCalldata = abi.encode(address(paymaster), 1 ether);
-
-        (, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) =
-            fundPaymaster.handleRequest(address(0), address(0), 1, mandateCalldata, 0);
-
-        assertEq(targets.length, 1);
-        assertEq(targets[0], address(paymaster));
-        assertEq(values[0], 1 ether);
-        assertEq(calldatas[0], "");
-    }
-
-    function test_WithdrawFromPaymaster_HandleRequest() public {
-        bytes memory mandateCalldata = abi.encode(address(paymaster), address(this), 1 ether);
-
-        (, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) =
-            withdrawPaymaster.handleRequest(address(0), address(0), 1, mandateCalldata, 0);
-
-        assertEq(targets.length, 1);
-        assertEq(targets[0], address(paymaster));
-        assertEq(values[0], 0);
-        assertEq(calldatas[0], abi.encodeWithSignature("withdrawTo(address,uint256)", address(this), 1 ether));
     }
 }

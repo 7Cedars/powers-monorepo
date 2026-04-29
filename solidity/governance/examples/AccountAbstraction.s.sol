@@ -14,9 +14,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // Account Abstraction Integrations
-import { PowersPaymaster } from "@src/mandates/integrations/AccountAbstraction/PowersPaymaster.sol";
-import { FundPaymaster } from "@src/mandates/integrations/AccountAbstraction/FundPaymaster.sol";
-import { WithdrawFromPaymaster } from "@src/mandates/integrations/AccountAbstraction/WithdrawFromPaymaster.sol";
+import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol"; 
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
 // helpers
@@ -35,9 +33,7 @@ contract Deploy is DeployHelpers {
     IMandateRegistry registry;
 
     SimpleErc20Votes simpleErc20Votes;
-    PowersPaymaster powersPaymaster;
-    FundPaymaster fundPaymaster;
-    WithdrawFromPaymaster withdrawFromPaymaster;
+    PowersPaymaster powersPaymaster; 
 
     address[] targets;
     uint256[] values;
@@ -58,9 +54,7 @@ contract Deploy is DeployHelpers {
 
         // step 1: deploy Contracts
         vm.startBroadcast();
-        simpleErc20Votes = new SimpleErc20Votes();
-        fundPaymaster = new FundPaymaster();
-        withdrawFromPaymaster = new WithdrawFromPaymaster();
+        simpleErc20Votes = new SimpleErc20Votes(); 
 
         powers = new Powers(
             "Account Abstracted Powers", // name
@@ -138,10 +132,6 @@ contract Deploy is DeployHelpers {
             nameDescription: "Fund Paymaster Flow: A delegate proposes to fund the PowersPaymaster with ETH, and another delegate can execute it."
         }));
 
-        string[] memory fundParams = new string[](2);
-        fundParams[0] = "address paymaster";
-        fundParams[1] = "uint256 amount";
-
         // Propose to fund paymaster
         mandateCount++;
         conditions.allowedRole = 1; // Delegate
@@ -149,7 +139,7 @@ contract Deploy is DeployHelpers {
             PowersTypes.MandateInitData({
                 nameDescription: "Propose to Fund Paymaster: Propose an ETH transfer to the paymaster.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
-                config: abi.encode(fundParams),
+                config: abi.encode(),
                 conditions: conditions
             })
         );
@@ -164,9 +154,13 @@ contract Deploy is DeployHelpers {
         conditions.needFulfilled = mandateCount - 1; 
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Execute Fund Paymaster: Execute the proposed ETH transfer to the paymaster.",
-                targetMandate: address(fundPaymaster),
-                config: abi.encode(), // empty config
+                nameDescription: "Execute Fund Paymaster: Send 0.5 ETH to the paymaster.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+                config: abi.encode(
+                    address(powersPaymaster),
+                    0.5 ether,
+                    abi.encodeWithSignature("deposit()")
+                ), 
                 conditions: conditions
             })
         );
@@ -184,10 +178,9 @@ contract Deploy is DeployHelpers {
             nameDescription: "Withdraw From Paymaster Flow: A delegate proposes to withdraw ETH from the PowersPaymaster, and another delegate can execute it."
         }));
 
-        string[] memory withdrawParams = new string[](3);
-        withdrawParams[0] = "address paymaster";
-        withdrawParams[1] = "address withdrawAddress";
-        withdrawParams[2] = "uint256 amount";
+        string[] memory withdrawParams = new string[](2); 
+        withdrawParams[0] = "address withdrawAddress";
+        withdrawParams[1] = "uint256 amount";
 
         // Propose to withdraw from paymaster
         mandateCount++;
@@ -212,8 +205,12 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Withdraw from Paymaster: Execute the proposed ETH withdrawal from the paymaster.",
-                targetMandate: address(withdrawFromPaymaster),
-                config: abi.encode(), // empty config
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                config: abi.encode(
+                    address(powersPaymaster),
+                    bytes4(keccak256("withdrawTo(address,uint256)")),
+                    withdrawParams
+                    ),  
                 conditions: conditions
             })
         );
