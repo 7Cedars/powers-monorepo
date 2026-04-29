@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { useReadContract } from 'wagmi'
+import { useReadContract, usePublicClient } from 'wagmi'
 import { mandateAbi } from "@/context/abi";
 import { bytesToParams, parseParamValues } from "@/utils/parsers";
-import { decodeAbiParameters, parseAbiParameters } from "viem";
+import { decodeAbiParameters, parseAbiParameters, formatEther, decodeFunctionData } from "viem";
 import { MandateSimulation, Mandate } from "@/context/types";
 
 type SimulationBoxProps = {
@@ -18,6 +18,9 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
   const [hasOverflow, setHasOverflow] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
+  const publicClient = usePublicClient();
+  const [decodedCalls, setDecodedCalls] = useState<any[]>([]);
+
   const { data } = useReadContract({
         abi: mandateAbi,
         address: mandate.mandateAddress,
@@ -27,6 +30,58 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
   const dataTypes = params.map(param => param.dataType) 
 
   // console.log("@SimulationBox: waypoint 2", {jsxSimulation})
+
+  useEffect(() => {
+    const fetchAbisAndDecode = async () => {
+      if (!simulation) return;
+      const targets = simulation[1];
+      const values = simulation[2];
+      const calldatas = simulation[3];
+      
+      const explorerUrl = publicClient?.chain?.blockExplorers?.default?.url;
+      const apiUrl = publicClient?.chain?.blockExplorers?.default?.apiUrl;
+
+      const newDecodedCalls = await Promise.all(targets.map(async (target, i) => {
+        const value = values[i];
+        const calldata = calldatas[i];
+        let decodedFunctionName = "Unknown";
+        let decodedArgs = "";
+
+        if (target === "0x0000000000000000000000000000000000000000") {
+          decodedFunctionName = "No Action";
+        } else if (calldata === "0x") {
+          decodedFunctionName = "Transfer";
+        } else if (apiUrl) {
+          try {
+            const response = await fetch(`${apiUrl}?module=contract&action=getabi&address=${target}`);
+            const data = await response.json();
+            if (data.status === "1") {
+              const abi = JSON.parse(data.result);
+              const decoded = decodeFunctionData({ abi, data: calldata });
+              decodedFunctionName = decoded.functionName;
+              decodedArgs = decoded.args ? JSON.stringify(decoded.args, (key, value) => 
+                typeof value === 'bigint' ? value.toString() : value
+              , 2) : "";
+            }
+          } catch (e) {
+            console.error("Failed to fetch/decode ABI for target:", target, e);
+          }
+        }
+
+        return {
+          target,
+          explorerUrl: explorerUrl ? `${explorerUrl}/address/${target}` : undefined,
+          valueEth: formatEther(value),
+          calldata,
+          functionName: decodedFunctionName,
+          functionArgs: decodedArgs
+        };
+      }));
+      setDecodedCalls(newDecodedCalls);
+    };
+
+    fetchAbisAndDecode();
+  }, [simulation, publicClient]);
     
   // Check for overflow
   useEffect(() => {
@@ -48,8 +103,62 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
     let jsxElements0: React.JSX.Element[] = []; 
     let jsxElements1: React.JSX.Element[] = []; 
 
-    if (simulation && simulation.length > 0) {
+    if (decodedCalls.length > 0) {
+      for (let i = 0; i < decodedCalls.length; i++) {
+        const call = decodedCalls[i];
+        
+        if (call.target === "0x0000000000000000000000000000000000000000") {
+          jsxElements0 = [
+            ...jsxElements0,
+            <tr key={i} className="text-xs font-mono text-foreground">
+              <td colSpan={3} className="px-3 py-2 text-center text-muted-foreground">
+                No action will be executed.
+              </td>
+            </tr>
+          ];
+          continue;
+        }
+
+        jsxElements0 = [ 
+          ... jsxElements0, 
+          <tr
+            key={i}
+            className="text-xs font-mono text-foreground"
+          >
+            <td className="px-3 py-2 text-left whitespace-nowrap">
+              {call.explorerUrl ? (
+                <a href={call.explorerUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  {call.target.slice(0, 6)}...{call.target.slice(-4)}
+                </a>
+              ) : (
+                <span>{call.target.slice(0, 6)}...{call.target.slice(-4)}</span>
+              )}
+            </td> 
+            <td className="px-3 py-2 text-left whitespace-nowrap">{call.valueEth} ETH</td>
+            <td className="px-3 py-2 text-left">
+              <div className="flex flex-col">
+                <span className="font-semibold">{call.functionName}</span>
+                {call.functionArgs && <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap">{call.functionArgs}</pre>}
+                {call.functionName === "Unknown" && <span className="text-[10px] text-muted-foreground break-all">{call.calldata}</span>}
+              </div>
+            </td>
+          </tr>
+        ];
+      }
+    } else if (simulation && simulation.length > 0) {
       for (let i = 0; i < simulation[1].length; i++) {
+        if (simulation[1][i] === "0x0000000000000000000000000000000000000000") {
+          jsxElements0 = [
+            ...jsxElements0,
+            <tr key={i} className="text-xs font-mono text-foreground">
+              <td colSpan={3} className="px-3 py-2 text-center text-muted-foreground">
+                No action will be executed.
+              </td>
+            </tr>
+          ];
+          continue;
+        }
+
         jsxElements0 = [ 
           ... jsxElements0, 
           <tr
@@ -57,7 +166,7 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
             className="text-xs font-mono text-foreground whitespace-nowrap"
           >
             <td className="px-3 py-2 text-left">{simulation[1][i]}</td> 
-            <td className="px-3 py-2 text-left">{String(simulation[2][i])}</td>
+            <td className="px-3 py-2 text-left">{formatEther(simulation[2][i])} ETH</td>
             <td className="px-3 py-2 text-left">{simulation[3][i]}</td>
           </tr>
         ];
@@ -82,7 +191,7 @@ export const SimulationBox = ({mandate, simulation}: SimulationBoxProps) => {
     }
     const sim = [jsxElements1, jsxElements0]
     setJsxSimulation(sim)
-  }, [simulation])
+  }, [simulation, decodedCalls])
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
