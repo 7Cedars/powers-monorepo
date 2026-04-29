@@ -158,8 +158,8 @@ contract Deploy is DeployHelpers {
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
                 config: abi.encode(
                     address(powersPaymaster),
-                    0.5 ether,
-                    abi.encodeWithSignature("deposit()")
+                    500000000000000000, // 0.5 ETH
+                    bytes4(keccak256("deposit()"))
                 ), 
                 conditions: conditions
             })

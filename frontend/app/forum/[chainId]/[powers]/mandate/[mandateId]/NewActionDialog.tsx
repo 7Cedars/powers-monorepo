@@ -524,7 +524,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
       {/* Simulation Box */}
       {simulation && action?.upToDate && (
         <div className="mt-4">
-          <SimulationBox mandate={mandate} simulation={simulation} />
+          <SimulationBox mandate={mandate} simulation={simulation} chainId={Number(chainId)} />
         </div>
       )}
 
