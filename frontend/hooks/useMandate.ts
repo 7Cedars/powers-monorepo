@@ -5,7 +5,7 @@ import { readContract, readContracts, simulateContract, writeContract } from "@w
 import { encodeFunctionData } from "viem";
 import { wagmiConfig } from "@/context/wagmiConfig";
 import { useConnection, useTransactionConfirmations } from "wagmi";
-import { useWallets } from "@privy-io/react-auth";
+import { useWallets, usePrivy } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { parseChainId } from "@/utils/parsers";
 import { useParams } from "next/navigation";
@@ -20,9 +20,11 @@ export const useMandate = () => {
 
   const { address } = useConnection();
   const { wallets } = useWallets();
+  const { user } = usePrivy();
   const { client } = useSmartWallets();
-  const activeWallet = wallets.find(w => w.address === address);
-  const isSmartWallet = activeWallet?.connectorType === 'smart_wallet';
+  
+  const hasSmartWalletAccount = user?.linkedAccounts.find((a) => a.type === 'smart_wallet') !== undefined;
+  const isSmartWallet = hasSmartWalletAccount && !!client && !!client.account;
  
   const [transactionHash, setTransactionHash ] = useState<`0x${string}` | undefined>()
   const {data: dataReceipt, error: errorReceipt, status: statusReceipt} = useTransactionConfirmations({
@@ -55,6 +57,57 @@ export const useMandate = () => {
     setError({error: null})
     setTransactionHash(undefined)
   }
+
+  // Helper to send smart wallet transaction with custom per-Powers paymaster
+  const sendSmartWalletTx = async (
+    to: `0x${string}`,
+    data: `0x${string}`,
+    powers: Powers
+  ): Promise<`0x${string}`> => {
+    console.log("@sendSmartWalletTx, waypoint 0", {to, data, powers})
+    if (!client) throw new Error("Smart wallet client not found");
+    
+    // If no specific paymaster is set, use the default Privy client behavior
+    if (!powers.paymaster || powers.paymaster === '0x0000000000000000000000000000000000000000') {
+      return await client.sendTransaction({ to, data, value: 0n });
+    }
+    console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
+
+    const { createSmartAccountClient } = await import('permissionless');
+    const { http } = await import('viem');
+    
+    const pimlicoUrl = process.env.NEXT_PUBLIC_PIMLICO_BUNDLER_URL || "";
+    let bundlerUrl = pimlicoUrl;
+    if (bundlerUrl.includes('11155111') && chainId.toString() !== '11155111') {
+      bundlerUrl = bundlerUrl.replace('11155111', chainId.toString());
+    }
+
+    console.log("@sendSmartWalletTx, waypoint 2", {bundlerUrl})
+
+    const chain = wagmiConfig.chains.find(c => c.id === parseChainId(chainId));
+
+    console.log("@sendSmartWalletTx, waypoint 3", {chain})
+
+    const customClient = createSmartAccountClient({
+      account: client.account as any,
+      chain,
+      bundlerTransport: http(bundlerUrl),
+      paymaster: {
+        getPaymasterData: async () => ({
+          paymaster: powers.paymaster as `0x${string}`,
+          paymasterData: "0x"
+        }),
+        getPaymasterStubData: async () => ({
+          paymaster: powers.paymaster as `0x${string}`,
+          paymasterData: "0x",
+          paymasterVerificationGasLimit: 100000n,
+          paymasterPostOpGasLimit: 100000n
+        })
+      }
+    });
+
+    return await customClient.sendTransaction({ account: customClient.account, to, data, value: 0n });
+  };
   
   // Actions //  
   const propose = useCallback( 
@@ -69,18 +122,15 @@ export const useMandate = () => {
         try {
           let result: `0x${string}`;
           if (isSmartWallet && client) {
-            result = await client.sendTransaction({
-              to: powers.contractAddress,
-              data: encodeFunctionData({
+            result = await sendSmartWalletTx(
+              powers.contractAddress,
+              encodeFunctionData({
                 abi: powersAbi,
                 functionName: 'propose',
                 args: [mandateId, mandateCalldata, nonce, description],
               }),
-              value: BigInt(0),
-              // @ts-ignore: Depending on viem/privy setup, we attach custom paymaster here
-              paymaster: powers.paymaster,
-              paymasterAndData: powers.paymaster 
-            })
+              powers
+            );
           } else {
             const { request: simulatedRequest } = await simulateContract(wagmiConfig, {
               abi: powersAbi,
@@ -111,18 +161,15 @@ export const useMandate = () => {
         try {
           let result: `0x${string}`;
           if (isSmartWallet && client) {
-            result = await client.sendTransaction({
-              to: powers.contractAddress,
-              data: encodeFunctionData({
+            result = await sendSmartWalletTx(
+              powers.contractAddress,
+              encodeFunctionData({
                 abi: powersAbi,
                 functionName: 'cancel',
                 args: [mandateId, mandateCalldata, nonce],
               }),
-              value: BigInt(0),
-              // @ts-ignore
-              paymaster: powers.paymaster,
-              paymasterAndData: powers.paymaster 
-            })
+              powers
+            );
           } else {
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
@@ -152,18 +199,15 @@ export const useMandate = () => {
         try {
           let result: `0x${string}`;
           if (isSmartWallet && client) {
-            result = await client.sendTransaction({
-              to: powers.contractAddress,
-              data: encodeFunctionData({
+            result = await sendSmartWalletTx(
+              powers.contractAddress,
+              encodeFunctionData({
                 abi: powersAbi,
                 functionName: 'castVote',
                 args: [actionId, support],
               }),
-              value: BigInt(0),
-              // @ts-ignore
-              paymaster: powers.paymaster,
-              paymasterAndData: powers.paymaster 
-            })
+              powers
+            );
           } else {
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
@@ -277,24 +321,21 @@ export const useMandate = () => {
       description: string,
       powers: Powers
     ): Promise<boolean> => {
-        console.log("@execute: waypoint 1", {mandate, mandateCalldata, nonce, description})
+        console.log("@execute: waypoint 1", {mandate, mandateCalldata, nonce, description, isSmartWallet, client})
         setError({error: null})
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
           if (isSmartWallet && client) {
-            result = await client.sendTransaction({
-              to: mandate.powers,
-              data: encodeFunctionData({
+            result = await sendSmartWalletTx(
+              mandate.powers,
+              encodeFunctionData({
                 abi: powersAbi,
                 functionName: 'request',
                 args: [mandate.index, mandateCalldata, nonce, description],
               }),
-              value: BigInt(0),
-              // @ts-ignore
-              paymaster: powers.paymaster,
-              paymasterAndData: powers.paymaster 
-            })
+              powers
+            );
             setTransactionHash(result)
             return true
           } else {
