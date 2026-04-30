@@ -86,7 +86,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels (Members, Executives) and revokes itself after execution",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -117,7 +117,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Actions: Members can veto actions",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -134,7 +134,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute an action: Executives can propose and execute actions, but members have veto power.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "OpenAction"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "OpenAction"),
                 config: abi.encode(), // empty config
                 conditions: conditions
             })
@@ -161,7 +161,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -175,7 +175,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "An executive can revoke a role: For this demo, any executive can revoke previously assigned roles.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })

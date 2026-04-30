@@ -24,10 +24,11 @@ type DynamicFormProps = {
     }[]; 
   status: Status;
   checks: Checks;
+  chainId: number;
   onCheck: (mandate: Mandate, callData: `0x${string}`, nonce: bigint, wallets: ConnectedWallet[], powers: Powers) => void;
 };
 
-export function DynamicForm({mandate, params, status, checks, onCheck}: DynamicFormProps) {
+export function DynamicForm({mandate, params, status, checks, chainId, onCheck}: DynamicFormProps) {
   const action = useActionStore();
   const error = useErrorStore()
   const dataTypes = params.map(param => param.dataType) 
@@ -285,7 +286,7 @@ export function DynamicForm({mandate, params, status, checks, onCheck}: DynamicF
       { 
         simulation && action?.upToDate && 
         <div className="w-full flex items-center gap-2 mt-6 px-6"> 
-          <SimulationBox mandate = {mandate} simulation = {simulation} />
+          <SimulationBox mandate = {mandate} simulation = {simulation} chainId={chainId} />
         </div>
       } 
 

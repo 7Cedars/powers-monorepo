@@ -6,14 +6,14 @@ if (!branch || !commitHash || !folderName) {
     throw Error("Missing required args");
 }
 
-const url = `https://powers-protocol.vercel.app/api/check-commit`; 
+const url = `https://powers-utils.vercel.app/api/check-commit/`; 
 
 const githubRequest = Functions.makeHttpRequest({
     url: url,
     method: "GET",
     timeout: 9000, 
     params: {
-        repo: "7cedars/powers",
+        repo: "publius/powers-monorepo",
         branch: branch,
         commitHash: commitHash,
         maxAgeCommitInDays: 90,

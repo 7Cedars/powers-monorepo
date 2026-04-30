@@ -183,7 +183,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels, set treasury and enable allowance module.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -214,7 +214,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create Child DAO: Executive can execute creation of Child DAO.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(powersChildFactory), 
                     bytes4(0x62b9a9b5), // = keccak256("createPowers(address)")), 
@@ -232,7 +232,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Child Role: Assign Child role (2) to the new DAO.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(powersParent), 
                     IPowers.assignRole.selector, 
@@ -253,7 +253,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Add Delegate: Add new Child DAO as delegate to Allowance Module.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Safe_ExecTransaction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_ExecTransaction_OnReturnValue"),
                 config: abi.encode(
                     helperConfig.getSafeAllowanceModule(block.chainid), 
                     bytes4(0xe71bdf41), // == AllowanceModule.addDelegate.selector
@@ -290,7 +290,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Allowance: Child DAO can request allowance.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -308,7 +308,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Set Allowance: Executive can set allowance for Child DAO.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Action"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Action"),
                 config: abi.encode(
                     inputParams,
                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector 
@@ -342,7 +342,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Transfer at Child: A parent organisation can veto a transfer at a child.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ExternalAction_Flexible"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Flexible"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })  
@@ -369,7 +369,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: The admin can assign any role to an account.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -383,7 +383,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Executive can revoke role: Executive can revoke a role.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(0), // target is its own powers contract
                     IPowers.revokeRole.selector, 
@@ -403,7 +403,7 @@ contract Deploy is DeployHelpers {
         parentConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can update URI: Admin can update the URI of the contract.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })
@@ -428,7 +428,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and revoke self.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions_OnOwnPowers"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
                 config: abi.encode(calldatas),
                 conditions: conditions
             })
@@ -457,7 +457,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Transfer: Public can request transfer of funds from Parent Treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -471,7 +471,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Transfer: Parent DAO can veto transfer.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -489,7 +489,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Transfer: Members vote to execute transfer from Parent Treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Transfer"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Transfer"),
                 config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury), // Treasury is Parent's treasury
                 conditions: conditions
             })
@@ -518,7 +518,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Additional Allowance: Members can request additional allowance from Parent.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "ExternalAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
                 config: abi.encode(
                     address(powersParent),
                     requestAllowanceMandateId, // ID from Parent Constitution
@@ -550,7 +550,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: The admin can assign any role to an account.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -564,7 +564,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Members can revoke role: Members can revoke a role.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -580,7 +580,7 @@ contract Deploy is DeployHelpers {
         childConstitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can update URI: Admin can update the URI of the contract.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(0), IPowers.setUri.selector, inputParams),
                 conditions: conditions
             })

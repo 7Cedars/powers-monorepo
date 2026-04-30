@@ -113,7 +113,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Setup: assigns labels to roles, sets the treasury and paymaster to itself. It self-destructs after execution.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -138,7 +138,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Propose to Fund Paymaster: Propose an ETH transfer to the paymaster.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -155,11 +155,11 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Fund Paymaster: Send 0.5 ETH to the paymaster.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
                 config: abi.encode(
                     address(powersPaymaster),
-                    0.5 ether,
-                    abi.encodeWithSignature("deposit()")
+                    500000000000000000, // 0.5 ETH
+                    bytes4(keccak256("deposit()"))
                 ), 
                 conditions: conditions
             })
@@ -188,7 +188,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Propose to Withdraw from Paymaster: Propose withdrawing ETH from the paymaster back to the treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(withdrawParams),
                 conditions: conditions
             })
@@ -205,7 +205,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Withdraw from Paymaster: Execute the proposed ETH withdrawal from the paymaster.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(powersPaymaster),
                     bytes4(keccak256("withdrawTo(address,uint256)")),
@@ -240,7 +240,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Propose to Mint: Propose to mint tokens at ", address(simpleErc20Votes).toHexString(), ".")),
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(mintParams),
                 conditions: conditions
             })
@@ -254,7 +254,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Veto a mint: Veto a proposed token mint at ", address(simpleErc20Votes).toHexString(), ".")),
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(mintParams),
                 conditions: conditions
             })
@@ -272,7 +272,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Execute a mint: Execute a mint at ", address(simpleErc20Votes).toHexString(), ". it has to be proposed first by the community and should not have been vetoed by an admin.")),
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(simpleErc20Votes), 
                     bytes4(keccak256("mint(address,uint256)")), 
@@ -305,7 +305,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Admin can assign any role: For this demo, the admin can assign any role to an account.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.assignRole.selector, dynamicParams),
                 conditions: conditions
             })
@@ -319,7 +319,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "A delegate can revoke a role: For this demo, any delegate can revoke previously assigned roles.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(powers), IPowers.revokeRole.selector, dynamicParams),
                 conditions: conditions
             })

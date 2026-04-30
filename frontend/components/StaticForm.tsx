@@ -6,7 +6,7 @@ import { StaticInput } from "@/components/StaticInput";
 import { Action, InputType, Mandate, Powers } from "@/context/types";
 import { ConnectedWallet, useWallets } from "@privy-io/react-auth";
 import { decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from "viem";
-import { parseMandateError, parseParamValues } from "@/utils/parsers";
+import { parseMandateError, parseParamValues, parseChainId } from "@/utils/parsers";
 import { hashAction } from "@/utils/hashAction";
 import { useMandate } from "@/hooks/useMandate";
 import { Button } from "@/components/Button";
@@ -14,11 +14,12 @@ import { SimulationBox } from "./SimulationBox";
 
 type StaticFormProps = {
   mandate?: Mandate;
+  chainId?: number;
   staticDescription?: boolean;
   onCheck: (mandate: Mandate, callData: `0x${string}`, nonce: bigint, wallets: ConnectedWallet[], powers: Powers) => void;
 };
 
-export function StaticForm({ mandate, staticDescription = true, onCheck }: StaticFormProps) {
+export function StaticForm({ mandate, chainId, staticDescription = true, onCheck }: StaticFormProps) {
   const action = useActionStore();
   const { simulation, simulate } = useMandate();
   const { wallets, ready } = useWallets();
@@ -162,7 +163,7 @@ export function StaticForm({ mandate, staticDescription = true, onCheck }: Stati
         )}
       </form> 
       { 
-        simulation && action.upToDate && <SimulationBox mandate = {mandate as Mandate} simulation = {simulation} />
+        simulation && action.upToDate && chainId && <SimulationBox mandate = {mandate as Mandate} simulation = {simulation} chainId={chainId} />
       } 
     </>
   );

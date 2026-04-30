@@ -82,7 +82,7 @@ export function MandateBox({powers, mandate, params, status, selectedExecution }
       </div>
 
       {/* dynamic form */}
-      <DynamicForm mandate={mandate} params={params} status={status} checks={checks as Checks} onCheck={fetchChecks} />
+      <DynamicForm mandate={mandate} params={params} status={status} checks={checks as Checks} chainId={parseChainId(chainId)} onCheck={fetchChecks} />
       
       {/* Here dynamic button conditional on status of action  */}
       <DynamicActionButton checks={checks as Checks} /> 

@@ -57,7 +57,7 @@ export function MandateBoxStatic({powers, mandate, selectedExecution }: MandateB
       </div>
 
       {/* dynamic form */}
-      <StaticForm mandate={mandate} onCheck={fetchChecks} />
+      <StaticForm mandate={mandate} chainId={parseChainId(chainId)} onCheck={fetchChecks} />
 
       {/* Here dynamic button conditional on status of action  */}
       <DynamicActionButton checks={checks as Checks} /> 
