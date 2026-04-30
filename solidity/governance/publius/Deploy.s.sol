@@ -91,7 +91,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Setup Safe: Create a SafeProxy, set up allowance module and register it as treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Safe_Setup"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_Setup"),
 //                 config: abi.encode(
 //                     helperConfig.getSafeProxyFactory(block.chainid),
 //                     helperConfig.getSafeL2Canonical(block.chainid), 
@@ -125,7 +125,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Assign role labels.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
 //                 config: abi.encode(targets, values, calldatas),
 //                 conditions: conditions
 //             })
@@ -141,7 +141,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Update URI: The admin can update the organization's URI.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
 //                 config: abi.encode(address(powersParent), IPowers.setUri.selector, dynamicParams),
 //                 conditions: conditions
 //             })
@@ -164,7 +164,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Apply for Contributor Role: Anyone can claim contributor roles based on their GitHub contributions to the 7cedars/powers repository",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Github_ClaimRoleWithSig"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Github_ClaimRoleWithSig"),
 //                 config: abi.encode(
 //                     "develop", // branch
 //                     paths,
@@ -186,7 +186,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Claim Contributor Role: Following a successful initial claim, contributors can get contributor role assigned to their account.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Github_AssignRoleWithSig"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Github_AssignRoleWithSig"),
 //                 config: abi.encode(), // empty config
 //                 conditions: conditions
 //             })
@@ -205,7 +205,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Apply for Member Role: Receive Member role when holding Funder or any Contributor role",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "RoleByRoles"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RoleByRoles"),
 //                 config: abi.encode(
 //                     5, // newRoleId (Members)
 //                     roleIdsNeeded
@@ -225,7 +225,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Veto Role Revocation: Admin can veto proposals to remove roles from accounts",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -243,7 +243,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Revoke Role: Members vote to remove a role from an account",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
 //                 config: abi.encode(
 //                     address(powersParent),
 //                     IPowers.revokeRole.selector,
@@ -270,7 +270,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Propose to add a new Child Powers as a delegate to the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -286,7 +286,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Veto adding a new Child Powers as a delegate to the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -303,7 +303,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "OK adding a new Child Powers as a delegate to the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -319,7 +319,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "OK adding a new Child Powers as a delegate to the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -335,7 +335,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Execute and adopt new child Powers as a delegate to the Safe treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Action"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Action"),
 //                 config: abi.encode(
 //                     inputParams,
 //                     bytes4(0xe71bdf41), // == AllowanceModule.addDelegate.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
@@ -366,7 +366,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Propose to set allowance for a Powers Child at the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -382,7 +382,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Veto setting allowance for a Powers Child at the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -399,7 +399,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "OK setting allowance for a Powers Child at the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -415,7 +415,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "OK setting allowance for a Powers Child at the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(inputParams),
 //                 conditions: conditions
 //             })
@@ -431,7 +431,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Execute and set allowance for a Powers Child at the Safe Treasury.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Action"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Action"),
 //                 config: abi.encode(
 //                     inputParams,
 //                     bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
@@ -456,7 +456,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Propose Adopting Mandates: Members propose adopting new mandates",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(adoptMandatesParams),
 //                 conditions: conditions
 //             })
@@ -473,7 +473,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Veto Adopting Mandates: Funders can veto proposals to adopt new mandates",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(adoptMandatesParams),
 //                 conditions: conditions
 //             })
@@ -488,7 +488,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Adopt Mandates: Admin adopts new mandates into the organization",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Adopt_Mandates"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates"),
 //                 config: abi.encode(), // empty 0x
 //                 conditions: conditions
 //             })
@@ -507,7 +507,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Propose Revoking Mandates: Members propose revoking existing mandates",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(revokeMandatesParams),
 //                 conditions: conditions
 //             })
@@ -524,7 +524,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Veto Revoking Mandates: Funders can veto proposals to revoke existing mandates",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(revokeMandatesParams),
 //                 conditions: conditions
 //             })
@@ -539,7 +539,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Revoke Mandates: Admin revokes mandates from the organization",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Revoke_Mandates"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Revoke_Mandates"),
 //                 config: abi.encode(abi.encode(0x00)), // "0x00" in TS (encoded bytes?) -> actually likely just empty bytes? TS says "0x00" as `0x${string}` which is 1 byte '00'. But Revoke_Mandates expects... let's check config. Usually Revoke_Mandates takes no config or specific config. TS says config is "0x00". Let's assume default encoding of "0x00".
 //                 // Actually, "0x00" as `0x${string}` in viem is just `0x00`.
 //                 // Revoke_Mandates usually takes nothing or is bespoke.
@@ -561,7 +561,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Propose adopting a Child Mandate: Members propose adopting new mandates for a Powers' child",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(adoptMandatesParams),
 //                 conditions: conditions
 //             })
@@ -578,7 +578,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Veto Adopting A child Mandate: Funders can veto proposals to adopt new mandates for a Powers' child",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(adoptMandatesParams),
 //                 conditions: conditions
 //             })
@@ -593,7 +593,7 @@ pragma solidity ^0.8.26;
 //         primaryConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Adopt a Child Mandate: Admin adopts the new mandate for a Powers' child",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
 //                 config: abi.encode(adoptMandatesParams),
 //                 conditions: conditions
 //             })
@@ -629,7 +629,7 @@ pragma solidity ^0.8.26;
 //         childConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Initial Setup: Assign role labels (Members, Delegates) and revoke itself after execution",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
 //                 config: abi.encode(targets, values, calldatas),
 //                 conditions: conditions
 //             })
@@ -648,7 +648,7 @@ pragma solidity ^0.8.26;
 //         childConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Execute Allowance Transaction: Execute a transaction from the Safe Treasury within the allowance set.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "SafeAllowance_Transfer"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Transfer"),
 //                 config: abi.encode(
 //                     helperConfig.getSafeAllowanceModule(block.chainid),  
 //                     address(parent) // Placeholder for SafeProxyTreasury
@@ -667,7 +667,7 @@ pragma solidity ^0.8.26;
 //         childConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Update URI: The admin can update the organization's URI.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
 //                 config: abi.encode(address(powersChild), IPowers.setUri.selector, dynamicParams),
 //                 conditions: conditions
 //             })
@@ -680,7 +680,7 @@ pragma solidity ^0.8.26;
 //         childConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Adopt Role 1: Anyone that has role 1 at the parent organization can adopt the same role here.",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "AssignExternalRole"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "AssignExternalRole"),
 //                 config: abi.encode(
 //                     parent,
 //                     1 // RoleId (Funders) placeholder
@@ -700,7 +700,7 @@ pragma solidity ^0.8.26;
 //         childConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Check Parent: Check if adopt new mandates has been passed at the parent organization",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "CheckExternalActionState"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "CheckExternalActionState"),
 //                 config: abi.encode(parent, adoptChildMandateId, adoptMandatesParams),
 //                 conditions: conditions
 //             })
@@ -714,7 +714,7 @@ pragma solidity ^0.8.26;
 //         childConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Adopt Mandates: Anyone can adopt new mandates ok-ed by the parent organization",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Adopt_Mandates"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates"),
 //                 config: abi.encode(parent, adoptChildMandateId, adoptMandatesParams),
 //                 conditions: conditions
 //             })
@@ -731,7 +731,7 @@ pragma solidity ^0.8.26;
 //         childConstitution.push(
 //             PowersTypes.MandateInitData({
 //                 nameDescription: "Revoke Mandates: Admin can revoke mandates from the organization",
-//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Revoke_Mandates"),
+//                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Revoke_Mandates"),
 //                 config: abi.encode(abi.encode(0x00)),
 //                 conditions: conditions
 //             })

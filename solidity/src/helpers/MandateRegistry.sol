@@ -21,11 +21,11 @@ interface IMandateRegistry {
     function deactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName) external;
     function reactivateMandate(uint16 major, uint16 minor, uint16 patch, string calldata mandateName) external;
     function batchRegisterMandates(string[] calldata mandateNames, address[] calldata mandateAddresses, bytes32[] calldata creationCodeHashes) external;
-    function getMandateEntry(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+    function getMandateEntry(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
         external
         view
         returns (MandateEntry memory);
-    function getMandateAddress(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+    function getMandateAddress(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
         external
         view
         returns (address);
@@ -34,13 +34,7 @@ interface IMandateRegistry {
         external
         view
         returns (bool);
-    function getBatchMandateEntries(
-        uint16 major,
-        uint16 minor,
-        uint16 patch,
-        bool strict,
-        string[] calldata mandateNames
-    ) external view returns (MandateEntry[] memory entries);
+    function getLatestVersion(string calldata mandateName) external view returns (uint16 major, uint16 minor, uint16 patch);
     function owner() external view returns (address);
 }
 
@@ -244,53 +238,35 @@ contract MandateRegistry is Ownable {
         uint16 major,
         uint16 minor,
         uint16 patch,
-        string calldata mandateName,
-        bool strict
+        string calldata mandateName
     ) internal view returns (MandateEntry memory) {
         bytes32 nameHash = keccak256(bytes(mandateName));
         uint48 targetVersion = packVersion(major, minor, patch);
 
-        if (strict) {
-            MandateEntry memory entry = registry[nameHash][targetVersion];
-            if (entry.registeredAt == 0) revert MandateNotFound(major, minor, patch, mandateName);
-            return entry;
-        } else {
-            uint48 highestBelow = 0;
-            bool found = false;
-            uint48[] storage versions = mandateVersions[nameHash];
-
-            for (uint256 i = versions.length; i > 0; i--) {
-                uint48 v = versions[i - 1];
-                if (v <= targetVersion) {
-                    highestBelow = v;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) revert MandateNotFound(major, minor, patch, mandateName);
-            return registry[nameHash][highestBelow];
-        }
+        MandateEntry memory entry = registry[nameHash][targetVersion];
+        if (entry.registeredAt == 0) revert MandateNotFound(major, minor, patch, mandateName);
+        return entry; 
     }
 
     //////////////////////////////////////////////////////////////
     //                   VIEW FUNCTIONS                         //
     //////////////////////////////////////////////////////////////
     /// @notice Gets the complete mandate entry
-    function getMandateEntry(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+    function getMandateEntry(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
         external
         view
         returns (MandateEntry memory)
     {
-        return _getMandateEntryInternal(major, minor, patch, mandateName, strict);
+        return _getMandateEntryInternal(major, minor, patch, mandateName);
     }
 
     /// @notice Gets the mandate address
-    function getMandateAddress(uint16 major, uint16 minor, uint16 patch, bool strict, string calldata mandateName)
+    function getMandateAddress(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
         external
         view
         returns (address)
     {
-        return _getMandateEntryInternal(major, minor, patch, mandateName, strict).mandateAddress;
+        return _getMandateEntryInternal(major, minor, patch, mandateName).mandateAddress;
     }
 
     /// @notice Checks if a mandate is registered
@@ -314,41 +290,14 @@ contract MandateRegistry is Ownable {
         return registry[nameHash][targetVersion].isActive;
     }
 
-    /// @notice Gets mandate details for multiple names
-    function getBatchMandateEntries(
-        uint16 major,
-        uint16 minor,
-        uint16 patch,
-        bool strict,
-        string[] calldata mandateNames
-    ) external view returns (MandateEntry[] memory entries) {
-        entries = new MandateEntry[](mandateNames.length);
-        uint48 targetVersion = packVersion(major, minor, patch);
+    function getLatestVersion(string calldata mandateName) external view returns (uint16 major, uint16 minor, uint16 patch) {
+        bytes32 nameHash = keccak256(bytes(mandateName));
+        uint48[] storage versions = mandateVersions[nameHash];
+        if (versions.length == 0) revert("No versions registered for this mandate");
 
-        for (uint256 i = 0; i < mandateNames.length; i++) {
-            bytes32 nameHash = keccak256(bytes(mandateNames[i]));
-            if (strict) {
-                if (registry[nameHash][targetVersion].registeredAt != 0) {
-                    entries[i] = registry[nameHash][targetVersion];
-                }
-            } else {
-                uint48 highestBelow = 0;
-                bool found = false;
-                uint48[] storage versions = mandateVersions[nameHash];
-
-                for (uint256 j = versions.length; j > 0; j--) {
-                    uint48 v = versions[j - 1];
-                    if (v <= targetVersion) {
-                        highestBelow = v;
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
-                    entries[i] = registry[nameHash][highestBelow];
-                }
-            }
-        }
-        return entries;
+        uint48 latestPacked = versions[versions.length - 1];
+        major = uint16(latestPacked >> 32);
+        minor = uint16((latestPacked >> 16) & 0xFFFF);
+        patch = uint16(latestPacked & 0xFFFF);
     }
 }

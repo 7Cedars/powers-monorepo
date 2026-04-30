@@ -94,7 +94,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and setup treasury",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -124,7 +124,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Register Mandate: Admin can register new mandates in the registry.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"), 
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"), 
                 config: abi.encode(address(registry), MandateRegistry.registerMandate.selector, dynamicParams),
                 conditions: conditions
             })
@@ -143,7 +143,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Deactivate Mandate: Admin can deactivate mandates in the registry.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(registry), MandateRegistry.deactivateMandate.selector, dynamicParams),
                 conditions: conditions
             })
@@ -156,7 +156,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Reactivate Mandate: Admin can reactivate mandates in the registry.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(registry), MandateRegistry.reactivateMandate.selector, dynamicParams),
                 conditions: conditions
             })
@@ -173,7 +173,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Batch Register Mandates: Admin can batch register mandates in the registry.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(address(registry), MandateRegistry.batchRegisterMandates.selector, dynamicParams),
                 conditions: conditions
             })
@@ -186,7 +186,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt Mandate: Admin can adopt new mandates to the powers organization.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Adopt_Mandates"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates"),
                 config: abi.encode(),
                 conditions: conditions
             })
