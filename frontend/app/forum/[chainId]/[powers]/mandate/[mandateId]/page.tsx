@@ -1,7 +1,7 @@
 'use client'
  
 import { useState, useMemo, useEffect } from 'react'; 
-import { PlusIcon, AdjustmentsHorizontalIcon, ChartBarIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, AdjustmentsHorizontalIcon, ChartBarIcon, ListBulletIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
 import { usePowersStore } from '@/context/store';
 import { useParams, useRouter } from 'next/navigation';
 import { Action, Mandate } from '@/context/types';
@@ -126,10 +126,13 @@ export default function MandatePage() {
       <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
         <div className="flex-1 flex flex-col border border-border overflow-hidden">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
-            <div className="min-w-0 flex-1 text-center sm:text-left w-full">
-              <h3 className="text-foreground text-base truncate">Mandate: #{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
-              <p className="text-muted-foreground text-sm truncate">{mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}</p>
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-2 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
+            <div className="flex items-center gap-2 min-w-0 flex-1 text-center sm:text-left w-full">
+              <DocumentCheckIcon className="hidden sm:block h-10 w-10 text-muted-foreground flex-shrink-0 -ml-1" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-foreground text-base truncate">Mandate: #{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] || '' : ''}</h3>
+                <p className="text-muted-foreground text-sm truncate">{mandate?.nameDescription ? mandate.nameDescription.split(':')[1] || '' : ''}</p>
+              </div>
             </div>
             <button
               onClick={() => setActionDialogOpen(true)}

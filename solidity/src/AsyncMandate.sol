@@ -158,7 +158,7 @@ abstract contract AsyncMandate is ERC165, IMandate {
     }
 
     function version() public pure returns (uint16 major, uint16 minor, uint16 patch) {
-        return (0, 6, 1);
+        return (0, 1, 1);
     }
 
     // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate.

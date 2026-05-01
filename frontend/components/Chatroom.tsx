@@ -515,12 +515,12 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         </div>
         {isConnected && groupChat && (
          <div className="flex items-center justify-between gap-3 relative">
-          <SearchFilterSort 
+          {/* <SearchFilterSort 
               onSearchChange={(query) => console.log('Search:', query)}
               onFilterChange={(filter) => console.log('Filter:', filter)}
               onSortChange={(sort) => console.log('Sort:', sort)}
             />
-          
+           */}
             <button
               onClick={() => setShowMembersList(!showMembersList)}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
