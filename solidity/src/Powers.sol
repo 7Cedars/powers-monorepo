@@ -531,12 +531,8 @@ contract Powers is EIP712, IPowers, Context {
     function removeFlow(uint8 index) external onlyPowers {
         if (index >= flows.length) revert Powers__InvalidFlowIndex();
 
-        // delete flow by replacing it with the last flow and popping the last flow.
-        uint256 lastIndex = flows.length - 1;
-        if (index != lastIndex) {
-            flows[index] = flows[lastIndex];
-        }
-        flows.pop();
+        // delete flow (turns it into an array of zeros, but keeps indices of other flows intact).
+        delete flows[index];
 
         emit FlowDeleted(index);
     }

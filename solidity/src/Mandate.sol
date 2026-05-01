@@ -128,7 +128,7 @@ abstract contract Mandate is ERC165, IMandate {
     }
 
     function version() public pure virtual returns (uint16 major, uint16 minor, uint16 patch) {
-        return (0, 6, 2);
+        return (0, 1, 0);
     }
 
     // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate.
