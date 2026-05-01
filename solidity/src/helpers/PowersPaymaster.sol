@@ -20,8 +20,9 @@ contract PowersPaymaster is BasePaymaster {
     error PowersPaymaster__InvalidCallData();
     error PowersPaymaster__UnsupportedSelector();
 
-    constructor(IEntryPoint _entryPoint, address _powersContract, address _owner) BasePaymaster(_entryPoint, _owner) {
+    constructor(IEntryPoint _entryPoint, address _powersContract, address _owner) BasePaymaster(_entryPoint) {
         POWERS_CONTRACT = _powersContract;
+        transferOwnership(_owner);
     }
 
     /// @notice Validates that the UserOperation targets the POWERS_CONTRACT

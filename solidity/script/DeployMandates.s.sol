@@ -44,15 +44,15 @@ import { PresetActions_OnOwnPowers } from "@src/mandates/executive/PresetActions
 
 // INTEGRATION MANDATES
 // Election List
-import { ElectionList_Nominate } from "@src/mandates/integrations/ElectionList/ElectionList_Nominate.sol";
-import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList/ElectionList_Tally.sol";
-import { ElectionList_Vote } from "@src/mandates/integrations/ElectionList/ElectionList_Vote.sol";
+import { ElectionRegistry_Nominate } from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_Nominate.sol";
+import { ElectionRegistry_Tally } from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_Tally.sol";
+import { ElectionRegistry_Vote } from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_Vote.sol";
 import {
-    ElectionList_CreateVoteMandate
-} from "@src/mandates/integrations/ElectionList/ElectionList_CreateVoteMandate.sol";
+    ElectionRegistry_CreateVoteMandate
+} from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_CreateVoteMandate.sol";
 import {
-    ElectionList_CleanUpVoteMandate
-} from "@src/mandates/integrations/ElectionList/ElectionList_CleanUpVoteMandate.sol";
+    ElectionRegistry_CleanUpVoteMandate
+} from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_CleanUpVoteMandate.sol";
 
 // ERC721
 import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
@@ -122,10 +122,10 @@ contract DeployMandates is Script {
             registry = MandateRegistry(registryAddr); 
         } else {
             console2.log("No existing MandateRegistry found for this network. Deploying new MandateRegistry...");
+            vm.startBroadcast();
+            registry = new MandateRegistry{salt: keccak256("MandateRegistry")}(msg.sender);
+            vm.stopBroadcast();
         }
-        vm.startBroadcast();
-            registry = new MandateRegistry();
-        vm.stopBroadcast();
         // MandateRegistry registry = MandateRegistry(registryAddr);
         // IPowers powers = IPowers(registry.owner());
         // uint16 submitMandateId = helperConfig.getSubmitMandateId(block.chainid);
@@ -152,12 +152,30 @@ contract DeployMandates is Script {
             regCount++;
         }
 
+        console2.log("Deployment complete. Registering mandates to MandateRegistry...");
+        console2.log("Total mandates to register:", regCount);
+        console2.log("Total mandates deployed:", names.length);
+
         // Create exactly-sized arrays for the registration payload
         if (regCount > 0) {
-            // bytes memory dynamicParams = abi.encode(finalNames, finalAddresses);
+            // Create properly-sized arrays with only regCount elements
+            string[] memory finalNames = new string[](regCount);
+            address[] memory finalAddresses = new address[](regCount);
+            bytes32[] memory finalCreationCodeHashes = new bytes32[](regCount);
+            
+            for (uint256 i = 0; i < regCount; i++) {
+                finalNames[i] = regNames[i];
+                finalAddresses[i] = regAddresses[i];
+                finalCreationCodeHashes[i] = regCreationCodeHashes[i];
+            }
+
+            console2.log("Registering the following mandates:");
+            for (uint256 i = 0; i < regCount; i++) {
+                console2.log(" - ", finalNames[i], " at ", finalAddresses[i]);
+            }
+
             vm.startBroadcast(); 
-            registry.batchRegisterMandates(regNames, regAddresses, regCreationCodeHashes);
-            // powers.request(submitMandateId, dynamicParams, 0, "Batch Register Mandates");
+            registry.batchRegisterMandates(finalNames, finalAddresses, finalCreationCodeHashes);
             vm.stopBroadcast();
 
             console2.log("Successfully registered mandates to MandateRegistry.");
@@ -335,25 +353,25 @@ contract DeployMandates is Script {
         creationCodes.push(type(GovernedToken_BurnToAccess).creationCode);
         constructorArgs.push(abi.encode("GovernedToken_BurnToAccess"));
 
-        names.push("ElectionList_Vote");
-        creationCodes.push(type(ElectionList_Vote).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_Vote"));
+        names.push("ElectionRegistry_Vote");
+        creationCodes.push(type(ElectionRegistry_Vote).creationCode);
+        constructorArgs.push(abi.encode("ElectionRegistry_Vote"));
 
-        names.push("ElectionList_Nominate");
-        creationCodes.push(type(ElectionList_Nominate).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_Nominate"));
+        names.push("ElectionRegistry_Nominate");
+        creationCodes.push(type(ElectionRegistry_Nominate).creationCode);
+        constructorArgs.push(abi.encode("ElectionRegistry_Nominate"));
 
-        names.push("ElectionList_CreateVoteMandate");
-        creationCodes.push(type(ElectionList_CreateVoteMandate).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_CreateVoteMandate"));
+        names.push("ElectionRegistry_CreateVoteMandate");
+        creationCodes.push(type(ElectionRegistry_CreateVoteMandate).creationCode);
+        constructorArgs.push(abi.encode("ElectionRegistry_CreateVoteMandate"));
 
-        names.push("ElectionList_Tally");
-        creationCodes.push(type(ElectionList_Tally).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_Tally"));
+        names.push("ElectionRegistry_Tally");
+        creationCodes.push(type(ElectionRegistry_Tally).creationCode);
+        constructorArgs.push(abi.encode("ElectionRegistry_Tally"));
 
-        names.push("ElectionList_CleanUpVoteMandate");
-        creationCodes.push(type(ElectionList_CleanUpVoteMandate).creationCode);
-        constructorArgs.push(abi.encode("ElectionList_CleanUpVoteMandate"));
+        names.push("ElectionRegistry_CleanUpVoteMandate");
+        creationCodes.push(type(ElectionRegistry_CleanUpVoteMandate).creationCode);
+        constructorArgs.push(abi.encode("ElectionRegistry_CleanUpVoteMandate"));
 
         names.push("GovernedToken_CollectSplitPayment");
         creationCodes.push(type(GovernedToken_CollectSplitPayment).creationCode);

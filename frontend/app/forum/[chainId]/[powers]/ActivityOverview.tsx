@@ -4,6 +4,13 @@ import { Powers, Mandate } from '@/context/types';
 import { bigintToRole } from "@/utils/bigintTo";
 import { useRouter, useParams } from 'next/navigation';
 import { SearchFilterSort } from '@/components/SearchFilterSort';
+import { useUIStateStore } from '@/context/store';
+import { useAccount, useReadContracts } from 'wagmi';
+import { EyeIcon } from '@heroicons/react/24/outline';
+import { powersAbi } from '@/context/abi';
+
+// PUBLIC_ROLE is max uint256 - mandates with this role are accessible to everyone
+const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
 
 interface ActivityOverviewProps {
   powers: Powers;
@@ -11,6 +18,57 @@ interface ActivityOverviewProps {
 
 export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>();
+  const { address: userAddress } = useAccount();
+  const showAllMandates = useUIStateStore((state) => state.showAllMandates);
+  const toggleShowAllMandates = useUIStateStore((state) => state.toggleShowAllMandates);
+
+  // Get unique role IDs from powers.roles
+  const roleIdsToCheck = useMemo(() => {
+    return powers.roles?.map(r => r.roleId) || [];
+  }, [powers.roles]);
+
+  // Use multicall to check hasRoleSince for all roles at once
+  const { data: roleSinceResults } = useReadContracts({
+    contracts: roleIdsToCheck.map(roleId => ({
+      address: powersAddress as `0x${string}`,
+      abi: powersAbi,
+      functionName: 'hasRoleSince' as const,
+      args: [userAddress as `0x${string}`, roleId] as const,
+      chainId: Number(chainId)
+    })),
+    query: { 
+      enabled: !!userAddress && !!powersAddress && roleIdsToCheck.length > 0 
+    }
+  });
+
+  // Build Set of roles the user has
+  const userRoleIds = useMemo(() => {
+    if (!roleSinceResults || roleIdsToCheck.length === 0) return new Set<string>();
+    
+    const roleIds = new Set<string>();
+    roleSinceResults.forEach((result, idx) => {
+      if (result.status === 'success' && (result.result as bigint) > 0n) {
+        roleIds.add(roleIdsToCheck[idx].toString());
+      }
+    });
+    return roleIds;
+  }, [roleSinceResults, roleIdsToCheck]);
+
+  // Check if a mandate is public (allowedRole is PUBLIC_ROLE, meaning accessible to everyone)
+  const isMandatePublic = (mandate: Mandate): boolean => {
+    return mandate.conditions?.allowedRole === PUBLIC_ROLE;
+  };
+
+  // Check if a mandate's allowedRole matches any of the user's roles
+  const userHasRoleForMandate = (mandate: Mandate): boolean => {
+    const allowedRole = mandate.conditions?.allowedRole?.toString();
+    return allowedRole !== undefined && userRoleIds.has(allowedRole);
+  };
+
+  // Check if user can access a mandate (either has the role or it's public)
+  const userCanAccessMandate = (mandate: Mandate): boolean => {
+    return isMandatePublic(mandate) || userHasRoleForMandate(mandate);
+  };
 
   // Extract flows and mandates
   const flowBoxes = useMemo(() => {
@@ -47,6 +105,19 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
     return boxes;
   }, [powers]);
 
+  // Filter flows based on user's roles when showAllMandates is false
+  const filteredFlowBoxes = useMemo(() => {
+    if (showAllMandates) return flowBoxes;
+    
+    // Filter to only show flows that contain at least one mandate the user can access (has role or is public)
+    return flowBoxes.filter(box => 
+      box.mandates.some(m => userCanAccessMandate(m))
+    );
+  }, [flowBoxes, showAllMandates, userRoleIds]);
+
+  // Check if user has no roles at all and showAllMandates is false
+  const showEmptyState = !showAllMandates && filteredFlowBoxes.length === 0 && flowBoxes.length > 0;
+
   if (flowBoxes.length === 0) {
     return (
       <div className="border border-border flex flex-col h-full">
@@ -60,27 +131,50 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
     );
   }
 
+  if (showEmptyState) {
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-auto p-0">
+          <div className="border border-border bg-background p-8 text-center">
+            <p className="text-muted-foreground font-mono text-sm mb-4">
+              You don't have any roles in this organisation that allow you to participate in governance flows.
+            </p>
+            <button
+              onClick={toggleShowAllMandates}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary font-mono text-sm"
+            >
+              <EyeIcon className="w-4 h-4" />
+              <span>Show all mandates</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 flex flex-col border border-border min-h-0">
-      <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
         <span className="font-mono text-muted-foreground uppercase tracking-wider text-base">GOVERNANCE OVERVIEW</span>
         <SearchFilterSort 
           onSearchChange={(query) => console.log('Search:', query)}
           onFilterChange={(filter) => console.log('Filter:', filter)}
           onSortChange={(sort) => console.log('Sort:', sort)}
         />
-      </div>
+      </div> */}
 
       {/* Was bg-muted/10 */}
-      <div className="flex-1 overflow-auto p-4"> 
+      <div className="flex-1 overflow-auto p-0"> 
         <div className="flex flex-wrap gap-4">
-          {flowBoxes.map((box, idx) => (
-            <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[21rem] max-w-2xl">
+          {filteredFlowBoxes.map((box, idx) => (
+            <div key={`flow-${box.flowIndex || 'other'}-${idx}`} className="flex-1 min-w-[min(100%,21rem)] max-w-2xl">
               <FlowSummaryBox 
                 box={box}
                 powers={powers}
                 chainId={chainId}
                 powersAddress={powersAddress}
+                userRoleIds={userRoleIds}
+                showAllMandates={showAllMandates}
               />
             </div>
           ))}
@@ -95,12 +189,16 @@ function FlowSummaryBox({
   box, 
   powers, 
   chainId, 
-  powersAddress 
+  powersAddress,
+  userRoleIds,
+  showAllMandates
 }: {
   box: { flowIndex?: string; nameDescription: string; mandates: Mandate[] };
   powers: Powers;
   chainId: string;
   powersAddress: string;
+  userRoleIds: Set<string>;
+  showAllMandates: boolean;
 }) {
   const router = useRouter();
   
@@ -112,7 +210,7 @@ function FlowSummaryBox({
       className="border border-border bg-background transition-colors relative hover:border-primary/50 cursor-pointer max-w-2xl"
       onClick={() => box.flowIndex && router.push(`/forum/${chainId}/${powersAddress}/flow/${box.flowIndex}`)}
     >
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-b border-border bg-muted/50 transition-colors">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 bg-muted/50 transition-colors">
         <h3 className="text-foreground tracking-wider text-sm">{name.trim() || 'Unnamed Flow'}</h3>
       </div>
       
@@ -126,18 +224,25 @@ function FlowSummaryBox({
             {box.mandates.map(m => {
               const roleId = m.conditions?.allowedRole?.toString() || 'N/A';
               const roleName = bigintToRole(BigInt(roleId), powers);
+              const userHasRole = roleId !== 'N/A' && userRoleIds.has(roleId);
+              const isPublic = m.conditions?.allowedRole === PUBLIC_ROLE;
+              const canAccess = isPublic || userHasRole;
+              const isDisabled = !m.active || (!showAllMandates && !canAccess);
+              const shouldDim = !showAllMandates && !canAccess;
+              
               return (
                 <div 
                   key={m.index.toString()} 
-                  className={`flex items-center text-xs font-mono ${!m.active ? 'opacity-50 cursor-not-allowed' : 'group cursor-pointer'}`}
+                  className={`flex items-center min-w-0 px-3 py-2 bg-background border border-border transition-colors ${isDisabled ? 'opacity-50 cursor-not-allowed text-foreground' : 'cursor-pointer hover:bg-muted/50 text-foreground hover:text-primary'}`}
+                  style={shouldDim ? { opacity: 0.5 } : undefined}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (m.active) {
+                    if (!isDisabled) {
                       router.push(`/forum/${chainId}/${powersAddress}/mandate/${m.index}`);
                     }
                   }}
                 >
-                  <span className={`text-foreground truncate transition-colors ${!m.active ? '' : 'group-hover:text-primary group-hover:underline'}`}>
+                  <span className="flex-1 min-w-0 text-xs font-mono tracking-wider truncate">
                     #{m.index.toString()} {m.nameDescription?.split(':')[0] || 'Unnamed Mandate'} - {roleName}
                   </span>
                 </div>

@@ -46,7 +46,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 6;
-    uint16 constant PATCH = 1;
+    uint16 constant PATCH = 2;
 
     function run() external returns (Powers) {
         // step 0, setup. 
@@ -110,7 +110,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Setup:  assigns labels to roles and set the treasury. It self-destructs after execution.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "PresetActions"), // presetSingleAction
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"), // presetSingleAction
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
             })
@@ -143,7 +143,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Propose to Mint: Propose to mint tokens at ", address(simpleErc20Votes).toHexString(), ".")),
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -156,7 +156,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Veto a mint: Veto a proposed token mint at", address(simpleErc20Votes).toHexString(), ".")),
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "StatementOfIntent"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -173,7 +173,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: string(abi.encodePacked("Execute a mint: Execute a mint at ", address(simpleErc20Votes).toHexString(), ". it has to be proposed first by the community and should not have been vetoed by an admin.")),
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "BespokeAction_Simple"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(simpleErc20Votes), // target contract
                     bytes4(keccak256("mint(address,uint256)")), 
@@ -205,7 +205,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate Me: Nominate yourself for a delegate election. (Set nominateMe to false to revoke nomination)",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "Nominate"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Nominate"),
                 config: abi.encode(
                     address(nominees)
                     ),
@@ -220,7 +220,7 @@ contract Deploy is DeployHelpers {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Call a delegate election: This can be done at any time. Nominations are elected on the amount of delegated tokens they have received. For",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, false, "DelegateTokenSelect"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "DelegateTokenSelect"),
                 config: abi.encode(
                     address(erc20DelegateElection),
                     address(nominees),

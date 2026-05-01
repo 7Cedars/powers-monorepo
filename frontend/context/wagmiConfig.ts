@@ -1,5 +1,6 @@
-import { createConfig, http, webSocket } from '@wagmi/core'
-import { injected, coinbaseWallet } from '@wagmi/connectors'
+import { http } from '@wagmi/core'
+import { createConfig } from '@privy-io/wagmi'
+import { injected } from '@wagmi/connectors'
 import { foundry, sepolia, baseSepolia, arbitrumSepolia, zksyncSepoliaTestnet, surgeTestnet, mainnet } from '@wagmi/core/chains' 
 import { defineChain } from 'viem'
 

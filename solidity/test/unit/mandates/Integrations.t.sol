@@ -25,7 +25,7 @@ import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { Governor } from "@lib/openzeppelin-contracts/contracts/governance/Governor.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 /// @notice Comprehensive unit tests for all executive mandates
@@ -506,7 +506,7 @@ contract GovernedToken_BurnToAccessTest is TestSetupIntegrations {
 //////////////////////////////////////////////////
 //              ELECTIONLIST TESTS              //
 //////////////////////////////////////////////////
-contract ElectionListIntegrationTest is TestSetupIntegrations {
+contract ElectionRegistryIntegrationTest is TestSetupIntegrations {
     uint16 createElectionId;
     uint16 nominateId;
     uint16 revokeId;
@@ -562,7 +562,7 @@ contract ElectionListIntegrationTest is TestSetupIntegrations {
         (electionListAddress,,) = abi.decode(mandateConfig, (address, bytes4, string[]));
     }
 
-    function test_ElectionList_FullFlow_Success() public {
+    function test_ElectionRegistry_FullFlow_Success() public {
         // 1. Create Election
         // BespokeAction_Simple params: encoded params for the function
         console2.log("Creating Election...");
@@ -581,7 +581,7 @@ contract ElectionListIntegrationTest is TestSetupIntegrations {
         daoMock.request(nominateId, electionParams, nonce, "Nominate Alice");
 
         // Verify Nomination
-        nomineesList = ElectionList(electionListAddress).getNominees(electionId);
+        nomineesList = ElectionRegistry(electionListAddress).getNominees(electionId);
         assertEq(nomineesList.length, 1);
         assertEq(nomineesList[0], alice);
 
@@ -605,7 +605,7 @@ contract ElectionListIntegrationTest is TestSetupIntegrations {
         vm.prank(alice);
         daoMock.request(voteMandateId, abi.encode(true), nonce, "Vote for Alice");
 
-        assertEq(ElectionList(electionListAddress).getVoteCount(electionId, alice), 1);
+        assertEq(ElectionRegistry(electionListAddress).getVoteCount(electionId, alice), 1);
 
         // 5. Tally
         vm.roll(endBlock + 1); // Advance to end block

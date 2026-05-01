@@ -16,7 +16,7 @@ export function ThemeColorMeta() {
     // Create new meta tag with the appropriate color
     const meta = document.createElement("meta");
     meta.name = "theme-color";
-    meta.content = resolvedTheme === "dark" ? "#09090b" : "rgb(255, 255, 254)";
+    meta.content = resolvedTheme === "dark" ? "#09090b" : "#ffffff";
     document.head.appendChild(meta);
 
     return () => {

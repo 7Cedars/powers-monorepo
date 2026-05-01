@@ -6,7 +6,7 @@ import { TestSetupPowers } from "../TestSetup.t.sol";
 import { PowersMock } from "../mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "../mocks/SimpleErc20Votes.sol";
 import { Erc20Taxed } from "../mocks/Erc20Taxed.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { SimpleErc1155 } from "../mocks/SimpleErc1155.sol";
 import { Nominees } from "@src/helpers/Nominees.sol";
 import { SimpleGovernor } from "../mocks/SimpleGovernor.sol";
@@ -37,7 +37,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 //////////////////////////////////////////////////////////////
 //                  ELECTION LIST TESTS                     //
 //////////////////////////////////////////////////////////////
-contract ElectionListTest is TestSetupPowers {
+contract ElectionRegistryTest is TestSetupPowers {
     uint256 electionId;
     string electionTitle = "Test Election";
     uint48 startBlock;
@@ -50,7 +50,7 @@ contract ElectionListTest is TestSetupPowers {
     function setUp() public override {
         super.setUp();
         vm.prank(address(daoMock));
-        electionList = new ElectionList();
+        electionList = new ElectionRegistry();
 
         startBlock = uint48(block.number + 10);
         endBlock = uint48(block.number + 100);
@@ -64,7 +64,7 @@ contract ElectionListTest is TestSetupPowers {
 
         uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
 
-        ElectionList.Election memory election = electionList.getElectionInfo(id);
+        ElectionRegistry.Election memory election = electionList.getElectionInfo(id);
         assertEq(election.owner, address(daoMock));
         assertEq(election.title, electionTitle);
         assertEq(election.startBlock, startBlock);

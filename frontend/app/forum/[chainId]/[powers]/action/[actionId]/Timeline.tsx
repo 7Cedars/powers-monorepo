@@ -181,19 +181,21 @@ export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) 
   }, [action, mandate, cond, blockNumber, chainId, timestamps, powers.mandates]);
 
   return (
-    <div className="flex-1 min-w-0 border border-border bg-background">
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2 mb-3">
         <QueueListIcon className="h-4 w-4 text-muted-foreground" />
-        <h4 className="text-sm text-foreground tracking-wider">Timeline</h4>
+        <h4 className="text-sm text-foreground uppercase tracking-wider">Timeline</h4>
       </div>
-      <div className="p-4 sm:p-6 space-y-2 text-sm">
+      <div className="lg:overflow-y-auto lg:max-h-[300px] pr-2">
         {timelineItems.length > 0 ? (
-          timelineItems.map((item, idx) => (
-            <div key={idx} className="flex justify-between">
-              <span className="text-muted-foreground">{item.label}</span>
-              <span className="text-foreground">{item.value}</span>
-            </div>
-          ))
+          <div className="space-y-2 text-sm">
+            {timelineItems.map((item, idx) => (
+              <div key={idx} className="flex justify-between">
+                <span className="text-muted-foreground">{item.label}</span>
+                <span className="text-foreground">{item.value}</span>
+              </div>
+            ))}
+          </div>
         ) : (
           <p className="text-muted-foreground/50 text-xs">No timeline data available</p>
         )}

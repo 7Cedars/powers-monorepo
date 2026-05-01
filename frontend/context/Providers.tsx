@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { PrivyClientConfig, PrivyProvider } from '@privy-io/react-auth';
+import { SmartWalletsProvider } from '@privy-io/react-auth/smart-wallets';
 import { arbitrumSepolia, baseSepolia, foundry, optimismSepolia, sepolia, zksyncSepoliaTestnet } from '@wagmi/core/chains'
 import { wagmiConfig } from './wagmiConfig'  
 import { WagmiProvider } from '@privy-io/wagmi';
@@ -21,7 +22,7 @@ export function Providers({children}: {children: React.ReactNode}) {
   }, []);
 
   const privyConfig: PrivyClientConfig = {
-    defaultChain: arbitrumSepolia,
+    defaultChain: sepolia,
     supportedChains: [
       zksyncSepoliaTestnet,
       optimismSepolia,
@@ -30,12 +31,17 @@ export function Providers({children}: {children: React.ReactNode}) {
       arbitrumSepolia,
       ...(isLocalhost ? [foundry] : [])
     ],
-    loginMethods: ['wallet'],
+    loginMethods: ['wallet', 'email' ],
     appearance: {
         theme: (mounted ? resolvedTheme : 'light') as 'light' | 'dark',
         accentColor: '#676FFF',
         logo: '/logo1_notext.png', 
         walletList: ["metamask", "rainbow", "detected_wallets", "wallet_connect"]
+    },
+    embeddedWallets: {
+      ethereum: {
+        createOnLogin: 'users-without-wallets',
+      },
     }
   };
 
@@ -45,11 +51,13 @@ export function Providers({children}: {children: React.ReactNode}) {
         // clientId={process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID as string} 
         config={privyConfig} 
         >
-          <QueryClientProvider client={queryClient}>
-            <WagmiProvider config={wagmiConfig}>
-                {children}
-            </WagmiProvider>
-          </QueryClientProvider>
+          <SmartWalletsProvider>
+            <QueryClientProvider client={queryClient}>
+              <WagmiProvider config={wagmiConfig}>
+                  {children}
+              </WagmiProvider>
+            </QueryClientProvider>
+          </SmartWalletsProvider>
       </PrivyProvider> 
   );
 }

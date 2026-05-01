@@ -4,9 +4,9 @@ pragma solidity ^0.8.26;
 // import "forge-std/Test.sol";
 // import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 // import { TestSetupElectoral } from "../../TestSetup.t.sol";
-// import { ElectionList_Tally } from "@src/mandates/integrations/ElectionList_Tally.sol";
+// import { ElectionRegistry_Tally } from "@src/mandates/integrations/ElectionRegistry_Tally.sol";
 // import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
-// import { ElectionList_Vote } from "@src/mandates/integrations/ElectionList_Vote.sol";
+// import { ElectionRegistry_Vote } from "@src/mandates/integrations/ElectionRegistry_Vote.sol";
 // import { TaxSelect } from "@src/mandates/electoral/TaxSelect.sol";
 // import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
 // import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
@@ -14,7 +14,7 @@ pragma solidity ^0.8.26;
 // import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
 // import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 // import { Erc20DelegateElection } from "@mocks/Erc20DelegateElection.sol";
-// import { ElectionList } from "@src/helpers/ElectionList.sol";
+// import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 // import { Nominees } from "@src/helpers/Nominees.sol";
 // import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
 // import { FlagActions } from "@src/helpers/FlagActions.sol";
@@ -22,9 +22,9 @@ pragma solidity ^0.8.26;
 // /// @title Electoral Mandate Fuzz Tests
 // /// @notice Comprehensive fuzz testing for all electoral mandate implementations using pre-initialized mandates
 // /// @dev Tests use mandates from electoralTestConstitution:
-// ///      mandateId 1: ElectionList_Tally (Erc20DelegateElection, roleId=3, maxHolders=3)
+// ///      mandateId 1: ElectionRegistry_Tally (Erc20DelegateElection, roleId=3, maxHolders=3)
 // ///      mandateId 2: PeerSelect (maxHolders=2, roleId=4, maxVotes=1, Nominees)
-// ///      mandateId 3: ElectionList_Vote (ElectionList, maxVotes=1)
+// ///      mandateId 3: ElectionRegistry_Vote (ElectionRegistry, maxVotes=1)
 // ///      mandateId 4: TaxSelect (Erc20Taxed, threshold=1000, roleId=4)
 // ///      mandateId 6: SelfSelect (roleId=4)
 // ///      mandateId 7: RenounceRole (roles=[1,2])
@@ -33,9 +33,9 @@ pragma solidity ^0.8.26;
 // ///      mandateId 10: PresetActions (label roles)
 // contract ElectoralFuzzTest is TestSetupElectoral {
 //     // Mandate instances for testing
-//     ElectionList_Tally openElectionEnd;
+//     ElectionRegistry_Tally openElectionEnd;
 //     PeerSelect peerSelect;
-//     ElectionList_Vote openElectionVote;
+//     ElectionRegistry_Vote openElectionVote;
 //     TaxSelect taxSelect;
 //     SelfSelect selfSelect;
 //     RenounceRole renounceRole;
@@ -44,7 +44,7 @@ pragma solidity ^0.8.26;
 
 //     // Mock contract instances
 //     Erc20DelegateElection erc20DelegateElection;
-//     ElectionList openElection;
+//     ElectionRegistry openElection;
 //     Nominees nomineesContract;
 //     Erc20Taxed erc20Taxed;
 //     FlagActions flagActions;
@@ -65,9 +65,9 @@ pragma solidity ^0.8.26;
 //         super.setUp();
 
 //         // Initialize mandate instances from deployed addresses
-//         openElectionEnd = ElectionList_Tally(mandateAddresses[11]);
+//         openElectionEnd = ElectionRegistry_Tally(mandateAddresses[11]);
 //         peerSelect = PeerSelect(mandateAddresses[12]);
-//         openElectionVote = ElectionList_Vote(mandateAddresses[13]);
+//         openElectionVote = ElectionRegistry_Vote(mandateAddresses[13]);
 //         nStrikesRevokesRoles = NStrikesRevokesRoles(mandateAddresses[14]);
 //         taxSelect = TaxSelect(mandateAddresses[15]);
 //         roleByRoles = RoleByRoles(mandateAddresses[17]);
@@ -76,7 +76,7 @@ pragma solidity ^0.8.26;
 
 //         // Initialize mock contract instances
 //         erc20DelegateElection = Erc20DelegateElection(helperAddresses[10]);
-//         openElection = ElectionList(helperAddresses[9]);
+//         openElection = ElectionRegistry(helperAddresses[9]);
 //         nomineesContract = Nominees(helperAddresses[8]);
 //         erc20Taxed = Erc20Taxed(helperAddresses[1]);
 //         flagActions = FlagActions(helperAddresses[6]);
@@ -234,9 +234,9 @@ pragma solidity ^0.8.26;
 //     //                  ELECTION SELECT FUZZ                    //
 //     //////////////////////////////////////////////////////////////
 
-//     /// @notice Fuzz test ElectionList_Tally (mandateId 1) action generation
+//     /// @notice Fuzz test ElectionRegistry_Tally (mandateId 1) action generation
 //     /// @dev mandateId 1 runs delegate elections for role 3
-//     function testFuzzElectionList_TallyActionGeneration(
+//     function testFuzzElectionRegistry_TallyActionGeneration(
 //         address[] memory nomineesFuzzed,
 //         uint256 numberOfNominees,
 //         address callerFuzzed,
@@ -264,8 +264,8 @@ pragma solidity ^0.8.26;
 //         assertEq(returnedTargets[0], address(daoMock));
 //     }
 
-//     /// @notice Fuzz test ElectionList_Tally with various nonces
-//     function testFuzzElectionList_TallyWithVariousNonces(uint256 nonce1, uint256 nonce2) public {
+//     /// @notice Fuzz test ElectionRegistry_Tally with various nonces
+//     function testFuzzElectionRegistry_TallyWithVariousNonces(uint256 nonce1, uint256 nonce2) public {
 //         vm.assume(nonce1 != nonce2);
 
 //         (returnedActionId,,,) = openElectionEnd.handleRequest(alice, address(daoMock), 1, abi.encode(), nonce1);
@@ -360,9 +360,9 @@ pragma solidity ^0.8.26;
 //     //                VOTE IN OPEN ELECTION FUZZ                //
 //     //////////////////////////////////////////////////////////////
 
-//     /// @notice Fuzz test ElectionList_Vote (mandateId 3) with various candidates
-//     /// @dev mandateId 3 allows voting in open elections with max 1 vote == ElectionList_Vote.
-//     function testFuzzElectionList_VoteWithCandidates(
+//     /// @notice Fuzz test ElectionRegistry_Vote (mandateId 3) with various candidates
+//     /// @dev mandateId 3 allows voting in open elections with max 1 vote == ElectionRegistry_Vote.
+//     function testFuzzElectionRegistry_VoteWithCandidates(
 //         address[] memory candidatesFuzzed,
 //         uint256 quantity,
 //         uint256 nonceFuzzed,
@@ -372,7 +372,7 @@ pragma solidity ^0.8.26;
 //         vm.assume(candidatesFuzzed.length >= quantity);
 //         uint256 numberOfCandidates;
 
-//         // step 1: nominate candidates in ElectionList contract
+//         // step 1: nominate candidates in ElectionRegistry contract
 //         vm.startPrank(address(daoMock));
 //         for (i = 0; i < quantity; i++) {
 //             if (candidatesFuzzed[i] != address(0) && !openElection.nominations(candidatesFuzzed[i])) {
@@ -388,7 +388,7 @@ pragma solidity ^0.8.26;
 
 //         vm.roll(block.number + 1);
 
-//         // step 2: initialise a NEW ElectionList_Vote mandate
+//         // step 2: initialise a NEW ElectionRegistry_Vote mandate
 //         delete conditions;
 //         conditions.allowedRole = type(uint256).max;
 //         mandateId = daoMock.mandateCounter();
@@ -398,13 +398,13 @@ pragma solidity ^0.8.26;
 //                 nameDescription: "Vote In Open Election",
 //                 targetMandate: mandateAddresses[13],
 //                 config: abi.encode(
-//                     helperAddresses[9], // ElectionList contract
+//                     helperAddresses[9], // ElectionRegistry contract
 //                     1 // max votes per voter
 //                 ),
 //                 conditions: conditions
 //             })
 //         );
-//         // step 3: vote for candidates in ElectionList_Vote contract
+//         // step 3: vote for candidates in ElectionRegistry_Vote contract
 //         vm.prank(address(daoMock));
 //         (returnedActionId, returnedTargets,, returnedCalldatas) =
 //             openElectionVote.handleRequest(alice, address(daoMock), mandateId, mandateCalldata, nonceFuzzed);
@@ -415,7 +415,7 @@ pragma solidity ^0.8.26;
 //     }
 
 //     /// @notice Fuzz test with multiple votes allowed.
-//     function testFuzzElectionList_VoteWithMultipleVotes(
+//     function testFuzzElectionRegistry_VoteWithMultipleVotes(
 //         address[] memory candidatesFuzzed,
 //         uint256 quantity,
 //         uint256 nonceFuzzed,
@@ -426,7 +426,7 @@ pragma solidity ^0.8.26;
 //         vm.assume(votesFuzzed.length > 3);
 //         uint256 numberOfCandidates;
 
-//         // step 1: nominate candidates in ElectionList contract
+//         // step 1: nominate candidates in ElectionRegistry contract
 //         vm.startPrank(address(daoMock));
 //         for (i = 0; i < quantity; i++) {
 //             if (candidatesFuzzed[i] != address(0) && !openElection.nominations(candidatesFuzzed[i])) {
@@ -453,7 +453,7 @@ pragma solidity ^0.8.26;
 
 //         vm.roll(block.number + 1);
 
-//         // step 2: initialise a NEW ElectionList_Vote mandate with multiple votes allowed
+//         // step 2: initialise a NEW ElectionRegistry_Vote mandate with multiple votes allowed
 //         delete conditions;
 //         conditions.allowedRole = type(uint256).max;
 //         mandateId = daoMock.mandateCounter();
@@ -463,14 +463,14 @@ pragma solidity ^0.8.26;
 //                 nameDescription: "Vote In Open Election Multiple",
 //                 targetMandate: mandateAddresses[13],
 //                 config: abi.encode(
-//                     helperAddresses[9], // ElectionList contract
+//                     helperAddresses[9], // ElectionRegistry contract
 //                     3 // max votes per voter increased to 3
 //                 ),
 //                 conditions: conditions
 //             })
 //         );
 
-//         // step 3: vote for candidates in ElectionList_Vote contract
+//         // step 3: vote for candidates in ElectionRegistry_Vote contract
 //         vm.prank(alice);
 //         actionId = daoMock.request(mandateId, mandateCalldata, nonceFuzzed, "");
 
@@ -668,14 +668,14 @@ pragma solidity ^0.8.26;
 //     function testFuzzElectoralWithZeroAddresses(uint256 arrayLength, uint256 nonceFuzzed) public {
 //         arrayLength = bound(arrayLength, 1, 10);
 
-//         // For ElectionList_Vote, we need a bool array, not address array
+//         // For ElectionRegistry_Vote, we need a bool array, not address array
 //         // Test with all false votes (no selections)
 //         bool[] memory votesArray = new bool[](arrayLength);
 //         // All elements are false by default
 
 //         mandateCalldata = abi.encode(votesArray);
 
-//         // Test ElectionList_Vote with no votes selected
+//         // Test ElectionRegistry_Vote with no votes selected
 //         // This should revert as no votes were cast
 //         vm.expectRevert();
 //         openElectionVote.handleRequest(alice, address(daoMock), 3, mandateCalldata, nonceFuzzed);
@@ -685,7 +685,7 @@ pragma solidity ^0.8.26;
 //     function testFuzzElectoralWithLargeArrays(uint256 numberOfNominees, uint256 voteIndex, uint256 nonceFuzzed) public {
 //         numberOfNominees = bound(numberOfNominees, 1, MAX_FUZZ_TARGETS);
 
-//         // Nominate many candidates in ElectionList
+//         // Nominate many candidates in ElectionRegistry
 //         vm.startPrank(address(daoMock));
 //         for (i = 0; i < numberOfNominees; i++) {
 //             address nominee = address(uint160(i + 1000)); // Use offset to avoid collisions
@@ -703,7 +703,7 @@ pragma solidity ^0.8.26;
 
 //         vm.roll(block.number + 1);
 
-//         // Initialize a new ElectionList_Vote mandate for this test
+//         // Initialize a new ElectionRegistry_Vote mandate for this test
 //         delete conditions;
 //         conditions.allowedRole = type(uint256).max;
 //         mandateId = daoMock.mandateCounter();
@@ -713,7 +713,7 @@ pragma solidity ^0.8.26;
 //                 nameDescription: "Vote In Open Election Large",
 //                 targetMandate: mandateAddresses[13],
 //                 config: abi.encode(
-//                     helperAddresses[9], // ElectionList contract
+//                     helperAddresses[9], // ElectionRegistry contract
 //                     1 // max votes per voter
 //                 ),
 //                 conditions: conditions

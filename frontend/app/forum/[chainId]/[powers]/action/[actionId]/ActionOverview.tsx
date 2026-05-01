@@ -8,6 +8,7 @@ import { parseParamValues } from "@/utils/parsers";
 import { SimulationBox } from "@/components/SimulationBox";
 import { useMandate } from "@/hooks/useMandate";
 import { useWallets } from "@privy-io/react-auth";
+import { useChainId } from "wagmi";
 
 interface ActionOverviewProps {
   action: Action;
@@ -23,6 +24,7 @@ interface ActionOverviewProps {
 export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate }) => {
   const { simulation, simulate } = useMandate();
   const { wallets, ready } = useWallets();
+  const chainId = useChainId();
   const [decodedParams, setDecodedParams] = useState<any[]>([]);
   const [hasSimulated, setHasSimulated] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -202,7 +204,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
 
         {simulation ? (
           <div>
-            <SimulationBox mandate={mandate} simulation={simulation} />
+            <SimulationBox mandate={mandate} simulation={simulation} chainId={chainId} />
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">

@@ -1,7 +1,6 @@
 'use client'
  import { useState, useEffect } from 'react'; 
  import { usePowersStore, useStatusStore } from "@/context/store";  
- import { OrgSummaryBox } from '@/components/OrgSummaryBox';
  import { ActivityOverview } from './ActivityOverview';
  import { usePowers } from '@/hooks/usePowers';
  import { useParams } from 'next/navigation';
@@ -10,6 +9,9 @@
 import { parseChainId } from '@/utils/parsers';
 import { CommunicationChannels } from '@/context/types';
 import { MetadataLinks } from '@/components/MetadataLinks';
+
+// No longer using OrgSummaryBox
+// import { OrgSummaryBox } from '@/components/OrgSummaryBox';
 
  export default function OverviewPage() {
     const powers = usePowersStore();
@@ -75,19 +77,38 @@ import { MetadataLinks } from '@/components/MetadataLinks';
    return (
         <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full overflow-y-auto px-2 sm:px-4 py-4 gap-4 min-h-0">
         
-            {/* DAO Summary - full width top */}
-            <OrgSummaryBox powers={powers} alignment='row' showHeader={false} /> 
+            {/* DAO Summary - Banner & Description only */}
+            <div>
+                {/* Banner */}
+                <div 
+                    className="h-48 relative overflow-hidden"
+                    style={{
+                        backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                    }}>
+                    <div className="absolute inset-0 bg-background/20" />
+                </div>
+                
+                {/* Description */}
+                <div className="px-4 pt-4 bg-muted/50">
+                    <p className="font-mono text-xs text-foreground leading-relaxed">
+                        {powers?.metadatas?.description ? powers.metadatas.description : "No description available."}
+                    </p>
+                </div>
 
-            <MetadataLinks 
-                      website={powers?.metadatas?.website}
-                      codeOfConduct={powers?.metadatas?.codeOfConduct}
-                      disputeResolution={powers?.metadatas?.disputeResolution}
-                      communicationChannels={powers?.metadatas?.communicationChannels as CommunicationChannels}
-                      parentContracts={powers?.metadatas?.parentContracts}
-                      childContracts={powers?.metadatas?.childContracts}
-                      chainId={powers?.chainId}
-                      isEditorView={false}
-                    />
+                <MetadataLinks 
+                  website={powers?.metadatas?.website}
+                  codeOfConduct={powers?.metadatas?.codeOfConduct}
+                  disputeResolution={powers?.metadatas?.disputeResolution}
+                  communicationChannels={powers?.metadatas?.communicationChannels as CommunicationChannels}
+                  parentContracts={powers?.metadatas?.parentContracts}
+                  childContracts={powers?.metadatas?.childContracts}
+                  chainId={powers?.chainId}
+                  isEditorView={false}
+                />
+                
+            </div>
 
             {/* THE ACTIVITY OF THE ORG - Unified mandates + actions */}
             <ActivityOverview powers={powers} />

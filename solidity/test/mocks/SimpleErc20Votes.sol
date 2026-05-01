@@ -18,7 +18,7 @@ contract SimpleErc20Votes is ERC20Votes {
     function mint(uint256 amount) public {
         if (amount == 0) {
             revert Erc20Votes__NoZeroAmount();
-        }
+        } 
         if (amount > MAX_AMOUNT_VOTES_TO_MINT) {
             revert Erc20Votes__AmountExceedsMax(amount, MAX_AMOUNT_VOTES_TO_MINT);
         }

@@ -3,11 +3,11 @@ pragma solidity ^0.8.26;
 
 // import { Test, console, console2 } from "lib/forge-std/src/Test.sol";
 // import { Powers } from "../../Powers.sol";
-// import { ElectionList } from "../../helpers/ElectionList.sol";
-// import { TestSetupElectionListsDAO } from "../../TestSetup.t.sol";
+// import { ElectionRegistry } from "../../helpers/ElectionRegistry.sol";
+// import { TestSetupElectionRegistrysDAO } from "../../TestSetup.t.sol";
 
-// contract ElectionListsDAO_IntegrationTest is TestSetupElectionListsDAO {
-//     // Mandate IDs from ElectionListsDAO.s.sol
+// contract ElectionRegistrysDAO_IntegrationTest is TestSetupElectionRegistrysDAO {
+//     // Mandate IDs from ElectionRegistrysDAO.s.sol
 //     // 1: Initial Setup (Revoked)
 //     // 2: Nominate
 //     // 3: Start Election
@@ -23,7 +23,7 @@ pragma solidity ^0.8.26;
 //     // So next mandate is 7.
 //     uint16 constant VOTE_MANDATE_ID = 7;
 
-//     function testElectionListsDAO_FullFlow() public {
+//     function testElectionRegistrysDAO_FullFlow() public {
 
 //         // --- 1. NOMINATION FLOW ---
 //         console2.log("--- Step 1: Nomination ---");
@@ -173,7 +173,7 @@ pragma solidity ^0.8.26;
 //         assertEq(openElection.getVoteCount(frank, electionId), 0, "Frank should have 0 votes");
 
 //         // Test Double Voting (Alice tries to vote again)
-//         vm.expectRevert(); // ElectionList already voted check or Mandate check
+//         vm.expectRevert(); // ElectionRegistry already voted check or Mandate check
 //         vm.prank(alice);
 //         daoMock.request(
 //             VOTE_MANDATE_ID,

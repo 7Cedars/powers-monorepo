@@ -10,13 +10,18 @@ import {
   BookOpenIcon,
   ArrowUpIcon,
   ArrowDownIcon,
-  CpuChipIcon
+  CpuChipIcon,
+  BanknotesIcon,
+  CreditCardIcon,
+  EyeIcon,
+  EyeSlashIcon
 } from '@heroicons/react/24/outline'
 import { CommunicationChannels, familyMember } from '@/context/types'
 import { useParams } from 'next/navigation'
 import { useAccount, useSignMessage, useReadContract } from 'wagmi'
 import { powersAbi } from '@/context/abi'
 import { useState } from 'react'
+import { usePowersStore, useUIStateStore } from '@/context/store'
 
 // SVG icons for social platforms (as heroicons doesn't have them all)
 // Note: AI generated these SVGs
@@ -71,6 +76,98 @@ type MetadataLinksProps = {
   childContracts?: familyMember[];
   chainId?: bigint | number;
   isEditorView?: boolean;
+}
+
+// Helper function to get Etherscan URL based on chain ID
+const getEtherscanUrl = (chainId: bigint | number | string | undefined, address: `0x${string}`): string => {
+  const chainIdNum = chainId ? Number(chainId) : 1;
+  
+  const explorers: Record<number, string> = {
+    1: 'https://etherscan.io',
+    5: 'https://goerli.etherscan.io',
+    11155111: 'https://sepolia.etherscan.io',
+    137: 'https://polygonscan.com',
+    80001: 'https://mumbai.polygonscan.com',
+    80002: 'https://amoy.polygonscan.com',
+    42161: 'https://arbiscan.io',
+    421614: 'https://sepolia.arbiscan.io',
+    10: 'https://optimistic.etherscan.io',
+    11155420: 'https://sepolia-optimism.etherscan.io',
+    8453: 'https://basescan.org',
+    84532: 'https://sepolia.basescan.org',
+  };
+  
+  const baseUrl = explorers[chainIdNum] || 'https://etherscan.io';
+  return `${baseUrl}/address/${address}`;
+};
+
+// Treasury Button Component
+function TreasuryButton({ chainId }: { chainId?: bigint | number | string }) {
+  const treasury = usePowersStore((state) => state.treasury);
+  
+  if (!treasury || treasury === '0x0' || treasury === '0x0000000000000000000000000000000000000000') {
+    return null;
+  }
+  
+  const handleClick = () => {
+    window.open(getEtherscanUrl(chainId, treasury), '_blank', 'noopener,noreferrer');
+  };
+  
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+      title={`Treasury: ${treasury}`}
+    >
+      <BanknotesIcon className="w-4 h-4" />
+      <span className="text-xs font-mono uppercase tracking-wider">Treasury</span>
+    </button>
+  );
+}
+
+// Show All Mandates Toggle Component
+function ShowAllMandatesToggle() {
+  const showAllMandates = useUIStateStore((state) => state.showAllMandates);
+  const toggleShowAllMandates = useUIStateStore((state) => state.toggleShowAllMandates);
+
+  return (
+    <button
+      onClick={toggleShowAllMandates}
+      className="p-2 ml-auto bg-background border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-primary"
+      aria-label={showAllMandates ? 'Show only your roles' : 'Show all mandates'}
+      title={showAllMandates ? 'Showing all mandates - click to filter by your roles' : 'Filtered by your roles - click to show all mandates'}
+    >
+      {showAllMandates ? (
+        <EyeIcon className="w-4 h-4" />
+      ) : (
+        <EyeSlashIcon className="w-4 h-4" />
+      )}
+    </button>
+  );
+}
+
+// PayMaster Button Component
+function PayMasterButton({ chainId }: { chainId?: bigint | number | string }) {
+  const paymaster = usePowersStore((state) => state.paymaster);
+  
+  if (!paymaster || paymaster === '0x0' || paymaster === '0x0000000000000000000000000000000000000000') {
+    return null;
+  }
+  
+  const handleClick = () => {
+    window.open(getEtherscanUrl(chainId, paymaster), '_blank', 'noopener,noreferrer');
+  };
+  
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary"
+      title={`PayMaster: ${paymaster}`}
+    >
+      <CreditCardIcon className="w-4 h-4" />
+      <span className="text-xs font-mono uppercase tracking-wider">PayMaster</span>
+    </button>
+  );
 }
 
 export function MetadataLinks({ 
@@ -180,8 +277,14 @@ export function MetadataLinks({
   }
 
   return (
-    <section className="w-full border border-border bg-muted/50 p-4">
+    <section className="w-full bg-muted/50 p-4">
       <div className="flex flex-wrap gap-3 items-center">
+        {/* Treasury Button */}
+        <TreasuryButton chainId={currentChainId} />
+
+        {/* PayMaster Button */}
+        <PayMasterButton chainId={currentChainId} />
+
         {/* Main Links */}
         {mainLinks.map((link, index) => {
           const Icon = link.icon
@@ -255,12 +358,15 @@ export function MetadataLinks({
           )
         })}
 
+        {/* Show All Mandates Toggle */}
+        <ShowAllMandatesToggle />
+
         {/* XMTP Agent Registration (Admin Only) */}
         {isAdmin && (
           <button
             onClick={handleRegisterAgent}
             disabled={isRegistering}
-            className={`flex items-center gap-2 px-3 py-2 ml-auto bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary ${isRegistering ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center gap-2 px-3 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary ${isRegistering ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Register with XMTP Agent"
           >
             <CpuChipIcon className={`w-4 h-4 ${isRegistering ? 'animate-pulse' : ''}`} />

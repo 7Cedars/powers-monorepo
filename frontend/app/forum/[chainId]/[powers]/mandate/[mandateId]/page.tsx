@@ -67,7 +67,7 @@ export default function MandatePage() {
       return 0;
     });
     
-    return sorted.slice(0, 25);
+    return sorted.slice(0, 10);
   }, [mandate?.actions]);
 
   // Compute usage statistics
@@ -146,15 +146,15 @@ export default function MandatePage() {
           </div>
 
           {/* Three Column Section */}
-          <div className="border-b border-border p-4">
-            <div className="flex flex-col lg:flex-row gap-4 w-full">
+          <div className="border-b border-border px-6 py-6">
+            <div className="flex flex-col lg:flex-row gap-6 w-full">
               {/* LEFT: Mandate Conditions */}
-              <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-3">
                   <AdjustmentsHorizontalIcon className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm text-foreground tracking-wider">Conditions</h4>
+                  <h4 className="text-sm text-foreground uppercase tracking-wider">Conditions</h4>
                 </div>
-                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[170px]">
+                <div className="lg:overflow-y-auto lg:max-h-[170px] pr-2">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Role</span>
@@ -204,13 +204,16 @@ export default function MandatePage() {
                 </div>
               </div>
 
+              {/* Separator */}
+              <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
               {/* MIDDLE: Usage Statistics */}
-              <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-3">
                   <ChartBarIcon className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm text-foreground tracking-wider">Usage</h4>
+                  <h4 className="text-sm text-foreground uppercase tracking-wider">Usage</h4>
                 </div>
-                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[170px]">
+                <div className="lg:overflow-y-auto lg:max-h-[170px] pr-2">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Total Actions</span>
@@ -262,23 +265,27 @@ export default function MandatePage() {
                 </div>
               </div>
 
+              {/* Separator */}
+              <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
               {/* RIGHT: Actions List */}
-              <div className="flex-1 min-w-0 border border-border bg-background">
-                <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-border bg-muted/50">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-3">
                   <ListBulletIcon className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm text-foreground tracking-wider">Recent Actions</h4>
+                  <h4 className="text-sm text-foreground uppercase tracking-wider">Recent Actions</h4>
                 </div>
-                <div className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-[170px]">
+                <div className="lg:overflow-y-auto lg:max-h-[170px] pr-2">
                   {sortedActions.length > 0 ? (
                     <div className="flex flex-col gap-2">
                       {sortedActions.map((action, idx) => {
                         const status = getActionStatus(action);
                         return (
-                          <div key={`action-${action.actionId}-${idx}`} className="flex items-start gap-2">
-                            <span
-                              className="text-foreground text-sm cursor-pointer hover:text-primary hover:underline transition-colors flex-1 truncate"
-                              onClick={() => router.push(`/forum/${chainId}/${powersAddress}/action/${action.actionId}`)}
-                            >
+                          <div 
+                            key={`action-${action.actionId}-${idx}`} 
+                            className="flex items-center justify-between px-3 py-2 bg-background border border-border transition-colors cursor-pointer hover:bg-muted/50 text-foreground hover:text-primary gap-2"
+                            onClick={() => router.push(`/forum/${chainId}/${powersAddress}/action/${action.actionId}`)}
+                          >
+                            <span className="text-xs font-mono tracking-wider truncate flex-1">
                               {action.description || 'No description'}
                             </span>
                             <div className="flex items-center gap-1 flex-shrink-0">

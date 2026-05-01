@@ -19,6 +19,7 @@ import { useXmtpClient } from "@/hooks/useXmtpClient";
 import { ForumModal } from "@/components/ForumModal";
 
 import { parseChainId } from "@/utils/parsers";
+import { Footer } from "@/components/Footer";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
@@ -98,7 +99,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       <header className="w-full flex flex-col items-center border-b border-border px-3 sm:px-4 py-4 flex-shrink-0">
         <div className="w-full flex flex-wrap md:flex-nowrap items-center justify-center md:justify-between max-w-6xl gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 md:flex-1">
-            <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">{
+            <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider truncate hover:text-foreground/80 transition-colors">{
                 powers.name ? powers.name : "FORUM"
             } 
             </a>
@@ -209,9 +210,12 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         </div>
       </div>
       
-      <main className="flex-1 overflow-y-auto min-h-0">
+      <main className="flex-1 overflow-y-auto min-h-0 pb-24">
         {children}
+        {/* <Footer /> */}
       </main>
+
+      
 
       {/* XMTP Login Modal */}
       <ForumModal 
