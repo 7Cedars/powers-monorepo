@@ -1,6 +1,5 @@
 const branch = args[0];
 const commitHash = args[1];
-const folderName = args[2]; 
 
 if (!branch || !commitHash || !folderName) {
     throw Error("Missing required args");
@@ -13,14 +12,13 @@ const githubRequest = Functions.makeHttpRequest({
     method: "GET",
     timeout: 9000, 
     params: {
-        repo: "publius/powers-monorepo",
+        repo: "publius-projects/cultural-stewards",
         branch: branch,
         commitHash: commitHash,
         maxAgeCommitInDays: 90,
-        folderName: folderName
+        folderName: "contracts"
     }
 });
-
  
 const githubResponse = await githubRequest;
 if (githubResponse.error || !githubResponse.data || !githubResponse.data.data || !githubResponse.data.data.signature) {

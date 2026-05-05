@@ -177,12 +177,12 @@ contract Configurations is Script {
     }
 
     function getMandateRegistry(uint256 chainId) public pure returns (address) {
-        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0xB6659Ba77742359158EaE0359e4838E5445C428D;
+        if (chainId == ETH_SEPOLIA_CHAIN_ID) return 0x97b66F08Eb857e27A24492D338d3DC484DF63896;
         if (chainId == ARB_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
         if (chainId == OPT_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
         if (chainId == BASE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
         if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 0x0000000000000000000000000000000000000000;
-        if (chainId == LOCAL_CHAIN_ID) return 0xB6659Ba77742359158EaE0359e4838E5445C428D; 
+        if (chainId == LOCAL_CHAIN_ID) return 0x97b66F08Eb857e27A24492D338d3DC484DF63896; 
         revert Configurations__UnsupportedChain();
     }
 

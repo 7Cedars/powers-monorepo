@@ -12,7 +12,7 @@ contract PowersPaymaster is BasePaymaster {
     address public immutable POWERS_CONTRACT;
 
     /// @notice Standard execute(address,uint256,bytes) selector used by most AA wallets
-    bytes4 public constant EXECUTE_SELECTOR = 0xb61d27f6;
+    bytes4 public constant EXECUTE_SELECTOR = 0x541d63c8; // was: 0xb61d27f6;
     /// @notice Standard executeBatch(address[],uint256[],bytes[]) selector
     bytes4 public constant EXECUTE_BATCH_SELECTOR = 0x47e1da2a;
 
@@ -20,9 +20,9 @@ contract PowersPaymaster is BasePaymaster {
     error PowersPaymaster__InvalidCallData();
     error PowersPaymaster__UnsupportedSelector();
 
-    constructor(IEntryPoint _entryPoint, address _powersContract, address _owner) BasePaymaster(_entryPoint) {
+    constructor(IEntryPoint _entryPoint, address _powersContract) BasePaymaster(_entryPoint) {
         POWERS_CONTRACT = _powersContract;
-        transferOwnership(_owner);
+        transferOwnership(_powersContract);
     }
 
     /// @notice Validates that the UserOperation targets the POWERS_CONTRACT

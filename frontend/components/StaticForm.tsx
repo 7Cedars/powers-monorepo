@@ -139,7 +139,7 @@ export function StaticForm({ mandate, chainId, staticDescription = true, onCheck
       { error.error &&
         <div className="w-full flex flex-col gap-0 justify-start items-center text-red text-center text-sm text-red-800 pt-8 pb-4 px-8">
           <div>
-            {`Failed check${parseMandateError(error.error)}`}     
+            {`Failed check${parseMandateError(error)}`}     
           </div>
         </div>
       }

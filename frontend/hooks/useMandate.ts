@@ -103,6 +103,16 @@ export const useMandate = () => {
           paymasterVerificationGasLimit: 100000n,
           paymasterPostOpGasLimit: 100000n
         })
+      },
+      userOperation: {
+        estimateFeesPerGas: async () => {
+          const { createPimlicoClient } = await import('permissionless/clients/pimlico');
+          const pimlicoClient = createPimlicoClient({ 
+            transport: http(bundlerUrl), 
+            entryPoint: { address: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", version: "0.7" } 
+          });
+          return await pimlicoClient.getUserOperationGasPrice().then((res: any) => res.fast);
+        }
       }
     });
 
