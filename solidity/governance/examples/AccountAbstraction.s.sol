@@ -67,8 +67,7 @@ contract Deploy is DeployHelpers {
 
         powersPaymaster = new PowersPaymaster(
             IEntryPoint(ENTRY_POINT),
-            address(powers),
-            address(powers) // Owner is the DAO
+            address(powers)
         );
         vm.stopBroadcast();
         
@@ -96,9 +95,9 @@ contract Deploy is DeployHelpers {
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
-        targets = new address[](6);
-        values = new uint256[](6);
-        calldatas = new bytes[](6);
+        targets = new address[](7);
+        values = new uint256[](7);
+        calldatas = new bytes[](7);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
@@ -106,9 +105,9 @@ contract Deploy is DeployHelpers {
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", ""); 
         calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
-        calldatas[3] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
-        calldatas[4] = abi.encodeWithSelector(IPowers.setPaymaster.selector, address(powersPaymaster));
-        calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
+        calldatas[4] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
+        calldatas[5] = abi.encodeWithSelector(IPowers.setPaymaster.selector, address(powersPaymaster));
+        calldatas[6] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public role
@@ -148,6 +147,13 @@ contract Deploy is DeployHelpers {
         delete conditions;
 
         // Execute fund paymaster
+        targets = new address[](1);
+        values = new uint256[](1);
+        calldatas = new bytes[](1);
+        targets[0] = address(powersPaymaster);
+        values[0] = 100000000000000000; // 0.1 ETH
+        calldatas[0] = abi.encodeWithSignature("deposit()");
+
         mandateCount++;
         conditions.allowedRole = 1; // Delegate
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
@@ -156,13 +162,9 @@ contract Deploy is DeployHelpers {
         conditions.needFulfilled = mandateCount - 1; 
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Execute Fund Paymaster: Send 0.5 ETH to the paymaster.",
+                nameDescription: "Execute Fund Paymaster: Send 0.1 ETH to the paymaster.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
-                config: abi.encode(
-                    address(powersPaymaster),
-                    500000000000000000, // 0.5 ETH
-                    bytes4(keccak256("deposit()"))
-                ), 
+                config: abi.encode(targets, values, calldatas), 
                 conditions: conditions
             })
         );

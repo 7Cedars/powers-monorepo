@@ -50,10 +50,7 @@ contract ElectionRegistryTest is TestSetupPowers {
     function setUp() public override {
         super.setUp();
         vm.prank(address(daoMock));
-        electionList = new ElectionRegistry();
-
-        startBlock = uint48(block.number + 10);
-        endBlock = uint48(block.number + 100);
+        electionList = new ElectionRegistry(300, 300);
     }
 
     function testCreateElection() public {
@@ -62,7 +59,7 @@ contract ElectionRegistryTest is TestSetupPowers {
         vm.expectEmit(false, false, false, true);
         emit ElectionCreated(0, electionTitle, startBlock, endBlock);
 
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
 
         ElectionRegistry.Election memory election = electionList.getElectionInfo(id);
         assertEq(election.owner, address(daoMock));
@@ -71,30 +68,18 @@ contract ElectionRegistryTest is TestSetupPowers {
         assertEq(election.endBlock, endBlock);
     }
 
-    function testCreateElectionRevertsWithInvalidBlocks() public {
-        vm.startPrank(address(daoMock));
-
-        vm.expectRevert("invalid start or end block");
-        electionList.createElection(electionTitle, 0, endBlock);
-
-        vm.expectRevert("invalid start or end block");
-        electionList.createElection(electionTitle, endBlock, startBlock); // end <= start
-
-        vm.stopPrank();
-    }
-
     function testCreateElectionRevertsWithDuplicate() public {
         vm.startPrank(address(daoMock));
-        electionList.createElection(electionTitle, startBlock, endBlock);
+        electionList.createElection(electionTitle);
 
         vm.expectRevert("election already exists");
-        electionList.createElection(electionTitle, startBlock, endBlock);
+        electionList.createElection(electionTitle);
         vm.stopPrank();
     }
 
     function testNominate() public {
         vm.prank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
 
         vm.prank(address(daoMock));
         vm.expectEmit(true, true, false, false);
@@ -109,7 +94,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testNominateRevertsIfNotOwner() public {
         vm.prank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
 
         vm.prank(alice);
         vm.expectRevert("Only election owner can call this function");
@@ -118,7 +103,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testNominateRevertsIfAlreadyNominated() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
         electionList.nominate(id, alice);
 
         vm.expectRevert("already nominated");
@@ -128,7 +113,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testRevokeNomination() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
         electionList.nominate(id, alice);
         electionList.nominate(id, bob);
 
@@ -144,7 +129,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testRevokeNominationRevertsIfNotNominated() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
 
         vm.expectRevert("not nominated");
         electionList.revokeNomination(id, alice);
@@ -153,7 +138,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testVote() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
         electionList.nominate(id, alice);
         electionList.nominate(id, bob);
         vm.stopPrank();
@@ -176,7 +161,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testVoteRevertsIfClosed() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
         electionList.nominate(id, alice);
         vm.stopPrank();
 
@@ -198,7 +183,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testVoteRevertsIfAlreadyVoted() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
         electionList.nominate(id, alice);
         vm.stopPrank();
 
@@ -217,7 +202,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testVoteRevertsIfLengthMismatch() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
         electionList.nominate(id, alice);
         vm.stopPrank();
 
@@ -232,7 +217,7 @@ contract ElectionRegistryTest is TestSetupPowers {
 
     function testRanking() public {
         vm.startPrank(address(daoMock));
-        uint256 id = electionList.createElection(electionTitle, startBlock, endBlock);
+        uint256 id = electionList.createElection(electionTitle);
         electionList.nominate(id, alice);
         electionList.nominate(id, bob);
         electionList.nominate(id, charlotte);
