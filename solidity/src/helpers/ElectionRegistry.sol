@@ -21,6 +21,9 @@ contract ElectionRegistry {
     mapping(uint256 electionId => mapping(address nominee => uint256)) votesCount;
     mapping(uint256 electionId => mapping(address voter => bool)) hasVoted;
 
+    uint48 immutable public voteDuration;  
+    uint48 immutable public nominationDuration;  
+
     // Events
     event NominationReceived(uint256 indexed electionId, address indexed nominee);
     event NominationRevoked(uint256 indexed electionId, address indexed nominee);
@@ -35,24 +38,29 @@ contract ElectionRegistry {
     }
 
     // constructor
-    constructor() { }
+    constructor(uint48 _nominationDuration, uint48 _voteDuration) {
+        nominationDuration = _nominationDuration;
+        voteDuration = _voteDuration;
+    }
 
     // Functions
     /// Create a new election
     /// @param title Title of the election.
-    /// @param startBlock Block number at which the election starts.
-    /// @param endBlock Block number at which the election ends.
-    function createElection(string memory title, uint48 startBlock, uint48 endBlock) external returns (uint256) {
-        uint256 electionId = uint256(keccak256(abi.encodePacked(msg.sender, title, startBlock, endBlock)));
+    function createElection(string memory title) external returns (uint256) {
+        uint256 electionId = uint256(keccak256(abi.encodePacked(msg.sender, title)));
 
         if (elections[electionId].owner != address(0)) revert("election already exists");
-        if (startBlock == 0 || endBlock <= startBlock) revert("invalid start or end block");
 
         // initialise election
         elections[electionId] =
-            Election({ owner: msg.sender, startBlock: startBlock, endBlock: endBlock, title: title });
+            Election({ 
+                owner: msg.sender, 
+                startBlock: uint48(block.number) + nominationDuration, 
+                endBlock: uint48(block.number) + nominationDuration + voteDuration, 
+                title: title });
 
-        emit ElectionCreated(electionId, title, startBlock, endBlock);
+        emit ElectionCreated(electionId, title, uint48(block.number) + nominationDuration, uint48(block.number) + nominationDuration + voteDuration);
+        
         return electionId;
     }
 
@@ -155,14 +163,6 @@ contract ElectionRegistry {
             revert("election still active");
         }
 
-        (rankedNominees, votes) = getRankingAnyTime(electionId);
-    }
-
-    function getRankingAnyTime(uint256 electionId)
-        public
-        view
-        returns (address[] memory rankedNominees, uint256[] memory votes)
-    {
         uint256 numNominees = getNominees(electionId).length;
         if (numNominees == 0) return (new address[](0), new uint256[](0));
 
@@ -191,7 +191,5 @@ contract ElectionRegistry {
                 }
             }
         }
-
-        return (rankedNominees, votes);
     }
 }

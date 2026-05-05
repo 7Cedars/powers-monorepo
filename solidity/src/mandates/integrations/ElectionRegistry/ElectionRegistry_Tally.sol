@@ -36,8 +36,6 @@ contract ElectionRegistry_Tally is Mandate {
         uint256 roleId;
         uint256 maxRoleHolders;
         string title;
-        uint48 startBlock;
-        uint48 endBlock;
         uint256 electionId;
     }
 
@@ -53,7 +51,7 @@ contract ElectionRegistry_Tally is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("string Title", "uint48 StartBlock", "uint48 EndBlock");
+        inputParams = abi.encode("string Title");
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
@@ -76,8 +74,8 @@ contract ElectionRegistry_Tally is Mandate {
         Mem memory mem;
         (mem.electionContract, mem.roleId, mem.maxRoleHolders) =
             abi.decode(getConfig(powers, mandateId), (address, uint256, uint256));
-        (mem.title, mem.startBlock, mem.endBlock) = abi.decode(mandateCalldata, (string, uint48, uint48));
-        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title, mem.startBlock, mem.endBlock)));
+        (mem.title) = abi.decode(mandateCalldata, (string));
+        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title)));
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
 
         // Step 1: Check if election is closed - revert if still open

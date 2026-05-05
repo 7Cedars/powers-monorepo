@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useCallback, useState, useMemo } from "react";
-import { XMarkIcon, ArrowPathIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { ForumModal } from "../../../../../../components/ForumModal";
 import { SelectActionDialog, SelectedActionInfo } from "../../flow/[mandateId]/SelectActionDialog";
 import { DynamicInput } from "@/components/DynamicInput";
@@ -17,6 +17,7 @@ import { useMandate } from "@/hooks/useMandate";
 import { useChecks } from "@/hooks/useChecks";
 import { cn } from "@/utils/utils";
 import { useRouter, useParams } from "next/navigation";
+import { SubmitButton } from "@/components/SubmitButton";
 
 interface NewActionDialogProps {
   open: boolean;
@@ -117,13 +118,23 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
     }
   }, [open, status.status]);
 
-  // Navigate to action page on successful transaction
+  // Navigate to appropriate page on successful transaction
   useEffect(() => {
     if (status.status === "success" && open && isSubmitting && action.actionId) {
       // Small delay to show success state before navigating
       const timer = setTimeout(() => {
-        // Navigate to the action page
-        router.push(`/forum/${chainId}/${powersAddress}`);
+        // Find if the mandate belongs to a flow
+        const targetFlow = powers?.flows?.find(flow => 
+          flow.mandateIds.includes(mandate.index)
+        );
+        
+        // Navigate to flow page if mandate belongs to a flow, otherwise to mandate page
+        if (targetFlow) {
+          router.push(`/forum/${chainId}/${powersAddress}/flow/${mandate.index}`);
+        } else {
+          router.push(`/forum/${chainId}/${powersAddress}/mandate/${mandate.index}`);
+        }
+        
         // Reset state
         onOpenChange(false);
         setStatus({ status: "idle" });
@@ -132,7 +143,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [status.status, open, onOpenChange, isSubmitting, action?.actionId, router, chainId, powersAddress]);
+  }, [status.status, open, onOpenChange, isSubmitting, action?.actionId, router, chainId, powersAddress, powers?.flows, mandate.index]);
 
   // Handle param value changes
   const handleChange = useCallback((input: InputType | InputType[], index: number) => {
@@ -529,36 +540,15 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
       )}
 
       {/* Submit Button */}
-      {canSubmit ? (
-        <button
-          onClick={handleSubmit}
-          disabled={status.status === "pending" && isSubmitting}
-          className={cn(
-            "w-full mt-4 border  px-4 py-2.5 text-xs font-mono",
-            "uppercase tracking-wider transition-colors",
-            "flex items-center justify-center gap-2",
-            status.status === "pending" && isSubmitting && "opacity-70 cursor-not-allowed",
-            status.status === "success" && isSubmitting && "bg-green-600 text-white border-green-600",
-            status.status === "error" && isSubmitting && "bg-red-600 text-white border-red-600",
-            (!isSubmitting || status.status === "idle") && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary/90"
-          )}
-        >
-          {status.status === "pending" && isSubmitting && (
-            <ArrowPathIcon className="h-4 w-4 animate-spin" />
-          )}
-          {status.status === "pending" && isSubmitting && "Waiting for Confirmation"}
-          {status.status === "success" && isSubmitting && "Transaction Confirmed!"}
-          {status.status === "error" && isSubmitting && "Transaction Failed"}
-          {(!isSubmitting || status.status === "idle") && (needsVote ? 'Propose Action' : 'Execute Action')}
-        </button>
-      )
-      : 
-        action.upToDate && (
-          <div className="w-full mt-4 text-xs text-muted-foreground">
-            Action cannot be submitted due to failed checks or an error.
-          </div>
-        )
-      }
+      <SubmitButton
+        canSubmit={canSubmit ?? false}
+        onSubmit={handleSubmit}
+        status={status.status}
+        isSubmitting={isSubmitting}
+        needsVote={!!needsVote}
+        showFallback={action.upToDate}
+        checks={checks}
+      />
 
       {/* Select Input Dialog */}
       <SelectActionDialog

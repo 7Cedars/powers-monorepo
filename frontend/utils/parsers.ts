@@ -5,6 +5,7 @@ import { type GetChainsReturnType } from '@wagmi/core'
 import { hexToString } from 'viem'
 import { getChains } from '@wagmi/core'
 import { wagmiConfig } from "@/context/wagmiConfig";
+
 const chains = getChains(wagmiConfig);
 
 const isArray = (array: unknown): array is Array<unknown> => {
@@ -307,65 +308,55 @@ export const parseVoteData = (data: unknown[]): {votes: number[], holders: numbe
 
   return {votes, holders, deadline, state}
 }
-  
+
+type ErrorStore = {
+  error: Error | string | null
+}
+
 // Parse different types of errors and extract meaningful error messages
-export const parseMandateError = (rawReply: unknown): string => {
-  // Handle null/undefined input
-  if (rawReply == null) {
-    return "."
+export const parseMandateError = (rawReply: ErrorStore): string => {
+  if ( !rawReply || typeof rawReply !== 'object' ) {
+    throw new Error('Incorrect or missing data');
   }
 
-  console.log("@parseMandateError: ", {rawReply})
+  // console.log("@parseMandateError: waypoint 0", {rawReply})
 
-  // Convert to string for processing
-  let errorString: string
-  try {
-    errorString = String(rawReply)
-  } catch {
-    return "."
+  if ( 
+    typeof rawReply.error === 'object' &&  rawReply.error && 'shortMessage' in rawReply.error
+    ) { 
+    return rawReply.error.shortMessage as string
   }
 
-  // Handle boolean input
-  if (typeof rawReply === 'boolean') {
-    return "."
-  }
+
+  const errorString: string = String(rawReply.error);
+
+  // console.log("@parseMandateError: waypoint 1", {errorString})
 
   // Handle contract revert errors with hex signature
   if (errorString.includes("The contract function") && errorString.includes("reverted with the following signature:")) {
     const signatureMatch = errorString.match(/reverted with the following signature:\s*(0x[a-fA-F0-9]+)/)
     if (signatureMatch && signatureMatch[1]) {
-      return `: The error signature is ${signatureMatch[1]}. That is all I know.`
+      return `the error signature is ${signatureMatch[1]}. That is all I know.`
     }
   }
 
   // Handle FailedCall() errors
   if (errorString.includes("FailedCall()")) {
-    return ": the call reverted. Something seems to be wrong with the calldata. Please check and try again."
+    return "the call reverted. Something seems to be wrong with the calldata. Please check and try again."
   }
 
   // Handle invalid address errors
   if (errorString.includes("Address") && errorString.includes("is invalid") && errorString.includes("viem@")) {
-    return ": invalid account address provided."
+    return "invalid account address provided."
   }
 
   // Handle SizeExceedsPaddingSizeError
   if (errorString.includes("SizeExceedsPaddingSizeError")) {
-    return ": Invalid calldata provide. Please make sure it follows the 0x format."
+    return "Invalid calldata provided. Please make sure it follows the 0x format."
   }
-
-  // Handle contract revert errors with reason
-  if (errorString.includes("reverted with the following reason:")) {
-    const reasonMatch = errorString.match(/reverted with the following reason:\s*([^.\n]+)/)
-    if (reasonMatch && reasonMatch[1]) {
-      return `: ${reasonMatch[1].trim()}`
-    }
-  }
-
-  // Handle other contract errors that might have different patterns
-  // Add more patterns here as needed for different error types
   
-  // If no recognized error pattern is found, return empty string
-  return ". Please try again."
+  return "Please try again."
+  
 };
 
 export const parseUri = (uri: unknown): string => {

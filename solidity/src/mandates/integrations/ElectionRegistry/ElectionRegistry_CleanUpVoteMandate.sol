@@ -22,9 +22,7 @@ import { ElectionRegistry } from "../../../helpers/ElectionRegistry.sol";
 
 contract ElectionRegistry_CleanUpVoteMandate is Mandate {
     struct Mem {
-        string title;
-        uint48 startBlock;
-        uint48 endBlock;
+        string title; 
         uint256 electionId;
         uint16 createVoteMandate_Id;
         bytes returnData;
@@ -43,18 +41,17 @@ contract ElectionRegistry_CleanUpVoteMandate is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("string Title", "uint48 StartBlock", "uint48 EndBlock");
+        inputParams = abi.encode("string Title");
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
-    /// @notice Build a call to nominate or revoke nomination for the caller
-    /// @param caller The transaction originator (will be nominated/revoked)
+    /// @notice Build a call to nominate or revoke nomination for the caller 
     /// @param powers The Powers contract address
     /// @param mandateId The mandate identifier
     /// @param mandateCalldata Encoded boolean (true = nominate, false = revoke)
     /// @param nonce Unique nonce to build the action id
     function handleRequest(
-        address caller,
+        address /* caller */,
         address powers,
         uint16 mandateId,
         bytes calldata mandateCalldata,
@@ -68,8 +65,8 @@ contract ElectionRegistry_CleanUpVoteMandate is Mandate {
         Mem memory mem;
 
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
-        (mem.title, mem.startBlock, mem.endBlock) = abi.decode(mandateCalldata, (string, uint48, uint48));
-        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title, mem.startBlock, mem.endBlock)));
+        (mem.title) = abi.decode(mandateCalldata, (string));
+        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title)));
         (mem.createVoteMandate_Id) = abi.decode(getConfig(powers, mandateId), (uint16)); // ElectionRegistry contract address
 
         // retrieve the ElectionRegistry_Vote mandate address from the return value of the Open Vote mandate

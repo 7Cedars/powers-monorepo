@@ -397,7 +397,7 @@ contract Powers is EIP712, IPowers, Context {
         }
 
         // emit event. -- commented out to save gas, can be re-enabled if needed.
-        // emit ActionFulfilled(mandateId, actionId, targets, values, calldatas);
+        emit ActionFulfilled(mandateId, actionId, targets, values, calldatas);
 
         // register latestFulfillment at mandate.
         mandate.latestFulfillment = uint48(block.number);

@@ -42,10 +42,11 @@ contract Deploy is DeployHelpers {
 
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
-    uint16 constant MINOR = 6;
-    uint16 constant PATCH = 2;
+    uint16 constant MINOR = 1;
+    uint16 constant PATCH = 1;
 
     address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+    address public cedars = 0x328735d26e5Ada93610F0006c32abE2278c46211; 
 
     function run() external returns (Powers) {
         // step 0, setup. 
@@ -104,6 +105,7 @@ contract Deploy is DeployHelpers {
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", ""); 
+        calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[3] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
         calldatas[4] = abi.encodeWithSelector(IPowers.setPaymaster.selector, address(powersPaymaster));
         calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
@@ -142,7 +144,7 @@ contract Deploy is DeployHelpers {
                 config: abi.encode(),
                 conditions: conditions
             })
-        );
+        ); 
         delete conditions;
 
         // Execute fund paymaster

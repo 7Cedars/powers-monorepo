@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ChatBubbleBottomCenterTextIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { MapIcon, DocumentCheckIcon, BoltIcon, LockClosedIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline'
 import { useXmtpClient } from '@/hooks/useXmtpClient'
 import { useConnection, useSignMessage } from 'wagmi' 
 import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk'
@@ -35,7 +35,18 @@ interface ChatroomProps {
   xmtpAgentAddress?: string
 }
 
+// Icon mapping based on chatroom type
+const chatroomIcons = {
+  Flow: MapIcon,
+  Mandate: DocumentCheckIcon,
+  Action: BoltIcon,
+  Vote: ChatBubbleBottomCenterTextIcon,
+  General: ChatBubbleBottomCenterTextIcon,
+} as const
+
 export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRole = false, chainId, powersAddress, contextId, xmtpAgentAddress }: ChatroomProps) {
+  // Get the appropriate icon for this chatroom type
+  const ChatroomIcon = chatroomIcons[chatroomType] || ChatBubbleBottomCenterTextIcon
   const { address } = useConnection ()
   const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations } = useXmtpClient()
   const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null)
@@ -500,8 +511,8 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
     <div className="flex-1 flex flex-col overflow-hidden min-h-[600px]">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-1 border-b border-border bg-muted/10">
-        <div className="flex items-center gap-2">
-          <ChatBubbleBottomCenterTextIcon className="h-3 w-3 text-muted-foreground" />
+        <div className="flex items-center gap-3">
+          {/* <ChatroomIcon className="h-8 w-8 text-muted-foreground" /> */}
           <h4 className="text-xs text-muted-foreground uppercase tracking-wider">{chatroomType.toUpperCase()} CHATROOM</h4>
           {/* {isConnected && (
             <button
@@ -525,7 +536,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
               onClick={() => setShowMembersList(!showMembersList)}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              | {groupChat.memberAddresses.length}/250 members
+              {groupChat.memberAddresses.length}/250 members
             </button>
 
             {showMembersList && (
@@ -548,14 +559,14 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
       {!hasRole ? (
         // No role - Show informational message
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
+          <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
             You do not have the required role to execute any actions in this mandate.
           </p>
         </div>
       ) : isPublicRole ? (
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
+          <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
             Due to the risk of spamming, publically accesible mandates do not have xmtp chat enabled.
           </p>
@@ -563,7 +574,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
       ) : !address || !isConnected ? (
         // Not connected - Show connection button
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <LockClosedIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
+          <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl mb-2">
             These chatrooms use XMTP, an encrypted Web3 messaging protocol.
           </p>
@@ -593,7 +604,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
       ) : !userInGroup ? (
         // User is not in the group chat - Show request access button
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <ChatBubbleBottomCenterTextIcon className="h-6 w-6 text-muted-foreground mb-4 opacity-40" />
+          <ChatroomIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-4">
             Join the conversation to start discussing this {chatroomType.toLowerCase()}.
           </p>
