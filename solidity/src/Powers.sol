@@ -539,7 +539,7 @@ contract Powers is EIP712, IPowers, Context {
 
     /// @inheritdoc IPowers
     function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external onlyPowers {
-        if (mandateId >= mandateCounter) revert Powers__InvalidMandateId();
+        if (mandateId > mandateCounter) revert Powers__InvalidMandateId(); // note: we allow to add a mandate that is 1 higher than the current mandateCounter, to allow for flow set-up in the same transaction as mandate adoption.
         if (index1 >= flows.length) revert Powers__InvalidFlowIndex();
         Flow storage flow = flows[index1];
         if (index2 >= flow.mandateIds.length) revert Powers__InvalidMandateIndex();
@@ -711,7 +711,7 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function getAmountFlows() public view returns (uint256) {
+    function getFlowCount() public view returns (uint256) {
         return flows.length;
     }
 

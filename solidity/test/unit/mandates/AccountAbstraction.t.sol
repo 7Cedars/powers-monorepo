@@ -69,7 +69,7 @@ contract AccountAbstractionTest is Test {
 
     function setUp() public {
         entryPoint = new MockEntryPoint();
-        paymaster = new PowersPaymaster(entryPoint, powersAddress, owner); 
+        paymaster = new PowersPaymaster(entryPoint, powersAddress); 
     }
 
     // Helper to simulate calling _validatePaymasterUserOp since it's internal and we can only call external validatePaymasterUserOp as entryPoint

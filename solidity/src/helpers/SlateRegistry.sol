@@ -1,129 +1,118 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.26;
+
+import { IPowers } from "../interfaces/IPowers.sol";
+import { IMandate } from "../interfaces/IMandate.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { PowersTypes } from "../interfaces/PowersTypes.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
-/// @title ElectionRegistry
-/// @notice A contract to manage multiple elections with nominee nominations and voting functionality.
+/// @title SlateRegistry
+/// @notice A contract to manage elections between slates of executable actions.   
+/// @dev IMPORTANT: the contract needs to have been assigned its own role Id in the Powers protocol. Without it, it will not bbe able to execute the results of a slate vote. If more than one address holds the role, the contract will revert. 
 /// @author 7Cedars
-contract ElectionRegistry {
+contract SlateRegistry is Ownable {
     // Election storage
-    struct Election {
-        address owner;
+    struct Election { 
+        uint8 flowIndex; 
+        uint8 maxVotes; 
+        uint8 maxWinners;
         uint48 startBlock;
         uint48 endBlock;
-        string title;
+        string electionTitle;
     }
-    mapping(uint256 electionId => Election) public elections;
-    mapping(uint256 electionId => address[]) nominees;
-    mapping(uint256 electionId => mapping(address nominee => bool)) nominated;
-    mapping(uint256 electionId => mapping(address nominee => uint256)) votesCount;
-    mapping(uint256 electionId => mapping(address voter => bool)) hasVoted;
 
-    uint48 immutable public voteDuration;  
-    uint48 immutable public nominationDuration;  
+    mapping(uint256 electionId => Election) public elections;
+    mapping(uint256 electionId => uint16[]) slates; 
+    mapping(uint256 electionId => mapping(uint16 slate => uint32)) votesCount;
+    mapping(uint256 electionId => mapping(address voter => bool)) hasVoted;
+    
+    uint48 immutable public voteDuration;
+    uint48 immutable public submitSlateDuration;  
+    uint256 immutable public roleId; // roleId of the registry. Has to be unique. 
+    uint16 immutable public submissionMandateId; // the mandateId used to submit slates.
+    uint16 immutable public revokeMandateId; // the mandateId used revoke slates.
 
     // Events
-    event NominationReceived(uint256 indexed electionId, address indexed nominee);
-    event NominationRevoked(uint256 indexed electionId, address indexed nominee);
-    event ElectionCreated(uint256 indexed electionId, string title, uint48 startBlock, uint48 endBlock);
-    event VoteCast(address indexed voter, address indexed nominee, uint256 indexed electionId);
-
-    // Modifier
-    // Note that this modifier doubles as a check that the election exists.
-    modifier onlyOwner(uint256 electionId) {
-        if (elections[electionId].owner != msg.sender) revert("Only election owner can call this function");
-        _;
-    }
+    event SlateReceived(uint256 indexed electionId, address indexed slate);
+    event SlateRevoked(uint256 indexed electionId, address indexed slate);
+    event ElectionCreated(uint256 indexed electionId, string electionTitle, uint48 startBlock, uint48 endBlock);
+    event VoteCast(address indexed voter, uint16 indexed slate, uint256 indexed electionId);
 
     // constructor
-    constructor(uint48 _nominationDuration, uint48 _voteDuration) {
-        nominationDuration = _nominationDuration;
+    constructor(uint48 _submitSlateDuration, uint48 _voteDuration, uint256 _roleId) Ownable(msg.sender) {
+        submitSlateDuration = _submitSlateDuration;
         voteDuration = _voteDuration;
+        roleId = _roleId; 
     }
 
     // Functions
-    /// Create a new election
-    /// @param title Title of the election.
-    function createElection(string memory title) external returns (uint256) {
-        uint256 electionId = uint256(keccak256(abi.encodePacked(msg.sender, title)));
+    /// Create a new vote
+    /// @param electionTitle electionTitle of the vote.
+    /// @param maxSlates Maximum number of slates allowed in the election.
+    /// @param maxVotes Maximum number of votes allowed per voter.
+    /// @param maxWinners Maximum number of winners allowed in the election.
+    function createElection(string memory electionTitle, uint8 maxSlates, uint8 maxVotes, uint8 maxWinners) external returns (uint256) {
+        uint256 electionId = uint256(keccak256(abi.encodePacked(msg.sender, electionTitle)));
 
-        if (elections[electionId].owner != address(0)) revert("election already exists");
+        if (IPowers(owner()).getAmountRoleHolders(roleId) > 1) {
+            revert ("Multiple role holders not supported for slate registry");
+        } 
+        if (elections[electionId].startBlock != 0) revert("vote already exists");
 
         // initialise election
+        PowersTypes.Flow memory election = PowersTypes.Flow({
+            mandateIds: new uint16[](maxSlates),
+            nameDescription: electionTitle
+        });
+        IPowers(owner()).addFlow(election);
+
         elections[electionId] =
             Election({ 
-                owner: msg.sender, 
-                startBlock: uint48(block.number) + nominationDuration, 
-                endBlock: uint48(block.number) + nominationDuration + voteDuration, 
-                title: title });
+                flowIndex: uint8(IPowers(owner()).getFlowCount() - 1), 
+                startBlock: uint48(block.number) + submitSlateDuration, 
+                endBlock: uint48(block.number) + submitSlateDuration + voteDuration, 
+                electionTitle: electionTitle,
+                maxVotes: maxVotes,
+                maxWinners: maxWinners
+            });
 
-        emit ElectionCreated(electionId, title, uint48(block.number) + nominationDuration, uint48(block.number) + nominationDuration + voteDuration);
+        emit ElectionCreated(electionId, electionTitle, uint48(block.number) + submitSlateDuration, uint48(block.number) + submitSlateDuration + voteDuration);
         
         return electionId;
     }
 
-    /// Nominate oneself for an election
-    /// @param electionId ID of the election.
-    /// @param caller Address of the nominee.
-    function nominate(uint256 electionId, address caller) external onlyOwner(electionId) {
-        Election storage currentElection = elections[electionId];
-
-        if (nominated[electionId][caller]) revert("already nominated");
-        if (block.number > currentElection.startBlock) revert("nomination not possible after election start");
-
-        nominated[electionId][caller] = true;
-        nominees[electionId].push(caller);
-
-        emit NominationReceived(electionId, caller);
-    }
-
-    /// Revoke one's nomination for an election
-    /// @param electionId ID of the election.
-    /// @param caller Address of the nominee.
-    function revokeNomination(uint256 electionId, address caller) external onlyOwner(electionId) {
-        Election storage currentElection = elections[electionId];
-
-        if (!nominated[electionId][caller]) revert("not nominated");
-        if (block.number > currentElection.startBlock) revert("revocation not possible after election start");
-
-        nominated[electionId][caller] = false;
-        // remove from nominees (swap-and-pop)
-        uint256 len = nominees[electionId].length;
-        for (uint256 i; i < len; i++) {
-            if (nominees[electionId][i] == caller) {
-                nominees[electionId][i] = nominees[electionId][len - 1];
-                nominees[electionId].pop();
-                break;
-            }
-        }
-
-        emit NominationRevoked(electionId, caller);
-    }
-
-    /// Vote for nominees in an election
-    /// @param electionId ID of the election.
-    /// @param caller Address of the voter.
-    /// @param votes Boolean array indicating which nominees to vote for.
-    function vote(uint256 electionId, address caller, bool[] calldata votes) external onlyOwner(electionId) {
+    /// Election for nominees in a vote
+    /// @param electionId ID of the vote.
+    /// @param caller Address of the voter. 
+    function vote(uint256 electionId, address caller, uint16[] memory slateIndexes) external onlyOwner() {        
         Election storage currentElection = elections[electionId];
         if (block.number < currentElection.startBlock || block.number > currentElection.endBlock) {
-            revert("election closed");
+            revert("vote closed");
         }
         if (hasVoted[electionId][caller]) revert("already voted");
-
-        address[] memory nomineesForElection = nominees[electionId];
-        if (votes.length != nomineesForElection.length) revert("votes array length mismatch");
+        if (slateIndexes.length > currentElection.maxVotes) revert("too many votes");
 
         hasVoted[electionId][caller] = true;
-        // Cast votes for each nominee where the corresponding boolean is true
-        for (uint256 i; i < votes.length; i++) {
-            if (votes[i]) {
-                address nominee = nomineesForElection[i];
-                votesCount[electionId][nominee] += 1;
-                emit VoteCast(caller, nominee, electionId);
-            }
+        // Cast vote for a slate (by its mandate Id). 
+        // Note there is no check if the mandate Id is actually part of the election. If it is an incorrect vote, the vote will simply not be counted in the election results. 
+        for (uint256 i = 0; i < slateIndexes.length; i++) {
+            uint16 slateIndex = slateIndexes[i];
+            votesCount[electionId][slateIndex]++;
+            emit VoteCast(caller, slateIndex, electionId);
+        }
+    }
+
+    function executeResults(uint256 electionId) external onlyOwner() {
+        // retrieve election results.  
+        Election storage currentElection = elections[electionId];
+        
+        (uint16[] memory rankedSlates, ) = getSlateRanking(electionId); 
+
+        for (uint256 i = 0; i < currentElection.maxWinners; i++) {
+            uint16 slateIndex = rankedSlates[i];
+            IPowers(owner()).request(slateIndex, "", i, string.concat("Execution of slate in election: ", currentElection.electionTitle));  
         }
     }
 
@@ -137,69 +126,69 @@ contract ElectionRegistry {
         return elections[electionId];
     }
 
-    function getNominees(uint256 electionId) public view returns (address[] memory) {
-        return nominees[electionId];
+    function getSlates(uint256 electionId) public view returns (uint16[] memory) {
+        return slates[electionId];
     }
 
-    function getNomineeCount(uint256 electionId) external view returns (uint256) {
-        return nominees[electionId].length;
+    function getSlateCount(uint256 electionId) external view returns (uint256) {
+        return slates[electionId].length;
     }
 
-    function getVoteCount(uint256 electionId, address nominee) external view returns (uint256) {
-        return votesCount[electionId][nominee];
+    function getElectionCount(uint256 electionId, uint16 slate) external view returns (uint256) {
+        return votesCount[electionId][slate];
     }
 
     function hasUserVoted(address voter, uint256 electionId) external view returns (bool) {
         return hasVoted[electionId][voter];
     }
 
-    function getNomineeRanking(uint256 electionId)
+    function getSlateRanking(uint256 electionId)
         public
         view
-        returns (address[] memory rankedNominees, uint256[] memory votes)
+        returns (uint16[] memory rankedSlates, uint32[] memory votes)
     {
         Election storage currentElection = elections[electionId];
         if (block.number >= currentElection.startBlock && block.number <= currentElection.endBlock) {
-            revert("election still active");
+            revert("vote still active");
         }
 
-        (rankedNominees, votes) = getRankingAnyTime(electionId);
+        (rankedSlates, votes) = getRankingAnyTime(electionId);
     }
 
     function getRankingAnyTime(uint256 electionId)
         public
         view
-        returns (address[] memory rankedNominees, uint256[] memory votes)
+        returns (uint16[] memory rankedSlates, uint32[] memory votes)
     {
-        uint256 numNominees = getNominees(electionId).length;
-        if (numNominees == 0) return (new address[](0), new uint256[](0));
+        uint256 numSlates = getSlates(electionId).length;
+        if (numSlates == 0) return (new uint16[](0), new uint32[](0));
 
-        rankedNominees = new address[](numNominees);
-        votes = new uint256[](numNominees);
+        rankedSlates = new uint16[](numSlates);
+        votes = new uint32[](numSlates);
 
-        // Copy nominees and their votes
-        for (uint256 i; i < numNominees; i++) {
-            rankedNominees[i] = nominees[electionId][i];
-            votes[i] = votesCount[electionId][nominees[electionId][i]];
+        // Copy slates and their votes
+        for (uint256 i; i < numSlates; i++) {
+            rankedSlates[i] = slates[electionId][i];
+            votes[i] = votesCount[electionId][rankedSlates[i]];
         }
 
         // Simple bubble sort by vote count (descending)
-        for (uint256 i; i < numNominees - 1; i++) {
-            for (uint256 j; j < numNominees - i - 1; j++) {
+        for (uint256 i; i < numSlates - 1; i++) {
+            for (uint256 j; j < numSlates - i - 1; j++) {
                 if (votes[j] < votes[j + 1]) {
                     // Swap votes
-                    uint256 tempVotes = votes[j];
+                    uint32 tempVotes = votes[j];
                     votes[j] = votes[j + 1];
                     votes[j + 1] = tempVotes;
 
-                    // Swap nominees
-                    address tempNominee = rankedNominees[j];
-                    rankedNominees[j] = rankedNominees[j + 1];
-                    rankedNominees[j + 1] = tempNominee;
+                    // Swap slates                    
+                    uint16 tempSlate = rankedSlates[j];
+                    rankedSlates[j] = rankedSlates[j + 1];
+                    rankedSlates[j + 1] = tempSlate;
                 }
             }
         }
 
-        return (rankedNominees, votes);
+        return (rankedSlates, votes);
     }
 }
