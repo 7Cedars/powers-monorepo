@@ -9,6 +9,7 @@ import { fromFutureBlockToDateTime } from '@/public/organisations/helpers';
 import { useBlockNumber } from 'wagmi';
 import { QueueListIcon } from '@heroicons/react/24/outline';
 import { usePowersStore } from '@/context/store';
+import { Button } from '@/components/Button';
 
 interface TimelineProps {
   action: Action;
