@@ -198,7 +198,6 @@ export const useMandate = () => {
       }
   }, [chainId, isSmartWallet, client])
 
-  // note: I did not implement castVoteWithReason -- to much work for now. 
   const castVote = useCallback( 
     async (
       actionId: bigint,
@@ -224,6 +223,44 @@ export const useMandate = () => {
               address: powers.contractAddress,
               functionName: 'castVote', 
               args: [actionId, support], 
+              chainId: parseChainId(chainId)
+            })
+          }
+          setTransactionHash(result)
+          return true
+      } catch (error) {
+          setStatus({status: "error"}) 
+          setError({error: error as Error})
+          return false
+      }
+  }, [chainId, isSmartWallet, client])
+
+  const castVoteWithReason = useCallback( 
+    async (
+      actionId: bigint,
+      support: bigint,
+      reason: string,
+      powers: Powers
+    ): Promise<boolean> => {
+        setStatus({status: "pending"})
+        try {
+          let result: `0x${string}`;
+          if (isSmartWallet && client) {
+            result = await sendSmartWalletTx(
+              powers.contractAddress,
+              encodeFunctionData({
+                abi: powersAbi,
+                functionName: 'castVoteWithReason',
+                args: [actionId, support, reason],
+              }),
+              powers
+            );
+          } else {
+            result = await writeContract(wagmiConfig, {
+              abi: powersAbi,
+              address: powers.contractAddress,
+              functionName: 'castVoteWithReason', 
+              args: [actionId, support, reason], 
               chainId: parseChainId(chainId)
             })
           }
@@ -375,5 +412,5 @@ export const useMandate = () => {
         return false
       }, [chainId, isSmartWallet, client])
 
-  return {simulation, actionVote, transactionHash, resetStatus, simulate, request, propose, cancel, castVote, fetchVoteData}
+  return {simulation, actionVote, transactionHash, resetStatus, simulate, request, propose, cancel, castVote, castVoteWithReason, fetchVoteData}
 }

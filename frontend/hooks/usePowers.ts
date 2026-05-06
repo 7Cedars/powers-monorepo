@@ -243,7 +243,7 @@ export const usePowers = () => {
       const amountFlows = await readContract(wagmiConfig, {
         abi: powersAbi,
         address: powersAddress,
-        functionName: 'getAmountFlows',
+        functionName: 'getFlowCount',
         chainId: chainId
       }) as bigint
 

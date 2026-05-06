@@ -319,7 +319,7 @@ export const parseMandateError = (rawReply: ErrorStore): string => {
     throw new Error('Incorrect or missing data');
   }
 
-  // console.log("@parseMandateError: waypoint 0", {rawReply})
+  console.log("@parseMandateError: waypoint 0", {rawReply})
 
   if ( 
     typeof rawReply.error === 'object' &&  rawReply.error && 'shortMessage' in rawReply.error
