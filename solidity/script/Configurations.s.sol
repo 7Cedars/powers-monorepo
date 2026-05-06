@@ -186,6 +186,16 @@ contract Configurations is Script {
         revert Configurations__UnsupportedChain();
     }
 
+    function get4337EntryPoint(uint256 chainId) public pure returns (address) {
+        if (
+            chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
+                || chainId == BASE_SEPOLIA_CHAIN_ID || chainId == MANTLE_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID
+        ) {
+            return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+        }
+        revert Configurations__UnsupportedChain();
+    }
+
     function getSubmitMandateId(uint256 chainId) public pure returns (uint16) {
         if (
             chainId == ETH_SEPOLIA_CHAIN_ID || chainId == ARB_SEPOLIA_CHAIN_ID || chainId == OPT_SEPOLIA_CHAIN_ID
