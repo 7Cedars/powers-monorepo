@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { MapIcon } from '@heroicons/react/24/outline';
 import { Chatroom } from "@/components/Chatroom";
 import { SingleFlow } from "./SingleFlow";
 import { SelectActionDialog } from "./SelectActionDialog";
@@ -82,17 +83,20 @@ export default function FlowSequencePage() {
             <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4 gap-4 overflow-hidden">
                 <div className="flex-1 flex flex-col border border-border overflow-hidden">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
-                    { targetFlow ? 
-                    <div className="min-w-0 flex-1 text-center sm:text-left w-full">
-                        <h3 className="text-foreground text-base truncate">{targetFlow.nameDescription ? `Flow: ${targetFlow.nameDescription.split(':')[0] || 'Flow Sequence'}` : 'Flow Sequence'}</h3>
-                        <p className="text-muted-foreground text-sm truncate">{targetFlow.nameDescription ? targetFlow.nameDescription.split(':').slice(1).join(':').trim() || '' : ''}</p>
+                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-2 sm:py-2 border-b border-border bg-muted/50 gap-4 sm:gap-3">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 text-center sm:text-left w-full">
+                        <MapIcon className="hidden sm:block h-10 w-10 text-muted-foreground flex-shrink-0 -ml-1" />
+                        { targetFlow ? 
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-foreground text-base truncate">{targetFlow.nameDescription ? `Flow: ${targetFlow.nameDescription.split(':')[0] || 'Flow Sequence'}` : 'Flow Sequence'}</h3>
+                            <p className="text-muted-foreground text-sm truncate">{targetFlow.nameDescription ? targetFlow.nameDescription.split(':').slice(1).join(':').trim() || '' : ''}</p>
+                        </div>
+                        :
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-foreground uppercase tracking-wider text-base truncate">Flow Sequence</h3>
+                        </div>
+                        }
                     </div>
-                    :
-                    <div className="min-w-0 flex-1 text-center sm:text-left w-full">
-                        <h3 className="text-foreground uppercase tracking-wider text-base truncate">Flow Sequence</h3>
-                    </div>
-                    }
                     <button 
                         onClick={() => setActionDialogOpen(true)}
                         className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80"

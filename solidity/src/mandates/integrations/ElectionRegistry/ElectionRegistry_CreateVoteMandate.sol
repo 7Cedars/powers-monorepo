@@ -22,13 +22,13 @@ import { ElectionRegistry } from "../../../helpers/ElectionRegistry.sol";
 
 contract ElectionRegistry_CreateVoteMandate is Mandate {
     struct Mem {
-        address electionList;
-        address electionListVote;
+        address electionRegistry;
+        address electionRegistryVote;
         uint256 maxVotes;
         uint256 voterRoleId;
-        string title;
-        uint48 startBlock;
-        uint48 endBlock;
+        uint48 nominationDuration;
+        uint48 votingDuration;
+        string title; 
         uint256 electionId;
     }
 
@@ -45,18 +45,17 @@ contract ElectionRegistry_CreateVoteMandate is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("string Title", "uint48 StartBlock", "uint48 EndBlock");
+        inputParams = abi.encode("string Title");
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
     /// @notice Build a call to nominate or revoke nomination for the caller
-    /// @param caller The transaction originator (will be nominated/revoked)
     /// @param powers The Powers contract address
     /// @param mandateId The mandate identifier
     /// @param mandateCalldata Encoded boolean (true = nominate, false = revoke)
     /// @param nonce Unique nonce to build the action id
     function handleRequest(
-        address caller,
+        address /* caller */,
         address powers,
         uint16 mandateId,
         bytes calldata mandateCalldata,
@@ -70,15 +69,15 @@ contract ElectionRegistry_CreateVoteMandate is Mandate {
         Mem memory mem;
 
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
-        (mem.title, mem.startBlock, mem.endBlock) = abi.decode(mandateCalldata, (string, uint48, uint48));
-        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title, mem.startBlock, mem.endBlock)));
-        (mem.electionList, mem.electionListVote, mem.maxVotes, mem.voterRoleId) =
+        (mem.title) = abi.decode(mandateCalldata, (string));
+        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title)));
+        (mem.electionRegistry, mem.electionRegistryVote, mem.maxVotes, mem.voterRoleId) =
             abi.decode(getConfig(powers, mandateId), (address, address, uint256, uint256)); // ElectionRegistry contract address
 
         PowersTypes.MandateInitData memory initData = PowersTypes.MandateInitData({
             nameDescription: "Vote in election",
-            targetMandate: mem.electionListVote,
-            config: abi.encode(mem.electionList, mem.maxVotes, mem.electionId),
+            targetMandate: mem.electionRegistryVote,
+            config: abi.encode(mem.electionRegistry, mem.maxVotes, mem.electionId),
             conditions: PowersTypes.Conditions({
                 allowedRole: mem.voterRoleId,
                 votingPeriod: 0,

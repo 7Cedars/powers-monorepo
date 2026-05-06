@@ -57,13 +57,13 @@ contract Deploy is DeployHelpers {
     string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibcfc5dzcah2xxmvk3gjhij7t3sp5v6ppkub36jmtex2t75fcz22i/";
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
-    uint16 constant MINOR = 6;
-    uint16 constant PATCH = 2;
+    uint16 constant MINOR = 1;
+    uint16 constant PATCH = 1;
 
     function run() external {
         // step 0, setup. 
         helperConfig = new Configurations();
-        openElection = new ElectionRegistry();
+        openElection = new ElectionRegistry(minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)), minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)));
         registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Governed721 Powers

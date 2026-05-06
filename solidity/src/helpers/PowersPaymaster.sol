@@ -8,24 +8,56 @@ import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntr
 /// @title PowersPaymaster
 /// @notice An ERC-4337 Paymaster that only sponsors calls where the target is a specific Powers protocol contract.
 /// @dev Inherits from BasePaymaster.
+/// @dev does NOT support batch execute calls. Powers itself allows for batch calls. There is no need to also batch mandate calls to the paymaster. 
 contract PowersPaymaster is BasePaymaster {
-    address public immutable POWERS_CONTRACT;
-
+    address[] public sponsoredTargets; // List of contract addresses that this Paymaster will sponsor calls to.
+    
     /// @notice Standard execute(address,uint256,bytes) selector used by most AA wallets
-    bytes4 public constant EXECUTE_SELECTOR = 0xb61d27f6;
-    /// @notice Standard executeBatch(address[],uint256[],bytes[]) selector
-    bytes4 public constant EXECUTE_BATCH_SELECTOR = 0x47e1da2a;
-
+    bytes4 public constant EXECUTE_SELECTOR = 0x541d63c8; 
+ 
     error PowersPaymaster__TargetNotAuthorized();
     error PowersPaymaster__InvalidCallData();
     error PowersPaymaster__UnsupportedSelector();
 
-    constructor(IEntryPoint _entryPoint, address _powersContract, address _owner) BasePaymaster(_entryPoint) {
-        POWERS_CONTRACT = _powersContract;
-        transferOwnership(_owner);
+    event sponsoredTargetAdded(address target);
+    event sponsoredTargetRemoved(address target);
+
+    constructor(IEntryPoint _entryPoint, address _powers) BasePaymaster(_entryPoint) {
+        transferOwnership(_powers);
     }
 
-    /// @notice Validates that the UserOperation targets the POWERS_CONTRACT
+    function addSponsoredTarget(address target) external onlyOwner {
+        if (target == address(0)) {
+            revert PowersPaymaster__InvalidCallData();
+        }
+        sponsoredTargets.push(target);
+
+        emit sponsoredTargetAdded(target);
+    }
+
+    function removeSponsoredTarget(address target) external onlyOwner {
+        if (target == address(0)) {
+            revert PowersPaymaster__InvalidCallData();
+        }
+
+        uint256 length = sponsoredTargets.length;
+        bool found = false;
+        for (uint256 i = 0; i < length; i++) {
+            if (sponsoredTargets[i] == target) {
+                sponsoredTargets[i] = sponsoredTargets[length - 1];
+                sponsoredTargets.pop();
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            revert PowersPaymaster__TargetNotAuthorized();
+        }
+
+        emit sponsoredTargetRemoved(target);
+    }
+
+    /// @notice Validates that the UserOperation targets one of the sponsored targets
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
         bytes32,
@@ -37,38 +69,25 @@ contract PowersPaymaster is BasePaymaster {
         override
         returns (bytes memory context, uint256 validationData)
     {
-        if (userOp.callData.length < 4) {
+        // execute(address,uint256,bytes)
+        if (userOp.callData.length < 68) {
             revert PowersPaymaster__InvalidCallData();
         }
 
         bytes4 selector = bytes4(userOp.callData[0:4]);
-
-        if (selector == EXECUTE_SELECTOR) {
-            // execute(address,uint256,bytes)
-            if (userOp.callData.length < 68) {
-                revert PowersPaymaster__InvalidCallData();
-            }
-            address target = abi.decode(userOp.callData[4:36], (address));
-
-            if (target != POWERS_CONTRACT) {
-                revert PowersPaymaster__TargetNotAuthorized();
-            }
-        } else if (selector == EXECUTE_BATCH_SELECTOR) {
-            // executeBatch(address[],uint256[],bytes[])
-            // For batches, we ensure ALL targets are the POWERS_CONTRACT
-            (address[] memory targets,,) = abi.decode(userOp.callData[4:], (address[], uint256[], bytes[]));
-
-            for (uint256 i = 0; i < targets.length; i++) {
-                if (targets[i] != POWERS_CONTRACT) {
-                    revert PowersPaymaster__TargetNotAuthorized();
-                }
-            }
-        } else {
-            // If we don't recognize the selector, we reject sponsorship to be safe
+        if (selector != EXECUTE_SELECTOR) {
             revert PowersPaymaster__UnsupportedSelector();
         }
+        
+        address target = abi.decode(userOp.callData[4:36], (address));
+        for (uint256 i = 0; i < sponsoredTargets.length; i++) {
+            if (sponsoredTargets[i] == target) {
+                // Target is authorized, return success
+                return ("", 0);
+            }
+        }
 
-        // Return 0 validationData to indicate success (valid indefinitely, no signature validation failure)
-        return ("", 0);
+        // If we get here, the target was not in the sponsored list
+        revert PowersPaymaster__TargetNotAuthorized();
     }
 }

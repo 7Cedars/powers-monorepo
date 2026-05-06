@@ -83,8 +83,8 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
 
     // versioning
     uint16 constant MAJOR = 0; 
-    uint16 constant MINOR = 6;
-    uint16 constant PATCH = 2;
+    uint16 constant MINOR = 1;
+    uint16 constant PATCH = 1;
 
     address[] targets;
     uint256[] values;
@@ -370,13 +370,13 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         MAX_FUZZ_CALLDATA_LENGTH = 2000;
 
         sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
-        optSepoliaFork = vm.createFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
-        arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
+        // optSepoliaFork = vm.createFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
+        // arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
 
         console2.log("Forks created:");
         console2.log("Sepolia Fork ID:", sepoliaFork);
-        console2.log("Optimism Sepolia Fork ID:", optSepoliaFork);
-        console2.log("Arbitrum Sepolia Fork ID:", arbSepoliaFork);
+        // console2.log("Optimism Sepolia Fork ID:", optSepoliaFork);
+        // console2.log("Arbitrum Sepolia Fork ID:", arbSepoliaFork);
 
         // users
         // note that when fork testing, addresses are often already taken. Therefore we loop to find addresses without code deployed on them to use as users in our tests.
@@ -548,7 +548,7 @@ abstract contract TestSetupElectoral is BaseSetup {
 
         vm.startPrank(address(daoMock));
         nominees = new Nominees();
-        openElection = new ElectionRegistry();
+        openElection = new ElectionRegistry(300, 300);
         erc20Taxed = new Erc20Taxed();
         erc20DelegateElection = new Erc20DelegateElection(address(erc20Taxed));
         vm.stopPrank();
@@ -613,7 +613,7 @@ abstract contract TestSetupIntegrations is BaseSetup {
         simpleGovernor = new SimpleGovernor(address(simpleErc20Votes));
         allowedTokens = new AllowedTokens();
         soulbound1155 = new Soulbound1155("this is a test uri");
-        electionList = new ElectionRegistry();
+        electionList = new ElectionRegistry(300,300);
         PowersDeployer powersDeployer = new PowersDeployer();
         powersFactory = new PowersFactory(
             "Powers Factory", // name
@@ -675,7 +675,7 @@ abstract contract TestSetupDelegateTokenFlow is BaseSetup {
 
         vm.startPrank(address(daoMock));
         nominees = new Nominees();
-        openElection = new ElectionRegistry();
+        openElection = new ElectionRegistry(300, 300);
         simpleErc20Votes = new SimpleErc20Votes();
         vm.stopPrank();
 
@@ -702,7 +702,7 @@ abstract contract TestSetupElectionRegistryFlow is BaseSetup {
         super.setUpVariables();
 
         vm.prank(address(daoMock));
-        openElection = new ElectionRegistry();
+        openElection = new ElectionRegistry(300, 300);
 
         // initiate multi constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =

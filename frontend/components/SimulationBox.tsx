@@ -31,6 +31,17 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
 
   console.log("@SimulationBox: waypoint 2", {jsxSimulation})
 
+  // Hide the simulation box if all targets are zero addresses
+  const allTargetsZero = React.useMemo(() => {
+    if (decodedCalls.length > 0) {
+      return decodedCalls.every(call => call.target === "0x0000000000000000000000000000000000000000");
+    }
+    if (simulation && simulation[1] && simulation[1].length > 0) {
+      return simulation[1].every(target => target === "0x0000000000000000000000000000000000000000");
+    }
+    return false;
+  }, [decodedCalls, simulation]);
+
   useEffect(() => {
     const fetchAbisAndDecode = async () => {
       if (!simulation) return;
@@ -156,18 +167,10 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
         const call = decodedCalls[i];
         
         if (call.target === "0x0000000000000000000000000000000000000000") {
-          jsxElements0 = [
-            ...jsxElements0,
-            <tr key={i} className="text-xs font-mono text-foreground">
-              <td colSpan={4} className="px-3 py-2 text-center text-muted-foreground">
-                No action will be executed.
-              </td>
-            </tr>
-          ];
           continue;
         }
 
-        jsxElements0 = [ 
+        jsxElements0 = [
           ... jsxElements0, 
           <tr
             key={i}
@@ -208,18 +211,10 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
     } else if (simulation && simulation.length > 0) {
       for (let i = 0; i < simulation[1].length; i++) {
         if (simulation[1][i] === "0x0000000000000000000000000000000000000000") {
-          jsxElements0 = [
-            ...jsxElements0,
-            <tr key={i} className="text-xs font-mono text-foreground">
-              <td colSpan={4} className="px-3 py-2 text-center text-muted-foreground">
-                No action will be executed.
-              </td>
-            </tr>
-          ];
           continue;
         }
 
-        jsxElements0 = [ 
+        jsxElements0 = [
           ... jsxElements0, 
           <tr
             key={i}
@@ -264,6 +259,10 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
       scrollContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
     }
   };
+
+  if (allTargetsZero) {
+    return null;
+  }
 
   return (
     <div className="w-full flex flex-col">

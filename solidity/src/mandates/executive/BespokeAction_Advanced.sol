@@ -34,7 +34,7 @@ contract BespokeAction_Advanced is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory /* inputParams */,
         bytes memory config
     ) public override {
         Mem memory mem;
@@ -65,7 +65,7 @@ contract BespokeAction_Advanced is Mandate {
 
         // Send the calldata to the target function
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
-        targets[0] = mem.targetContract;
+        targets[0] = mem.targetContract == address(0) ? powers : mem.targetContract;
         calldatas[0] =
             abi.encodePacked(mem.targetFunction, mem.staticParamsBefore, mandateCalldata, mem.staticParamsAfter);
 

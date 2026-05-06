@@ -174,7 +174,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     function version() external pure returns (string memory version);
 
     /// @notice Gets the quantity of governance flows for a mandate
-    function getAmountFlows() external view returns (uint256);
+    function getFlowCount() external view returns (uint256);
 
     /// @notice Gets the mandates of a governance flow at a specific index
     /// @param index The index of the flow
