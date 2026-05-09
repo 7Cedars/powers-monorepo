@@ -96,7 +96,7 @@ contract DeployHelpers is Script {
     // deploys the mandates in ReformMandate_Static of packageSize size using create2
     // and returns the mandateInitData for those packages.
     // the packages can then be adopted in Powers but are linked sequentially through needFulfilled conditions.
-    function packageInitData(PowersTypes.MandateInitData[] memory mandateInitData, uint256 packageSize, uint16 startId)
+    function packageInitData(PowersTypes.MandateInitData[] memory mandateInitData, uint256 packageSize)
         public
         returns (PowersTypes.MandateInitData[] memory packages)
     {
@@ -142,10 +142,7 @@ contract DeployHelpers is Script {
             // Link sequentially using needFulfilled
             PowersTypes.Conditions memory conditions;
             if (i >= 0) {
-                // The previous package (i-1) will be at ID: startId + (i-1)
-                // The current package (i) needs the previous one fulfilled.
                 conditions.allowedRole = type(uint256).max; // public
-                if (i > 0) conditions.needFulfilled = startId + uint16(i) - 1;
             }
 
             packages[i] = PowersTypes.MandateInitData({

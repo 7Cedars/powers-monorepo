@@ -36,7 +36,7 @@ contract GovernedToken_MintEncodedToken is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("address To, address Artist, string TokenURI");
+        inputParams = abi.encode("address To");
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
@@ -57,7 +57,7 @@ contract GovernedToken_MintEncodedToken is Mandate {
 
         // 1. Get config
         mem.governedToken = abi.decode(getConfig(powers, mandateId), (address));
-        (mem.to, mem.artist, mem.tokenURI) = abi.decode(mandateCalldata, (address, address, string));
+        (mem.to) = abi.decode(mandateCalldata, (address));
 
         mem.blockNumber = uint48(block.number);
         mem.tokenId = (uint256(uint160(caller)) << 48) | uint256(mem.blockNumber);
@@ -65,7 +65,7 @@ contract GovernedToken_MintEncodedToken is Mandate {
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         targets[0] = mem.governedToken;
         calldatas[0] = abi.encodeWithSignature(
-            "mint(address,uint256,address,string)", mem.to, mem.tokenId, mem.artist, mem.tokenURI
+            "mint(address,uint256)", mem.to, mem.tokenId
         );
 
         return (actionId, targets, values, calldatas);

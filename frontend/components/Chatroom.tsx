@@ -420,8 +420,8 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
       // We do a simple interval poll for a minute
       const startTime = Date.now()
       const pollInterval = setInterval(async () => {
-        // If we've polled for 60 seconds, stop
-        if (Date.now() - startTime > 60000) {
+        // If we've polled for 10 seconds, stop
+        if (Date.now() - startTime > 10000) {
           clearInterval(pollInterval)
           setIsRequestingAccess(false)
           // If we still aren't in the group, we can set an error or just stop
