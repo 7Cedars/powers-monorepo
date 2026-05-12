@@ -1,6 +1,8 @@
 [submodule "solidity/lib/zkpassport-packages"]
 	path = solidity/lib/zkpassport-packages
 	url = https://github.com/zkpassport/zkpassport-packages
+	shallow = true
+	fetchRecurseSubmodules = false
 [submodule "solidity/lib/circuits"]
 	path = solidity/lib/circuits
 	url = https://github.com/zkpassport/circuits

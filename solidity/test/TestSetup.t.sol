@@ -84,7 +84,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // versioning
     uint16 constant MAJOR = 0; 
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 1;
+    uint16 constant PATCH = 2;
 
     address[] targets;
     uint256[] values;
@@ -615,8 +615,7 @@ abstract contract TestSetupIntegrations is BaseSetup {
         soulbound1155 = new Soulbound1155("this is a test uri");
         electionList = new ElectionRegistry(300,300);
         PowersDeployer powersDeployer = new PowersDeployer();
-        powersFactory = new PowersFactory(
-            "Powers Factory", // name
+        powersFactory = new PowersFactory( 
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
