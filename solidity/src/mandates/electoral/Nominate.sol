@@ -24,8 +24,9 @@ contract Nominate is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("bool shouldNominate");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        string[] memory params = new string[](1);
+        params[0] = "bool shouldNominate";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     /// @notice Build a call to nominate or revoke nomination for the caller

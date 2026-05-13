@@ -23,9 +23,10 @@ contract Revoke_Mandates is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("uint16[] mandateIds");
-        super.initializeMandate(index, nameDescription, inputParams, config);
-    }
+        string[] memory params = new string[](1);
+        params[0] = "uint16[] mandateIds";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
+    } 
 
     /// @notice Build calls to revoke the configured mandates
     /// @param mandateCalldata Unused for this mandate

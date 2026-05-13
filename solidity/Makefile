@@ -319,6 +319,9 @@ registry-deploy :
 	@echo "Deploying mandate registry..."
 	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
+mandates-deploy : 
+	@echo "Deploying mandates..."
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
 examples-deploy : 
 	@echo "Deploying example contracts..."

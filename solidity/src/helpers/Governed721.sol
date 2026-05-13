@@ -45,6 +45,7 @@ interface IGoverned721 is IERC721 {
     function getArtist(uint256 tokenId) external view returns (address artist);
     function getSplit(Role role) external view returns (uint8 percentage);
     function getTransferData(uint256 actionId) external view returns (TransferData memory);
+    function safeTransferFromWithETH(address oldOwner, address newOwner, uint256 tokenId, uint256 quantity, uint256 nonce) external payable;
 }
 
 contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
@@ -113,7 +114,8 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         _setTokenURI(tokenId, tokenURI);
     }
 
-    /// @dev The payment functionality does NOT currently support native tokens. This is very much a PoC type contract.
+    /// @dev Standard ERC721 safeTransferFrom with optional ERC20 payment support.
+    /// @notice For native ETH payments, use safeTransferFromWithETH instead.
     function safeTransferFrom(address oldOwner, address newOwner, uint256 tokenId, bytes memory data)
         public
         override(ERC721, IERC721)
@@ -131,11 +133,12 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         if (data.length != 0) {
             (paymentToken, quantity, nonce) = abi.decode(data, (address, uint256, uint256));
 
-            // check 3: is payment token whitelisted?
-            if (paymentToken != address(0) && !whitelist[paymentToken]) revert("Payment token is not whitelisted");
-
-            (bool success) = IERC20(paymentToken).transferFrom(newOwner, owner(), quantity); // transfer payment tokens to this contract. This requires the sender to have approved this contract to spend their tokens.
-            if (!success) revert("Payment transfer failed");
+            // ERC20 token payment (address(0) means no payment in this function - use safeTransferFromWithETH for ETH)
+            if (paymentToken != address(0)) {
+                if (!whitelist[paymentToken]) revert("Payment token is not whitelisted");
+                bool success = IERC20(paymentToken).transferFrom(newOwner, owner(), quantity);
+                if (!success) revert("Payment transfer failed");
+            }
         } else {
             nonce = block.number; // only needed for uniqueness, does not need to be random.
         }
@@ -157,6 +160,57 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
 
         // Followed by the existing function.
         super.safeTransferFrom(oldOwner, newOwner, tokenId, data);
+    }
+
+    /// @dev Transfer NFT with native ETH payment. Use this when paying with ETH.
+    /// @param oldOwner The current owner of the token
+    /// @param newOwner The address to receive the token
+    /// @param tokenId The token ID to transfer
+    /// @param quantity The amount of ETH expected as payment (must match or exceed msg.value)
+    /// @param nonce A unique nonce for this transfer
+    function safeTransferFromWithETH(
+        address oldOwner,
+        address newOwner,
+        uint256 tokenId,
+        uint256 quantity,
+        uint256 nonce
+    ) external payable {
+        // check 1: are any accounts blacklisted?
+        if (blacklist[oldOwner] || blacklist[newOwner] || blacklist[msg.sender]) {
+            revert("Blacklisted account involved in transfer");
+        }
+
+        // Handle native ETH payment
+        if (msg.value < quantity) revert("Insufficient ETH sent");
+        
+        // Transfer ETH to owner
+        (bool success,) = payable(owner()).call{value: quantity}("");
+        if (!success) revert("ETH transfer failed");
+        
+        // Refund excess ETH to sender
+        if (msg.value > quantity) {
+            (bool refundSuccess,) = payable(msg.sender).call{value: msg.value - quantity}("");
+            if (!refundSuccess) revert("ETH refund failed");
+        }
+
+        // Log the transfer with address(0) as paymentToken to indicate ETH
+        uint256 transferId = uint256(keccak256(abi.encode(oldOwner, newOwner, tokenId, address(0), quantity, nonce)));
+        _transfers[transferId] = TransferData(
+            oldOwner,
+            newOwner,
+            _artists[tokenId],
+            getApproved(tokenId),
+            tokenId,
+            address(0), // ETH payment indicated by address(0)
+            quantity,
+            nonce
+        );
+
+        // Emit transfer ID event
+        emit TransferId(transferId);
+
+        // Execute the NFT transfer
+        _safeTransfer(oldOwner, newOwner, tokenId, "");
     }
 
     // This function is meant to be called by the Powers instance after a transfer with payment has been executed, to distribute the payment splits to the relevant parties.

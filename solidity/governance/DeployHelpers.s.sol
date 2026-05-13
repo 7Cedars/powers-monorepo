@@ -12,6 +12,10 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { ReformMandate_Static } from "@src/mandates/reform/MandatePackage_Static.sol";
 
 contract DeployHelpers is Script {
+    address testAccount1 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_1"));
+    address testAccount2 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_2"));
+    address testAccount3 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_3"));
+
     // Struct to hold the result for each name lookup
     struct IndexResult {
         uint16 flowIndex;

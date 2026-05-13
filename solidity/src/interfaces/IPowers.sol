@@ -9,8 +9,10 @@ pragma solidity ^0.8.26;
 import { PowersErrors } from "./PowersErrors.sol";
 import { PowersEvents } from "./PowersEvents.sol";
 import { PowersTypes } from "./PowersTypes.sol";
+import { IERC721Receiver } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import { IERC1155Receiver } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
 
-interface IPowers is PowersErrors, PowersEvents, PowersTypes {
+interface IPowers is PowersErrors, PowersEvents, PowersTypes, IERC721Receiver, IERC1155Receiver {
     //////////////////////////////////////////////////////////////
     //                  CONSTITUTE LOGIC                        //
     //////////////////////////////////////////////////////////////

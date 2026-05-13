@@ -36,9 +36,10 @@ contract GovernedToken_MintEncodedToken is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("address To");
-        super.initializeMandate(index, nameDescription, inputParams, config);
-    }
+        string[] memory params = new string[](1);
+        params[0] = "address To";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
+    } 
 
     function handleRequest(
         address caller,

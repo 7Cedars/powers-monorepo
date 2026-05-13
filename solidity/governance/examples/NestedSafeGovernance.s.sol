@@ -49,7 +49,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 2;
+    uint16 constant PATCH = 4;
 
     function run() external returns (Powers, PowersFactory) { 
         helperConfig = new Configurations();
@@ -181,7 +181,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = type(uint256).max; // anyone can execute this mandate. 
         parentConstitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Initial Setup: Assign role labels, set treasury and enable allowance module.",
+                nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions
