@@ -11,7 +11,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/7Cedars/powers"> 
+  <a href="https://github.com/7Cedars/powers-monorepo"> 
     <img src="./powers_icon_notext.svg" alt="Powers Logo" width="300" height="300">
   </a>
 
@@ -82,8 +82,8 @@ Powers v0.4 enables three key governance patterns that solve common on-chain org
 
 1. **Clone and setup the repository**
    ```bash
-   git clone https://github.com/7Cedars/powers.git
-   cd powers
+   git clone https://github.com/7Cedars/powers-monorepo.git
+   cd powers-monorepo
    ```
 
 2. **Start Anvil chain** (local Ethereum development chain)
@@ -216,10 +216,10 @@ Seven Cedars - [Github profile](https://github.com/7Cedars) - cedars7@proton.me
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[issues-shield]: https://img.shields.io/github/issues/7Cedars/powers.svg?style=for-the-badge
-[issues-url]: https://github.com/7Cedars/powers/issues/
-[license-shield]: https://img.shields.io/github/license/7Cedars/powers.svg?style=for-the-badge
-[license-url]: https://github.com/7Cedars/powers/LICENSE.txt
+[issues-shield]: https://img.shields.io/github/issues/7Cedars/powers-monorepo.svg?style=for-the-badge
+[issues-url]: https://github.com/7Cedars/powers-monorepo/issues/
+[license-shield]: https://img.shields.io/github/license/7Cedars/powers-monorepo.svg?style=for-the-badge
+[license-url]: https://github.com/7Cedars/powers-monorepo/blob/main/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/linkedin_username
 [product-screenshot]: images/screenshot.png

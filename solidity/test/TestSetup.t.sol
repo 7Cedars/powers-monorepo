@@ -84,7 +84,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // versioning
     uint16 constant MAJOR = 0; 
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 1;
+    uint16 constant PATCH = 4;
 
     address[] targets;
     uint256[] values;
@@ -272,28 +272,50 @@ abstract contract TestHelperFunctions is Test, TestVariables {
         }
     }
 
-    // function distributeNfts(
-    //     address powersContract,
-    //     address erc721MockLocal,
-    //     address[] memory accounts,
-    //     uint256 randomiser,
-    //     uint256 density
-    // ) public {
-    //     uint256 currentRandomiser;
-    //     randomiser = bound(randomiser, 10, 100 * 10 ** 18);
-    //     for (i = 0; i < accounts.length; i++) {
-    //         if (currentRandomiser < 10) {
-    //             currentRandomiser = randomiser;
-    //         } else {
-    //             currentRandomiser = currentRandomiser / 10;
-    //         }
-    //         bool getNft = (currentRandomiser % 100) < density;
-    //         if (getNft) {
-    //             vm.prank(powersContract);
-    //             SoulboundErc721(erc721MockLocal).mintNft(randomiser + i, accounts[i]);
-    //         }
-    //     }
-    // }
+    function check_inputParamsDependencies(address powers) public view {
+        // check that the input params are correctly set in the mandate.
+        uint16 counter = Powers(payable(powers)).mandateCounter();
+
+        // for each mandate:
+        for (uint16 mandateId = 1; mandateId < counter; mandateId++) {
+            (address mandateAddr,, bool active) = Powers(payable(powers)).getAdoptedMandate(mandateId);
+            if (!active) continue;
+
+            // 1: check if it has needFulfilled and / or need not fulfilled set.
+            PowersTypes.Conditions memory conditions = Powers(payable(powers)).getConditions(mandateId);
+
+            // 2: if so, use getInputParams at the mandate to check if the input params are the same between child and parent mandate.
+            if (conditions.needFulfilled > 0) {
+                (address parentAddr,,) = Powers(payable(powers)).getAdoptedMandate(conditions.needFulfilled);
+
+                bytes memory childInputParams = Mandate(mandateAddr).getInputParams(powers, mandateId);
+                bytes memory parentInputParams = Mandate(parentAddr).getInputParams(powers, conditions.needFulfilled); 
+
+                vm.assertTrue(
+                    keccak256(childInputParams) == keccak256(parentInputParams),
+                    string.concat(
+                        "InputParams mismatch: '", Mandate(mandateAddr).getNameDescription(powers, mandateId),
+                        "' needs fulfilled '", Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled), "'" 
+                    )
+                );
+            }
+
+            if (conditions.needNotFulfilled > 0) {
+                (address parentAddr,,) = Powers(payable(powers)).getAdoptedMandate(conditions.needNotFulfilled);
+
+                bytes memory childInputParams = Mandate(mandateAddr).getInputParams(powers, mandateId);
+                bytes memory parentInputParams = Mandate(parentAddr).getInputParams(powers, conditions.needNotFulfilled);
+
+                vm.assertTrue(
+                    keccak256(childInputParams) == keccak256(parentInputParams),
+                    string.concat(
+                        "InputParams mismatch: '", Mandate(mandateAddr).getNameDescription(powers, mandateId),
+                        "' needs not fulfilled '", Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled), "'" 
+                    )
+                );
+            }
+        }
+    }
 
     function voteOnProposal(
         address payable dao,
@@ -353,6 +375,18 @@ abstract contract TestHelperFunctions is Test, TestVariables {
             }
         }
         revert(string.concat("Mandate not found: ", description));
+    }
+
+    function daysToBlocks(uint256 quantityDays, uint256 blocksPerHour) public pure returns (uint32) {
+        return uint32(quantityDays * 24 * blocksPerHour);
+    }
+
+    function hoursToBlocks(uint256 quantityHours, uint256 blocksPerHour) public pure returns (uint32) {
+        return uint32(quantityHours * blocksPerHour);
+    }
+
+    function minutesToBlocks(uint256 quantityMinutes, uint256 blocksPerHour) public pure returns (uint32) {
+        return uint32((quantityMinutes * blocksPerHour) / 60);
     }
 }
 
@@ -615,8 +649,7 @@ abstract contract TestSetupIntegrations is BaseSetup {
         soulbound1155 = new Soulbound1155("this is a test uri");
         electionList = new ElectionRegistry(300,300);
         PowersDeployer powersDeployer = new PowersDeployer();
-        powersFactory = new PowersFactory(
-            "Powers Factory", // name
+        powersFactory = new PowersFactory( 
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),

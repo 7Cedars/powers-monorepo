@@ -63,8 +63,9 @@ contract PauseMandates is Mandate {
             revert("Array length mismatch");
         }
 
-        inputParams = abi.encode("bool paused");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        string[] memory params = new string[](1);
+        params[0] = "bool paused";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     /// @notice Handle pause/restart requests for mandates at specific flow positions

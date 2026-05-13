@@ -52,20 +52,20 @@ export default function ActionPage() {
     }
   }, [powers.mandates, actionId]);
 
-  // Fetch timestamps for relevant blocks
-  useEffect(() => {
-    if (action && chainId) {
-      const blockNumbers: bigint[] = [];
-      if (action.proposedAt && BigInt(action.proposedAt) !== 0n) blockNumbers.push(BigInt(action.proposedAt));
-      if (action.requestedAt && BigInt(action.requestedAt) !== 0n) blockNumbers.push(BigInt(action.requestedAt));
-      if (action.fulfilledAt && BigInt(action.fulfilledAt) !== 0n) blockNumbers.push(BigInt(action.fulfilledAt));
-      if (action.cancelledAt && BigInt(action.cancelledAt) !== 0n) blockNumbers.push(BigInt(action.cancelledAt));
+  // // Fetch timestamps for relevant blocks
+  // useEffect(() => {
+  //   if (action && chainId) {
+  //     const blockNumbers: bigint[] = [];
+  //     if (action.proposedAt && BigInt(action.proposedAt) !== 0n) blockNumbers.push(BigInt(action.proposedAt));
+  //     if (action.requestedAt && BigInt(action.requestedAt) !== 0n) blockNumbers.push(BigInt(action.requestedAt));
+  //     if (action.fulfilledAt && BigInt(action.fulfilledAt) !== 0n) blockNumbers.push(BigInt(action.fulfilledAt));
+  //     if (action.cancelledAt && BigInt(action.cancelledAt) !== 0n) blockNumbers.push(BigInt(action.cancelledAt));
       
-      if (blockNumbers.length > 0) {
-        fetchTimestamps(blockNumbers, chainId);
-      }
-    }
-  }, [action, chainId, fetchTimestamps]);
+  //     if (blockNumbers.length > 0) {
+  //       fetchTimestamps(blockNumbers, chainId);
+  //     }
+  //   }
+  // }, [action, chainId, fetchTimestamps]);
 
   // Helper function to get state label and color
   const getStateDisplay = (state: number | undefined): { label: string; color: string } => {

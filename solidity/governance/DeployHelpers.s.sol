@@ -12,6 +12,10 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { ReformMandate_Static } from "@src/mandates/reform/MandatePackage_Static.sol";
 
 contract DeployHelpers is Script {
+    address testAccount1 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_1"));
+    address testAccount2 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_2"));
+    address testAccount3 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_3"));
+
     // Struct to hold the result for each name lookup
     struct IndexResult {
         uint16 flowIndex;
@@ -96,7 +100,7 @@ contract DeployHelpers is Script {
     // deploys the mandates in ReformMandate_Static of packageSize size using create2
     // and returns the mandateInitData for those packages.
     // the packages can then be adopted in Powers but are linked sequentially through needFulfilled conditions.
-    function packageInitData(PowersTypes.MandateInitData[] memory mandateInitData, uint256 packageSize, uint16 startId)
+    function packageInitData(PowersTypes.MandateInitData[] memory mandateInitData, uint256 packageSize)
         public
         returns (PowersTypes.MandateInitData[] memory packages)
     {
@@ -142,10 +146,7 @@ contract DeployHelpers is Script {
             // Link sequentially using needFulfilled
             PowersTypes.Conditions memory conditions;
             if (i >= 0) {
-                // The previous package (i-1) will be at ID: startId + (i-1)
-                // The current package (i) needs the previous one fulfilled.
                 conditions.allowedRole = type(uint256).max; // public
-                if (i > 0) conditions.needFulfilled = startId + uint16(i) - 1;
             }
 
             packages[i] = PowersTypes.MandateInitData({

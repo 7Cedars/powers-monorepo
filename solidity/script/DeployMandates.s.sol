@@ -173,7 +173,7 @@ contract DeployMandates is Script {
                 console2.log(" - ", finalNames[i], " at ", finalAddresses[i]);
             }
 
-            vm.startBroadcast(); 
+            vm.startBroadcast(msg.sender); 
             registry.batchRegisterMandates(finalNames, finalAddresses, finalCreationCodeHashes);
             vm.stopBroadcast();
 
