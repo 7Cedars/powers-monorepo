@@ -47,7 +47,8 @@ contract Governed721_test is TestHelperFunctions {
     address safeAllowanceModule; 
     address testAccount1 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_1")); 
     address testAccount2 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_2"));
-    address testAccount3 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_3"));
+    address testAccount3 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_3")); 
+    address testAccount4 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_4"));
 
     uint256 fork; 
     string[] IDEAS_NAMES = ["Seeing", "Making", "Listening", "Telling", "Remembering", "Imagining", "Tending"];
@@ -80,7 +81,7 @@ contract Governed721_test is TestHelperFunctions {
         // check label role 
         vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(governed721Org)).getRoleLabel(1))) == keccak256(abi.encodePacked("Artist")), "Role 1 should be 'Artist'"); 
         vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(governed721Org)).getRoleLabel(2))) == keccak256(abi.encodePacked("Owner")), "Role 2 should be 'Owner'"); 
-        vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(governed721Org)).getRoleLabel(3))) == keccak256(abi.encodePacked("Operator")), "Role 3 should be 'Operator'"); 
+        vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(governed721Org)).getRoleLabel(3))) == keccak256(abi.encodePacked("Intermediary")), "Role 3 should be 'Intermediary'"); 
         vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(governed721Org)).getRoleLabel(4))) == keccak256(abi.encodePacked("Voter")), "Role 4 should be 'Voter'"); 
         vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(governed721Org)).getRoleLabel(5))) == keccak256(abi.encodePacked("Executive")), "Role 5 should be 'Executive'"); 
         
@@ -91,8 +92,7 @@ contract Governed721_test is TestHelperFunctions {
         vm.assertTrue(Powers(payable(governed721Org)).getTreasury() == governed721Org, "Treasury should be set as organisation itself.");
     }
 
-
-    function test_sellTokenAndClaimRoles() public {
+    function test_mintTokenAndClaimRoles() public {
         // setup: give the new owner 2 ETH to buy the token.
         vm.deal(testAccount1, 2 ether);
 
@@ -104,18 +104,13 @@ contract Governed721_test is TestHelperFunctions {
         vm.roll(block.number + minutesToBlocks(10,  helperConfig.getBlocksPerHour(block.chainid)));
         management.whitelistPaymentTokensExecute(governed721Org, address(0), privateKeys, block.timestamp);
 
-        // step 2: mintTokens. Operator = testAccount1, Owner = Governed721Org, Artist = testAccount2.
-        management.mintNftAtGoverned721(governed721, testAccount1, governed721Org, testAccount2, 1);
-
-        transferId = uint256(keccak256(abi.encode(governed721Org, testAccount3, 1, address(0), 1 ether, block.timestamp)));
-
-        // step 3: buyNftAtGoverned721: create transaction (Governed721Org -> testAccount3)
-        management.buyNftAtGoverned721(governed721, 1, 1 ether, governed721Org, testAccount3, block.timestamp);
- 
-        // step 4: claim roles. 
-        roles.getOwnerArtistOperatorRole(governed721Org, 1, block.timestamp);
-
-        assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount1, 3) > 0, "Test Account 1 should have Operator role");
+        // step 2: mintTokens. Intermediary = cedars, Owner = testAccount1, Artist = testAccount2.
+        management.mintNftAtGoverned721(governed721, testAccount1, privateKeys[2], testAccount2, 1);
+        
+        // step 3: claim roles.
+        roles.getOwnerArtistIntermediaryRole(governed721Org, 1, block.timestamp);
+        
+        assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount1, 3) > 0, "Test Account 1 should have Intermediary role");
         assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount2, 1) > 0, "Test Account 2 should have Artist role");
         assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount3, 2) > 0, "Test Account 3 should have Owner role"); 
 
@@ -127,7 +122,7 @@ contract Governed721_test is TestHelperFunctions {
         }
 
         // step 6: elect executives. 
-        roles.createExecutiveElection(governed721Org, privateKeys, block.timestamp);
+        uint256 electionId = roles.createExecutiveElection(governed721Org, privateKeys, block.timestamp);
 
         // set votes: everyone votes for 1st nominee.
         bool[] memory voteSelection = new bool[](3);
@@ -138,25 +133,25 @@ contract Governed721_test is TestHelperFunctions {
         }
 
         vm.roll(block.number + minutesToBlocks(6,  helperConfig.getBlocksPerHour(block.chainid)));
-        roles.voteInExecutiveElection(governed721Org, electionRegistry, voteSelections, 0, privateKeys, block.timestamp);
+        roles.voteInExecutiveElection(governed721Org, electionRegistry, voteSelections, electionId, privateKeys, block.timestamp);
 
         vm.roll(block.number + minutesToBlocks(6,  helperConfig.getBlocksPerHour(block.chainid)));
-        roles.tallyExecutiveElection(governed721Org, block.timestamp);
+        roles.tallyExecutiveElection(governed721Org, privateKeys, block.timestamp);
 
         assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount1, 5) > 0, "Test Account 1 should have Executive role");
     }
 
     function test_setSplitPayment() public { 
-        // step 0: set roles. Test Account 1 should be executive. 
-        test_sellTokenAndClaimRoles();
+        // note roleId 1 = Artist, roleId 2 = Owner, roleId 3 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.
+        management.initiateSplitPayment(governed721Org, 1, 15, privateKeys, block.timestamp);
+        management.initiateSplitPayment(governed721Org, 3, 10, privateKeys, block.timestamp); 
 
-        // Note: roleId 1 = Artist, roleId 2 = Owner, roleId 3 = Operator.  
-        management.initiateSplitPayment(governed721Org, 1, 10, privateKeys, block.timestamp);
+        vm.roll(block.number + minutesToBlocks(11,  helperConfig.getBlocksPerHour(block.chainid))); 
+        management.executeSplitPayment(governed721Org, 1, 15, privateKeys, block.timestamp);
+        management.executeSplitPayment(governed721Org, 3, 10, privateKeys, block.timestamp);
 
-        vm.roll(block.number + minutesToBlocks(10,  helperConfig.getBlocksPerHour(block.chainid)));
-        management.executeSplitPayment(governed721Org, 1, 10, privateKeys, block.timestamp);
-
-        assertTrue(IGoverned721(governed721Org).getSplit(IGoverned721.Role.Artist) == 10, "Artist should have 10% split");
+        assertTrue(IGoverned721(governed721).getSplit(IGoverned721.Role.Artist) == 15, "Artist should have 15% split");
+        assertTrue(IGoverned721(governed721).getSplit(IGoverned721.Role.Intermediary) == 10, "Intermediary should have 10% split");
     }
 
     function test_vetoSplitPayment() public { 
@@ -165,7 +160,10 @@ contract Governed721_test is TestHelperFunctions {
 
     function test_CollectSplitPayment() public {
         // the token first has to be sold.. 
-        test_sellTokenAndClaimRoles();
+        test_mintTokenAndClaimRoles();
+
+        management.buyNftAtGoverned721(governed721, 1, 1 ether, testAccount3, testAccount4, privateKeys[0], block.timestamp);
+        transferId = uint256(keccak256(abi.encode(testAccount1, testAccount3, 1, address(0), 1, 0))); // should match the transferId emitted in the event during buy.
 
         management.collectPayment(governed721Org, transferId, privateKeys, block.timestamp);
     }

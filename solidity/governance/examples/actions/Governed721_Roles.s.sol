@@ -22,14 +22,14 @@ contract Governed721_Roles is ActionHelpers {
     ///////////////////////////////////////////////////////////////
     //                          CLAIM ROLES                      // 
     ///////////////////////////////////////////////////////////////
-    function getOwnerArtistOperatorRole(address powers, uint256 tokenId, uint256 nonce) public {
+    function getOwnerArtistIntermediaryRole(address powers, uint256 tokenId, uint256 nonce) public {
         // step 0: reset state variables.
         delete mandateSlots;
         
         // step 1: identify mandates to run for checking tokens.
         mandateSlots.push(findMandateIdInOrg("Check ownership Token: This check is needed to assign the owner role to the NFT owner in the next mandate.", Powers(payable(powers))));
         mandateSlots.push(findMandateIdInOrg("Check artist Token: This check is needed to assign the artist role to the NFT artist in the next mandate.", Powers(payable(powers))));
-        mandateSlots.push(findMandateIdInOrg("Check operator Token: This check is needed to assign the operator role to the NFT operator in the next mandate.", Powers(payable(powers))));
+        mandateSlots.push(findMandateIdInOrg("Check intermediary Token: This check is needed to assign the intermediary role to the NFT intermediary in the next mandate.", Powers(payable(powers))));
 
         // step 2: checking tokens.
         vm.startBroadcast();
@@ -42,7 +42,7 @@ contract Governed721_Roles is ActionHelpers {
         delete mandateSlots;
         mandateSlots.push(findMandateIdInOrg("Assign Owner Role: Assigns Owner role to the owner of the NFT.", Powers(payable(powers))));
         mandateSlots.push(findMandateIdInOrg("Assign Artist Role: Assigns Artist role to the artist of the NFT.", Powers(payable(powers))));
-        mandateSlots.push(findMandateIdInOrg("Assign Operator Role: Assigns Operator role to the approved address of the NFT.", Powers(payable(powers))));
+        mandateSlots.push(findMandateIdInOrg("Assign Intermediary Role: Assigns Intermediary role to the approved address of the NFT.", Powers(payable(powers))));
 
         // step 4: assigning roles.
         vm.startBroadcast();
@@ -61,12 +61,12 @@ contract Governed721_Roles is ActionHelpers {
         delete actionIds;
         
         // step 1: identify mandates to run.
-        mandateSlots.push(findMandateIdInOrg("Assign Owner Role: Assigns Owner role to the owner of the NFT.", Powers(payable(powers))));
+        mandateSlots.push(findMandateIdInOrg("Claim Voter Role: Artists, Owners, and Intermediarys can claim voter role.", Powers(payable(powers))));
 
         // step 2: Claim voter roles 
         for (uint256 i = 0; i < privateKeys.length; i++) {
             address claimant = vm.addr(privateKeys[i]);
-            if (Powers(payable(powers)).hasRoleSince(claimant, 1) > 0 || Powers(payable(powers)).hasRoleSince(claimant, 2) > 0 || Powers(payable(powers)).hasRoleSince(claimant, 3) > 0) { // roleId 1 = Artist, roleId 2 = Owner, roleId 3 = Operator
+            if (Powers(payable(powers)).hasRoleSince(claimant, 1) > 0 || Powers(payable(powers)).hasRoleSince(claimant, 2) > 0 || Powers(payable(powers)).hasRoleSince(claimant, 3) > 0) { // roleId 1 = Artist, roleId 2 = Owner, roleId 3 = Intermediary
                 vm.startBroadcast();
                 Powers(payable(powers)).request(mandateSlots[0], abi.encode(claimant), nonce, string.concat("Claiming voter role for: ", vm.toString(claimant)));
                 vm.stopBroadcast();
@@ -75,7 +75,7 @@ contract Governed721_Roles is ActionHelpers {
     }
 
 
-    function createExecutiveElection(address powers, uint256[] memory privateKeys, uint256 nonce) public {
+    function createExecutiveElection(address powers, uint256[] memory privateKeys, uint256 nonce) public returns (uint256) {
         // step 0: reset state variables.
         delete mandateSlots;
         delete actionIds;
@@ -85,7 +85,7 @@ contract Governed721_Roles is ActionHelpers {
         mandateSlots.push(findMandateIdInOrg("Nominate for Executive: Voters can nominate.", Powers(payable(powers)))); 
         
         // step 2: Create Election & Nominate 
-        createElectionAndNominate(
+        uint256 electionId = createElectionAndNominate(
             powers, 
             mandateSlots[0], 
             mandateSlots[1], 
@@ -93,6 +93,8 @@ contract Governed721_Roles is ActionHelpers {
             privateKeys, // nominee private keys (if any)
             nonce
         );
+
+        return electionId;
     }
 
     function voteInExecutiveElection(address powers, address electionRegistry, bool[][] memory voteSelections, uint256 electionId, uint256[] memory privateKeys, uint256 nonce) public {
@@ -116,7 +118,7 @@ contract Governed721_Roles is ActionHelpers {
         );
     }
 
-    function tallyExecutiveElection(address powers, uint256 nonce) public {
+    function tallyExecutiveElection(address powers, uint256[] memory privateKeys, uint256 nonce) public {
         // step 0: reset state variables.
         delete mandateSlots;
         delete actionIds;
@@ -129,7 +131,8 @@ contract Governed721_Roles is ActionHelpers {
         tallyElection(
             powers,  
             mandateSlots[0],  
-            mandateSlots[1],   
+            mandateSlots[1],
+            privateKeys,  
             "Executive Election 1", 
             nonce
         );

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Script } from "forge-std/Script.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Script } from "forge-std/Script.sol"; 
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 
@@ -24,7 +23,7 @@ contract ActionHelpers is Script {
         for (uint16 i = 1; i < counter; i++) {
             (address mandateAddress, , ) = org.getAdoptedMandate(i);
             string memory mandateDesc = IMandate(mandateAddress).getNameDescription(address(org), i);
-            if (Strings.equal(mandateDesc, description)) {
+            if (keccak256(abi.encodePacked(mandateDesc)) == keccak256(abi.encodePacked(description))) {
                 return i;
             }
         }
@@ -33,6 +32,16 @@ contract ActionHelpers is Script {
 
     function calculateActionId(uint16 mandateId, bytes memory mandateCalldata, uint256 nonce) public pure returns (uint256) {
         return uint256(keccak256(abi.encode(mandateId, mandateCalldata, nonce)));
+    }
+
+    function getPrivateKeyRoleHolder(address powers, uint256 roleId, uint256 index, uint256[] memory privateKeys) public view returns (uint256) {
+        for (uint256 i = 0; i < privateKeys.length; i++) {
+            address account = vm.addr(privateKeys[i]);
+            if (Powers(payable(powers)).getRoleHolderAtIndex(roleId, index) == account) {
+                return privateKeys[i];
+            }
+        }
+        revert("The selected role does not match any of the provided private keys");
     }
 
     function voteOnProposal(
@@ -111,7 +120,7 @@ contract ActionHelpers is Script {
         bytes memory createCalldata = abi.encode(electionTitle);
         
         console2.log("Creating election:", electionTitle);
-        vm.startBroadcast();
+        vm.startBroadcast(nomineePrivateKeys[0]);
         Powers(payable(organisation)).request(createElectionMandateId, createCalldata, nonce, "");
         vm.stopBroadcast();
         
@@ -123,7 +132,7 @@ contract ActionHelpers is Script {
             
             console2.log("Nominating:", nominee);
             vm.startBroadcast(nomineePrivateKeys[i]);
-            Powers(payable(organisation)).request(nominateMandateId, nominateCalldata, nonce, "");
+            Powers(payable(organisation)).request(nominateMandateId, nominateCalldata, nonce + i, "");
             vm.stopBroadcast();
         }
         
@@ -161,7 +170,7 @@ contract ActionHelpers is Script {
         console2.log("Opening election voting for:", electionTitle);
         console2.log("Vote mandate will be ID:", voteMandateId);
         
-        vm.startBroadcast();
+        vm.startBroadcast(voterPrivateKeys[0]);
         Powers(payable(organisation)).request(openVoteMandateId, openVoteCalldata, nonce, "");
         vm.stopBroadcast();
         
@@ -199,7 +208,7 @@ contract ActionHelpers is Script {
              
             console2.log("Voter casting vote:", voter);
             vm.startBroadcast(voterPrivateKeys[i]);
-            Powers(payable(organisation)).request(voteMandateId, voteCalldata, nonce, "");
+            Powers(payable(organisation)).request(voteMandateId, voteCalldata, nonce + i, "");
             vm.stopBroadcast();
         }
         
@@ -215,21 +224,20 @@ contract ActionHelpers is Script {
         address organisation,
         uint16 tallyMandateId,
         uint16 cleanupMandateId,
+        uint256[] memory privateKeys,
         string memory electionTitle, 
         uint256 nonce
     ) public {
-        bytes memory tallyCalldata = abi.encode(electionTitle); 
+        uint256 privateKeyVoter =  getPrivateKeyRoleHolder(organisation, 4, 0, privateKeys); 
 
         console2.log("Tallying election:", electionTitle);
-        vm.startBroadcast();
-        Powers(payable(organisation)).request(tallyMandateId, tallyCalldata, nonce, "");
+        vm.startBroadcast(privateKeyVoter);
+        Powers(payable(organisation)).request(tallyMandateId, abi.encode(electionTitle), nonce, "");
         vm.stopBroadcast();
-
-        bytes memory cleanupCalldata = abi.encode(electionTitle);
         
         console2.log("Cleaning up election:", electionTitle);
-        vm.startBroadcast();
-        Powers(payable(organisation)).request(cleanupMandateId, cleanupCalldata, nonce, "");
+        vm.startBroadcast(privateKeyVoter);
+        Powers(payable(organisation)).request(cleanupMandateId, abi.encode(electionTitle), nonce, "");
         vm.stopBroadcast();
     }
 }
