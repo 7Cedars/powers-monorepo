@@ -36,8 +36,6 @@ remappings = [
     "@lib/=lib/",
     "@script/=script",
     "@governance/=governance/",
-    "@zkpassport/registry-sdk/=lib/zkpassport-packages/packages/registry-sdk/",
-    "@zkpassport/registry-contracts/=lib/zkpassport-packages/packages/registry-contracts/",
     "@zkpassport/circuits/=lib/circuits/src/solidity/"
 ] 
 
