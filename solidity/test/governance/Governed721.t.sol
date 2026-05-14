@@ -162,8 +162,10 @@ contract Governed721_test is TestHelperFunctions {
         // the token first has to be sold.. 
         test_mintTokenAndClaimRoles();
 
-        management.buyNftAtGoverned721(governed721, 1, 1 ether, testAccount3, testAccount4, privateKeys[0], block.timestamp);
-        transferId = uint256(keccak256(abi.encode(testAccount1, testAccount3, 1, address(0), 1, 0))); // should match the transferId emitted in the event during buy.
+        management.buyNftAtGoverned721(governed721, 1, 1 ether, testAccount3, testAccount4, privateKeys[0], 123);
+        // the calculation of transferId is not correct 
+        // transferId is only emited, not stored. So we here work with fixed nonce and hard coded transferId for the test.  
+        transferId = 75563888685347931465250278609645497862873052394463244380052361800918482156059; // should match the transferId emitted in the event during buy.
 
         management.collectPayment(governed721Org, transferId, privateKeys, block.timestamp);
     }

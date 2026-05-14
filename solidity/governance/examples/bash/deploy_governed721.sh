@@ -2,7 +2,7 @@
 
 # Navigate to the Foundry project root (contracts directory)
 # This allows the script to be run from anywhere and correctly use forge
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../../.."
 
 # Exit on error
 set -e
@@ -79,7 +79,7 @@ if [ -z "$GOVERNED721_ORG" ]; then
         read -r GOVERNED721_ORG
     fi
 else
-    echo "[1/4] Skipping deployment — using provided organisation: $GOVERNED721_ORG"
+    echo "[1/5] Skipping deployment — using provided organisation: $GOVERNED721_ORG"
 fi
 echo ""
 
@@ -95,9 +95,9 @@ echo "Initial setup mandate completed."
 echo ""
 
 # ──────────────────────────────────────────────────────────────
-# Step 3: Initiate split payments (propose + start timelock)
+# Step 3: Initiate split payments (propose + start timelock) + Native ETH whitelist execution (propose + start timelock)
 # ──────────────────────────────────────────────────────────────
-echo "[3/4] Initiating split payments..."
+echo "[3/4] Initiating split payments + Native ETH whitelist execution..."
 
 forge script governance/examples/actions/Governed721_Management.s.sol:Governed721_Management \
     --sig "initiateSplitPayment(address,uint8,uint8,uint256[],uint256)" \
@@ -115,9 +115,15 @@ echo ""
 echo "Waiting 11 minutes ($INTERVAL seconds) for the 10-minute timelock to expire..."
 countdown $INTERVAL
 echo ""
+ 
+forge script governance/examples/actions/Governed721_Management.s.sol:Governed721_Management \
+    --sig "whitelistPaymentTokensPropose(address,address,uint256[],uint256)" \
+    "$GOVERNED721_ORG" "0x0000000000000000000000000000000000000000" "$PRIVATE_KEYS" "$NONCE" \
+    $EXTRA_ARGS
+echo "  - Native ETH whitelist proposal created and voted on."
 
 # ──────────────────────────────────────────────────────────────
-# Step 4: Execute split payments (after timelock)
+# Step 4: Execute split payments (after timelock) and executing native ETH whitelist
 # ──────────────────────────────────────────────────────────────
 echo "[4/4] Executing split payments..."
 
@@ -132,6 +138,13 @@ forge script governance/examples/actions/Governed721_Management.s.sol:Governed72
     "$GOVERNED721_ORG" 3 10 "$PRIVATE_KEYS" "$NONCE" \
     $EXTRA_ARGS
 echo "  - Intermediary (role 3): 10% split executed."
+
+forge script governance/examples/actions/Governed721_Management.s.sol:Governed721_Management \
+    --sig "whitelistPaymentTokensExecute(address,address,uint256[],uint256)" \
+    "$GOVERNED721_ORG" "0x0000000000000000000000000000000000000000" "$PRIVATE_KEYS" "$NONCE" \
+    $EXTRA_ARGS
+echo "  - Native ETH whitelist executed."
+echo ""
 
 echo ""
 echo "=========================================================="
