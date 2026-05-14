@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { TestSetupMandate } from "../TestSetup.t.sol";
-import { IMandate } from "../../src/interfaces/IMandate.sol";
-import { PresetActions_Single } from "../../src/mandates/executive/PresetActions_Single.sol";
-import { OpenAction } from "../../src/mandates/executive/OpenAction.sol";
-import { StatementOfIntent } from "../../src/mandates/executive/StatementOfIntent.sol";
-import { BespokeAction_Simple } from "../../src/mandates/executive/BespokeAction_Simple.sol";
-import { BespokeAction_Advanced } from "../../src/mandates/executive/BespokeAction_Advanced.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+// import { TestSetupMandate } from "../TestSetup.t.sol";
+// import { IMandate } from "@src/interfaces/IMandate.sol";
+// import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
+// import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+// import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
+// import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
+// import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Advanced.sol";
+// import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 // /// @title Mandate Fuzz Tests
 // /// @notice Comprehensive fuzz testing for the Mandate.sol contract and its implementations
 // /// @dev Tests various edge cases and random inputs for mandate functionality
 // contract MandateFuzzTest is TestSetupMandate {
 //     // Mandate instances for testing
-//     PresetActions_Single presetSingleAction;
+//     PresetActions presetSingleAction;
 //     OpenAction openAction;
 //     StatementOfIntent statementOfIntent;
 //     BespokeAction_Simple bespokeActionSimple;
@@ -29,7 +29,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 //         super.setUp();
 
 //         // Initialize mandate instances
-//         presetSingleAction = PresetActions_Single(mandateAddresses[4]);
+//         presetSingleAction = PresetActions(mandateAddresses[4]);
 //         openAction = OpenAction(mandateAddresses[3]);
 //         statementOfIntent = StatementOfIntent(mandateAddresses[6]);
 //         bespokeActionSimple = BespokeAction_Simple(mandateAddresses[7]);

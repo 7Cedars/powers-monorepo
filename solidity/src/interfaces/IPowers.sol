@@ -9,8 +9,10 @@ pragma solidity ^0.8.26;
 import { PowersErrors } from "./PowersErrors.sol";
 import { PowersEvents } from "./PowersEvents.sol";
 import { PowersTypes } from "./PowersTypes.sol";
+import { IERC721Receiver } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import { IERC1155Receiver } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
 
-interface IPowers is PowersErrors, PowersEvents, PowersTypes {
+interface IPowers is PowersErrors, PowersEvents, PowersTypes, IERC721Receiver, IERC1155Receiver {
     //////////////////////////////////////////////////////////////
     //                  CONSTITUTE LOGIC                        //
     //////////////////////////////////////////////////////////////
@@ -27,6 +29,12 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @dev Can only be called by an admin account
     /// @param newAdmin The address of the new admin account
     function closeConstitute(address newAdmin) external;
+
+    /// @notice Closes the constitute phase, preventing further mandates from being added, and sets the initial flows.
+    /// @dev Can only be called by an admin account
+    /// @param newAdmin The address of the new admin account
+    /// @param flows The initial governance flows to set in the protocol
+    function closeConstitute(address newAdmin, Flow[] memory flows) external;
 
     //////////////////////////////////////////////////////////////
     //                  GOVERNANCE FUNCTIONS                    //
@@ -91,7 +99,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     function castVoteWithReason(uint256 actionId, uint8 support, string calldata reason) external;
 
     //////////////////////////////////////////////////////////////
-    //                  ROLE AND LAW ADMIN                       //
+    //            ROLE, MANDATE AND FLOW ADMIN                  //
     //////////////////////////////////////////////////////////////
     /// @notice Activates a new mandate in the protocol
     /// @dev Can only be called through the protocol itself
@@ -102,6 +110,23 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @dev Can only be called through the protocol itself
     /// @param mandateId The id of the mandate
     function revokeMandate(uint16 mandateId) external;
+
+    /// @notice Adds flows
+    /// @dev Can only be called through the protocol itself
+    /// @param flow The flow to add
+    function addFlow(Flow memory flow) external;
+
+    /// @notice Removes a flow
+    /// @dev Can only be called through the protocol itself
+    /// @param index The index of the flow to remove
+    function removeFlow(uint8 index) external;
+
+    /// @notice Edits a flow by replacing a mandate in the flow with another mandate
+    /// @dev Can only be called through the protocol itself
+    /// @param index1 The index of the flow to edit
+    /// @param index2 The index of the mandate in the flow to replace
+    /// @param mandateId The id of the new mandate to add to the flow
+    function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external;
 
     /// @notice Grants a role to an account
     /// @dev Can only be called through the protocol itself
@@ -115,7 +140,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param account The address to remove the role from
     function revokeRole(uint256 roleId, address account) external;
 
-    /// @notice Assigns a human-readable label and URI to a role  
+    /// @notice Assigns a human-readable label and URI to a role
     /// @dev Optional. Can only be called through the protocol itself
     /// @param roleId The identifier of the role to label
     /// @param label The human-readable label for the role
@@ -132,6 +157,11 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @param newTreasury The new treasury address
     function setTreasury(address payable newTreasury) external;
 
+    /// @notice Sets the paymaster address
+    /// @dev Can only be called through the protocol itself
+    /// @param newPaymaster The new paymaster address
+    function setPaymaster(address newPaymaster) external;
+
     /// @notice Blacklists an account
     /// @dev Can only be called through the protocol itself
     /// @param account The address to blacklist
@@ -141,6 +171,23 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     //////////////////////////////////////////////////////////////
     //                      VIEW FUNCTIONS                       //
     //////////////////////////////////////////////////////////////
+    /// @notice Gets the protocol version
+    /// @return version the version string
+    function version() external pure returns (string memory version);
+
+    /// @notice Gets the quantity of governance flows for a mandate
+    function getFlowCount() external view returns (uint256);
+
+    /// @notice Gets the mandates of a governance flow at a specific index
+    /// @param index The index of the flow
+    /// @return mandateIds The ids of the mandates in the flow
+    function getFlowMandatesAtIndex(uint8 index) external view returns (uint16[] memory mandateIds);
+
+    /// @notice Gets the description of a governance flow at a specific index
+    /// @param index The index of the flow
+    /// @return description The human-readable description of the flow
+    function getFlowDescriptionAtIndex(uint8 index) external view returns (string memory);
+
     /// @notice Gets the quantity of actions of a mandate
     /// @param mandateId The id of the mandate
     /// @return quantityMandateActions The quantity of actions of the mandate
@@ -277,15 +324,15 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes {
     /// @return The treasury address
     function getTreasury() external view returns (address payable);
 
+    /// @notice Getter for paymaster address.
+    /// @return The paymaster address
+    function paymaster() external view returns (address);
+
     /// @notice Checks if an account has permission to call a mandate
     /// @param caller The address attempting to call the mandate
     /// @param mandateId The mandate id to check
     /// @return canCall True if the caller has permission, false otherwise
     function canCallMandate(address caller, uint16 mandateId) external view returns (bool canCall);
-
-    /// @notice Gets the protocol version
-    /// @return version the version string
-    function version() external pure returns (string memory version);
 
     /// @notice Checks if an account is blacklisted
     /// @param account The address to check

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { PowersTypes } from "../../interfaces/PowersTypes.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
 
@@ -57,7 +57,7 @@ contract CheckExternalActionState is Mandate {
         // Compute the expected action ID on the parent contract
         // This assumes the action was created with the same calldata and nonce
         mem.remoteActionId = MandateUtilities.computeActionId(mem.configMandateId, mandateCalldata, nonce);
-        
+
         // Check state
         PowersTypes.ActionState state = IPowers(mem.parentPowers).getActionState(mem.remoteActionId);
         if (state != PowersTypes.ActionState.Fulfilled) {

@@ -25,7 +25,7 @@ const DynamicThumbnail: React.FC<DynamicThumbnailProps> = ({ roleId, powers, siz
   if (roleId === "") {
     return (
       <div 
-        className={`${className || 'rounded-md bg-slate-50'} flex items-center justify-center text-gray-500 font-bold border border-gray-200`} 
+        className={`${className || ' bg-slate-50'} flex items-center justify-center text-gray-500 font-bold border border-gray-200`} 
         style={{ width: size, height: size, fontSize: size * 0.25 }}
       >
         {"Unknown"}
@@ -39,7 +39,7 @@ const DynamicThumbnail: React.FC<DynamicThumbnailProps> = ({ roleId, powers, siz
            src={imageSrc} 
            width={size} 
            height={size} 
-           className={className || 'object-cover rounded-md bg-slate-50 bg-opacity-0'} 
+           className={className || 'object-cover  bg-slate-50 bg-opacity-0'} 
            alt={`#${roleId}`} 
         />
      );
@@ -47,7 +47,7 @@ const DynamicThumbnail: React.FC<DynamicThumbnailProps> = ({ roleId, powers, siz
 
   return (
       <div 
-        className={`${className || 'rounded-md bg-slate-50'} flex items-center justify-center text-gray-500 font-bold border border-gray-200`} 
+        className={`${className || ' bg-slate-50'} flex items-center justify-center text-gray-500 font-bold border border-gray-200`} 
         style={{ width: size, height: size, fontSize: size * 0.25 }}
       >
         {String(roleId)}

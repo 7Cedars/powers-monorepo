@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IPowers } from "../../interfaces/IPowers.sol";
 
 /**
@@ -42,9 +42,10 @@ contract AssignExternalRole is Mandate {
         override
     {
         // Define the input parameters for the UI
-        bytes memory inputParams = abi.encode("address account");
-        super.initializeMandate(index, nameDescription, inputParams, config);
-    }
+        string[] memory params = new string[](1);
+        params[0] = "address Account";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
+    } 
 
     /// @notice Process a request to synchronize a role
     /// @param powers The Powers contract address

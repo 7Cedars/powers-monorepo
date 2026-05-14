@@ -115,7 +115,8 @@ export function DynamicActionButton({checks}: {checks: Checks}) {
       mandate,
       mandateCalldata as `0x${string}`,
       nonce,
-      description
+      description, 
+      powers as Powers
     );
     // console.log("@handleExecute: waypoint 1", {
     //   paramValues,

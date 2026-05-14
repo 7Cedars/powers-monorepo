@@ -1,6 +1,12 @@
 {
-  "lib/forge-std": {
-    "rev": "dd75251e15bfb826147090585346f4d7636063e9"
+  "lib/account-abstraction": {
+    "tag": {
+      "name": "v0.7.0",
+      "rev": "7af70c8993a6f42973f520ae0752386a5032abe7"
+    }
+  },
+  "lib/circuits": {
+    "rev": "fef4b9485a45bbb8238364e3366150c22e3726be"
   },
   "lib/openzeppelin-contracts": {
     "rev": "cc94ea49301460aa6bd39edf29b2ab953d1d80b5"
@@ -13,5 +19,8 @@
   },
   "solidity/lib/openzeppelin-contracts": {
     "rev": "cc94ea49301460aa6bd39edf29b2ab953d1d80b5"
+  },
+  "solidity/lib/zkpassport-packages": {
+    "rev": "3f28ada779cd9156dacd31574730ae7e2eb66a1d"
   }
 }

@@ -1,0 +1,22 @@
+# Railway deployment configuration
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "pnpm start"
+
+# Health check configuration
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+
+# Environment configuration
+[env]
+NODE_ENV = "production"
+XMTP_ENV = "production"
+XMTP_DB_DIRECTORY = "/data"
+
+# Volume configuration for persistent XMTP database
+[[deploy.volumes]]
+mountPath = "/data"
+name = "xmtp-database"

@@ -6,7 +6,7 @@ import { StaticInput } from "@/components/StaticInput";
 import { Action, InputType, Mandate, Powers } from "@/context/types";
 import { ConnectedWallet, useWallets } from "@privy-io/react-auth";
 import { decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from "viem";
-import { parseMandateError, parseParamValues } from "@/utils/parsers";
+import { parseMandateError, parseParamValues, parseChainId } from "@/utils/parsers";
 import { hashAction } from "@/utils/hashAction";
 import { useMandate } from "@/hooks/useMandate";
 import { Button } from "@/components/Button";
@@ -14,11 +14,12 @@ import { SimulationBox } from "./SimulationBox";
 
 type StaticFormProps = {
   mandate?: Mandate;
+  chainId?: number;
   staticDescription?: boolean;
   onCheck: (mandate: Mandate, callData: `0x${string}`, nonce: bigint, wallets: ConnectedWallet[], powers: Powers) => void;
 };
 
-export function StaticForm({ mandate, staticDescription = true, onCheck }: StaticFormProps) {
+export function StaticForm({ mandate, chainId, staticDescription = true, onCheck }: StaticFormProps) {
   const action = useActionStore();
   const { simulation, simulate } = useMandate();
   const { wallets, ready } = useWallets();
@@ -103,7 +104,7 @@ export function StaticForm({ mandate, staticDescription = true, onCheck }: Stati
       {/* nonce */}
       <div className="w-full mt-4 flex flex-row justify-center items-center ps-3 pe-6 gap-3">
         <label htmlFor="nonce" className="text-xs text-slate-600 ps-3 min-w-28">Nonce</label>
-        <div className="w-full h-fit flex items-center text-md justify-center rounded-md ps-2 outline outline-1 outline-slate-300">
+        <div className="w-full h-fit flex items-center text-md justify-center  ps-2 outline outline-1 outline-slate-300">
           <input 
             type="text" 
             name="nonce"
@@ -119,7 +120,7 @@ export function StaticForm({ mandate, staticDescription = true, onCheck }: Stati
       {staticDescription && 
       <div className="w-full mt-4 flex flex-row justify-center items-start ps-3 pe-6 gap-3 min-h-24">
         <label htmlFor="reason" className="text-xs text-slate-600 ps-3 min-w-28 pt-1">Description</label>
-        <div className="w-full flex items-center rounded-md outline outline-1 outline-slate-300">
+        <div className="w-full flex items-center  outline outline-1 outline-slate-300">
           <textarea 
             name="reason" 
             id="reason" 
@@ -138,7 +139,7 @@ export function StaticForm({ mandate, staticDescription = true, onCheck }: Stati
       { error.error &&
         <div className="w-full flex flex-col gap-0 justify-start items-center text-red text-center text-sm text-red-800 pt-8 pb-4 px-8">
           <div>
-            {`Failed check${parseMandateError(error.error)}`}     
+            {`Failed check${parseMandateError(error)}`}     
           </div>
         </div>
       }
@@ -162,7 +163,7 @@ export function StaticForm({ mandate, staticDescription = true, onCheck }: Stati
         )}
       </form> 
       { 
-        simulation && action.upToDate && <SimulationBox mandate = {mandate as Mandate} simulation = {simulation} />
+        simulation && action.upToDate && chainId && <SimulationBox mandate = {mandate as Mandate} simulation = {simulation} chainId={chainId} />
       } 
     </>
   );

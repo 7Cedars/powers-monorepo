@@ -7,8 +7,8 @@
 
 pragma solidity ^0.8.26;
 
-import { Checks } from "../../src/libraries/Checks.sol";
-import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
+import { Checks } from "@src/libraries/Checks.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { TestSetupPowers } from "../TestSetup.t.sol";
 
 contract ChecksTest is TestSetupPowers {

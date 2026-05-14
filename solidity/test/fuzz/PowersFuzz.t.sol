@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 // import { TestSetupPowers } from "../TestSetup.t.sol";
-// import { PowersTypes } from "../../src/interfaces/PowersTypes.sol";
+// import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 // /// @title Powers Core Fuzz Tests
 // /// @notice Deep fuzz testing for core Powers.sol functionality

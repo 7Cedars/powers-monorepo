@@ -121,13 +121,13 @@ update-deps:
 install-deps:
 	@echo "Installing dependencies..."
 	forge install foundry-rs/forge-std --no-git || exit 1
-	forge install openzeppelin/openzeppelin-contracts@v5.0.2  --no-git || exit 1
+	forge install openzeppelin/openzeppelin-contracts@v5.6.1  --no-git || exit 1
 	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  --no-git || exit 1
 	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
 	forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	forge install safe-fndn/safe-modules --no-git || exit 1
 	forge install zkpassport/circuits --no-git || exit 1
-	forge install zkpassport/zkpassport-packages --no-git || exit 1
+	forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies installed without git metadata."
 	
 
@@ -136,11 +136,13 @@ reset-deps:
 	@rm -rf lib/
 	@mkdir -p lib
 	@forge install foundry-rs/forge-std --no-git || exit 1
-	@forge install openzeppelin/openzeppelin-contracts@v5.0.2 --no-git || exit 1
+	@forge install openzeppelin/openzeppelin-contracts@v5.6.1 --no-git || exit 1
 	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 --no-git || exit 1
 	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-git || exit 1
 	@forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	@forge install safe-fndn/safe-modules --no-git || exit 1
+	@forge install zkpassport/circuits --no-git || exit 1
+	@forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies reset complete. All libs installed without git metadata."
 
 # Documentation
@@ -284,6 +286,7 @@ info:
 update-builds:
 	@echo "Updating builds..."
 	for contract in ERC20 Erc20Taxed SimpleErc20Votes Erc20DelegateElection Mandate Nominees Ownable Powers ZKPassport_Check ZKPassport_PowersRegistry; do cp out/$${contract}.sol/$${contract}.json ../frontend/context/builds/$${contract}.json; done
+	for contract in Powers; do cp out/$${contract}.sol/$${contract}.json ../xmtp-agent/src/powers/$${contract}.json; done
 	
 ###############################
 # 		Deploy Commands  	  # 
@@ -292,27 +295,59 @@ update-builds:
 # Deployment arguments for different networks
  
 ANVIL_DEPLOY_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) --broadcast --ffi -vv
-# NB: turned off verify
+# NB: turned off verify --verify 
 SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 11155111 --ffi -vv
 ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 421614 --verify --ffi -vv 
 OPT_SEPOLIA_DEPLOY_ARGS := --rpc-url $(OPT_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --ffi -vv
 
+# fund dev address on local chain.  
+fund-dev :
+	cast send --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) ${DEV2_ADDRESS} --value 1ether 
+
 # create forked anvil chain. 
 # included in .env are SEPOLIA_RPC_URL, ARB_SEPOLIA_RPC_URL, OPT_SEPOLIA_RPC_URL
 fork-anvil : 
-	anvil --fork-url $(OPT_SEPOLIA_RPC_URL) --block-time 1 --chain-id 31337   
+	anvil --fork-url $(SEPOLIA_RPC_URL) --block-time 12 --chain-id 31337   
 
 # Deploy an organisation to a single chain. 
 # Adjust the ANVIL_DEPLOY_ARGS, SEPOLIA_DEPLOY_ARGS, OPT_SEPOLIA_DEPLOY_ARGS, ARB_SEPOLIA_DEPLOY_ARGS variables above to change network and deployment settings.
 # Adjust the script path and contract name below to change which organisation is deployed.
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
-deploy-organisation : 
-	@echo "Deploying organisation..."
-	forge script script/organisations/culturalStewardsDAO/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)  
+registry-deploy : 
+	@echo "Deploying mandate registry..."
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
-initialise-powers :
-	@echo "Initialising Powers contract..."
-	forge script script/InitialisePowers.s.sol:InitialisePowers $(SEPOLIA_DEPLOY_ARGS)
+mandates-deploy : 
+	@echo "Deploying mandates..."
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
+
+examples-deploy : 
+	@echo "Deploying example contracts..."
+	@echo "Account Abstraction:"
+	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Bicameralism:"
+# 	forge script governance/examples/Bicameralism.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Election List DAO:"
+# 	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Governed 721:"
+# 	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Nested Safe Governance:"
+# 	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Optimistic Execution:"
+# 	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Powers 101:"
+# 	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+# 	@echo "Token Delegates:"
+# 	forge script governance/examples/TokenDelegates.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+# 	@echo "All example contracts deployed."
+
+organisation-deploy : 
+	@echo "Deploying organisation..."
+	forge script governance/publius-registry/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+
+governed721-deploy : 
+	@echo "Deploying convergence layer contracts..."
+	./governance/examples/bash/deploy_governed721.sh "" "" "" $(SEPOLIA_DEPLOY_ARGS)
 
 # deploy-zkregistry : 
 # 	@echo "Deploying ZKPassport Registry..."
@@ -322,7 +357,10 @@ initialise-powers :
 deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:DeployAllowanceModule $(OPT_SEPOLIA_DEPLOY_ARGS) 
 
 # Verify Contracts
-# sepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x05c0379565ef0ebb1bD21C0Ab463ca5CE5211D3A src/Powers.sol:Powers --watch
+sepoliaVerifyContract : 
+# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/helpers/PowersPaymaster.sol:PowersPaymaster --watch
+	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xEA32F09478C71aa481248c3D95467bc36DF4d524 src/helpers/PowersFactory.sol:PowersFactory --watch 
+
 optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 arbSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 421614 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0xb1fe867eE7919887EB381c4626bdbAe003969683 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 

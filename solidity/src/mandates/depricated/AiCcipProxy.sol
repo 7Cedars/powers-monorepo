@@ -4,7 +4,7 @@ pragma solidity ^0.8.7;
 // import { Client } from "@chainlink/contracts-ccip/libraries/Client.sol";
 // import { CCIPReceiver } from "@chainlink/contracts-ccip/applications/CCIPReceiver.sol";
 // import { IRouterClient } from "@chainlink/contracts-ccip/interfaces/IRouterClient.sol";
-// import { Chainlink, ChainlinkClient } from "@chainlink/contracts/src/v0.8/operatorforwarder/ChainlinkClient.sol";
+// import { Chainlink, ChainlinkClient } from "@chainlink/contracts/src/v0.8/intermediaryforwarder/ChainlinkClient.sol";
 // import { ConfirmedOwner } from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 // import { LinkTokenInterface } from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
 

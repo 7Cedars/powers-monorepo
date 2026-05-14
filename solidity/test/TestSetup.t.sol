@@ -3,79 +3,76 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 // protocol
-import { Powers } from "../src/Powers.sol";
-import { Mandate } from "../src/Mandate.sol";
-import { PowersErrors } from "../src/interfaces/PowersErrors.sol";
-import { PowersTypes } from "../src/interfaces/PowersTypes.sol";
-import { PowersEvents } from "../src/interfaces/PowersEvents.sol";
-import { Configurations } from "../script/Configurations.s.sol";
-import { TestConstitutions } from "./TestConstitutions.sol"; 
+import { Powers } from "@src/Powers.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
+import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
+import { Configurations } from "@script/Configurations.s.sol";
+import { TestConstitutions } from "./TestConstitutions.sol";
 import { console2 } from "forge-std/console2.sol";
 
-// deploy scripts
-import { InitialisePowers } from "../script/InitialisePowers.s.sol";
-import { PowersMock } from "@mocks/PowersMock.sol";
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
+// deploy scripts 
+import { PowersMock } from "./mocks/PowersMock.sol";
+import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 
 // organisations
-import { Powers101 } from "../script/organisations/examples/Powers101.s.sol";
-import { ElectionListsDAO } from "../script/organisations/examples/ElectionListsDAO.s.sol";
-// import { Deploy } from "../script/organisations/CulturalStewardsDAO/Deploy.s.sol";
+import { Deploy as Powers101 } from "../governance/examples/Powers101.s.sol";
+import { Deploy as ElectionRegistrysDAO } from "../governance/examples/ElectionListsDao.s.sol";
+// import { Deploy } from "@governance/examples/CulturalStewards/Deploy.s.sol";
 
 // helpers
 import { Nominees } from "@src/helpers/Nominees.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
-import { Erc20DelegateElection } from "@mocks/Erc20DelegateElection.sol";
-import { FlagActions } from "@src/helpers/FlagActions.sol";
-import { SimpleGovernor } from "@mocks/SimpleGovernor.sol";
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
-import { Erc20Taxed } from "@mocks/Erc20Taxed.sol";
-import { SimpleErc20Votes } from "@mocks/SimpleErc20Votes.sol";
-import { SimpleErc1155 } from "@mocks/SimpleErc1155.sol";
-import { ReturnDataMock } from "@mocks/ReturnDataMock.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { Erc20DelegateElection } from "./mocks/Erc20DelegateElection.sol";
+import { SimpleGovernor } from "./mocks/SimpleGovernor.sol";
+import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
+import { Erc20Taxed } from "./mocks/Erc20Taxed.sol";
+import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
+import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
+import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
 import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
-import { ElectionList } from "@src/helpers/ElectionList.sol";
 import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
+import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // protocol and mocks
     Powers powers;
     Configurations helperConfig;
+    MandateRegistry registry;
     PowersMock daoMock;
     PowersMock daoMockChild1;
     PowersMock daoMockChild2;
-    ElectionListsDAO openElections;
-    InitialisePowers initialisePowers;
-    PowersDeployer powersDeployer;
+    ElectionRegistrysDAO openElections; 
     string[] mandateNames;
     address[] mandateAddresses;
-    TestConstitutions testConstitutions; 
+    TestConstitutions testConstitutions;
     PowersTypes.Conditions conditions;
     address powersAddress;
     address[] mandates;
 
-    FlagActions flagActions;
     SimpleErc20Votes simpleErc20Votes;
     Erc20Taxed erc20Taxed;
     SimpleErc1155 simpleErc1155;
     ReturnDataMock returnDataMock;
     Nominees nominees;
-    ElectionList openElection;
+    ElectionRegistry openElection;
     Erc20DelegateElection erc20DelegateElection;
     SimpleGovernor simpleGovernor;
     AllowedTokens allowedTokens;
     PowersFactory powersFactory;
     Soulbound1155 soulbound1155;
-    ElectionList electionList;
+    ElectionRegistry electionList;
     ZKPassport_PowersRegistry zkPassportRegistry;
 
-    uint256 sepoliaFork; 
+    uint256 sepoliaFork;
     uint256 optSepoliaFork;
     uint256 arbSepoliaFork;
 
@@ -83,6 +80,11 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     uint8 constant AGAINST = 0;
     uint8 constant FOR = 1;
     uint8 constant ABSTAIN = 2;
+
+    // versioning
+    uint16 constant MAJOR = 0; 
+    uint16 constant MINOR = 1;
+    uint16 constant PATCH = 5;
 
     address[] targets;
     uint256[] values;
@@ -189,7 +191,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     address lisa;
     address oracle;
     address[] users;
-    address cedars; 
+    address cedars;
 
     // list of dao names
     string[] daoNames;
@@ -270,28 +272,50 @@ abstract contract TestHelperFunctions is Test, TestVariables {
         }
     }
 
-    // function distributeNfts(
-    //     address powersContract,
-    //     address erc721MockLocal,
-    //     address[] memory accounts,
-    //     uint256 randomiser,
-    //     uint256 density
-    // ) public {
-    //     uint256 currentRandomiser;
-    //     randomiser = bound(randomiser, 10, 100 * 10 ** 18);
-    //     for (i = 0; i < accounts.length; i++) {
-    //         if (currentRandomiser < 10) {
-    //             currentRandomiser = randomiser;
-    //         } else {
-    //             currentRandomiser = currentRandomiser / 10;
-    //         }
-    //         bool getNft = (currentRandomiser % 100) < density;
-    //         if (getNft) {
-    //             vm.prank(powersContract);
-    //             SoulboundErc721(erc721MockLocal).mintNft(randomiser + i, accounts[i]);
-    //         }
-    //     }
-    // }
+    function check_inputParamsDependencies(address powers) public view {
+        // check that the input params are correctly set in the mandate.
+        uint16 counter = Powers(payable(powers)).mandateCounter();
+
+        // for each mandate:
+        for (uint16 mandateId = 1; mandateId < counter; mandateId++) {
+            (address mandateAddr,, bool active) = Powers(payable(powers)).getAdoptedMandate(mandateId);
+            if (!active) continue;
+
+            // 1: check if it has needFulfilled and / or need not fulfilled set.
+            PowersTypes.Conditions memory conditions = Powers(payable(powers)).getConditions(mandateId);
+
+            // 2: if so, use getInputParams at the mandate to check if the input params are the same between child and parent mandate.
+            if (conditions.needFulfilled > 0) {
+                (address parentAddr,,) = Powers(payable(powers)).getAdoptedMandate(conditions.needFulfilled);
+
+                bytes memory childInputParams = Mandate(mandateAddr).getInputParams(powers, mandateId);
+                bytes memory parentInputParams = Mandate(parentAddr).getInputParams(powers, conditions.needFulfilled); 
+
+                vm.assertTrue(
+                    keccak256(childInputParams) == keccak256(parentInputParams),
+                    string.concat(
+                        "InputParams mismatch: '", Mandate(mandateAddr).getNameDescription(powers, mandateId),
+                        "' needs fulfilled '", Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled), "'" 
+                    )
+                );
+            }
+
+            if (conditions.needNotFulfilled > 0) {
+                (address parentAddr,,) = Powers(payable(powers)).getAdoptedMandate(conditions.needNotFulfilled);
+
+                bytes memory childInputParams = Mandate(mandateAddr).getInputParams(powers, mandateId);
+                bytes memory parentInputParams = Mandate(parentAddr).getInputParams(powers, conditions.needNotFulfilled);
+
+                vm.assertTrue(
+                    keccak256(childInputParams) == keccak256(parentInputParams),
+                    string.concat(
+                        "InputParams mismatch: '", Mandate(mandateAddr).getNameDescription(powers, mandateId),
+                        "' needs not fulfilled '", Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled), "'" 
+                    )
+                );
+            }
+        }
+    }
 
     function voteOnProposal(
         address payable dao,
@@ -344,13 +368,25 @@ abstract contract TestHelperFunctions is Test, TestVariables {
     function findMandateIdInOrg(string memory description, Powers org) public view returns (uint16) {
         uint16 counter = org.mandateCounter();
         for (uint16 i = 1; i < counter; i++) {
-            (address mandateAddress, , ) = org.getAdoptedMandate(i);
+            (address mandateAddress,,) = org.getAdoptedMandate(i);
             string memory mandateDesc = Mandate(mandateAddress).getNameDescription(address(org), i);
             if (Strings.equal(mandateDesc, description)) {
                 return i;
             }
         }
-        revert("Mandate not found");
+        revert(string.concat("Mandate not found: ", description));
+    }
+
+    function daysToBlocks(uint256 quantityDays, uint256 blocksPerHour) public pure returns (uint32) {
+        return uint32(quantityDays * 24 * blocksPerHour);
+    }
+
+    function hoursToBlocks(uint256 quantityHours, uint256 blocksPerHour) public pure returns (uint32) {
+        return uint32(quantityHours * blocksPerHour);
+    }
+
+    function minutesToBlocks(uint256 quantityMinutes, uint256 blocksPerHour) public pure returns (uint32) {
+        return uint32((quantityMinutes * blocksPerHour) / 60);
     }
 }
 
@@ -368,18 +404,18 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         MAX_FUZZ_CALLDATA_LENGTH = 2000;
 
         sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
-        optSepoliaFork = vm.createFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
-        arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
+        // optSepoliaFork = vm.createFork(vm.envString("OPT_SEPOLIA_RPC_URL"));
+        // arbSepoliaFork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
 
         console2.log("Forks created:");
         console2.log("Sepolia Fork ID:", sepoliaFork);
-        console2.log("Optimism Sepolia Fork ID:", optSepoliaFork);  
-        console2.log("Arbitrum Sepolia Fork ID:", arbSepoliaFork);
+        // console2.log("Optimism Sepolia Fork ID:", optSepoliaFork);
+        // console2.log("Arbitrum Sepolia Fork ID:", arbSepoliaFork);
 
         // users
         // note that when fork testing, addresses are often already taken. Therefore we loop to find addresses without code deployed on them to use as users in our tests.
         alice = makeAddr("alice");
-        i = 0; 
+        i = 0;
         while (alice.code.length > 0) {
             alice = makeAddr(string.concat("alice", Strings.toString(i)));
             i++;
@@ -428,7 +464,7 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         kate = makeAddr("kate");
         lisa = makeAddr("lisa");
         oracle = makeAddr("oracle");
-        cedars = vm.envAddress("DEV2_ADDRESS"); 
+        cedars = vm.envAddress("DEV2_ADDRESS");
 
         // assign funds
         vm.deal(alice, 10 ether);
@@ -446,24 +482,16 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         vm.deal(oracle, 10 ether);
         vm.deal(cedars, 10 ether);
 
-        users = [alice, bob, charlotte, david, eve, frank, gary, helen, ian, jacob, kate, lisa];  
-        
+        users = [alice, bob, charlotte, david, eve, frank, gary, helen, ian, jacob, kate, lisa];
+
         // deploy mock powers
         daoMock = new PowersMock();
         daoMockChild1 = new PowersMock();
         daoMockChild2 = new PowersMock();
-        powersDeployer = new PowersDeployer();
-        powersDeployer.transferOwnership(address(daoMock));  
 
-        // deploy external contracts
-        initialisePowers = new InitialisePowers();
-        (mandateNames, mandateAddresses) = initialisePowers.getDeployed();
-        helperConfig = new Configurations(); 
-
-        // deploy constitutions mock
-        vm.startPrank(address(daoMock));
-        testConstitutions = new TestConstitutions(mandateNames, mandateAddresses);
-        vm.stopPrank();
+        // deploy external contracts  
+        helperConfig = new Configurations();
+        testConstitutions = new TestConstitutions();
     }
 }
 
@@ -480,7 +508,7 @@ abstract contract TestSetupPowers is BaseSetup {
         // initiate constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
             testConstitutions.powersTestConstitution(address(daoMock));
- 
+
         console2.log("Chain Id:");
         console2.logUint(block.chainid);
         console2.log("Mandate Init Data Length:");
@@ -554,10 +582,9 @@ abstract contract TestSetupElectoral is BaseSetup {
 
         vm.startPrank(address(daoMock));
         nominees = new Nominees();
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry(300, 300);
         erc20Taxed = new Erc20Taxed();
         erc20DelegateElection = new Erc20DelegateElection(address(erc20Taxed));
-        flagActions = new FlagActions();
         vm.stopPrank();
 
         // initiate electoral constitution
@@ -566,8 +593,7 @@ abstract contract TestSetupElectoral is BaseSetup {
             address(nominees),
             address(openElection),
             address(erc20DelegateElection),
-            address(erc20Taxed),
-            address(flagActions)
+            address(erc20Taxed)
         );
 
         // constitute daoMock.
@@ -611,7 +637,7 @@ abstract contract TestSetupExecutive is BaseSetup {
 }
 
 abstract contract TestSetupIntegrations is BaseSetup {
-    function setUpVariables() public override { 
+    function setUpVariables() public override {
         // vm.skip(true);
 
         super.setUpVariables();
@@ -621,18 +647,18 @@ abstract contract TestSetupIntegrations is BaseSetup {
         simpleGovernor = new SimpleGovernor(address(simpleErc20Votes));
         allowedTokens = new AllowedTokens();
         soulbound1155 = new Soulbound1155("this is a test uri");
-        electionList = new ElectionList();
-        powersFactory = new PowersFactory(
-            "Powers Factory", // name
+        electionList = new ElectionRegistry(300,300);
+        PowersDeployer powersDeployer = new PowersDeployer();
+        powersFactory = new PowersFactory( 
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid),
-            address(0) // admin
+            address(powersDeployer)
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();
-        
+
         zkPassportRegistry = ZKPassport_PowersRegistry(findMandateAddress("ZKPassport_PowersRegistry"));
         vm.stopPrank();
 
@@ -682,7 +708,7 @@ abstract contract TestSetupDelegateTokenFlow is BaseSetup {
 
         vm.startPrank(address(daoMock));
         nominees = new Nominees();
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry(300, 300);
         simpleErc20Votes = new SimpleErc20Votes();
         vm.stopPrank();
 
@@ -704,12 +730,12 @@ abstract contract TestSetupDelegateTokenFlow is BaseSetup {
     }
 }
 
-abstract contract TestSetupElectionListFlow is BaseSetup {
+abstract contract TestSetupElectionRegistryFlow is BaseSetup {
     function setUpVariables() public override {
         super.setUpVariables();
 
         vm.prank(address(daoMock));
-        openElection = new ElectionList();
+        openElection = new ElectionRegistry(300, 300);
 
         // initiate multi constitution
         (PowersTypes.MandateInitData[] memory mandateInitData_) =
@@ -725,27 +751,6 @@ abstract contract TestSetupElectionListFlow is BaseSetup {
         daoMock.assignRole(ROLE_ONE, frank);
         daoMock.assignRole(ROLE_ONE, gary);
         daoMock.assignRole(ROLE_ONE, helen);
-        daoMock.assignRole(ROLE_TWO, charlotte);
-        daoMock.assignRole(ROLE_TWO, david);
-        vm.stopPrank();
-    }
-}
-
-abstract contract TestSetupRoleByTransactionFlow is BaseSetup {
-    function setUpVariables() public override {
-        super.setUpVariables();
-
-        // initiate multi constitution
-        (PowersTypes.MandateInitData[] memory mandateInitData_) =
-            testConstitutions.roleByTransaction_IntegrationTestConstitution(address(daoMock));
-
-        // constitute daoMock.
-        daoMock.constitute(mandateInitData_);
-        daoMock.closeConstitute();
-
-        vm.startPrank(address(daoMock));
-        daoMock.assignRole(ROLE_ONE, alice);
-        daoMock.assignRole(ROLE_ONE, bob);
         daoMock.assignRole(ROLE_TWO, charlotte);
         daoMock.assignRole(ROLE_TWO, david);
         vm.stopPrank();
@@ -866,10 +871,9 @@ abstract contract TestSetupSafeProtocolFlow is BaseSetup {
         super.setUpVariables();
 
         // initiate multi constitution
-        (PowersTypes.MandateInitData[] memory mandateInitData_) =
-            testConstitutions.safeProtocol_Parent_IntegrationTestConstitution(
-                helperConfig.getSafeAllowanceModule(block.chainid)
-            );
+        (PowersTypes.MandateInitData[] memory mandateInitData_) = testConstitutions.safeProtocol_Parent_IntegrationTestConstitution(
+            helperConfig.getSafeAllowanceModule(block.chainid)
+        );
 
         // constitute daoMock.
         daoMock.constitute(mandateInitData_);
@@ -917,7 +921,7 @@ abstract contract TestSetupPowers101 is BaseSetup {
 }
 
 // Open Elections Setup
-abstract contract TestSetupElectionListsDAO is BaseSetup {
+abstract contract TestSetupElectionRegistrysDAO is BaseSetup {
     function setUpVariables() public override {
         // Note: this test runs the full initalisation scripts. It takes a while to run.
         // But it is needed to be able to test the full deployment flow of an organisation.
@@ -925,7 +929,7 @@ abstract contract TestSetupElectionListsDAO is BaseSetup {
 
         super.setUpVariables();
 
-        ElectionListsDAO openElections = new ElectionListsDAO();
+        ElectionRegistrysDAO openElections = new ElectionRegistrysDAO();
         (powers, openElection) = openElections.run();
         daoMock = PowersMock(payable(address(powers)));
 

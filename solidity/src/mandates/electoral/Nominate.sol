@@ -8,7 +8,7 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../Mandate.sol";
-import { MandateUtilities } from "../../libraries/MandateUtilities.sol";
+import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { Nominees } from "../../helpers/Nominees.sol";
 
 contract Nominate is Mandate {
@@ -24,8 +24,9 @@ contract Nominate is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("bool shouldNominate");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        string[] memory params = new string[](1);
+        params[0] = "bool shouldNominate";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     /// @notice Build a call to nominate or revoke nomination for the caller

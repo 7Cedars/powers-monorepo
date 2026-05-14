@@ -7,7 +7,7 @@
 
 pragma solidity ^0.8.26;
 
-import { ERC721 } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import { ERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import { Powers } from "../Powers.sol";
 
 // import "forge-std/Test.sol"; // for testing only. remove before deployment.
@@ -24,7 +24,6 @@ library MandateUtilities {
             revert("String too long");
         }
     }
-
 
     //////////////////////////////////////////////////////////////
     //                      HELPER FUNCTIONS                    //
@@ -119,5 +118,4 @@ library MandateUtilities {
         }
         revert("Invalid hex character");
     }
- 
 }

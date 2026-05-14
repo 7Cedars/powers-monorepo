@@ -27,7 +27,7 @@ export const MandateDependenciesList: React.FC<MandateImpactListProps> = ({
         {mandates.map((mandate: Mandate) => (
           <div 
             key={`${mode}-${mandate.mandateAddress}-${mandate.index}`}
-            className="w-full bg-slate-50 border-2 rounded-md overflow-hidden border-slate-600 opacity-50"
+            className="w-full bg-slate-50 border-2  overflow-hidden border-slate-600 opacity-50"
           >
             <div className="w-full border-b border-slate-300 bg-slate-100 py-4 ps-6 pe-2">
               <HeaderMandate

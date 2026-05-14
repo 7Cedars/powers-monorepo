@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { ERC1155 } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
+import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /// @notice Helper function to compute the address of a contract deployed via CREATE2
 /// @param deployer The address of the contract deployer
@@ -10,12 +10,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 /// @param bytecodeHash The keccak256 hash of the contract creation code
 /// @return The computed address
 function computeAddress(address deployer, bytes32 salt, bytes32 bytecodeHash) pure returns (address) {
-    return address(uint160(uint256(keccak256(abi.encodePacked(
-        bytes1(0xff),
-        deployer,
-        salt,
-        bytecodeHash
-    )))));
+    return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), deployer, salt, bytecodeHash)))));
 }
 
 // A: OnchainIdRegistryMock
@@ -47,10 +42,7 @@ contract OnchainIdRegistryMock {
         bool isPoliticallyExposed
     ) external {
         identities[onChainId] = IdentityData({
-            name: name,
-            countryId: countryId,
-            kycVerified: kycVerified,
-            isPoliticallyExposed: isPoliticallyExposed
+            name: name, countryId: countryId, kycVerified: kycVerified, isPoliticallyExposed: isPoliticallyExposed
         });
     }
 
@@ -81,7 +73,7 @@ contract IdentityRegistryMock {
     mapping(uint256 => uint256) public thresholds;
     // wallet => onChainId
     mapping(address => uint256) public walletToOnChainId;
-    
+
     // onChainId => list of proposals
     mapping(uint256 => Proposal[]) public proposals;
 
@@ -114,7 +106,7 @@ contract IdentityRegistryMock {
 
     function _removeWallet(uint256 onChainId, address wallet) internal {
         require(walletToOnChainId[wallet] == onChainId, "Wallet not linked to this ID");
-        
+
         address[] storage wallets = _wallets[onChainId];
         for (uint256 i = 0; i < wallets.length; i++) {
             if (wallets[i] == wallet) {
@@ -141,20 +133,20 @@ contract IdentityRegistryMock {
     /// @return proposalId The ID of the created proposal
     function proposeWalletChange(uint256 onChainId, address targetWallet, bool isAdding) external returns (uint256) {
         require(walletToOnChainId[msg.sender] == onChainId, "Not a member");
-        
+
         uint256 proposalId = proposals[onChainId].length;
         proposals[onChainId].push();
         Proposal storage p = proposals[onChainId][proposalId];
         p.targetWallet = targetWallet;
         p.isAdding = isAdding;
-        p.approvalCount = 0; 
-        
+        p.approvalCount = 0;
+
         // Auto-approve by proposer
         p.hasApproved[msg.sender] = true;
         p.approvalCount = 1;
 
         emit ProposalCreated(onChainId, proposalId, targetWallet, isAdding);
-        
+
         // Try execute immediately if threshold met
         if (p.approvalCount >= thresholds[onChainId]) {
             _executeProposal(onChainId, p);
@@ -185,7 +177,7 @@ contract IdentityRegistryMock {
         if (p.isAdding) {
             _addWallet(onChainId, p.targetWallet);
         } else {
-            require(_wallets[onChainId].length > thresholds[onChainId], "Cannot remove: threshold violation"); 
+            require(_wallets[onChainId].length > thresholds[onChainId], "Cannot remove: threshold violation");
             _removeWallet(onChainId, p.targetWallet);
         }
         emit ProposalExecuted(onChainId, 0);
@@ -199,7 +191,7 @@ contract IdentityRegistryMock {
 contract ComplianceRegistryMock {
     struct ComplianceChecks {
         uint256 maxTotalSupply; // 0 for unlimited
-        uint256 maxPerAccount;  // 0 for unlimited
+        uint256 maxPerAccount; // 0 for unlimited
         bool kycRequired;
         bool noPoliticallyExposed;
         bool useCountryAllowlist;
@@ -220,13 +212,15 @@ contract ComplianceRegistryMock {
 
         // IdentityRegistryMock
         bytes32 saltIdentity = keccak256(bytes("IdentityRegistryMock"));
-        address identityAddress = computeAddress(deployer, saltIdentity, keccak256(type(IdentityRegistryMock).creationCode));
+        address identityAddress =
+            computeAddress(deployer, saltIdentity, keccak256(type(IdentityRegistryMock).creationCode));
         // Note: We expect the deployer to have deployed this already. We do not self-deploy to ensure correct address linkage.
         identityRegistry = IdentityRegistryMock(identityAddress);
 
         // OnchainIdRegistryMock
         bytes32 saltOnchain = keccak256(bytes("OnchainIdRegistryMock"));
-        address onchainAddress = computeAddress(deployer, saltOnchain, keccak256(type(OnchainIdRegistryMock).creationCode));
+        address onchainAddress =
+            computeAddress(deployer, saltOnchain, keccak256(type(OnchainIdRegistryMock).creationCode));
         onchainIdRegistry = OnchainIdRegistryMock(onchainAddress);
     }
 
@@ -239,10 +233,10 @@ contract ComplianceRegistryMock {
     /// @param useCountryAllowlist True to enforce country allowlist
     /// @param useCountryBlocklist True to enforce country blocklist
     function setComplianceChecks(
-        uint256 tokenId, 
-        uint256 maxTotalSupply, 
-        uint256 maxPerAccount, 
-        bool kycRequired, 
+        uint256 tokenId,
+        uint256 maxTotalSupply,
+        uint256 maxPerAccount,
+        bool kycRequired,
         bool noPoliticallyExposed,
         bool useCountryAllowlist,
         bool useCountryBlocklist
@@ -307,15 +301,16 @@ contract ComplianceRegistryMock {
             if (checks.maxPerAccount > 0 && currentToBalance + amount > checks.maxPerAccount) {
                 return false;
             }
-            
+
             // Check Identity
             uint256 onChainId = identityRegistry.walletToOnChainId(to);
-            
-            bool needsIdentity = checks.kycRequired || checks.noPoliticallyExposed || checks.useCountryAllowlist || checks.useCountryBlocklist;
-            
+
+            bool needsIdentity = checks.kycRequired || checks.noPoliticallyExposed || checks.useCountryAllowlist
+                || checks.useCountryBlocklist;
+
             if (needsIdentity) {
                 if (onChainId == 0) return false; // Must have identity
-                
+
                 OnchainIdRegistryMock.IdentityData memory data = onchainIdRegistry.getIdentity(onChainId);
 
                 if (checks.kycRequired && !data.kycVerified) return false;
@@ -348,17 +343,20 @@ contract RwaMock is ERC1155 {
 
         // OnchainIdRegistryMock
         bytes32 saltOnchain = keccak256(bytes("OnchainIdRegistryMock"));
-        address onchainAddress = computeAddress(deployer, saltOnchain, keccak256(type(OnchainIdRegistryMock).creationCode));
+        address onchainAddress =
+            computeAddress(deployer, saltOnchain, keccak256(type(OnchainIdRegistryMock).creationCode));
         onchainIdRegistry = OnchainIdRegistryMock(onchainAddress);
 
         // IdentityRegistryMock
         bytes32 saltIdentity = keccak256(bytes("IdentityRegistryMock"));
-        address identityAddress = computeAddress(deployer, saltIdentity, keccak256(type(IdentityRegistryMock).creationCode));
+        address identityAddress =
+            computeAddress(deployer, saltIdentity, keccak256(type(IdentityRegistryMock).creationCode));
         identityRegistry = IdentityRegistryMock(identityAddress);
 
         // ComplianceRegistryMock
         bytes32 saltCompliance = keccak256(bytes("ComplianceRegistryMock"));
-        address complianceAddress = computeAddress(deployer, saltCompliance, keccak256(type(ComplianceRegistryMock).creationCode));
+        address complianceAddress =
+            computeAddress(deployer, saltCompliance, keccak256(type(ComplianceRegistryMock).creationCode));
         complianceRegistry = ComplianceRegistryMock(complianceAddress);
     }
 
@@ -383,14 +381,12 @@ contract RwaMock is ERC1155 {
     function mint(address to, uint256 tokenId, uint256 amount) external {
         require(bytes(idToName[tokenId]).length > 0, "Token not created");
 
-        require(complianceRegistry.checkTransfer(
-            tokenId, 
-            address(0), 
-            to, 
-            amount, 
-            balanceOf(to, tokenId), 
-            totalSupply[tokenId]
-        ), "Compliance check failed");
+        require(
+            complianceRegistry.checkTransfer(
+                tokenId, address(0), to, amount, balanceOf(to, tokenId), totalSupply[tokenId]
+            ),
+            "Compliance check failed"
+        );
 
         totalSupply[tokenId] += amount;
         _mint(to, tokenId, amount, "");
@@ -409,29 +405,29 @@ contract RwaMock is ERC1155 {
 
     /// @notice Safely transfers tokens, enforcing compliance checks
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) public override {
-        require(complianceRegistry.checkTransfer(
-            id, 
-            from, 
-            to, 
-            amount, 
-            balanceOf(to, id), 
-            totalSupply[id]
-        ), "Compliance check failed");
-        
+        require(
+            complianceRegistry.checkTransfer(id, from, to, amount, balanceOf(to, id), totalSupply[id]),
+            "Compliance check failed"
+        );
+
         super.safeTransferFrom(from, to, id, amount, data);
     }
 
     /// @notice Safely batch transfers tokens, enforcing compliance checks
-    function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public override {
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public override {
         for (uint256 i = 0; i < ids.length; i++) {
-             require(complianceRegistry.checkTransfer(
-                ids[i], 
-                from, 
-                to, 
-                amounts[i], 
-                balanceOf(to, ids[i]), 
-                totalSupply[ids[i]]
-            ), "Compliance check failed");
+            require(
+                complianceRegistry.checkTransfer(
+                    ids[i], from, to, amounts[i], balanceOf(to, ids[i]), totalSupply[ids[i]]
+                ),
+                "Compliance check failed"
+            );
         }
         super.safeBatchTransferFrom(from, to, ids, amounts, data);
     }
@@ -447,12 +443,12 @@ contract FactoryRwaMock {
     function deploy() external {
         address addr;
         bytes32 salt;
-        
+
         // 1. OnchainIdRegistryMock
         salt = keccak256(bytes("OnchainIdRegistryMock"));
         addr = computeAddress(address(this), salt, keccak256(type(OnchainIdRegistryMock).creationCode));
         if (addr.code.length == 0) {
-            new OnchainIdRegistryMock{salt: salt}();
+            new OnchainIdRegistryMock{ salt: salt }();
             emit Deployed("OnchainIdRegistryMock", addr);
         }
 
@@ -460,7 +456,7 @@ contract FactoryRwaMock {
         salt = keccak256(bytes("IdentityRegistryMock"));
         addr = computeAddress(address(this), salt, keccak256(type(IdentityRegistryMock).creationCode));
         if (addr.code.length == 0) {
-            new IdentityRegistryMock{salt: salt}();
+            new IdentityRegistryMock{ salt: salt }();
             emit Deployed("IdentityRegistryMock", addr);
         }
 
@@ -468,7 +464,7 @@ contract FactoryRwaMock {
         salt = keccak256(bytes("ComplianceRegistryMock"));
         addr = computeAddress(address(this), salt, keccak256(type(ComplianceRegistryMock).creationCode));
         if (addr.code.length == 0) {
-            new ComplianceRegistryMock{salt: salt}();
+            new ComplianceRegistryMock{ salt: salt }();
             emit Deployed("ComplianceRegistryMock", addr);
         }
 
@@ -476,7 +472,7 @@ contract FactoryRwaMock {
         salt = keccak256(bytes("RwaMock"));
         addr = computeAddress(address(this), salt, keccak256(type(RwaMock).creationCode));
         if (addr.code.length == 0) {
-            new RwaMock{salt: salt}();
+            new RwaMock{ salt: salt }();
             emit Deployed("RwaMock", addr);
         }
     }

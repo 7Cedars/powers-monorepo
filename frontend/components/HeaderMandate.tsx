@@ -28,7 +28,7 @@ export const HeaderMandate: React.FC<HeaderMandateProps> = ({
   return (
     <div className={`flex flex-row items-center gap-4 w-full ${className}`}>
       {/* Thumbnail */}
-      <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+      <div className="flex-shrink-0 w-20 h-20  overflow-hidden">
         <DynamicThumbnail
           roleId={BigInt(roleId)}
           powers={powers as Powers}
