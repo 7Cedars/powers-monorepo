@@ -57,9 +57,8 @@ import {
 // ERC721
 import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
 
-// // GitHub -> Chainlink CCIP
-// import { Github_ClaimRoleWithSig } from "@src/mandates/integrations/Github/Github_ClaimRoleWithSig.sol";
-// import { Github_AssignRoleWithSig } from "@src/mandates/integrations/Github/Github_AssignRoleWithSig.sol";
+// GitHub -> Chainlink Functions
+import { ChainlinkFunctions_Open } from "@src/mandates/integrations/ChainlinkFunctions/ChainlinkFunctions_Open.sol";
 
 // GovernedToken
 import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
@@ -123,7 +122,7 @@ contract DeployMandates is Script {
         } else {
             console2.log("No existing MandateRegistry found for this network. Deploying new MandateRegistry...");
             vm.startBroadcast();
-            registry = new MandateRegistry{salt: keccak256("MandateRegistry")}(msg.sender);
+            registry = new MandateRegistry{salt: keccak256("MandateRegistry1")}(msg.sender);
             vm.stopBroadcast();
         }
         // MandateRegistry registry = MandateRegistry(registryAddr);
@@ -174,7 +173,7 @@ contract DeployMandates is Script {
                 console2.log(" - ", finalNames[i], " at ", finalAddresses[i]);
             }
 
-            vm.startBroadcast(); 
+            vm.startBroadcast(msg.sender); 
             registry.batchRegisterMandates(finalNames, finalAddresses, finalCreationCodeHashes);
             vm.stopBroadcast();
 
@@ -380,6 +379,10 @@ contract DeployMandates is Script {
         names.push("ZKPassport_Check");
         creationCodes.push(type(ZKPassport_Check).creationCode);
         constructorArgs.push(abi.encode());
+
+        names.push("ChainlinkFunctions_Open");
+        creationCodes.push(type(ChainlinkFunctions_Open).creationCode);
+        constructorArgs.push(abi.encode("ChainlinkFunctions_Open"));
 
         //////////////////////////////////////////////////////////////////////////
         //                          Reform Mandates                             //

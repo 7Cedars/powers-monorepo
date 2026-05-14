@@ -14,12 +14,11 @@ interface IPowersFactory is PowersTypes {
     function addMandates(MandateInitData[] memory _mandateInitData) external;
     function replaceMandate(uint256 index, MandateInitData memory _mandateInitData) external;
     function getMandate(uint256 index) external view returns (MandateInitData memory);
-    function createPowers() external returns (address);
+    function createPowers(string memory name) external returns (address); 
     function getLatestDeployment() external view returns (address);
 }
 
 contract PowersFactory is IPowersFactory, Ownable {
-    string public name;
     string public uri;
     MandateInitData[] public mandateInitData;
     Flow[] public flows;
@@ -34,7 +33,6 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @param _maxReturnDataLength The maximum length of return data allowed in the Powers contract.
     /// @param _maxExecutionsLength The maximum number of executions allowed in a single proposal.
     constructor(
-        string memory _name,
         string memory _uri,
         uint256 _maxCallDataLength,
         uint256 _maxReturnDataLength,
@@ -42,7 +40,6 @@ contract PowersFactory is IPowersFactory, Ownable {
         address _deployer
     ) Ownable(msg.sender) {
         // set immutable variables. note for now data not validated.
-        name = _name;
         uri = _uri;
 
         maxCallDataLength = _maxCallDataLength;
@@ -110,7 +107,7 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
-    function createPowers() external onlyOwner returns (address) {
+    function createPowers(string memory name) external onlyOwner returns (address) {
         address powers = PowersDeployer(deployer)
             .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, msg.sender);
         latestDeployment = powers;
@@ -121,7 +118,7 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
-    function createPowers(address admin) external onlyOwner returns (address) {
+    function createPowers(string memory name, address admin) external onlyOwner returns (address) {
         address powers = PowersDeployer(deployer)
             .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, admin);
         latestDeployment = powers;

@@ -52,14 +52,23 @@ function serializeBigInt(obj: any): any {
  * - mandateId, proposedAt, requestedAt, fulfilledAt, cancelledAt, voteStart, voteDuration, voteEnd, againstVotes, forVotes, abstainVotes (Action)
  * - And many more nested fields
  */
-function deserializeBigInt(obj: any, currentPath: string[] = []): any {
+function deserializeBigInt(obj: any, currentPath: string[] = [], insideBigIntArray: boolean = false): any {
   if (obj === null || obj === undefined) {
     return obj;
   }
   
+  // If we're inside a BigInt array and this is a string that looks like a number, convert it
+  if (insideBigIntArray && typeof obj === 'string' && /^\d+$/.test(obj)) {
+    try {
+      return BigInt(obj);
+    } catch {
+      return obj;
+    }
+  }
+  
   // Handle arrays
   if (Array.isArray(obj)) {
-    return obj.map((item, index) => deserializeBigInt(item, [...currentPath, `[${index}]`]));
+    return obj.map((item, index) => deserializeBigInt(item, [...currentPath, `[${index}]`], insideBigIntArray));
   }
   
   // Handle objects
@@ -69,6 +78,9 @@ function deserializeBigInt(obj: any, currentPath: string[] = []): any {
       if (obj.hasOwnProperty(key)) {
         const value = obj[key];
         
+        // Check if this key is a known BigInt array field
+        const isArrayOfBigInts = isBigIntArrayField(key, currentPath) && Array.isArray(value);
+        
         // Check if this key is a known BigInt field and the value is a string that looks like a number
         if (isBigIntField(key, currentPath) && typeof value === 'string' && /^\d+$/.test(value)) {
           try {
@@ -77,8 +89,11 @@ function deserializeBigInt(obj: any, currentPath: string[] = []): any {
             // If conversion fails, keep as string
             deserialized[key] = value;
           }
+        } else if (isArrayOfBigInts) {
+          // Process BigInt array with the flag set
+          deserialized[key] = deserializeBigInt(value, [...currentPath, key], true);
         } else {
-          deserialized[key] = deserializeBigInt(value, [...currentPath, key]);
+          deserialized[key] = deserializeBigInt(value, [...currentPath, key], insideBigIntArray);
         }
       }
     }
@@ -90,13 +105,26 @@ function deserializeBigInt(obj: any, currentPath: string[] = []): any {
 }
 
 /**
+ * Determines if a field at a given path is a BigInt array
+ * This helps identify arrays whose elements should be converted to BigInt
+ */
+function isBigIntArrayField(key: string, path: string[]): boolean {
+  // Flow mandateIds - these are bigint arrays
+  if (path.includes('flows') && key === 'mandateIds') {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Determines if a field at a given path should be treated as a BigInt
  * This helps identify which string values should be converted back to BigInt
  */
 function isBigIntField(key: string, path: string[]): boolean {
   // Top-level Powers fields
-  const topLevelBigIntFields = ['chainId', 'foundedAt', 'mandateCount'];
-  if (path.length === 0 && topLevelBigIntFields.includes(key)) {
+  const topLevelBigIntFields = ['chainId', 'foundedAt', 'mandateCount', 'lastFetched'];
+  if ((path.length === 0 || (path.length === 1 && path[0].startsWith('['))) && topLevelBigIntFields.includes(key)) {
     return true;
   }
   
@@ -145,6 +173,11 @@ function isBigIntField(key: string, path: string[]): boolean {
   // BlockRange fields
   const blockRangeFields = ['from', 'to'];
   if (blockRangeFields.includes(key)) {
+    return true;
+  }
+  
+  // Flow mandateIds - these are bigint arrays
+  if (path.includes('flows') && key === 'mandateIds') {
     return true;
   }
   

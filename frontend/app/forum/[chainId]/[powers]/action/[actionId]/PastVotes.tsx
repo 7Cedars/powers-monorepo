@@ -21,6 +21,7 @@ interface PastVotesProps {
 type VoteData = {
   voter: `0x${string}`;
   support: number;
+  reason: string;
   blockNumber: bigint;
   transactionHash: `0x${string}`;
   ensName: string | null;
@@ -117,6 +118,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
         return {
           voter: log.args.account as `0x${string}`,
           support: log.args.support as number,
+          reason: (log.args.reason as string) || "",
           blockNumber: log.blockNumber as bigint,
           transactionHash: log.transactionHash as `0x${string}`,
           ensName,
@@ -210,7 +212,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody>
                 {votes.map((vote, index) => {
                   const timestampData = timestamps.get(`${chainId}:${vote.blockNumber}`);
                   const timestamp = timestampData?.timestamp;
@@ -228,26 +230,45 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
                   }
 
                   return (
-                    <tr key={index} className="hover:bg-muted/20 transition-colors">
-                      {/* Voter */}
-                      <td className="px-3 py-2">
-                        <span className="text-foreground font-mono">
-                          {parseAddress(vote.voter, vote.ensName)}
-                        </span>
-                      </td>
+                    <tr key={index} className="group">
+                      {/* Main vote row */}
+                      <td colSpan={3} className="p-0">
+                        <div className={`${index > 0 ? "border-t-2 border-border" : ""}`}>
+                          {/* Vote info row */}
+                          <div className="flex items-center px-3 py-2 hover:bg-muted/20 transition-colors">
+                            {/* Voter */}
+                            <div className="flex-1">
+                              <span className="text-foreground font-mono">
+                                {parseAddress(vote.voter, vote.ensName)}
+                              </span>
+                            </div>
 
-                      {/* Vote type */}
-                      <td className="px-3 py-2">
-                        <span className={`font-medium ${getVoteColor(vote.support)}`}>
-                          {getVoteLabel(vote.support)}
-                        </span>
-                      </td>
+                            {/* Vote type */}
+                            <div className="flex-1">
+                              <span className={`font-medium ${getVoteColor(vote.support)}`}>
+                                {getVoteLabel(vote.support)}
+                              </span>
+                            </div>
 
-                      {/* Timestamp */}
-                      <td className="px-3 py-2">
-                        <span className="text-muted-foreground font-mono">
-                          {formattedDate}
-                        </span>
+                            {/* Timestamp */}
+                            <div className="flex-1">
+                              <span className="text-muted-foreground font-mono">
+                                {formattedDate}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Reason row (only shown if reason exists) */}
+                          {vote.reason && vote.reason.trim() !== "" && (
+                            <div className="px-3 pb-3 pt-1">
+                              <div className="bg-muted/30 border-l-2 border-muted-foreground/30 px-3 py-2">
+                                <p className="text-xs text-muted-foreground italic whitespace-pre-wrap break-words">
+                                  "{vote.reason}"
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

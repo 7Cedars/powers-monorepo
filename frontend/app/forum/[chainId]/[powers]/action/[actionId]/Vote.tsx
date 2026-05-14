@@ -9,6 +9,7 @@ import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
 import { getConstants } from "@/context/constants";
 import { CheckIcon, XMarkIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import { fromFutureBlockToDateTime } from "@/public/organisations/helpers";
 import { Action, Powers, Mandate } from "@/context/types";
 import { ForumModal } from "@/components/ForumModal";
 import { useChecks } from "@/hooks/useChecks";
@@ -25,9 +26,9 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const action = useActionStore();
   const status = useStatusStore();
   const { chainId } = useParams<{ chainId: string }>();
-  const { data: blockNumber } = useBlockNumber({ watch: true });
+  const { data: blockNumber } = useBlockNumber();
   const constants = getConstants(parseChainId(chainId) as number);
-  const { castVote, actionVote, fetchVoteData, request } = useMandate();
+  const { castVoteWithReason, actionVote, fetchVoteData, request } = useMandate();
   const { checks, fetchChecks, status: checksStatus } = useChecks();
   const { timestamps, fetchTimestamps } = useBlocks();
   const { wallets } = useWallets();
@@ -35,6 +36,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const [pendingVote, setPendingVote] = useState<bigint | null>(null);
   const [logSupport, setLogSupport] = useState<bigint>();
   const [populatedAction, setPopulatedAction] = useState<Action | undefined>();
+  const [voteReason, setVoteReason] = useState<string>("");
 
   console.log({checks, checksStatus })
 
@@ -116,13 +118,15 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
 
   const handleVoteClick = (support: bigint) => {
     setPendingVote(support);
+    setVoteReason(""); // Reset reason when opening modal
   };
 
   const confirmVote = async () => {
     if (pendingVote !== null && populatedAction) {
       setLogSupport(pendingVote);
-      await castVote(BigInt(populatedAction.actionId), pendingVote, powers as Powers);
+      await castVoteWithReason(BigInt(populatedAction.actionId), pendingVote, voteReason, powers as Powers);
       setPendingVote(null);
+      setVoteReason(""); // Clear reason after voting
     }
   };
 
@@ -152,9 +156,12 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
     }
   };
 
-  const timeRemainingMinutes = blockNumber && voteEnd && blockNumber < voteEnd
-    ? Math.floor((Number(voteEnd) - Number(blockNumber)) * 60 / constants.BLOCKS_PER_HOUR)
-    : 0;
+  const getFutureDateTime = (targetBlock: bigint): string => {
+    if (!blockNumber) return '-';
+    const parsedChainId = parseChainId(chainId);
+    if (!parsedChainId) return '-';
+    return fromFutureBlockToDateTime(targetBlock, BigInt(blockNumber), parsedChainId) || '-';
+  };
 
   const handleExecute = async () => {
     if (!mandate || !action || !action.callData) return;
@@ -199,11 +206,9 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
           
           {/* Time Remaining */}
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Time Remaining:</span>
+            <span className="text-muted-foreground">Est. Vote End:</span>
             <span className="text-foreground font-mono">
-              {timeRemainingMinutes > 60
-                ? `${Math.floor(timeRemainingMinutes / 60)}h ${timeRemainingMinutes % 60}m`
-                : `${timeRemainingMinutes}m`}
+              {voteEnd ? getFutureDateTime(voteEnd) : '-'}
             </span>
           </div>
 
@@ -398,6 +403,21 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
               </span>
               ? This action is recorded on the blockchain and cannot be undone.
             </p>
+          </div>
+
+          {/* Optional Reason Input */}
+          <div className="space-y-2">
+            <label htmlFor="vote-reason" className="text-xs text-muted-foreground">
+              Reason (optional)
+            </label>
+            <textarea
+              id="vote-reason"
+              value={voteReason}
+              onChange={(e) => setVoteReason(e.target.value)}
+              placeholder="Add a reason for your vote..."
+              rows={3}
+              className="w-full px-3 py-2 text-xs bg-background border border-border rounded-none focus:outline-none focus:ring-1 focus:ring-primary resize-none font-mono placeholder:text-muted-foreground/50"
+            />
           </div>
           
           <div className="flex gap-2 justify-end">

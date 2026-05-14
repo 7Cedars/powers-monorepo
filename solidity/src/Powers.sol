@@ -40,8 +40,10 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "./Mandate.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
-import { IPowers } from "./interfaces/IPowers.sol";
+import { IPowers, IERC721Receiver, IERC1155Receiver } from "./interfaces/IPowers.sol";
 import { Checks } from "./libraries/Checks.sol";
+import { ERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
 import { Address } from "@lib/openzeppelin-contracts/contracts/utils/Address.sol";
 import { EIP712 } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
@@ -49,7 +51,7 @@ import { Context } from "@lib/openzeppelin-contracts/contracts/utils/Context.sol
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
-contract Powers is EIP712, IPowers, Context {
+contract Powers is EIP712, ERC165, IPowers, Context {
     //////////////////////////////////////////////////////////////
     //                           STORAGE                        //
     /////////////////////////////////////////////////////////////
@@ -397,7 +399,7 @@ contract Powers is EIP712, IPowers, Context {
         }
 
         // emit event. -- commented out to save gas, can be re-enabled if needed.
-        // emit ActionFulfilled(mandateId, actionId, targets, values, calldatas);
+        emit ActionFulfilled(mandateId, actionId, targets, values, calldatas);
 
         // register latestFulfillment at mandate.
         mandate.latestFulfillment = uint48(block.number);
@@ -531,19 +533,15 @@ contract Powers is EIP712, IPowers, Context {
     function removeFlow(uint8 index) external onlyPowers {
         if (index >= flows.length) revert Powers__InvalidFlowIndex();
 
-        // delete flow by replacing it with the last flow and popping the last flow.
-        uint256 lastIndex = flows.length - 1;
-        if (index != lastIndex) {
-            flows[index] = flows[lastIndex];
-        }
-        flows.pop();
+        // delete flow (turns it into an array of zeros, but keeps indices of other flows intact).
+        delete flows[index];
 
         emit FlowDeleted(index);
     }
 
     /// @inheritdoc IPowers
     function editFlowByIndex(uint8 index1, uint8 index2, uint16 mandateId) external onlyPowers {
-        if (mandateId >= mandateCounter) revert Powers__InvalidMandateId();
+        if (mandateId > mandateCounter) revert Powers__InvalidMandateId(); // note: we allow to add a mandate that is 1 higher than the current mandateCounter, to allow for flow set-up in the same transaction as mandate adoption.
         if (index1 >= flows.length) revert Powers__InvalidFlowIndex();
         Flow storage flow = flows[index1];
         if (index2 >= flow.mandateIds.length) revert Powers__InvalidMandateIndex();
@@ -707,6 +705,38 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     //////////////////////////////////////////////////////////////
+    //                   TOKEN RECEIVERS                        //
+    //////////////////////////////////////////////////////////////
+    /// @notice Allows the contract to receive ERC721 tokens once the constitution is closed.
+    function onERC721Received(address, address, uint256, bytes calldata) external view returns (bytes4) {
+        if (!_constituteClosed) revert Powers__ConstituteOpen();
+        return this.onERC721Received.selector;
+    }
+
+    /// @notice Allows the contract to receive ERC1155 tokens once the constitution is closed.
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external view returns (bytes4) {
+        if (!_constituteClosed) revert Powers__ConstituteOpen();
+        return this.onERC1155Received.selector;
+    }
+
+    /// @notice Allows the contract to receive ERC1155 batch transfers once the constitution is closed.
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        view
+        returns (bytes4)
+    {
+        if (!_constituteClosed) revert Powers__ConstituteOpen();
+        return this.onERC1155BatchReceived.selector;
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IERC721Receiver).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
+            || super.supportsInterface(interfaceId);
+    }
+
+
+    //////////////////////////////////////////////////////////////
     //                 VIEW / GETTER FUNCTIONS                  //
     //////////////////////////////////////////////////////////////
     /// @inheritdoc IPowers
@@ -715,7 +745,7 @@ contract Powers is EIP712, IPowers, Context {
     }
 
     /// @inheritdoc IPowers
-    function getAmountFlows() public view returns (uint256) {
+    function getFlowCount() public view returns (uint256) {
         return flows.length;
     }
 

@@ -37,8 +37,8 @@ contract Deploy is DeployHelpers {
 
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
-    uint16 constant MINOR = 6;
-    uint16 constant PATCH = 2;
+    uint16 constant MINOR = 1;
+    uint16 constant PATCH = 4;
 
     function run() external returns (Powers, ElectionRegistry) { 
         helperConfig = new Configurations(); 
@@ -46,7 +46,7 @@ contract Deploy is DeployHelpers {
 
         // step 1: deploy Open Elections Powers
         vm.startBroadcast();
-        openElection = new ElectionRegistry();
+        openElection = new ElectionRegistry(minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)), minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid))); // nomination duration: 1 hour, vote duration: 2 hours
         powers = new Powers(
             "Open Election", // name
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/electionListDao.json", // uri
@@ -91,7 +91,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = 0; // = admin.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Initial Setup: Assign role labels (Delegates, Funders) and revokes itself after execution",
+                nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
                 config: abi.encode(targets, values, calldatas),
                 conditions: conditions

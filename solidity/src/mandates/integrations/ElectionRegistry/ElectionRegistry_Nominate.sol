@@ -40,8 +40,9 @@ contract ElectionRegistry_Nominate is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("string Title", "uint48 StartBlock", "uint48 EndBlock");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        string[] memory params = new string[](1);
+        params[0] = "string Title";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     /// @notice Build a call to nominate or revoke nomination for the caller
@@ -65,8 +66,8 @@ contract ElectionRegistry_Nominate is Mandate {
         Mem memory mem;
         actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
         (mem.electionList, mem.shouldNominate) = abi.decode(getConfig(powers, mandateId), (address, bool)); // ElectionRegistry contract address
-        (mem.title, mem.startBlock, mem.endBlock) = abi.decode(mandateCalldata, (string, uint48, uint48));
-        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title, mem.startBlock, mem.endBlock)));
+        (mem.title) = abi.decode(mandateCalldata, (string));
+        mem.electionId = uint256(keccak256(abi.encodePacked(powers, mem.title)));
 
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         targets[0] = mem.electionList;

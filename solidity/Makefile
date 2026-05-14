@@ -121,13 +121,14 @@ update-deps:
 install-deps:
 	@echo "Installing dependencies..."
 	forge install foundry-rs/forge-std --no-git || exit 1
-	forge install openzeppelin/openzeppelin-contracts@v5.0.2  --no-git || exit 1
+	forge install openzeppelin/openzeppelin-contracts@v5.6.1  --no-git || exit 1
 	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  --no-git || exit 1
 	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
 	forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	forge install safe-fndn/safe-modules --no-git || exit 1
 	forge install zkpassport/circuits --no-git || exit 1
-	forge install zkpassport/zkpassport-packages --no-git || exit 1
+	forge install zkpassport/zkpassport-packages@3f28ada779cd9156dacd31574730ae7e2eb66a1d --no-git || exit 1
+	forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies installed without git metadata."
 	
 
@@ -136,13 +137,14 @@ reset-deps:
 	@rm -rf lib/
 	@mkdir -p lib
 	@forge install foundry-rs/forge-std --no-git || exit 1
-	@forge install openzeppelin/openzeppelin-contracts@v5.0.2 --no-git || exit 1
+	@forge install openzeppelin/openzeppelin-contracts@v5.6.1 --no-git || exit 1
 	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 --no-git || exit 1
 	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-git || exit 1
 	@forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	@forge install safe-fndn/safe-modules --no-git || exit 1
 	@forge install zkpassport/circuits --no-git || exit 1
-	@forge install zkpassport/zkpassport-packages --no-git || exit 1
+	@forge install zkpassport/zkpassport-packages@3f28ada779cd9156dacd31574730ae7e2eb66a1d --no-git || exit 1
+	@forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies reset complete. All libs installed without git metadata."
 
 # Documentation
@@ -317,6 +319,9 @@ registry-deploy :
 	@echo "Deploying mandate registry..."
 	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
+mandates-deploy : 
+	@echo "Deploying mandates..."
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
 examples-deploy : 
 	@echo "Deploying example contracts..."
@@ -350,7 +355,10 @@ organisation-deploy :
 deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:DeployAllowanceModule $(OPT_SEPOLIA_DEPLOY_ARGS) 
 
 # Verify Contracts
-sepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x924A267762d45BeA35263DeD7a1f2d1a5C6De89F src/Powers.sol:Powers --watch
+sepoliaVerifyContract : 
+# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/helpers/PowersPaymaster.sol:PowersPaymaster --watch
+	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xEA32F09478C71aa481248c3D95467bc36DF4d524 src/helpers/PowersFactory.sol:PowersFactory --watch 
+
 optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 arbSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 421614 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0xb1fe867eE7919887EB381c4626bdbAe003969683 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 
