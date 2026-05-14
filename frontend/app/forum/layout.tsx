@@ -200,7 +200,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)} 
                 className="flex items-center justify-center gap-2 px-3 py-2 border border-border border-foreground cursor-pointer hover:bg-foreground hover:text-background transition-all text-xs uppercase font-mono leading-none">
                 <ArrowLeftIcon className="h-3 w-3" />
-                <span className="leading-none">BACK TO DAO</span>
+                <span className="leading-none">BACK TO ORGANISATION</span>
               </button>
               :
               <>

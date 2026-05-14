@@ -33,7 +33,7 @@ contract Deploy is DeployHelpers {
     Powers public powers;
     PowersTypes.Flow[] flows;
     Governed721 public governed721;
-    ElectionRegistry public openElection;
+    ElectionRegistry public electionRegistry;
 
     uint256 constant PACKAGE_SIZE = 10; // number of mandates per packaged mandate.
     address treasury;
@@ -58,12 +58,12 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 1;
+    uint16 constant PATCH = 5;
 
-    function run() external {
+    function run() external returns (address powersAddress, address governed721Address, address electionRegistryAddress) {
         // step 0, setup. 
         helperConfig = new Configurations();
-        openElection = new ElectionRegistry(minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)), minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)));
+        electionRegistry = new ElectionRegistry(minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)), minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)));
         registry = IMandateRegistry(helperConfig.getMandateRegistry(block.chainid));
 
         // step 1: deploy Governed721 Powers
@@ -75,15 +75,10 @@ contract Deploy is DeployHelpers {
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
         );
-        governed721 = new Governed721(); 
+        governed721 = new Governed721();
         vm.stopBroadcast();  
-        console2.log("Powers deployed at:", address(powers));
-        console2.log("Governed721 deployed at:", address(governed721));
 
-        // step 2: create constitution
         uint256 constitutionLength = createConstitution();
-        console2.log("Constitution created with length:");
-        console2.logUint(constitutionLength);
 
         // step 3: run constitute.
         for (uint256 i = 0; i < constitution.length; i += PACKAGE_SIZE) {
@@ -101,13 +96,21 @@ contract Deploy is DeployHelpers {
         }
         vm.startBroadcast(); 
         powers.closeConstitute(msg.sender, flows); // close constitute and set flows. msg.sender is admin.
-        
-        // Transfer ownership of Governed721 to Powers (important for minting/updating)
-        governed721.setPaymentId(paymentMandateId);
-        governed721.transferOwnership(address(powers));
+        governed721.transferOwnership(address(powers));  
         vm.stopBroadcast();
 
-        console2.log("Powers successfully constituted.");
+        console2.log("Powers successfully constituted."); 
+        console2.log("Constitution length:", constitutionLength);
+
+        return (address(powers), address(governed721), address(electionRegistry));
+    }
+
+
+    //////////////////////////////////////////////////////////////////////
+    //                       HELPER FUNCTIONS                           //
+    //////////////////////////////////////////////////////////////////////
+    function getElectionRegistry() public view returns (address) {
+        return address(electionRegistry);
     }
 
     function createConstitution() internal returns (uint256 constitutionLength) {
@@ -116,25 +119,23 @@ contract Deploy is DeployHelpers {
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
-        calldatas = new bytes[](11);
+        calldatas = new bytes[](10);
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", "");
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Owner", ""); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Operator", ""); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Intermediary", ""); 
         calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", ""); 
         calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", "");
-        // Assign roles to msg.sender for initial setup (will be revoked later or kept for testing)
-        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, msg.sender);
-        calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, msg.sender);
-        calldatas[9] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
-        calldatas[10] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
+        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, testAccount1); 
+        calldatas[8] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
+        calldatas[9] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Initial Setup: Assign role labels, setup treasury and revokes itself after execution",
+                nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
                 config: abi.encode(calldatas),
                 conditions: conditions
@@ -217,7 +218,7 @@ contract Deploy is DeployHelpers {
 
         // Intermediary Veto
         mandateCount++;
-        conditions.allowedRole = 3; // Operator
+        conditions.allowedRole = 3; // Intermediary
         conditions.needFulfilled = proposeSplitId;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
@@ -357,7 +358,7 @@ contract Deploy is DeployHelpers {
         }));
 
         // executives: add addresses to blacklist. Vote. Execute.
-        inputParams = new string[](2);
+        inputParams = new string[](1);
         inputParams[0] = "address Account";
 
         mandateCount++;
@@ -374,7 +375,7 @@ contract Deploy is DeployHelpers {
                     IPowers.blacklistAddress.selector,
                     abi.encode(), 
                     inputParams,
-                    abi.encode(true) // true to whitelist, false to remove from whitelist
+                    abi.encode(true) // true to whitelist 
                 ),
                 conditions: conditions
             })
@@ -482,8 +483,6 @@ contract Deploy is DeployHelpers {
         );
         delete conditions;
 
-
-
         // MANAGING ARTIST ROLE:
         mandateIds = new uint16[](3); 
         mandateIds[0] = mandateCount + 1;
@@ -579,7 +578,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = type(uint256).max; // = public function 
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Check approved address Token: This check is needed to assign the intermediary role to the approved address of the NFT in the next mandate.",
+                nameDescription: "Check intermediary Token: This check is needed to assign the intermediary role to the NFT intermediary in the next mandate.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(governed721),
@@ -626,7 +625,7 @@ contract Deploy is DeployHelpers {
                 config: abi.encode(
                     address(0),
                     IPowers.revokeRole.selector,
-                    abi.encode(3), // Operator role
+                    abi.encode(3), // Intermediary role
                     inputParams,
                     mandateCount - 2, // the mandate from which the return data will be fetched (the ownership check mandate)
                     abi.encode()
@@ -652,15 +651,15 @@ contract Deploy is DeployHelpers {
         }));
 
         uint256[] memory voterRoleCriteria = new uint256[](3);
-        voterRoleCriteria[0] = 1; // Minter role ID
+        voterRoleCriteria[0] = 1; // Artist role ID
         voterRoleCriteria[1] = 2; // Owner role ID
         voterRoleCriteria[2] = 3; // Intermediary role ID
-        // if account has minter, owner or intermediary role, they can claim a voter role. 
+        // if account has artist, owner or intermediary role, they can claim a voter role. 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // public  
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Claim Voter Role: Minters, Owners, and Intermediaries can claim voter role.",
+                nameDescription: "Claim Voter Role: Artists, Owners, and Intermediarys can claim voter role.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RoleByRoles"),
                 config: abi.encode(
                     4, // Voter role ID
@@ -674,24 +673,19 @@ contract Deploy is DeployHelpers {
         // Note standard election flow. See cultural stewards DAO for example. WHO ARE THE VOTERS AND CANDIDATES? 
         // Voters = Role 4 (Voter)
         // Candidates = Role 4? (Assume Voters can be Executives)        
-        inputParams = new string[](3);
-        inputParams[0] = "string Title";
-        inputParams[1] = "uint48 StartBlock";
-        inputParams[2] = "uint48 EndBlock";
+        inputParams = new string[](1);
+        inputParams[0] = "string Title"; 
 
         // Create Election
         mandateCount++;
         conditions.allowedRole = 4; // Voters
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
-        conditions.quorum = 10;
-        conditions.succeedAt = 51;
         conditions.throttleExecution = minutesToBlocks(30, helperConfig.getBlocksPerHour(block.chainid)); // Throttle to prevent multiple elections being created in a short period of time.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create Executive Election: Voters can create election.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
-                    address(openElection), // target contract (ElectionRegistry)
+                    address(electionRegistry), // target contract (ElectionRegistry)
                     ElectionRegistry.createElection.selector,
                     inputParams
                 ),
@@ -709,7 +703,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Open Executive Vote: Open voting.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_CreateVoteMandate"),
                 config: abi.encode(
-                    address(openElection),
+                    address(electionRegistry),
                     registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Vote"),
                     1, // votes per voter
                     4 // allowed role to vote (Voter)
@@ -728,7 +722,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Tally Executive Election: Tally votes.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Tally"),
                 config: abi.encode(
-                    address(openElection),
+                    address(electionRegistry),
                     5, // RoleId for Executives
                     5 // Max role holders
                 ),
@@ -766,7 +760,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Nominate for Executive: Voters can nominate.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Nominate"),
                 config: abi.encode(
-                    address(openElection),
+                    address(electionRegistry),
                     true
                 ),
                 conditions: conditions
@@ -782,7 +776,7 @@ contract Deploy is DeployHelpers {
                 nameDescription: "Revoke Nomination: Revoke self nomination.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Nominate"),
                 config: abi.encode(
-                    address(openElection),
+                    address(electionRegistry),
                     false
                 ),
                 conditions: conditions

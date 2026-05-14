@@ -7,7 +7,7 @@ import {
     BoundData,
     FaceMatchMode,
     OS
-} from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
+} from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 
 /// @title ZKPassport Interfaces
 

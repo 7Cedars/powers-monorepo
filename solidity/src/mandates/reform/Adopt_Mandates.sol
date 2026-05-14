@@ -23,9 +23,11 @@ contract Adopt_Mandates is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("address[] mandateAddress", "uint256[] roleIds");
-        super.initializeMandate(index, nameDescription, inputParams, config);
-    }
+        string[] memory params = new string[](2);
+        params[0] = "address[] mandateAddress";
+        params[1] = "uint256[] roleIds";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
+    } 
 
     /// @notice Build calls to adopt the configured mandates
     /// @param mandateCalldata Unused for this mandate

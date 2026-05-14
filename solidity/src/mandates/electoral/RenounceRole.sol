@@ -31,8 +31,9 @@ contract RenounceRole is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("uint256 roleId");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        string[] memory params = new string[](1);
+        params[0] = "uint256 RoleId";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     function handleRequest(

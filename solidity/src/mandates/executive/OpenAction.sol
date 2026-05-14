@@ -31,9 +31,11 @@ contract OpenAction is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        // Set UI-exposed input parameters: targets, values, calldatas
-        inputParams = abi.encode("address[] targets", "uint256[] values", "bytes[] calldatas");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        string[] memory params = new string[](3);
+        params[0] = "address[] targets";
+        params[1] = "uint256[] values";
+        params[2] = "bytes[] calldatas";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     /// @notice Execute the open action.

@@ -132,6 +132,7 @@ export type ActionVote = {
 export type Powers = {
   contractAddress: `0x${string}`;
   chainId: bigint;
+  lastFetched?: bigint; // Block number of last fetch - used for cold/warm fetch optimization
   name?: string;
   foundedAt?: bigint;
   uri?: string;

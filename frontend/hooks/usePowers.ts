@@ -2,34 +2,30 @@ import { Status, Action, Powers, Mandate, Metadata, Role, Conditions, ChainId, F
 import { wagmiConfig } from '../context/wagmiConfig'
 import { useCallback, useState } from "react";
 import { mandateAbi, powersAbi } from "@/context/abi";
-import { readContract, readContracts } from "wagmi/actions";
+import { readContract, readContracts, getBlockNumber, getPublicClient } from "wagmi/actions";
 import { bytesToParams, parseMetadata } from "@/utils/parsers";
 import { useParams } from "next/navigation";
 import { setPowers, setError, setStatus } from "@/context/store";
+import { getConstants } from "@/context/constants";
+import { stringifyWithBigInt, parseWithBigInt } from "@/utils/localStorage";
 
 export const usePowers = () => {
   // function to save powers to local storage
   const savePowers = (powers: Powers, address: `0x${string}`) => {
     if (typeof window === 'undefined') return
-    // console.log("@savePowers, waypoint 0", {powers})
     const localStore = localStorage.getItem("powersProtocols")
-    // console.log("@savePowers, waypoint 1", {localStore})
-    const saved: Powers[] = localStore && localStore != "undefined" ? JSON.parse(localStore) : []
-    // console.log("@savePowers, waypoint 2", {saved})
+    const saved: Powers[] = localStore && localStore != "undefined" ? parseWithBigInt<Powers[]>(localStore) : []
     const existing = saved.find(item => item.contractAddress == address)
     if (existing) {
       saved.splice(saved.indexOf(existing), 1)
     }
     saved.push(powers)
-    localStorage.setItem("powersProtocols", JSON.stringify(saved, (key, value) =>
-      typeof value === "bigint" ? value.toString() : value,
-    ));
+    localStorage.setItem("powersProtocols", stringifyWithBigInt(saved));
   }
 
   // Everytime powers is fetched these functions are called. 
   const fetchPowersData = async(powers: Powers, chainId: ChainId): Promise<Powers | undefined> => {
     const powersPopulated: Powers | undefined = powers
-    // console.log("@fetchPowersData, waypoint 0", {powers})
     try { 
       const [ namePowers, uriPowers, mandateCountPowers, treasuryPowers, foundedAtPowers, paymasterPowers ] = await readContracts(wagmiConfig, {
         allowFailure: false,
@@ -73,7 +69,6 @@ export const usePowers = () => {
         ]
       }) as [string, string, bigint, `0x${string}`, bigint, `0x${string}` ]
 
-      // console.log("@fetchPowersData, waypoint 1", {namePowers, uriPowers, mandateCountPowers})
       powersPopulated.name = namePowers as string
       powersPopulated.uri = uriPowers as string
       powersPopulated.mandateCount = mandateCountPowers as bigint
@@ -84,7 +79,6 @@ export const usePowers = () => {
       return powersPopulated
 
     } catch (error) {
-      // console.log("@fetchPowersData, waypoint 3", {error})
       setStatus({status: "error"}) 
       setError({error: error as Error})
     }
@@ -93,19 +87,14 @@ export const usePowers = () => {
   const fetchMetaData = async (powers: Powers, chainId: ChainId): Promise<Metadata | undefined> => {
     let updatedMetaData: Metadata | undefined
 
-    // console.log("@fetchMetaData, waypoint 0", {powers}) 
-
     if (powers && powers.uri) {
       try {
           const fetchedMetadata: unknown = await(
             await fetch(powers.uri as string)
             ).json() 
-            // console.log("@fetchMetaData, waypoint 1", {fetchedMetadata})
           updatedMetaData = parseMetadata(fetchedMetadata) 
-          // console.log("@fetchMetaData, waypoint 2", {updatedMetaData})
           return updatedMetaData
       } catch (error) {
-          // console.log("@fetchMetaData, waypoint 3", {error})
           console.warn("Failed to fetch metadata from URI, treating as empty:", error)
       }
     }
@@ -114,7 +103,6 @@ export const usePowers = () => {
   
   const checkMandates = async (mandateIds: bigint[], address: `0x${string}`, chainId: ChainId) => {
     const fetchedMandates: Mandate[] = []
-    // console.log("@checkMandates, waypoint 0", {mandateIds, address})
 
     if (wagmiConfig && mandateIds.length > 0 && address) {
         try {
@@ -125,13 +113,11 @@ export const usePowers = () => {
             args: [BigInt(id)] as [bigint],
             chainId: chainId
           }))
-          // console.log("@checkMandates, waypoint 1", {contracts})
 
           const results = await readContracts(wagmiConfig, {
             allowFailure: false,
             contracts
           }) as Array<[`0x${string}`, `0x${string}`, boolean]>
-          // console.log("@checkMandates, waypoint 2", {results})
 
           results.forEach((mandateTuple, idx) => {
             const id = mandateIds[idx]
@@ -143,10 +129,8 @@ export const usePowers = () => {
               active: mandateTuple[2] as unknown as boolean
             })
           })
-          // console.log("@checkMandates, waypoint 3", {fetchedMandates})  
           return fetchedMandates
         } catch (error) {
-          // console.log("@checkMandates, waypoint 4", {error})
           setStatus({status: "error"})
           setError({error: error as Error})
         }
@@ -156,7 +140,6 @@ export const usePowers = () => {
   const populateMandates = async (mandates: Mandate[], chainId: ChainId) => {
     let mandate: Mandate
     const populatedMandates: Mandate[] = []
-    // console.log("@populateMandates, waypoint 0", {mandates})
 
     try {
       type PendingCall = {
@@ -167,7 +150,6 @@ export const usePowers = () => {
       const pending: PendingCall[] = []
 
       mandates.forEach((l, idx) => {
-        // console.log("@populateMandates, waypoint 1 loop", {l})
         if (l.mandateAddress != `0x0000000000000000000000000000000000000000`) {
           if (!l.conditions) {
             contracts.push({
@@ -187,7 +169,6 @@ export const usePowers = () => {
               args: [l.powers, l.index],
               chainId: chainId!
             })
-            // console.log("@populateMandates, waypoint 1.5 loop", {contracts, l})
             pending.push({ kind: 'inputParams', mandateIdx: idx })
           }
           if (!l.nameDescription) {
@@ -209,9 +190,6 @@ export const usePowers = () => {
           contracts
         })
 
-        // console.log("@populateMandates, waypoint 1.75", {results})
-
-        // Apply results back to the corresponding mandates in order
         results.forEach((value, i) => {
           const meta = pending[i]
           const target = mandates[meta.mandateIdx]
@@ -229,10 +207,8 @@ export const usePowers = () => {
       for (mandate of mandates) {
         populatedMandates.push(mandate)
       }
-      // console.log("@populateMandates, waypoint 2", {populatedMandates})
       return populatedMandates
     } catch (error) {
-      // console.log("@populateMandates, waypoint 3", {error})
       setStatus({status: "error"}) 
       setError({error: error as Error})
     }
@@ -302,7 +278,6 @@ export const usePowers = () => {
  
     if (rolesIds.size > 0) {
       try {
-        // Build a multicall to fetch labels, uris and holder counts for all roles
         const contracts = Array.from(rolesIds).flatMap((roleId) => ([
           {
             abi: powersAbi,
@@ -332,7 +307,6 @@ export const usePowers = () => {
           contracts
         })
         
-        // Process results and fetch metadata in parallel
         const rolePromises = Array.from(rolesIds).map(async (roleId, i) => {
           const labelResult = results[i * 3]
           const metadataResult = results[i * 3 + 1]
@@ -381,7 +355,6 @@ export const usePowers = () => {
   }
 
   const fetchMandates = async (powers: Powers, chainId: ChainId): Promise<Mandate[] | undefined> => {
-    // console.log("@fetchMandates, waypoint 0", {powers})
     try {
       const mandateCount = await readContract(wagmiConfig, {
         abi: powersAbi,
@@ -389,16 +362,12 @@ export const usePowers = () => {
         functionName: 'getMandateCounter',
         chainId: chainId
       })
-      // console.log("@fetchMandates, waypoint 0.5", {mandateCount})
       const mandateIds = Array.from({length: Number(mandateCount) - 1}, (_, i) => BigInt(i+1))
       const mandates = await checkMandates(mandateIds, powers.contractAddress, chainId)
-      // console.log("@fetchMandates, waypoint 1", {mandateCount, mandateIds, mandates})
       if (mandates) {
         const mandatesPopulated = await populateMandates(mandates, chainId)
-        // console.log("@fetchMandates, waypoint 2", {mandatesPopulated})
         return mandatesPopulated
       } else {
-        // console.log("@fetchMandates, waypoint 3", {mandates})
         setStatus({status: "error"})
         setError({error: Error("Failed to fetch mandates")})
         return undefined
@@ -411,7 +380,6 @@ export const usePowers = () => {
   }
 
   const populateActions = async(actionIds: string[], powersAddress: `0x${string}`, chainId: ChainId): Promise<Action[]> => {
-    // console.log("@populateActions, waypoint 0", {actionIds, powersAddress})
     if (actionIds.length === 0) return []
 
     const [stateResults, dataResults, calldataResults, metadataResults] = await Promise.all([
@@ -436,13 +404,13 @@ export const usePowers = () => {
           chainId: chainId
         }))
       }) as Promise<Array<[
-        number,      // mandateId (uint16)
-        bigint,      // proposedAt (uint48)
-        bigint,      // requestedAt (uint48)
-        bigint,      // fulfilledAt (uint48)
-        bigint,      // cancelledAt (uint48)
-        `0x${string}`, // caller (address)
-        bigint       // nonce (uint256)
+        number,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        `0x${string}`,
+        bigint
       ]>>,
  
       readContracts(wagmiConfig, {
@@ -489,20 +457,16 @@ export const usePowers = () => {
     return actions
   }
   
-  // Returns a mapping of non-stale actionIds to their mandateId and index
   const fetchActions = async (mandates: Mandate[], chainId: ChainId): Promise<Mandate[] | undefined> => {
-    // console.log("@fetchActions, waypoint 0", {mandates})
     const activeMandates = mandates.filter((mandate) => mandate.active)
 
-    // Step 1: Identify stale actions by mandate
-    const staleActionsByMandate = new Map<string, Set<number>>() // mandateId -> Set of stale indices
+    const staleActionsByMandate = new Map<string, Set<number>>()
     
     activeMandates.forEach((mandate) => {
       const savedActions = mandate.actions || []
       const staleIndices = new Set<number>()
       
       savedActions.forEach((action, index) => {
-        // State 2, 4, or 7 are stale (Defeated, Fulfilled, or NonExistent)
         if (action.state === 2 || action.state === 4 || action.state === 7) {
           staleIndices.add(index)
         }
@@ -513,9 +477,6 @@ export const usePowers = () => {
       }
     })
 
-    // console.log("@fetchActions, waypoint 1", {staleActionsByMandate})
-
-    // Step 2: Fetch action quantities for each active mandate
     const actionQuantities = await readContracts(wagmiConfig, {
       allowFailure: false,
       contracts: activeMandates.map((mandate) => ({
@@ -527,9 +488,6 @@ export const usePowers = () => {
       }))
     }) as Array<bigint>
 
-    // console.log("@fetchActions, waypoint 2", {actionQuantities})
-
-    // Step 3: Create list of non-stale action indices to fetch per mandate
     type FetchRequest = {
       mandateId: bigint
       actionIndex: number
@@ -542,7 +500,6 @@ export const usePowers = () => {
       const mandateId = mandate.index
       const staleIndices = staleActionsByMandate.get(mandateId.toString()) || new Set()
       
-      // Create requests for non-stale indices only
       for (let i = 0; i < Number(quantity); i++) {
         if (!staleIndices.has(i)) {
           fetchRequests.push({
@@ -553,14 +510,10 @@ export const usePowers = () => {
       }
     })
 
-    // console.log("@fetchActions, waypoint 3", {fetchRequests})
-
-    // Early exit if no actions to fetch
     if (fetchRequests.length === 0) {
       return mandates
     }
 
-    // Step 4: Fetch actionIds for non-stale actions
     const actionIds = await readContracts(wagmiConfig, {
       allowFailure: false,
       contracts: fetchRequests.map((req) => ({
@@ -572,9 +525,6 @@ export const usePowers = () => {
       }))
     }) as Array<bigint>
 
-    // console.log("@fetchActions, waypoint 4", {actionIds})
-
-    // Step 5: Create mapping of actionId -> { mandateId, index }
     const actionIdMapping = new Map<string, { mandateId: bigint, index: number }>()
     
     fetchRequests.forEach((req, idx) => {
@@ -585,12 +535,10 @@ export const usePowers = () => {
       })
     })
 
-    // Step 6: Populate actions with full data
     const actionIdsArray = Array.from(actionIdMapping.keys())
     const populatedActions = await populateActions(actionIdsArray, activeMandates[0].powers as `0x${string}`, chainId)
 
-    // Step 7: Organize actions by mandate and index
-    const actionsByMandate = new Map<string, Map<number, Action>>() // mandateId -> (index -> Action)
+    const actionsByMandate = new Map<string, Map<number, Action>>()
     
     populatedActions.forEach((action) => {
       const mapping = actionIdMapping.get(action.actionId)
@@ -605,19 +553,14 @@ export const usePowers = () => {
       }
     })
 
-    // console.log("@fetchActions, waypoint 5", {actionsByMandate})
-
-    // Step 8: Update mandates with populated actions (including stale actions)
     const updatedMandates = mandates.map((mandate) => {
       const mandateKey = mandate.index.toString()
       const newActionsByIndex = actionsByMandate.get(mandateKey)
       
       if (!newActionsByIndex && !mandate.active) {
-        // Inactive mandate with no new actions - keep as is
         return mandate
       }
       
-      // Get the total quantity for this mandate
       const mandateIndex = activeMandates.findIndex(l => l.index === mandate.index)
       const quantity = mandateIndex >= 0 ? Number(actionQuantities[mandateIndex]) : 0
       
@@ -625,26 +568,22 @@ export const usePowers = () => {
         return { ...mandate, actions: [] }
       }
       
-      // Build actions array with correct indices
       const actionsArray: Action[] = new Array(quantity)
       const savedActions = mandate.actions || []
       const staleIndices = staleActionsByMandate.get(mandateKey) || new Set()
       
-      // First, place stale actions at their indices
       savedActions.forEach((action, index) => {
         if (staleIndices.has(index)) {
           actionsArray[index] = action
         }
       })
       
-      // Then, place newly fetched actions at their indices
       if (newActionsByIndex) {
         newActionsByIndex.forEach((action, index) => {
           actionsArray[index] = action
         })
       }
       
-      // Filter out undefined entries
       const finalActions = actionsArray.filter(a => a !== undefined)
       
       return {
@@ -653,72 +592,274 @@ export const usePowers = () => {
       }
     })
 
-    // console.log("@fetchActions, waypoint 6", {updatedMandates})
     return updatedMandates
   }
 
+  // ============ WARM FETCH LOGIC ============
+  // Warm fetch uses event logs to incrementally update state instead of full contract reads
+
+  const warmFetch = async (
+    existingPowers: Powers,
+    fromBlock: bigint,
+    toBlock: bigint,
+    chainId: ChainId
+  ): Promise<Powers> => {
+    console.log("@warmFetch: Fetching events from block", fromBlock.toString(), "to", toBlock.toString())
+    
+    let updatedPowers = { ...existingPowers }
+    let needsFullMandateRefresh = false
+    let needsFullRoleRefresh = false
+    let needsFullFlowRefresh = false
+    let actionIdsToRefresh: Set<string> = new Set()
+    let mandateIdsToRefresh: Set<number> = new Set()
+
+    try {
+      // Fetch all relevant events in a single batch using viem client
+      const client = getPublicClient(wagmiConfig, { chainId })
+      if (!client) {
+        throw new Error("Failed to get public client")
+      }
+      
+      const logs = await client.getContractEvents({
+        address: existingPowers.contractAddress,
+        abi: powersAbi,
+        fromBlock,
+        toBlock
+      })
+
+      console.log("@warmFetch: Found", logs.length, "events")
+
+      // Process each event
+      for (const log of logs) {
+        const eventName = log.eventName
+
+        switch (eventName) {
+          case 'ActionRequested':
+          case 'ProposedActionCreated':
+            // New action created - need to refresh the mandate's actions
+            const mandateId = Number((log.args as any).mandateId)
+            mandateIdsToRefresh.add(mandateId)
+            break
+
+          case 'ActionFulfilled':
+          case 'ProposedActionCancelled':
+            // Action state changed - refresh this specific action
+            const actionId = String((log.args as any).actionId)
+            actionIdsToRefresh.add(actionId)
+            break
+
+          case 'VoteCast':
+            // Vote cast on action - refresh vote counts for this action
+            const votedActionId = String((log.args as any).actionId)
+            actionIdsToRefresh.add(votedActionId)
+            break
+
+          case 'RoleSet':
+          case 'RoleLabel':
+            // Role changed - refresh all roles
+            needsFullRoleRefresh = true
+            break
+
+          case 'MandateAdopted':
+          case 'MandateRevoked':
+            // Mandate structure changed - need full mandate refresh
+            needsFullMandateRefresh = true
+            break
+
+          case 'FlowAdded':
+          case 'FlowDeleted':
+          case 'FlowAdapted':
+            // Flow structure changed - need full flow refresh
+            needsFullFlowRefresh = true
+            break
+
+          case 'PaymasterSet':
+            // Paymaster updated - update directly from event
+            updatedPowers.paymaster = (log.args as any).newPaymaster
+            break
+        }
+      }
+
+      // If no events found, just update lastFetched and return
+      if (logs.length === 0) {
+        updatedPowers.lastFetched = toBlock
+        return updatedPowers
+      }
+
+      // Perform targeted refreshes based on events
+
+      // Full mandate refresh if structure changed
+      if (needsFullMandateRefresh) {
+        console.log("@warmFetch: Full mandate refresh required")
+        const mandates = await fetchMandates(updatedPowers, chainId)
+        if (mandates) {
+          const mandatesWithActions = await fetchActions(mandates, chainId)
+          updatedPowers.mandates = mandatesWithActions
+        }
+      } else if (mandateIdsToRefresh.size > 0 || actionIdsToRefresh.size > 0) {
+        // Selective action refresh for affected mandates
+        console.log("@warmFetch: Refreshing actions for mandates:", Array.from(mandateIdsToRefresh))
+        
+        if (updatedPowers.mandates) {
+          // Refresh actions for specific mandates or all if we have action IDs
+          const mandatesToRefresh = updatedPowers.mandates.filter(m => 
+            mandateIdsToRefresh.has(Number(m.index)) || 
+            (actionIdsToRefresh.size > 0 && m.active)
+          )
+          
+          if (mandatesToRefresh.length > 0) {
+            const refreshedMandates = await fetchActions(updatedPowers.mandates, chainId)
+            if (refreshedMandates) {
+              updatedPowers.mandates = refreshedMandates
+            }
+          }
+        }
+      }
+
+      // Refresh roles if needed
+      if (needsFullRoleRefresh && updatedPowers.mandates) {
+        console.log("@warmFetch: Full role refresh required")
+        const roles = await fetchRoles(updatedPowers.mandates, chainId)
+        updatedPowers.roles = roles
+      }
+
+      // Refresh flows if needed
+      if (needsFullFlowRefresh) {
+        console.log("@warmFetch: Full flow refresh required")
+        const flows = await fetchFlows(updatedPowers.contractAddress, chainId)
+        updatedPowers.flows = flows
+      }
+
+      updatedPowers.lastFetched = toBlock
+      return updatedPowers
+
+    } catch (error) {
+      console.error("@warmFetch error:", error)
+      // On error, fall back to returning existing powers with updated lastFetched
+      // The next fetch might trigger a cold fetch if this fails
+      throw error
+    }
+  }
+
+  // ============ COLD FETCH LOGIC (existing full fetch) ============
+  const coldFetch = async (
+    address: `0x${string}`,
+    chainId: ChainId,
+    existingPowers?: Powers
+  ): Promise<Powers | undefined> => {
+    console.log("@coldFetch: Full data refresh for", address)
+    
+    let metaData: Metadata | undefined
+    let mandates: Mandate[] | undefined
+    let mandateWithActions: Mandate[] | undefined
+    let roles: Role[] | undefined
+    let flows: Flow[] | undefined
+
+    const powersToBeUpdated = existingPowers ? existingPowers : {
+      contractAddress: address,
+      chainId: BigInt(chainId)
+    }
+
+    try {
+      const data = await fetchPowersData(powersToBeUpdated, chainId)
+      if (data) {
+        [metaData, mandates] = await Promise.all([
+          fetchMetaData(data, chainId),
+          fetchMandates(data, chainId)
+        ])
+      }
+      if (mandates) {
+        mandateWithActions = await fetchActions(mandates, chainId)
+        roles = await fetchRoles(mandates, chainId)
+        flows = await fetchFlows(address, chainId)
+      }
+
+      if (data != undefined && mandates != undefined) {
+        // Get current block number for lastFetched
+        const currentBlock = await getBlockNumber(wagmiConfig, { chainId })
+        
+        const newPowers: Powers = {
+          contractAddress: powersToBeUpdated.contractAddress as `0x${string}`,
+          chainId: BigInt(chainId),
+          lastFetched: currentBlock,
+          name: data.name,
+          metadatas: metaData,
+          uri: data.uri,
+          treasury: data.treasury,
+          paymaster: data.paymaster,
+          foundedAt: data.foundedAt,
+          mandateCount: data.mandateCount,
+          mandates: mandateWithActions,
+          roles: roles,
+          flows: flows,
+          layout: powersToBeUpdated.layout
+        }
+        return newPowers
+      }
+    } catch (error) {
+      console.error("@coldFetch error:", error)
+      throw error
+    }
+    return undefined
+  }
+
+  // ============ MAIN FETCH FUNCTION ============
   const fetchPowers = useCallback(
     async (address: `0x${string}`, chainId: ChainId) => {
-      // console.log("@fetchPowers, waypoint 0", {address, chainId})
+      console.log("@fetchPowers: Starting fetch for", address)
       setStatus({status: "pending"})
-      let metaData: Metadata | undefined
-      let mandates: Mandate[] | undefined
-      let mandateWithActions: Mandate[] | undefined
-      let roles: Role[] | undefined
-      let flows: Flow[] | undefined
-
-      let existing: Powers | undefined
-      const localStore = localStorage.getItem("powersProtocols")
-      const saved: Powers[] = localStore && localStore != "undefined" ? JSON.parse(localStore) : []
-      existing = saved.find(item => item.contractAddress == address)
-
-      const powersToBeUpdated = existing ? existing : {
-        contractAddress: address,
-        chainId: BigInt(chainId)
-      }
-      // console.log("@refetchPowers, waypoint 1", {powersToBeUpdated})
 
       try {
-        const data = await fetchPowersData(powersToBeUpdated, chainId)
-        // console.log("@refetchPowers, waypoint 2", {data})
-        if (data) {
-          [metaData, mandates] = await Promise.all([
-            fetchMetaData(data, chainId),
-            fetchMandates(data, chainId)
-          ])
-        }
-        if (mandates) {
-          mandateWithActions = await fetchActions(mandates, chainId)
-          roles = await fetchRoles(mandates, chainId)
-          flows = await fetchFlows(address, chainId)
-        }
+        // Get current block number
+        const currentBlock = await getBlockNumber(wagmiConfig, { chainId })
+        const constants = getConstants(chainId)
+        const maxBlocksFetch = BigInt(constants.MAX_BLOCKS_FETCH)
 
-        // console.log("@refetchPowers, waypoint 4", {metaData, mandates})
+        // Check for existing data in localStorage
+        let existing: Powers | undefined
+        const localStore = localStorage.getItem("powersProtocols")
+        const saved: Powers[] = localStore && localStore != "undefined" ? parseWithBigInt<Powers[]>(localStore) : []
+        existing = saved.find(item => item.contractAddress == address)
 
-        if (data != undefined && mandates != undefined) {
-          // console.log("@refetchPowers, waypoint 7", {data, metaData, mandates})
-          const newPowers: Powers = {
-            contractAddress: powersToBeUpdated.contractAddress as `0x${string}`,
-            chainId: BigInt(chainId),
-            name: data.name,
-            metadatas: metaData,
-            uri: data.uri,
-            treasury: data.treasury,
-            paymaster: data.paymaster,
-            foundedAt: data.foundedAt,
-            mandateCount: data.mandateCount,
-            mandates: mandateWithActions,
-            roles: roles,
-            flows: flows,
-            layout: powersToBeUpdated.layout
+        // Determine if we should do a warm or cold fetch
+        const shouldWarmFetch = existing && 
+          existing.lastFetched !== undefined && 
+          currentBlock < existing.lastFetched + maxBlocksFetch &&
+          existing.mandates !== undefined  // Must have existing data to update
+
+        let newPowers: Powers | undefined
+
+        if (shouldWarmFetch && existing && existing.lastFetched !== undefined) {
+          // WARM FETCH: Use events to incrementally update
+          console.log("@fetchPowers: Using WARM fetch (event-based incremental update)")
+          try {
+            newPowers = await warmFetch(
+              existing,
+              BigInt(existing.lastFetched) + 1n, // Start from block after last fetch (ensure BigInt in case of legacy string storage)
+              currentBlock,
+              chainId
+            )
+          } catch (warmError) {
+            // If warm fetch fails, fall back to cold fetch
+            console.warn("@fetchPowers: Warm fetch failed, falling back to cold fetch", warmError)
+            newPowers = await coldFetch(address, chainId, existing)
           }
-          // console.log("@refetchPowers, waypoint 8", {newPowers})
+        } else {
+          // COLD FETCH: Full data refresh from contracts
+          console.log("@fetchPowers: Using COLD fetch (full contract reads)")
+          newPowers = await coldFetch(address, chainId, existing)
+        }
+
+        if (newPowers) {
           setPowers(newPowers)
           savePowers(newPowers, address)
           setStatus({status: "success"})
+        } else {
+          setStatus({status: "error"})
+          setError({error: Error("Failed to fetch powers data")})
         }
       } catch (error) {
-        //  console.error("@fetchPowers error:", error)
+        console.error("@fetchPowers error:", error)
         setStatus({status: "error"})
         setError({error: error as Error})
       }

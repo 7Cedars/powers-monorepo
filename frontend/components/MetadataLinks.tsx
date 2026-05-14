@@ -120,7 +120,7 @@ function TreasuryButton({ chainId }: { chainId?: bigint | number | string }) {
       title={`Treasury: ${treasury}`}
     >
       <BanknotesIcon className="w-4 h-4" />
-      <span className="text-xs font-mono uppercase tracking-wider">Treasury</span>
+      {/* <span className="text-xs font-mono uppercase tracking-wider">Treasury</span> */}
     </button>
   );
 }
@@ -165,7 +165,7 @@ function PayMasterButton({ chainId }: { chainId?: bigint | number | string }) {
       title={`PayMaster: ${paymaster}`}
     >
       <CreditCardIcon className="w-4 h-4" />
-      <span className="text-xs font-mono uppercase tracking-wider">PayMaster</span>
+      {/* <span className="text-xs font-mono uppercase tracking-wider">PayMaster</span> */}
     </button>
   );
 }
@@ -279,12 +279,6 @@ export function MetadataLinks({
   return (
     <section className="w-full bg-muted/50 p-4">
       <div className="flex flex-wrap gap-3 items-center">
-        {/* Treasury Button */}
-        <TreasuryButton chainId={currentChainId} />
-
-        {/* PayMaster Button */}
-        <PayMasterButton chainId={currentChainId} />
-
         {/* Main Links */}
         {mainLinks.map((link, index) => {
           const Icon = link.icon
@@ -302,6 +296,12 @@ export function MetadataLinks({
             </a>
           )
         })}
+
+        {/* Treasury Button */}
+        <TreasuryButton chainId={currentChainId} />
+
+        {/* PayMaster Button */}
+        <PayMasterButton chainId={currentChainId} />
 
         {/* Communication channels */}
         {socialLinks.map((link, index) => {

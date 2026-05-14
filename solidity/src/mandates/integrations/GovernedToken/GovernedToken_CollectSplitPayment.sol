@@ -46,8 +46,9 @@ contract GovernedToken_CollectSplitPayment is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
-        inputParams = abi.encode("uint256 TransferId");
-        super.initializeMandate(index, nameDescription, inputParams, config);
+        string[] memory params = new string[](1);
+        params[0] = "uint256 TransferId";
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     function handleRequest(
@@ -81,8 +82,7 @@ contract GovernedToken_CollectSplitPayment is Mandate {
         // 4. Verify transfer data matches input (sanity check, mainly checks if transfer exists)
         if (
             mem.transferData.oldOwner == address(0) || mem.transferData.newOwner == address(0)
-                || mem.transferData.tokenId == 0 || mem.transferData.quantity == 0
-                || mem.transferData.paymentToken == address(0) || mem.transferData.nonce == 0
+                || mem.transferData.tokenId == 0 || mem.transferData.quantity == 0 || mem.transferData.nonce == 0
         ) {
             revert("Transfer data mismatch or not found");
         }

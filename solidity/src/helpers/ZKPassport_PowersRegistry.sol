@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { DisclosedData, ProofVerificationParams, BoundData } from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
+import { DisclosedData, ProofVerificationParams, BoundData } from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "../interfaces/IZKPassport.sol";
  
 // import { console } from "forge-std/console.sol"; // only for testing purposes.
@@ -12,7 +12,7 @@ import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "../in
 interface IZKPassport_PowersRegistry {
     function registerProof(ProofVerificationParams calldata params, bool isIdCard) external returns (bytes32 identifier);
     function deleteProof() external;
-    function getDisclosed(address account) external view returns (DisclosedData memory);
+    // function getDisclosed(address account) external view returns (DisclosedData memory);
     function getProofTimestamp(address account) external view returns (uint256);
     function getIsFacematched(address account) external view returns (bool);
 }
@@ -72,6 +72,34 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     }
 
     //////////////////////////////////////////////////////////////
+    //                        MOCK CALL                         //      
+    //              !!!DELETE FOR PRODUCTION!!!                 //
+    //////////////////////////////////////////////////////////////
+    function mockAddDisclosedData(address account) external {
+        bytes32 mockIdentifier = keccak256(abi.encodePacked(account, block.timestamp));
+        accountIdentifiers[account] = mockIdentifier;
+        identifierAccounts[mockIdentifier] = account;
+        DisclosedData memory data = DisclosedData(
+            "Mock Entry",
+            "GBR",
+            "GBR",
+            "Male",
+            "1990-01-01",
+            "2030-01-01",
+            "123456789",
+            "Passport"
+        );
+
+        identifierToDisclosedData[mockIdentifier] = Disclosed({ 
+            disclosedData: data, 
+            isFacematched: true, 
+            timestamp: block.timestamp 
+            });
+        emit IdentityRegistered(account, mockIdentifier);
+    }
+
+
+    //////////////////////////////////////////////////////////////
     //            VERIFICATION AND REGISTRATION                 //
     //////////////////////////////////////////////////////////////
 
@@ -115,7 +143,7 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
 
         // if all checks pass, retrieve disclosed data
         DisclosedData memory disclosedData = zkPassportHelper.getDisclosedData(params.committedInputs, isIDCard);
-        // // console.log here the disclosed data for testing purposes?
+        // console.log here the disclosed data for testing purposes?
         // console.log("Disclosed Data:");
         // console.log(disclosedData.name);
         // console.log(disclosedData.issuingCountry);
@@ -160,7 +188,6 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     //////////////////////////////////////////////////////////////
     //                      GETTER FUNCTIONS                    //
     //////////////////////////////////////////////////////////////
-
     function getDisclosed(address account) external view returns (DisclosedData memory) {
         bytes32 identifier = accountIdentifiers[account];
         require(identifier != bytes32(0), "No registration found");

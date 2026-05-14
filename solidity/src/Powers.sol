@@ -40,8 +40,10 @@ pragma solidity ^0.8.26;
 
 import { Mandate } from "./Mandate.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
-import { IPowers } from "./interfaces/IPowers.sol";
+import { IPowers, IERC721Receiver, IERC1155Receiver } from "./interfaces/IPowers.sol";
 import { Checks } from "./libraries/Checks.sol";
+import { ERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
 import { Address } from "@lib/openzeppelin-contracts/contracts/utils/Address.sol";
 import { EIP712 } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
@@ -49,7 +51,7 @@ import { Context } from "@lib/openzeppelin-contracts/contracts/utils/Context.sol
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
-contract Powers is EIP712, IPowers, Context {
+contract Powers is EIP712, ERC165, IPowers, Context {
     //////////////////////////////////////////////////////////////
     //                           STORAGE                        //
     /////////////////////////////////////////////////////////////
@@ -701,6 +703,38 @@ contract Powers is EIP712, IPowers, Context {
     function _countMembersRole(uint256 roleId) internal view returns (uint256 amountMembers) {
         return roles[roleId].membersArray.length;
     }
+
+    //////////////////////////////////////////////////////////////
+    //                   TOKEN RECEIVERS                        //
+    //////////////////////////////////////////////////////////////
+    /// @notice Allows the contract to receive ERC721 tokens once the constitution is closed.
+    function onERC721Received(address, address, uint256, bytes calldata) external view returns (bytes4) {
+        if (!_constituteClosed) revert Powers__ConstituteOpen();
+        return this.onERC721Received.selector;
+    }
+
+    /// @notice Allows the contract to receive ERC1155 tokens once the constitution is closed.
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external view returns (bytes4) {
+        if (!_constituteClosed) revert Powers__ConstituteOpen();
+        return this.onERC1155Received.selector;
+    }
+
+    /// @notice Allows the contract to receive ERC1155 batch transfers once the constitution is closed.
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        view
+        returns (bytes4)
+    {
+        if (!_constituteClosed) revert Powers__ConstituteOpen();
+        return this.onERC1155BatchReceived.selector;
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IERC721Receiver).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
+            || super.supportsInterface(interfaceId);
+    }
+
 
     //////////////////////////////////////////////////////////////
     //                 VIEW / GETTER FUNCTIONS                  //

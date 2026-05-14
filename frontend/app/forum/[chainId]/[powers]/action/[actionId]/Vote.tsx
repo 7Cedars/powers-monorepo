@@ -9,6 +9,7 @@ import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
 import { getConstants } from "@/context/constants";
 import { CheckIcon, XMarkIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import { fromFutureBlockToDateTime } from "@/public/organisations/helpers";
 import { Action, Powers, Mandate } from "@/context/types";
 import { ForumModal } from "@/components/ForumModal";
 import { useChecks } from "@/hooks/useChecks";
@@ -25,7 +26,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const action = useActionStore();
   const status = useStatusStore();
   const { chainId } = useParams<{ chainId: string }>();
-  const { data: blockNumber } = useBlockNumber({ watch: true });
+  const { data: blockNumber } = useBlockNumber();
   const constants = getConstants(parseChainId(chainId) as number);
   const { castVoteWithReason, actionVote, fetchVoteData, request } = useMandate();
   const { checks, fetchChecks, status: checksStatus } = useChecks();
@@ -155,9 +156,12 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
     }
   };
 
-  const timeRemainingMinutes = blockNumber && voteEnd && blockNumber < voteEnd
-    ? Math.floor((Number(voteEnd) - Number(blockNumber)) * 60 / constants.BLOCKS_PER_HOUR)
-    : 0;
+  const getFutureDateTime = (targetBlock: bigint): string => {
+    if (!blockNumber) return '-';
+    const parsedChainId = parseChainId(chainId);
+    if (!parsedChainId) return '-';
+    return fromFutureBlockToDateTime(targetBlock, BigInt(blockNumber), parsedChainId) || '-';
+  };
 
   const handleExecute = async () => {
     if (!mandate || !action || !action.callData) return;
@@ -202,11 +206,9 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
           
           {/* Time Remaining */}
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Time Remaining:</span>
+            <span className="text-muted-foreground">Est. Vote End:</span>
             <span className="text-foreground font-mono">
-              {timeRemainingMinutes > 60
-                ? `${Math.floor(timeRemainingMinutes / 60)}h ${timeRemainingMinutes % 60}m`
-                : `${timeRemainingMinutes}m`}
+              {voteEnd ? getFutureDateTime(voteEnd) : '-'}
             </span>
           </div>
 

@@ -13,8 +13,8 @@ const checkDescriptions: Record<string, string> = {
   proposalPassed: "The proposal has not passed",
   fulfilled: "This action has not been fulfilled",
   actionNotFulfilled: "This action has already been fulfilled",
-  mandateFulfilled: "Another mandate needs to be fulfilled first",
-  mandateNotFulfilled: "Another mandate should not have been fulfilled",
+  mandateFulfilled: "Parent mandate needs to be fulfilled first",
+  mandateNotFulfilled: "Parent mandate should not have been fulfilled",
   delayPassed: "Required delay period has not passed",
   throttlePassed: "Execution is being throttled, please wait",
 };

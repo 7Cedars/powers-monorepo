@@ -121,13 +121,12 @@ update-deps:
 install-deps:
 	@echo "Installing dependencies..."
 	forge install foundry-rs/forge-std --no-git || exit 1
-	forge install openzeppelin/openzeppelin-contracts@v5.0.2  --no-git || exit 1
+	forge install openzeppelin/openzeppelin-contracts@v5.6.1  --no-git || exit 1
 	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  --no-git || exit 1
 	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
 	forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	forge install safe-fndn/safe-modules --no-git || exit 1
 	forge install zkpassport/circuits --no-git || exit 1
-	forge install zkpassport/zkpassport-packages --no-git || exit 1
 	forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies installed without git metadata."
 	
@@ -137,13 +136,12 @@ reset-deps:
 	@rm -rf lib/
 	@mkdir -p lib
 	@forge install foundry-rs/forge-std --no-git || exit 1
-	@forge install openzeppelin/openzeppelin-contracts@v5.0.2 --no-git || exit 1
+	@forge install openzeppelin/openzeppelin-contracts@v5.6.1 --no-git || exit 1
 	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 --no-git || exit 1
 	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-git || exit 1
 	@forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	@forge install safe-fndn/safe-modules --no-git || exit 1
 	@forge install zkpassport/circuits --no-git || exit 1
-	@forge install zkpassport/zkpassport-packages --no-git || exit 1
 	@forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies reset complete. All libs installed without git metadata."
 
@@ -298,7 +296,7 @@ update-builds:
  
 ANVIL_DEPLOY_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) --broadcast --ffi -vv
 # NB: turned off verify --verify 
-SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verify --verifier etherscan --chain 11155111 --ffi -vv
+SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 11155111 --ffi -vv
 ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 421614 --verify --ffi -vv 
 OPT_SEPOLIA_DEPLOY_ARGS := --rpc-url $(OPT_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --ffi -vv
 
@@ -319,6 +317,9 @@ registry-deploy :
 	@echo "Deploying mandate registry..."
 	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
+mandates-deploy : 
+	@echo "Deploying mandates..."
+	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
 
 examples-deploy : 
 	@echo "Deploying example contracts..."
@@ -344,6 +345,10 @@ organisation-deploy :
 	@echo "Deploying organisation..."
 	forge script governance/publius-registry/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 
+governed721-deploy : 
+	@echo "Deploying convergence layer contracts..."
+	./governance/examples/bash/deploy_governed721.sh "" "" "" $(SEPOLIA_DEPLOY_ARGS)
+
 # deploy-zkregistry : 
 # 	@echo "Deploying ZKPassport Registry..."
 # 	forge script script/DeployZKPassportRegistry.s.sol:DeployZKPassportRegistry $(SEPOLIA_DEPLOY_ARGS)
@@ -353,10 +358,8 @@ deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:Deplo
 
 # Verify Contracts
 sepoliaVerifyContract : 
-	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xC11260bB9afd3461AE526f97ff51B7E77DbF7da2 src/Powers.sol:Powers --watch
-	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xbA0B1D92CD40F1c7751beAc39a95fFEFCfd57A6f src/Powers.sol:Powers --watch
-	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xc75d12D4537CD5456f6a08c971cC62B9Ee7dB475 src/helpers/PowersFactory.sol:PowersFactory --watch
-	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x383c61FD77974e0cB9eec91eb9000aa4381E609A src/helpers/PowersFactory.sol:PowersFactory --watch
+# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/helpers/PowersPaymaster.sol:PowersPaymaster --watch
+	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xEA32F09478C71aa481248c3D95467bc36DF4d524 src/helpers/PowersFactory.sol:PowersFactory --watch 
 
 optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 arbSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 421614 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0xb1fe867eE7919887EB381c4626bdbAe003969683 src/helpers/TreasuryPools.sol:TreasuryPools --watch
