@@ -84,7 +84,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // versioning
     uint16 constant MAJOR = 0; 
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 4;
+    uint16 constant PATCH = 5;
 
     address[] targets;
     uint256[] values;

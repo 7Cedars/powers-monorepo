@@ -1,6 +1,6 @@
 // Powers contract interaction utilities
 
-import { createPublicClient, http, type Address, type PublicClient } from 'viem';
+import { createPublicClient, http, webSocket, type Address, type PublicClient } from 'viem';
 import type { Mandate } from '../utils/types.js';
 import { config } from '../config/env.js';
 import { powersAbi } from './abi.js';
@@ -15,18 +15,44 @@ const CHAIN_CONFIGS = {
 
 type SupportedChainId = keyof typeof CHAIN_CONFIGS;
 
+function httpToWss(url: string): string {
+  return url.replace(/^https:\/\//, 'wss://');
+}
+
 /**
- * Creates a public client for a specific chain
+ * Creates a public client for a specific chain (HTTP, for reads)
  */
 export function getPublicClient(chainId: number): PublicClient {
   const chainConfig = CHAIN_CONFIGS[chainId as SupportedChainId];
-  
+
   if (!chainConfig) {
     throw new Error(`Unsupported chain ID: ${chainId}`);
   }
-  
+
   return createPublicClient({
     transport: http(chainConfig.rpcUrl),
+  });
+}
+
+/**
+ * Creates a WebSocket client for a specific chain (for event watching)
+ */
+export function getWatchClient(chainId: number): PublicClient {
+  const chainConfig = CHAIN_CONFIGS[chainId as SupportedChainId];
+
+  if (!chainConfig) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
+
+  if (!chainConfig.rpcUrl) {
+    throw new Error(`No RPC URL configured for chain: ${chainConfig.name}`);
+  }
+
+  return createPublicClient({
+    transport: webSocket(httpToWss(chainConfig.rpcUrl), {
+      keepAlive: { interval: 30_000 },
+      reconnect: { delay: 3_000, attempts: 10 },
+    }),
   });
 }
 

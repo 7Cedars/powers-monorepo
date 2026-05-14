@@ -97,7 +97,7 @@ When a proposal passes and enters timelock, roles can be revoked or reassigned b
 
 **Suggestion**: Make the design intent explicit in documentation and NatSpec. Two valid options:
 - **Snapshot model**: Record role membership at proposal creation, use that snapshot for quorum/threshold checks.
-- **At-time-of-fulfill model**: Current behavior — document explicitly that roles are dynamic and operators must account for this.
+- **At-time-of-fulfill model**: Current behavior — document explicitly that roles are dynamic and intermediarys must account for this.
 
 Neither is wrong, but the choice has significant governance implications.
 

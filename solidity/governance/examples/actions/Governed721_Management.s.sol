@@ -21,24 +21,28 @@ contract Governed721_Management is ActionHelpers {
     /////////////////////////////////////////////////////////////// 
     //                          CLAIM ROLES                      //
     /////////////////////////////////////////////////////////////// 
-    function mintNftAtGoverned721(address governed721, address operator, address owner, address artist, uint256 quantity) public { // the org has to mint. This should be in the reform mandate.
+    function mintNftAtGoverned721(address governed721, address intermediary, uint256 privateKeyOwner, address artist, uint256 quantity) public { // the org has to mint. This should be in the reform mandate.
         // mint tokens 
+        address owner =  vm.addr(privateKeyOwner);
+
         vm.startBroadcast();
         for (uint256 i = 1; i < quantity + 1; i++) {
             IGoverned721(governed721).mint(owner, i, artist, string.concat("Token_", vm.toString(i)));
         }
         vm.stopBroadcast();
 
-        // set operator
-        vm.startBroadcast();
-        IGoverned721(governed721).setApprovalForAll(operator, true);
+        // set intermediary as approved address per token (getApproved is used to record intermediary in TransferData)
+        vm.startBroadcast(privateKeyOwner);
+        for (uint256 i = 1; i < quantity + 1; i++) {
+            IGoverned721(governed721).approve(intermediary, i);
+        }
         vm.stopBroadcast();
     }
 
-    function buyNftAtGoverned721(address governed721, uint256 tokenId, uint256 price, address oldOwner, address newOwner, uint256 nonce) public { 
+    function buyNftAtGoverned721(address governed721, uint256 tokenId, uint256 price, address oldOwner, address newOwner, uint256 privateKeyIntermediary, uint256 nonce) public {
         // sell token
-        vm.startBroadcast();
-        IGoverned721(governed721).safeTransferFromWithETH{value: price}(oldOwner, newOwner, tokenId, 1, nonce);
+        vm.startBroadcast(privateKeyIntermediary);
+        IGoverned721(governed721).safeTransferFromWithETH{value: price}(oldOwner, newOwner, tokenId, price, nonce);
         vm.stopBroadcast();
     }
 
@@ -183,11 +187,20 @@ contract Governed721_Management is ActionHelpers {
         delete actionIds;
  
         // step 1: identify mandates to run.
-        mandateSlots.push(findMandateIdInOrg("Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.", Powers(payable(powers)))); 
+        mandateSlots.push(findMandateIdInOrg("Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.", Powers(payable(powers))));
+        mandateSlots.push(findMandateIdInOrg("Split Checkpoint 1: Confirm no Minter veto.", Powers(payable(powers)))); 
+
+        // step 2: identify relevant accounts 
+        uint256 privateKey = getPrivateKeyRoleHolder(powers, 5, 0, privateKeys); 
 
         // Step 2: Execute call
-        vm.startBroadcast(privateKeys[0]);
-        Powers(payable(powers)).request(mandateSlots[0], abi.encode(role, percentage), nonce, "Setting split payment"); 
+        vm.startBroadcast(privateKey);
+        Powers(payable(powers)).request(mandateSlots[0], abi.encode(role, percentage), nonce, string.concat("Proposing split payment for role: ", vm.toString(role), " with percentage: ", vm.toString(percentage))); 
+        vm.stopBroadcast();
+
+        // Note that this mandate has a timelock, hence we first need to propose - and request after the timelock has passed. 
+        vm.startBroadcast(privateKey);
+        Powers(payable(powers)).propose(mandateSlots[1], abi.encode(role, percentage), nonce, string.concat("Executing split payment for role: ", vm.toString(role), " with percentage: ", vm.toString(percentage))); 
         vm.stopBroadcast();
     }
 
@@ -203,7 +216,8 @@ contract Governed721_Management is ActionHelpers {
         mandateSlots.push(findMandateIdInOrg("Veto Split (Intermediary): Intermediary can veto split change.", Powers(payable(powers)))); 
 
         // Step 2: Execute call
-        vm.startBroadcast(privateKeys[0]);
+        uint256 privateKey = getPrivateKeyRoleHolder(powers, 5, 0, privateKeys); 
+        vm.startBroadcast(privateKey);
         Powers(payable(powers)).request(mandateSlots[mandateSlot], abi.encode(role, percentage), nonce, string.concat("Vetoing split payment for role: ", vm.toString(role), " with percentage: ", vm.toString(percentage)));
         vm.stopBroadcast();   
     }
@@ -217,22 +231,22 @@ contract Governed721_Management is ActionHelpers {
         // step 1: identify mandates to run.
         mandateSlots.push(findMandateIdInOrg("Split Checkpoint 1: Confirm no Minter veto.", Powers(payable(powers)))); 
         mandateSlots.push(findMandateIdInOrg("Split Checkpoint 2: Confirm no Owner veto.", Powers(payable(powers)))); 
-        mandateSlots.push(findMandateIdInOrg("Execute Split Payment: Set new split payment.", Powers(payable(powers))));  
-
+        mandateSlots.push(findMandateIdInOrg("Execute Split Payment: Set new split payment.", Powers(payable(powers))));
+        
         // Step 2: Execute call
-        vm.startBroadcast(privateKeys[0]);
+        uint256 privateKey = getPrivateKeyRoleHolder(powers, 5, 0, privateKeys);
+        vm.startBroadcast(privateKey);
         Powers(payable(powers)).request(mandateSlots[0], abi.encode(role, percentage), nonce, string.concat("Executing split payment for role: ", vm.toString(role), " with percentage: ", vm.toString(percentage)));
         vm.stopBroadcast();
 
-        vm.startBroadcast(privateKeys[0]);
+        vm.startBroadcast(privateKey);
         Powers(payable(powers)).request(mandateSlots[1], abi.encode(role, percentage), nonce, string.concat("Executing split payment for role: ", vm.toString(role), " with percentage: ", vm.toString(percentage)));
         vm.stopBroadcast();   
-
-        vm.startBroadcast(privateKeys[0]);
+ 
+        vm.startBroadcast(privateKey);
         Powers(payable(powers)).request(mandateSlots[2], abi.encode(role, percentage), nonce, string.concat("Executing split payment for role: ", vm.toString(role), " with percentage: ", vm.toString(percentage)));
         vm.stopBroadcast();   
     }
-
 }
 
 

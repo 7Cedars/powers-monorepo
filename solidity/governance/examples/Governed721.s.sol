@@ -43,7 +43,7 @@ contract Deploy is DeployHelpers {
     uint16 proposeSplitId;
     uint16 vetoMinterId;
     uint16 vetoOwnerId;
-    uint16 vetoOperatorId;
+    uint16 vetoIntermediaryId;
     uint16 splitCheckpoint1;
     uint16 splitCheckpoint2;
     uint16 splitCheckpoint3;
@@ -58,7 +58,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 4;
+    uint16 constant PATCH = 5;
 
     function run() external returns (address powersAddress, address governed721Address, address electionRegistryAddress) {
         // step 0, setup. 
@@ -124,7 +124,7 @@ contract Deploy is DeployHelpers {
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Artist", "");
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Owner", ""); 
-        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Operator", ""); 
+        calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Intermediary", ""); 
         calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 4, "Voter", ""); 
         calldatas[6] = abi.encodeWithSelector(IPowers.labelRole.selector, 5, "Executive", "");
         calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, testAccount1); 
@@ -158,19 +158,19 @@ contract Deploy is DeployHelpers {
 
         flows.push(PowersTypes.Flow({
             mandateIds: mandateIds,
-            nameDescription: "Set a split payment: Executives can propose a new split, minter, owner and operator can veto, and if no vetoes, executives can execute the new split after a time lock."
+            nameDescription: "Set a split payment: Executives can propose a new split, minter, owner and intermediary can veto, and if no vetoes, executives can execute the new split after a time lock."
         }));
 
-        // single executive: propose new split and vote. Input should be the new split between minter, operator and owner.
+        // single executive: propose new split and vote. Input should be the new split between minter, intermediary and owner.
         inputParams = new string[](2);
-        inputParams[0] = "uint8 Role"; // 1 = Artist, 2 = Operator. The Old Owner gets the remainder after Artist and Operator split, so we only need to input the splits for Artist and Operator.
+        inputParams[0] = "uint8 Role"; // 1 = Artist, 2 = Intermediary. The Old Owner gets the remainder after Artist and Intermediary split, so we only need to input the splits for Artist and Intermediary.
         inputParams[1] = "uint8 Percentage";
 
         mandateCount++;
         conditions.allowedRole = 5; // Executive
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Operator. The old owner gets the remainder after Artist and Operator split.",
+                nameDescription: "Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
@@ -216,23 +216,23 @@ contract Deploy is DeployHelpers {
         delete conditions;
         vetoOwnerId = mandateCount;
 
-        // Operator Veto
+        // Intermediary Veto
         mandateCount++;
-        conditions.allowedRole = 3; // Operator
+        conditions.allowedRole = 3; // Intermediary
         conditions.needFulfilled = proposeSplitId;
         conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
         conditions.succeedAt = 51;
         conditions.quorum = 30; //
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Veto Split (Operator): Operator can veto split change.",
+                nameDescription: "Veto Split (Intermediary): Intermediary can veto split change.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
         );
         delete conditions;
-        vetoOperatorId = mandateCount;
+        vetoIntermediaryId = mandateCount;
 
         // executives: vote + time lock. Execute & implement new split.        
         // Checkpoint 1: Check Minter Veto
@@ -268,11 +268,11 @@ contract Deploy is DeployHelpers {
         delete conditions;
         splitCheckpoint2 = mandateCount;
 
-        // Checkpoint 3: Check Operator Veto & execute Split if no vetoes.
+        // Checkpoint 3: Check Intermediary Veto & execute Split if no vetoes.
         mandateCount++;
-        conditions.allowedRole = 5; // any executive can execute, but it will only execute if the operator has not vetoed.
+        conditions.allowedRole = 5; // any executive can execute, but it will only execute if the intermediary has not vetoed.
         conditions.needFulfilled = splitCheckpoint2;
-        conditions.needNotFulfilled = vetoOperatorId;
+        conditions.needNotFulfilled = vetoIntermediaryId;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Execute Split Payment: Set new split payment.",
@@ -567,7 +567,7 @@ contract Deploy is DeployHelpers {
 
         flows.push(PowersTypes.Flow({
             mandateIds: mandateIds,
-            nameDescription: "Manage Operator Role: Assigning and revoking operator role based on approved address of the NFT. Operator can be assigned or revoked based on the approved address check, with a veto from executives for revocation."
+            nameDescription: "Manage Intermediary Role: Assigning and revoking intermediary role based on approved address of the NFT. Intermediary can be assigned or revoked based on the approved address check, with a veto from executives for revocation."
         }));
 
         // Note follows the same logic as owner role assignments, but now checks if / who has been assigned as 'approved' at a token. 
@@ -578,7 +578,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = type(uint256).max; // = public function 
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Check operator Token: This check is needed to assign the operator role to the NFT operator in the next mandate.",
+                nameDescription: "Check intermediary Token: This check is needed to assign the intermediary role to the NFT intermediary in the next mandate.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
                 config: abi.encode(
                     address(governed721),
@@ -596,12 +596,12 @@ contract Deploy is DeployHelpers {
         conditions.needFulfilled = mandateCount - 1;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Assign Operator Role: Assigns Operator role to the approved address of the NFT.",
+                nameDescription: "Assign Intermediary Role: Assigns Intermediary role to the approved address of the NFT.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.assignRole.selector,
-                    abi.encode(3), // Operator role
+                    abi.encode(3), // Intermediary role
                     inputParams,
                     mandateCount - 1, // the mandate from which the return data will be fetched (the ownership check mandate)
                     abi.encode()
@@ -620,12 +620,12 @@ contract Deploy is DeployHelpers {
         conditions.needFulfilled = mandateCount - 1;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Revoke Operator Role: Revokes Operator role. In case of inactivity or lapsed ownership. Executives can revoke the operator role based on the same ownership check if needed.",
+                nameDescription: "Revoke Intermediary Role: Revokes Intermediary role. In case of inactivity or lapsed ownership. Executives can revoke the intermediary role based on the same ownership check if needed.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_OnReturnValue"),
                 config: abi.encode(
                     address(0),
                     IPowers.revokeRole.selector,
-                    abi.encode(3), // Operator role
+                    abi.encode(3), // Intermediary role
                     inputParams,
                     mandateCount - 2, // the mandate from which the return data will be fetched (the ownership check mandate)
                     abi.encode()
@@ -647,19 +647,19 @@ contract Deploy is DeployHelpers {
 
         flows.push(PowersTypes.Flow({
             mandateIds: mandateIds,
-            nameDescription: "Manage Voter Role and Executive Elections: Assigning voter role based on having a certain role (e.g. owner, minter, operator), with executives having the power to veto. Executives can create elections, voters can vote, and executives can tally and execute results."
+            nameDescription: "Manage Voter Role and Executive Elections: Assigning voter role based on having a certain role (e.g. owner, minter, intermediary), with executives having the power to veto. Executives can create elections, voters can vote, and executives can tally and execute results."
         }));
 
         uint256[] memory voterRoleCriteria = new uint256[](3);
-        voterRoleCriteria[0] = 1; // Minter role ID
+        voterRoleCriteria[0] = 1; // Artist role ID
         voterRoleCriteria[1] = 2; // Owner role ID
-        voterRoleCriteria[2] = 3; // Operator role ID
-        // if account has minter, owner or operator role, they can claim a voter role. 
+        voterRoleCriteria[2] = 3; // Intermediary role ID
+        // if account has artist, owner or intermediary role, they can claim a voter role. 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // public  
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Claim Voter Role: Minters, Owners, and Intermediaries can claim voter role.",
+                nameDescription: "Claim Voter Role: Artists, Owners, and Intermediarys can claim voter role.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RoleByRoles"),
                 config: abi.encode(
                     4, // Voter role ID
