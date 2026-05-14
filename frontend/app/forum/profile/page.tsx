@@ -1,72 +1,131 @@
 'use client'
 
-import { ChatBubbleLeftIcon, TrophyIcon, LinkIcon, ArrowTopRightOnSquareIcon, UserCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { useRouter } from 'next/navigation';
+import { ChatBubbleLeftIcon, UserCircleIcon, DocumentTextIcon, BoltIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
+import { Roles } from './Roles';
+import { useWallets } from '@privy-io/react-auth';
+import { useAddressDisplay } from '@/hooks/useAddressDisplay';
+import { useProfileStats } from '@/hooks/useProfileStats';
 
 export default function UserProfile() {
-    // For now, we here use dummy data. 
-    const router = useRouter(); 
+  const { wallets, ready: walletsReady } = useWallets();
+  const userAddress = wallets[0]?.address as `0x${string}` | undefined;
+  const { displayName, ensName, isLoading: ensLoading } = useAddressDisplay(userAddress);
+  const { proposals, executions, votes, isLoadingVotes } = useProfileStats(userAddress);
 
   return (
     <div className="min-h-screen flex flex-col bg-background scanlines">
-      {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
-          <div className="space-y-8">
+        <div className="space-y-8">
 
-            {/* Profile Header — read-only */}
-            <section className="border border-border p-6">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                {/* Avatar */}
-                <div className="shrink-0 self-start">
-                  <div className = "h-20 w-20">
-                    <UserCircleIcon /> 
+          {/* Profile Header */}
+          <section className="border border-border p-6">
+            {!walletsReady ? (
+              <div className="flex items-center gap-3 text-muted-foreground font-mono text-sm uppercase tracking-wider">
+                <UserCircleIcon className="h-8 w-8" />
+                <span>···</span>
+              </div>
+            ) : !userAddress ? (
+              <div className="flex items-center gap-3 text-muted-foreground font-mono text-sm uppercase tracking-wider">
+                <UserCircleIcon className="h-8 w-8" />
+                <span>No wallet connected</span>
+              </div>
+            ) : (
+              <div className="flex flex-col lg:flex-row gap-6 w-full">
+                {/* Avatar + address */}
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="h-10 w-10 shrink-0 text-muted-foreground">
+                    <UserCircleIcon className="h-full w-full" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className={`font-mono text-base text-foreground tracking-wider truncate${ensName ? '' : ' uppercase'}`}>
+                      {ensLoading ? '···' : displayName}
+                    </h2>
+                    {ensName && userAddress && (
+                      <p className="font-mono text-xs text-muted-foreground mt-0.5">
+                        {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="space-y-2 flex-1">
-                  <h2 className="font-mono text-base text-foreground text-glow uppercase tracking-wider">HERE ADDRESS OR ENS NAME</h2>
-                  Add latest activity here: votes, proposals, etc. Fetch from event logs. 
+
+                {/* Divider */}
+                <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
+                {/* Proposals */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-3">
+                    <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="text-sm text-foreground uppercase tracking-wider">Proposals</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Created</span>
+                      <span className="text-foreground font-semibold">{proposals}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
+                {/* Executions */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BoltIcon className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="text-sm text-foreground uppercase tracking-wider">Executions</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Fulfilled</span>
+                      <span className="text-foreground font-semibold">{executions}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
+                {/* Votes */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-3">
+                    <HandRaisedIcon className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="text-sm text-foreground uppercase tracking-wider">Votes</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Cast</span>
+                      <span className="text-foreground font-semibold">
+                        {isLoadingVotes ? <span className="text-muted-foreground">···</span> : votes}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </section>    
+            )}
+          </section>
 
-            {/* On-Chain Section */}
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* On-Chain Section */}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                {/* DAO Roles */}
-                <div className="border border-border space-y-3">
-                  <h4 className="font-mono text-foreground flex items-center gap-2 uppercase tracking-wider text-sm px-4 py-3 border-b border-border bg-muted/50">
-                    <TrophyIcon className="h-4 w-4" /> DAO Roles
-                  </h4>
-                  <div className="space-y-2 p-4">
-                    Add organisation roles here. This can be fetched separately using hasRoleSince calls to contracts (and their role IDs) that are locally saved. 
-                    Use same layout as in the commented text below. 
-                    {/* {profile.daoRoles.map((role, i) =>
-                    <div key={i} className="font-mono text-xs text-muted-foreground flex justify-between">
-                        <span><span className="text-foreground">{role.role}</span> @ {role.dao}</span>
-                        <span>since {role.since}</span>
-                      </div>
-                    )} */}
-                  </div>
+              <Roles userAddress={userAddress} />
+
+              {/* Inbox */}
+              <div className="border border-border space-y-4">
+                <h4 className="font-mono text-foreground flex items-center gap-2 uppercase tracking-wider text-sm px-4 py-3 border-b border-border bg-muted/50">
+                  <ChatBubbleLeftIcon className="h-4 w-4" /> Inbox
+                </h4>
+                <div className="space-y-3 p-4">
+                  Add events here. Fetched from event logs of orgs saved locally.
+                  Events are active votes + executed actions in relevant orgs.
                 </div>
-
-                {/* Inbox */}
-                <div className="border border-border space-y-4">
-                  <h4 className="font-mono text-foreground flex items-center gap-2 uppercase tracking-wider text-sm px-4 py-3 border-b border-border bg-muted/50">
-                    <ChatBubbleLeftIcon className="h-4 w-4" /> Inbox
-                  </h4>
-                  <div className="space-y-3 p-4">
-                    Add events here. Fetched from event logs of orgs saved locally. 
-                    Events are active votes + executed actions in relevant orgs.
-                  </div>
-                </div>
-
               </div>
+
             </div>
-
           </div>
+
+        </div>
       </main>
-
-    </div>);
-
+    </div>
+  )
 }
