@@ -104,6 +104,10 @@ contract PowersFactory is IPowersFactory, Ownable {
         return flows[index];
     }
 
+    ////////////////////////////////
+    ///      DEPLOY ORGS         ///
+    ////////////////////////////////
+
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
@@ -125,6 +129,10 @@ contract PowersFactory is IPowersFactory, Ownable {
 
         return powers;
     }
+
+    ////////////////////////////////
+    ///         GETTERS          ///
+    ////////////////////////////////
 
     /// @notice Returns the address of the latest deployed Powers contract.
     /// @return The address of the latest deployment.

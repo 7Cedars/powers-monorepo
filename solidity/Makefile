@@ -126,7 +126,7 @@ install-deps:
 	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
 	forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	forge install safe-fndn/safe-modules --no-git || exit 1
-	forge install zkpassport/circuits --no-git || exit 1
+	forge install zkpassport/circuits@24537062043212a73f70066f2e04bc0abe97ae0e --no-git || exit 1
 	forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies installed without git metadata."
 	
@@ -141,7 +141,7 @@ reset-deps:
 	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-git || exit 1
 	@forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	@forge install safe-fndn/safe-modules --no-git || exit 1
-	@forge install zkpassport/circuits --no-git || exit 1
+	forge install zkpassport/circuits@24537062043212a73f70066f2e04bc0abe97ae0e --no-git || exit 1
 	@forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies reset complete. All libs installed without git metadata."
 
@@ -323,23 +323,23 @@ mandates-deploy :
 
 examples-deploy : 
 	@echo "Deploying example contracts..."
-	@echo "Account Abstraction:"
-	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Account Abstraction:"
+# 	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Bicameralism:"
 # 	forge script governance/examples/Bicameralism.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Election List DAO:"
 # 	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Governed 721:"
 # 	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-# 	@echo "Nested Safe Governance:"
-# 	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	@echo "Nested Safe Governance:"
+	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Optimistic Execution:"
 # 	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Powers 101:"
 # 	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
 # 	@echo "Token Delegates:"
 # 	forge script governance/examples/TokenDelegates.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
-# 	@echo "All example contracts deployed."
+	@echo "All example contracts deployed."
 
 organisation-deploy : 
 	@echo "Deploying organisation..."
