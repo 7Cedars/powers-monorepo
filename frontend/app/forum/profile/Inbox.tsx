@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useReadContracts } from 'wagmi'
 import { useRouter } from 'next/navigation'
-import { InboxIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, InboxIcon } from '@heroicons/react/24/outline'
 import { useSavedProtocolsStore, setPowers, setAction } from '@/context/store'
 import { powersAbi } from '@/context/abi'
-import { Powers, Action, Mandate } from '@/context/types'
+import { Powers, Action, Mandate, ChainId } from '@/context/types'
 import { useBlocks } from '@/hooks/useBlocks'
 import { toFullDateFormat } from '@/utils/toDates'
+import { usePowers } from '@/hooks/usePowers'
 
 const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 const PAGE_SIZE = 25
@@ -39,9 +40,11 @@ const EVENT_DISPLAY: Record<InboxItem['event'], { label: string; color: string }
 
 export function Inbox({ userAddress }: InboxProps) {
   const router = useRouter()
-  const { savedProtocols } = useSavedProtocolsStore()
+  const { savedProtocols, loadSavedProtocols } = useSavedProtocolsStore()
   const { timestamps, fetchTimestamps } = useBlocks()
+  const { fetchPowers } = usePowers()
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Flatten all (protocol, roleId) pairs across saved protocols for batch hasRoleSince
   const roleEntries = useMemo<RoleEntry[]>(() => {
@@ -56,7 +59,7 @@ export function Inbox({ userAddress }: InboxProps) {
     return entries
   }, [userAddress, savedProtocols])
 
-  const { data: roleResults, isLoading } = useReadContracts({
+  const { data: roleResults, isLoading, refetch } = useReadContracts({
     contracts: roleEntries.map(({ protocol, roleId }) => ({
       address: protocol.contractAddress,
       abi: powersAbi,
@@ -69,6 +72,21 @@ export function Inbox({ userAddress }: InboxProps) {
       staleTime: 0,
     },
   })
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all(
+        savedProtocols.map(protocol =>
+          fetchPowers(protocol.contractAddress, Number(protocol.chainId) as ChainId)
+        )
+      )
+      loadSavedProtocols()
+      refetch()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [savedProtocols, fetchPowers, loadSavedProtocols, refetch])
 
   // Map: contractAddress → Set of roleId strings the user holds
   const userRolesByProtocol = useMemo(() => {
@@ -145,7 +163,11 @@ export function Inbox({ userAddress }: InboxProps) {
       }
     }
 
-    items.sort((a, b) => (a.blockNumber > b.blockNumber ? -1 : a.blockNumber < b.blockNumber ? 1 : 0))
+    const EVENT_ORDER: Record<InboxItem['event'], number> = { proposed: 0, requested: 1, cancelled: 2, fulfilled: 3 }
+    items.sort((a, b) => {
+      if (a.blockNumber !== b.blockNumber) return a.blockNumber > b.blockNumber ? -1 : 1
+      return EVENT_ORDER[b.event] - EVENT_ORDER[a.event]
+    })
     return items
   }, [savedProtocols, userRolesByProtocol])
 
@@ -177,6 +199,14 @@ export function Inbox({ userAddress }: InboxProps) {
     <div className="border border-border space-y-3">
       <h4 className="font-mono text-foreground flex items-center gap-2 uppercase tracking-wider text-sm px-4 py-3 border-b border-border bg-muted/50">
         <InboxIcon className="h-4 w-4" /> Inbox
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing || !userAddress}
+          className="ml-auto text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="Refresh inbox"
+        >
+          <ArrowPathIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </button>
       </h4>
       <div className="p-4">
         {!userAddress ? (
