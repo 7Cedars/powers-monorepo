@@ -1,7 +1,8 @@
 'use client'
 
-import { ChatBubbleLeftIcon, UserCircleIcon, DocumentTextIcon, BoltIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, DocumentTextIcon, BoltIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
 import { Roles } from './Roles';
+import { Inbox } from './Inbox';
 import { useWallets } from '@privy-io/react-auth';
 import { useAddressDisplay } from '@/hooks/useAddressDisplay';
 import { useProfileStats } from '@/hooks/useProfileStats';
@@ -106,19 +107,14 @@ export default function UserProfile() {
 
           {/* On-Chain Section */}
           <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              <Roles userAddress={userAddress} />
+              <div className="lg:col-span-1">
+                <Roles userAddress={userAddress} />
+              </div>
 
-              {/* Inbox */}
-              <div className="border border-border space-y-4">
-                <h4 className="font-mono text-foreground flex items-center gap-2 uppercase tracking-wider text-sm px-4 py-3 border-b border-border bg-muted/50">
-                  <ChatBubbleLeftIcon className="h-4 w-4" /> Inbox
-                </h4>
-                <div className="space-y-3 p-4">
-                  Add events here. Fetched from event logs of orgs saved locally.
-                  Events are active votes + executed actions in relevant orgs.
-                </div>
+              <div className="lg:col-span-2">
+                <Inbox userAddress={userAddress} />
               </div>
 
             </div>

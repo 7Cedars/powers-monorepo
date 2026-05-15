@@ -39,6 +39,7 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "./Mandate.sol";
+import { PowersUtilities } from "./libraries/PowersUtilities.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
 import { IPowers, IERC721Receiver, IERC1155Receiver } from "./interfaces/IPowers.sol";
 import { Checks } from "./libraries/Checks.sol";
@@ -499,27 +500,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation.
     /// @dev Internal helper to store mandate data and initialize it.
     function _storeMandate(uint16 mandateId, MandateInitData memory mandateInitData) internal {
-        // check if added address is indeed a mandate. Note that this will also revert with address(0).
-        if (!ERC165Checker.supportsInterface(mandateInitData.targetMandate, type(IMandate).interfaceId)) {
-            revert Powers__IncorrectInterface(mandateInitData.targetMandate);
-        }
-
-        // check if targetMandate is blacklisted
-        if (isBlacklisted(mandateInitData.targetMandate)) revert Powers__AddressBlacklisted();
-
-        // check if conditions combine PUBLIC_ROLE with a vote - which is impossible due to PUBLIC_ROLE having an infinite number of members.
-        if (mandateInitData.conditions.allowedRole == PUBLIC_ROLE && mandateInitData.conditions.quorum > 0) {
-            revert Powers__VoteWithPublicRoleDisallowed();
-        }
-
-        AdoptedMandate storage mandate = mandates[mandateId];
-        mandate.active = true;
-        mandate.targetMandate = mandateInitData.targetMandate;
-        mandate.conditions = mandateInitData.conditions;
-
-        Mandate(mandateInitData.targetMandate)
-            .initializeMandate(mandateId, mandateInitData.nameDescription, "", mandateInitData.config);
-
+        PowersUtilities.storeMandate(mandates, _blacklist, mandateId, mandateInitData);
         emit MandateAdopted(mandateId);
     }
 
@@ -584,36 +565,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     ///
     /// Emits a {PowersEvents::RoleSet} event.
     function _setRole(uint256 roleId, address account, bool access) internal {
-        // check 1: Public role is locked.
-        if (roleId == PUBLIC_ROLE) revert Powers__CannotSetPublicRole();
-        // check 2: Zero address is not allowed.
-        if (account == address(0)) revert Powers__CannotAddZeroAddress();
-        // check 3: The organisation itself cannot be assigned a role. This to avoid re-entrancy attacks.
-        if (account == address(this)) revert Powers__CannotAddPowersAddressAsMember();
-
-        Role storage role = roles[roleId];
-        uint256 index = role.members[account];
-        bool hasRole = index != 0;
-
-        // add role if role requested and account does not already have role.
-        if (access && !hasRole) {
-            role.membersArray.push(Member({ account: account, since: uint48(block.number) }));
-            role.members[account] = role.membersArray.length; // 'index of new member is length of array (which is 1-based index).
-            // remove role if access set to false and account has role.
-        } else if (!access && hasRole) {
-            uint256 indexEnd = role.membersArray.length - 1;
-            Member memory memberEnd = role.membersArray[indexEnd];
-
-            // updating array. Note that 1 is added to the index to avoid 0 index of first member in array. We here have to subtract it.
-            role.membersArray[index - 1] = memberEnd; // replace account with last member account.
-            role.membersArray.pop(); // remove last member.
-
-            // updating indices in mapping.
-            role.members[memberEnd.account] = index; // update index of last member in list
-            role.members[account] = 0; // 'index of removed member is set to 0.
-        }
-        // note: nothing happens when 1: access is requested and not a new member 2: access is false and account does not have role. No revert.
-
+        PowersUtilities.setRole(roles, roleId, account, access);
         emit RoleSet(roleId, account, access);
     }
 
@@ -679,21 +631,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     /// @param account The address casting the vote.
     /// @param support The support value (0=Against, 1=For, 2=Abstain).
     function _countVote(uint256 actionId, address account, uint8 support) internal {
-        Action storage proposedAction = _actions[actionId];
-
-        // set account as voted.
-        proposedAction.hasVoted[account] = true;
-
-        // add vote to tally.
-        if (support == uint8(VoteType.Against)) {
-            proposedAction.againstVotes++;
-        } else if (support == uint8(VoteType.For)) {
-            proposedAction.forVotes++;
-        } else if (support == uint8(VoteType.Abstain)) {
-            proposedAction.abstainVotes++;
-        } else {
-            revert Powers__InvalidVoteType();
-        }
+        PowersUtilities.countVote(_actions, actionId, account, support);
     }
 
     /// @notice Internal function that counts the number of members in a given role.
