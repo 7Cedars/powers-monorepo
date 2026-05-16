@@ -359,7 +359,7 @@ deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:Deplo
 # Verify Contracts
 sepoliaVerifyContract : 
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/helpers/PowersPaymaster.sol:PowersPaymaster --watch
-	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xEA32F09478C71aa481248c3D95467bc36DF4d524 src/helpers/PowersFactory.sol:PowersFactory --watch 
+	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xD13b49a6252e732B0EdB8B16c33391f44e087be8 src/helpers/PowersFactory.sol:PowersFactory --watch 
 
 optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 src/helpers/TreasuryPools.sol:TreasuryPools --watch
 arbSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 421614 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0xb1fe867eE7919887EB381c4626bdbAe003969683 src/helpers/TreasuryPools.sol:TreasuryPools --watch
