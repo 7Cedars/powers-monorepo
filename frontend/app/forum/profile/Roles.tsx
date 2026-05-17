@@ -61,7 +61,7 @@ export function Roles({ userAddress }: RolesProps) {
     results.forEach((result, i) => {
       if (result.status !== 'success') return
       const since = result.result as bigint
-      if (since === 0n) return
+      if (!since) return
 
       const { protocol, role } = roleEntries[i]
       const key = protocol.contractAddress

@@ -105,7 +105,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 powers.name ? powers.name : "FORUM"
             } 
             </a>
-              { 
+              {triggerName === "Main" &&
                 <BlockCounter onRefresh={() => {
                   if (powersAddress && chainId) {
                     fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
@@ -278,15 +278,17 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           {/* Menu content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {/* Block Counter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-mono uppercase">Block:</span>
-              <BlockCounter onRefresh={() => {
-                if (powersAddress && chainId) {
-                  fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                  fetchBlockNumber();
-                }
-              }} blockNumber={blockNumber} />
-            </div>
+            {triggerName === "Main" && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-mono uppercase">Block:</span>
+                <BlockCounter onRefresh={() => {
+                  if (powersAddress && chainId) {
+                    fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
+                    fetchBlockNumber();
+                  }
+                }} blockNumber={blockNumber} />
+              </div>
+            )}
             
             {/* Divider */}
             <div className="border-t border-border" />
