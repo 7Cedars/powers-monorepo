@@ -24,7 +24,7 @@ contract Adopt_Mandates is Mandate {
         bytes memory config
     ) public override {
         string[] memory params = new string[](2);
-        params[0] = "address[] mandateAddress";
+        params[0] = "address[] mandates";
         params[1] = "uint256[] roleIds";
         super.initializeMandate(index, nameDescription, abi.encode(params), config);
     } 

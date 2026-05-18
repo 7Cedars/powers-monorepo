@@ -12,7 +12,7 @@ import { useWallets } from '@privy-io/react-auth';
 import { useReadContract, useBlockNumber } from 'wagmi';
 import { powersAbi } from '@/context/abi';
 import { parseChainId } from '@/utils/parsers';
-import { calculateVoteTimeRemaining } from '@/public/organisations/helpers';
+import { calculateVoteTimeRemaining, calculateTimelockRemaining } from '@/public/organisations/helpers';
 
 export default function MandatePage() {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -88,9 +88,9 @@ export default function MandatePage() {
   const getActionStatus = (action: Action): { text: string; color: string; isActive: boolean } => {
     if (action.state === undefined) return { text: 'UNKNOWN', color: 'text-gray-500', isActive: false };
     
-    if (action.state === 3 && 
-        action.proposedAt && 
-        mandate?.conditions?.votingPeriod && 
+    if (action.state === 3 &&
+        action.proposedAt &&
+        mandate?.conditions?.votingPeriod &&
         currentBlockNumber &&
         chainId) {
       const parsedChainId = parseChainId(chainId);
@@ -102,6 +102,28 @@ export default function MandatePage() {
           parsedChainId
         );
         return { text: timeRemaining, color: 'text-green-600', isActive: true };
+      }
+    }
+
+    // Timelock countdown: state 5 (Succeeded) + active timelock = waiting to execute
+    if (action.state === 5 &&
+        action.proposedAt &&
+        mandate?.conditions?.timelock &&
+        BigInt(mandate.conditions.timelock) > 0n &&
+        currentBlockNumber &&
+        chainId) {
+      const parsedChainId = parseChainId(chainId);
+      if (parsedChainId) {
+        const timeRemaining = calculateTimelockRemaining(
+          BigInt(action.proposedAt),
+          BigInt(mandate.conditions.timelock),
+          currentBlockNumber,
+          parsedChainId
+        );
+        if (timeRemaining !== "Ready") {
+          return { text: timeRemaining, color: 'text-yellow-600', isActive: true };
+        }
+        return { text: 'READY', color: 'text-green-600', isActive: true };
       }
     }
     
