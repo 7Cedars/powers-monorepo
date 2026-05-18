@@ -1,7 +1,7 @@
 // Viem-based event watcher for RoleSet events
 
 import { type Address, type WatchContractEventReturnType } from 'viem';
-import { getPublicClient } from '../powers/contract.js';
+import { getWatchClient } from '../powers/contract.js';
 import { powersAbi } from '../powers/abi.js';
 import type { RoleSetEvent } from '../utils/types.js';
 
@@ -20,7 +20,7 @@ export function watchRoleSetEvents(
   powersAddress: Address,
   onEvent: EventHandler
 ): WatchContractEventReturnType {
-  const client = getPublicClient(chainId);
+  const client = getWatchClient(chainId);
   
   console.log(`Starting to watch RoleSet events on chain ${chainId} for contract ${powersAddress}`);
   

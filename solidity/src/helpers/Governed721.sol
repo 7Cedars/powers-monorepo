@@ -70,7 +70,7 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
     function setPaymentId(uint16 _mandateId) external onlyOwner {
         paymentMandateId = _mandateId;
     }
-
+ 
     function setSplit(Role role, uint8 percentage) external onlyOwner {
         if (uint8(role) > 4) {
             revert(
@@ -175,7 +175,10 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
         uint256 quantity,
         uint256 nonce
     ) external payable {
-        // check 1: are any accounts blacklisted?
+        // check 1: is msg.sender authorized to transfer this token?
+        _checkAuthorized(oldOwner, msg.sender, tokenId);
+
+        // check 2: are any accounts blacklisted?
         if (blacklist[oldOwner] || blacklist[newOwner] || blacklist[msg.sender]) {
             revert("Blacklisted account involved in transfer");
         }
