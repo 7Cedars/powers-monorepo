@@ -43,8 +43,13 @@ contract SafeAllowance_Transfer is Mandate {
         bytes memory inputParams,
         bytes memory config
     ) public override {
+        string[] memory params = new string[](3);
+        params[0] = "address token";
+        params[1] = "uint256 amount";
+        params[2] = "address payableTo";
+
         super.initializeMandate(
-            index, nameDescription, abi.encode("address Token", "uint256 Amount", "address PayableTo"), config
+            index, nameDescription, abi.encode(params), config
         );
     }
 

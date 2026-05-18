@@ -321,14 +321,12 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
       return;
     }
 
-    const needsVote = mandate.conditions?.quorum && mandate.conditions.quorum > 0n;
-
     // Mark that we're submitting a transaction
     setIsSubmitting(true);
 
     try {
-      if (needsVote) {
-        // Needs a vote - use propose
+      if (needsVote || needsProposalFirst) {
+        // Voting mandate OR timelock-only mandate: propose first
         await propose(
           mandate.index,
           action.callData as `0x${string}`,
@@ -337,7 +335,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           powers
         );
       } else {
-        // Direct execution - use request
+        // Direct execution (no quorum, no timelock)
         await request(
           mandate,
           action.callData as `0x${string}`,
@@ -390,20 +388,19 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
     }
   }, [flowActions, dataTypes, mandate.index, action]);
 
-  const needsVote = mandate.conditions?.quorum && mandate.conditions.quorum > 0n;
-  console.log("@NewActionDialog: ", {action, error, status, simulation, checks, needsVote});
-  
-  // For NEW proposals, we need different checks than for executing existing actions
-  // When proposing, the action shouldn't exist yet (actionExists should be false)
-  // We only care about: authorised, throttlePassed, actionNotFulfilled, mandateFulfilled, mandateNotFulfilled
+  const needsVote = !!(mandate.conditions?.quorum && mandate.conditions.quorum > 0n);
+  // Timelock-only: quorum == 0 but timelock > 0 — must propose first, then wait, then request
+  const needsProposalFirst = !needsVote && !!(mandate.conditions?.timelock && BigInt(mandate.conditions.timelock) > 0n);
+  console.log("@NewActionDialog: ", {action, error, status, simulation, checks, needsVote, needsProposalFirst});
+
+  // For NEW proposals (voting OR timelock-only), we only gate on auth + throttle + not-yet-fulfilled.
+  // delayPassed is NOT checked here because no proposal exists yet (nothing to delay against).
   const canSubmit = action.upToDate && checks && (() => {
-    if (needsVote) {
-      // For proposals: action should NOT exist yet, so we skip actionExists and proposalPassed checks
+    if (needsVote || needsProposalFirst) {
       return checks.authorised === true &&
              checks.throttlePassed === true &&
-             checks.actionNotFulfilled === true; 
+             checks.actionNotFulfilled === true;
     } else {
-      // For direct execution: use all checks
       return checks.allPassed === true;
     }
   })();
@@ -545,7 +542,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         onSubmit={handleSubmit}
         status={status.status}
         isSubmitting={isSubmitting}
-        needsVote={!!needsVote}
+        needsVote={needsVote || needsProposalFirst}
         showFallback={action.upToDate}
         checks={checks}
       />

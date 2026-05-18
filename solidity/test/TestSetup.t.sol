@@ -273,31 +273,32 @@ abstract contract TestHelperFunctions is Test, TestVariables {
     }
 
     function check_inputParamsDependencies(address powers) public view {
-        // check that the input params are correctly set in the mandate.
         uint16 counter = Powers(payable(powers)).mandateCounter();
+        string memory failures = "";
+        uint256 failCount = 0;
 
-        // for each mandate:
         for (uint16 mandateId = 1; mandateId < counter; mandateId++) {
             (address mandateAddr,, bool active) = Powers(payable(powers)).getAdoptedMandate(mandateId);
             if (!active) continue;
 
-            // 1: check if it has needFulfilled and / or need not fulfilled set.
             PowersTypes.Conditions memory conditions = Powers(payable(powers)).getConditions(mandateId);
 
-            // 2: if so, use getInputParams at the mandate to check if the input params are the same between child and parent mandate.
             if (conditions.needFulfilled > 0) {
                 (address parentAddr,,) = Powers(payable(powers)).getAdoptedMandate(conditions.needFulfilled);
 
                 bytes memory childInputParams = Mandate(mandateAddr).getInputParams(powers, mandateId);
-                bytes memory parentInputParams = Mandate(parentAddr).getInputParams(powers, conditions.needFulfilled); 
+                bytes memory parentInputParams = Mandate(parentAddr).getInputParams(powers, conditions.needFulfilled);
 
-                vm.assertTrue(
-                    keccak256(childInputParams) == keccak256(parentInputParams),
-                    string.concat(
-                        "InputParams mismatch: '", Mandate(mandateAddr).getNameDescription(powers, mandateId),
-                        "' needs fulfilled '", Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled), "'" 
-                    )
-                );
+                if (keccak256(childInputParams) != keccak256(parentInputParams)) {
+                    failCount++;
+                    failures = string.concat(
+                        failures,
+                        "\n[", Strings.toString(failCount), "] '",
+                        Mandate(mandateAddr).getNameDescription(powers, mandateId),
+                        "' needs fulfilled '",
+                        Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled), "'"
+                    );
+                }
             }
 
             if (conditions.needNotFulfilled > 0) {
@@ -306,15 +307,23 @@ abstract contract TestHelperFunctions is Test, TestVariables {
                 bytes memory childInputParams = Mandate(mandateAddr).getInputParams(powers, mandateId);
                 bytes memory parentInputParams = Mandate(parentAddr).getInputParams(powers, conditions.needNotFulfilled);
 
-                vm.assertTrue(
-                    keccak256(childInputParams) == keccak256(parentInputParams),
-                    string.concat(
-                        "InputParams mismatch: '", Mandate(mandateAddr).getNameDescription(powers, mandateId),
-                        "' needs not fulfilled '", Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled), "'" 
-                    )
-                );
+                if (keccak256(childInputParams) != keccak256(parentInputParams)) {
+                    failCount++;
+                    failures = string.concat(
+                        failures,
+                        "\n[", Strings.toString(failCount), "] '",
+                        Mandate(mandateAddr).getNameDescription(powers, mandateId),
+                        "' needs not fulfilled '",
+                        Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled), "'"
+                    );
+                }
             }
         }
+
+        vm.assertTrue(
+            failCount == 0,
+            string.concat("InputParams mismatches (", Strings.toString(failCount), "):", failures)
+        );
     }
 
     function voteOnProposal(
