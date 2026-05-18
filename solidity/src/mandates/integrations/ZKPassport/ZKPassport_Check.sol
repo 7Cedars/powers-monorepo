@@ -76,9 +76,10 @@ contract ZKPassport_Check is Mandate {
     {
         // Decode config
         Mem memory mem;
-        (, mem.registry, mem.staleAfterSeconds, mem.facematchRequired, mem.functionSelector, mem.input) =
+        (mem.inputParams, mem.registry, mem.staleAfterSeconds, mem.facematchRequired, mem.functionSelector, mem.input) =
             abi.decode(getConfig(powers, mandateId), (string[], address, uint256, bool, bytes4, bytes));
-        mem.accountToCheck = abi.decode(mandateCalldata, (address));
+        // "address AccountToCheck" is appended last in initializeMandate, so read from position mem.inputParams.length.
+        mem.accountToCheck = abi.decode(mandateCalldata[mem.inputParams.length * 32:], (address));
 
         // 1. validate inputs
         if (mem.registry == address(0)) revert("ZKPassport: Invalid registry address");
@@ -154,6 +155,7 @@ contract ZKPassport_Check is Mandate {
         }
 
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
+        calldatas[0] = abi.encode(caller);
         return (actionId, targets, values, calldatas);
     }
 
