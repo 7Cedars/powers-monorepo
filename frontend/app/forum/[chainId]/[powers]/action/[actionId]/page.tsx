@@ -12,6 +12,7 @@ import { ActionOverview } from './ActionOverview';
 import { PastVotes } from './PastVotes';
 import { setAction, useActionStore } from '@/context/store';
 import { Timeline } from './Timeline';
+import { TimelockExecute } from './TimelockExecute';
 
 export default function ActionPage() {
   const router = useRouter();
@@ -178,6 +179,17 @@ export default function ActionPage() {
                       </div>
                     </div>
                   </div>
+                </>
+              )}
+
+              {/* Timelock Execute Section (Right) - Only show if mandate has timelock but no vote */}
+              {(mandate.conditions?.quorum ? BigInt(mandate.conditions.quorum) : 0n) === 0n &&
+               (mandate.conditions?.timelock ? BigInt(mandate.conditions.timelock) : 0n) > 0n && (
+                <>
+                  {/* Separator */}
+                  <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
+                  <TimelockExecute action={action} mandate={mandate} />
                 </>
               )}
             </div>
