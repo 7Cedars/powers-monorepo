@@ -18,7 +18,7 @@ export const useAddressDisplay = (address?: string | undefined) => {
     address: address ? address as `0x${string}` : "0x0000000000000000000000000000000000000000" as `0x${string}`,
     chainId: mainnet.id,
     query: {
-      enabled: !!address && address.length >= 10, // Only fetch if address is valid
+      enabled: !!address && address.length >= 10 && !!process.env.NEXT_PUBLIC_ALCHEMY_KEY,
       staleTime: 1000 * 60 * 5, // Cache for 5 minutes
       retry: false, // Don't retry on CORS errors
     }

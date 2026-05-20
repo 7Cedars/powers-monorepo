@@ -8,6 +8,7 @@ import { useUIStateStore } from '@/context/store';
 import { useAccount, useReadContracts } from 'wagmi';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { powersAbi } from '@/context/abi';
+import { usePrivy } from '@privy-io/react-auth';
 
 // PUBLIC_ROLE is max uint256 - mandates with this role are accessible to everyone
 const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
@@ -19,6 +20,7 @@ interface ActivityOverviewProps {
 export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>();
   const { address: userAddress } = useAccount();
+  const { authenticated, login } = usePrivy();
   const showAllMandates = useUIStateStore((state) => state.showAllMandates);
   const toggleShowAllMandates = useUIStateStore((state) => state.toggleShowAllMandates);
 
@@ -66,7 +68,9 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
   };
 
   // Check if user can access a mandate (either has the role or it's public)
+  // Unauthenticated users cannot access any mandate in the filtered view
   const userCanAccessMandate = (mandate: Mandate): boolean => {
+    if (!authenticated || !userAddress) return false;
     return isMandatePublic(mandate) || userHasRoleForMandate(mandate);
   };
 
@@ -136,16 +140,44 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-auto p-0">
           <div className="border border-border bg-background p-8 text-center">
-            <p className="text-muted-foreground font-mono text-sm mb-4">
-              You don't have any roles in this organisation that allow you to participate in governance flows.
-            </p>
-            <button
-              onClick={toggleShowAllMandates}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary font-mono text-sm"
-            >
-              <EyeIcon className="w-4 h-4" />
-              <span>Show all mandates</span>
-            </button>
+            {!authenticated || !userAddress ? (
+              <>
+                <p className="text-muted-foreground font-mono text-sm mb-2">
+                  You are not logged in. Connect your wallet to participate in governance flows.
+                </p>
+                <p className="text-muted-foreground font-mono text-sm mb-4">
+                  You can still view all governance flows without logging in.
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={login}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary font-mono text-sm"
+                  >
+                    <span>Login</span>
+                  </button>
+                  <button
+                    onClick={toggleShowAllMandates}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary font-mono text-sm"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                    <span>View flows</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground font-mono text-sm mb-4">
+                  You don't have any roles in this organisation that allow you to participate in governance flows.
+                </p>
+                <button
+                  onClick={toggleShowAllMandates}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border hover:bg-muted/50 transition-colors text-foreground hover:text-primary font-mono text-sm"
+                >
+                  <EyeIcon className="w-4 h-4" />
+                  <span>Show all mandates</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

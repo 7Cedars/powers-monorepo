@@ -125,7 +125,7 @@ export default function ActionPage() {
             </div>
             <button
               onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${action.mandateId}?actionId=${action.actionId}`)}
-              className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80"
+              className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80 cursor-pointer"
             >
               View Flow Sequence
               <ArrowLongRightIcon className="h-4 w-4" />

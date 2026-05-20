@@ -2,9 +2,13 @@ import { ChangeEvent } from "react";
 import { InputType, DataType, Metadata, Attribute, Token, CommunicationChannels, ChainId } from "../context/types"
 import { type UseReadContractsReturnType } from 'wagmi'
 import { type GetChainsReturnType } from '@wagmi/core'
-import { hexToString } from 'viem'
+import { hexToString, decodeErrorResult } from 'viem'
 import { getChains } from '@wagmi/core'
 import { wagmiConfig } from "@/context/wagmiConfig";
+import PowersAbi from '@/context/builds/Powers.json'
+import MandateAbi from '@/context/builds/Mandate.json'
+
+const ERROR_ABI = [...PowersAbi.abi, ...MandateAbi.abi] as const
 
 const chains = getChains(wagmiConfig);
 
@@ -321,10 +325,21 @@ export const parseMandateError = (rawReply: ErrorStore): string => {
 
   console.log("@parseMandateError: waypoint 0", {rawReply})
 
-  if ( 
+  if (
     typeof rawReply.error === 'object' &&  rawReply.error && 'shortMessage' in rawReply.error
-    ) { 
-    return rawReply.error.shortMessage as string
+    ) {
+    const shortMessage = rawReply.error.shortMessage as string
+    const hexMatch = shortMessage.match(/0x[a-fA-F0-9]{8,}/)
+    if (hexMatch) {
+      try {
+        const decoded = decodeErrorResult({ abi: ERROR_ABI, data: hexMatch[0] as `0x${string}` })
+        const args = decoded.args && decoded.args.length > 0 ? `: ${decoded.args.join(', ')}` : ''
+        return `${decoded.errorName}${args}`
+      } catch {
+        // hex present but not in our ABI — fall through to return shortMessage
+      }
+    }
+    return shortMessage
   }
 
 
@@ -336,7 +351,16 @@ export const parseMandateError = (rawReply: ErrorStore): string => {
   if (errorString.includes("The contract function") && errorString.includes("reverted with the following signature:")) {
     const signatureMatch = errorString.match(/reverted with the following signature:\s*(0x[a-fA-F0-9]+)/)
     if (signatureMatch && signatureMatch[1]) {
-      return `the error signature is ${signatureMatch[1]}. That is all I know.`
+      try {
+        const decoded = decodeErrorResult({
+          abi: ERROR_ABI,
+          data: signatureMatch[1] as `0x${string}`
+        })
+        const args = decoded.args && decoded.args.length > 0 ? `: ${decoded.args.join(', ')}` : ''
+        return `${decoded.errorName}${args}`
+      } catch {
+        return `unknown error signature: ${signatureMatch[1]}`
+      }
     }
   }
 

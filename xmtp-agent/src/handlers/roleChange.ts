@@ -3,7 +3,7 @@
 import type { Agent } from '@xmtp/agent-sdk';
 import type { Address } from 'viem';
 import type { RoleSetEvent } from '../utils/types.js';
-import { isPowersContract, getAllMandates, getMandatesByRole, getAllActions, getPublicClient } from '../powers/contract.js';
+import { isPowersContract, getMandatesByRole, getAllActions, getPublicClient } from '../powers/contract.js';
 import { powersAbi } from '../powers/abi.js';
 import { getFlowsContainingMandates } from '../powers/flows.js';
 import { getMandateGroupName, getFlowGroupName, getActionGroupName } from '../utils/naming.js';
@@ -94,11 +94,8 @@ export async function handleRoleSet(
     
     console.log(`Found ${roleMandates.length} mandates for role ${roleId}`);
     
-    // 5. Get all mandates for flow identification
-    const allMandates = await getAllMandates(chainId, powersAddress);
-    
-    // 6. Identify flows containing these mandates
-    const flows = getFlowsContainingMandates(allMandates, roleMandates);
+    // 5. Identify on-chain flows containing these mandates
+    const flows = await getFlowsContainingMandates(chainId, powersAddress, roleMandates);
     
     console.log(`Found ${flows.length} flows containing role mandates`);
     
@@ -120,7 +117,7 @@ export async function handleRoleSet(
     
     // Add flow groups
     for (const flow of flows) {
-      const flowId = flow[0]; // First mandate in flow
+      const flowId = flow.mandateIds[0];
       groupNamesToCheck.push(getFlowGroupName(chainId, powersAddress, flowId));
     }
     

@@ -213,6 +213,10 @@ send:
 	@echo "Sending transaction..."
 	cast send $(CONTRACT_ADDRESS) $(FUNCTION_SIG) $(ARGS) --rpc-url $(RPC_URL) --private-key $(PRIVATE_KEY)
 
+paymaster-deposit:
+	@echo "Depositing 0.1 ether into PowersPaymaster at $(PAYMASTER_ADDRESS)..."
+	cast send $(PAYMASTER_ADDRESS) "deposit()" --value 0.1ether --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 
+
 # Debug helpers
 debug-test:
 	@echo "Debugging test: $(TEST)"
@@ -324,23 +328,23 @@ mandates-deploy :
 
 examples-deploy : 
 	@echo "Deploying example contracts..."
-	@echo "Account Abstraction:"
-	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Account Abstraction:"
+# 	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 	@echo "Bicameralism:"
 	forge script governance/examples/Bicameralism.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-	@echo "Election List DAO:"
-	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-	@echo "Governed 721:"
-	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-	@echo "Nested Safe Governance:"
-	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-	@echo "Optimistic Execution:"
-	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-	@echo "Powers 101:"
-	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
-	@echo "Token Delegates:"
-	forge script governance/examples/TokenDelegates.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
-	@echo "All example contracts deployed."
+# 	@echo "Election List DAO:"
+# 	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Governed 721:"
+# 	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Nested Safe Governance:"
+# 	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Optimistic Execution:"
+# 	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+# 	@echo "Powers 101:"
+# 	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+# 	@echo "Token Delegates:"
+# 	forge script governance/examples/TokenDelegates.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+# 	@echo "All example contracts deployed."
 
 organisation-deploy : 
 	@echo "Deploying organisation..."
@@ -370,11 +374,12 @@ deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:Deplo
 # Governed721
 # ElectionRegistry
 # ZKPassportPowersRegistry
-sepoliaVerifyContract : 
-# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/Powers.sol:Powers --watch
+sepoliaVerifyContract :
+#	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xfF28EE3bc457bf8389E71929057a53b3f9b1c98c src/helpers/PowersPaymaster.sol:PowersPaymaster --watch
+	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x78f9De1Fad256FA3B06ED60AF6F3aeF349155AdF src/Powers.sol:Powers --watch
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/Mandate.sol:Mandate --watch
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x1Aa34502237AD69D699A8eDcF6eab7DB454F1373 src/AsyncMandate.sol:AsyncMandate --watch 
-# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xc41F96f47cB73bB2bFC7E7967C1ddA4551535eE3 src/helpers/PowersPaymaster.sol:PowersPaymaster --watch
+ 	
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/helpers/Soulbound1155.sol:Soulbound1155 --watch
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x05A9d9FaAE1fc11C6Aa3993e55c38dB4F2B28a19 src/helpers/Governed721.sol:Governed721 --watch 
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xdE4188f007f4FfbD26E6dCE2cC108354a5995ed9 src/helpers/ElectionRegistry.sol:ElectionRegistry --watch
