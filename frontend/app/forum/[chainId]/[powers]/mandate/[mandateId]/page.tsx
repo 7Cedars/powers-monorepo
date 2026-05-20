@@ -8,7 +8,7 @@ import { Action, Mandate } from '@/context/types';
 import { bigintToRole } from '@/utils/bigintTo';
 import { NewActionDialog } from './NewActionDialog';
 import { Chatroom } from '@/components/Chatroom';
-import { useWallets } from '@privy-io/react-auth';
+import { useEffectiveAddress } from '@/hooks/useEffectiveAddress';
 import { useReadContract, useBlockNumber } from 'wagmi';
 import { powersAbi } from '@/context/abi';
 import { parseChainId } from '@/utils/parsers';
@@ -29,17 +29,15 @@ export default function MandatePage() {
     }
   }, [powers, router, chainId, powersAddress]);
   
-  // Get wallet address
-  const { wallets, ready: walletsReady } = useWallets();
-  const walletAddress = walletsReady && wallets[0] ? wallets[0].address : undefined;
-  
+  const effectiveAddress = useEffectiveAddress();
+
   // Check if user has the required role
   const { data: hasRoleSinceData } = useReadContract({
     address: powersAddress as `0x${string}`,
     abi: powersAbi,
     functionName: 'hasRoleSince',
-    args: walletAddress && mandate?.conditions?.allowedRole !== undefined
-      ? [walletAddress as `0x${string}`, BigInt(mandate.conditions.allowedRole)]
+    args: effectiveAddress && mandate?.conditions?.allowedRole !== undefined
+      ? [effectiveAddress, BigInt(mandate.conditions.allowedRole)]
       : undefined
   });
   

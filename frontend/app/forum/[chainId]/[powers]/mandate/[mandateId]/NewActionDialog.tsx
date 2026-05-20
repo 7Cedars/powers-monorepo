@@ -15,6 +15,7 @@ import { hashAction } from "@/utils/hashAction";
 import { useWallets } from "@privy-io/react-auth";
 import { useMandate } from "@/hooks/useMandate";
 import { useChecks } from "@/hooks/useChecks";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 import { cn } from "@/utils/utils";
 import { useRouter, useParams } from "next/navigation";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -47,6 +48,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
   const { wallets, ready } = useWallets();
   const { simulation, simulate, request, propose } = useMandate();
   const { checks, fetchChecks } = useChecks();
+  const effectiveAddress = useEffectiveAddress();
 
   // Track if we're submitting a transaction (not just simulating)
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -289,7 +291,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         actionId,
         state: 0,
         mandateId: mandate.index,
-        caller: wallets[0] ? wallets[0].address as `0x${string}` : '0x0',
+        caller: effectiveAddress ?? '0x0',
         dataTypes: mandate.params?.map(param => param.dataType),
         paramValues: sanitizedParamValues,
         nonce: action.nonce,
@@ -304,7 +306,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
 
       try {
         await simulate(
-          wallets[0] ? wallets[0].address as `0x${string}` : '0x0',
+          effectiveAddress ?? '0x0',
           newAction.callData as `0x${string}`,
           BigInt(newAction.nonce as string),
           mandate

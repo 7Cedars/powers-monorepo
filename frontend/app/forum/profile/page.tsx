@@ -7,10 +7,11 @@ import { Inbox } from './Inbox';
 import { useWallets } from '@privy-io/react-auth';
 import { useAddressDisplay } from '@/hooks/useAddressDisplay';
 import { useProfileStats } from '@/hooks/useProfileStats';
+import { useEffectiveAddress } from '@/hooks/useEffectiveAddress';
 
 export default function UserProfile() {
   const { wallets, ready: walletsReady } = useWallets();
-  const userAddress = wallets[0]?.address as `0x${string}` | undefined;
+  const userAddress = useEffectiveAddress();
   const { displayName, ensName, isLoading: ensLoading } = useAddressDisplay(userAddress);
   const { proposals, executions, votes, isLoadingVotes } = useProfileStats(userAddress);
   const [copied, setCopied] = useState(false);

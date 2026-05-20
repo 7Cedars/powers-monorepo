@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore, useStatusStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 
 import { NavigationDropdownMenu } from './NavigationDropdownMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -36,7 +37,8 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
     const action = useActionStore();
-    const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
+    const effectiveAddress = useEffectiveAddress();
+    const { displayName, isLoading } = useAddressDisplay(effectiveAddress);
     const { client, isConnected: xmtpConnected, initializeClient, disconnect: disconnectXmtp} = useXmtpClient();
     const [showXmtpModal, setShowXmtpModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
