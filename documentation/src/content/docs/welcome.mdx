@@ -11,40 +11,48 @@ The Powers protocol is under development. The protocol, app and documentation ar
 
 ## What it is
 
-The Powers protocol provides on-chain institutional governance. 
-It gives a framework to define the rules, structures and processes that direct and control an organization. 
+The Powers protocol provides on-chain institutional governance.
+It gives a framework to define the rules, structures and processes that direct and control an organization.
 
-Using Powers, a single decision can be guided through multiple role-restricted modules, with each their own conditional checks and voting mechanisms. 
+Using Powers, a single decision can be guided through multiple role-restricted modules, each with their own conditional checks and voting mechanisms.
 Together, these paths create completely modular, transparent and asynchronous governance structures.
 
 ## Components
 
-The protocol combines a governance engine, **Powers**, with role restricted and modular contracts, called **mandates**, to govern **actions**.
+The protocol is built around three core components: **flows**, **mandates** and **actions**.
 
-* **Powers** manages assigning roles to addresses and governance flows.
-* **Mandates** define what actions can be taken by which roles under what conditions. When it passes, a mandate translates an action to executable targets, values and calldatas.
-* **Actions** consist of calldata and a unique nonce that is send to a target mandate.
+* **Flows** group mandates into named governance paths, giving human-readable structure to an organization's decision-making processes.
+* **Mandates** are modular, role-restricted contracts that define what actions can be taken, by which roles, and under what conditions. When triggered, a mandate transforms calldata into executable targets, values and calldatas.
+* **Actions** are the governance lifecycle: a piece of calldata with a unique nonce that moves through one or more mandates. An action can be proposed (with optional voting), requested, fulfilled, cancelled or failed.
 
-Crucially, Powers allows the **same action** to be send to **different mandates**: the execution of mandate A can be conditional on the execution of the same action at mandate B.
+Crucially, Powers allows the **same action** to be sent to **different mandates**: the fulfillment of mandate A can be a precondition for mandate B, enabling multi-step checks and balances within a single governance flow.
 
 ## Governance solutions 
 
-Powers enables a wide range of applications, moving beyond the limitations of monolithic token voting to support sophisticated and resilient organizational structures. The protocol addresses several common challenges in the on-chain governance ecosystem:
+Governance is hard — even well-designed institutions face moments where trust becomes strained: when stakeholders have competing interests, when verification is costly, or when participation is structurally difficult. Powers provides a transparent, neutral infrastructure layer that complements existing governance frameworks, adding verifiability and accessibility precisely where these challenges arise.
 
 <CardGrid>
-  <Card title="🔐 Devolved Responsibilities" icon="lock">
-    Establish specialized bodies—such as grants committees, treasury management councils, or technical working groups—by assigning them specific, role-restricted powers. Actions are transparently recorded on-chain, and powers can be modified or revoked by the parent organization at any time, ensuring responsibility comes with direct accountability.
+  <Card title="Pseudonymous Participation" icon="lock">
+    Combined with zero-knowledge identity frameworks such as ZK Passport and Account Abstraction, Powers allows participants in sensitive contexts — journalism, activism, confidential research — to prove eligibility without revealing their identity, extending formal participation to where existing identity frameworks fall short.
+  </Card>
+
+  <Card title="Continuous Accountability" icon="approve-check">
+    Foundations, governments, and industry bodies typically rely on periodic audits to demonstrate accountability. Powers adds a real-time transparency layer: any party can verify whether decisions followed agreed rules between audit cycles, reducing the cost of oversight without replacing existing reporting structures.
+  </Card>
+
+  <Card title="Separation of Powers" icon="approve-check">
+    Separating proposal, deliberation, veto, and execution across distinct roles is a foundational governance principle that is difficult to enforce in practice. Powers reinforces these separations structurally: roles cannot exceed their mandate and no procedural override is possible without the required parties acting in concert.
+  </Card>
+
+  <Card title="Beyond Institutional Reach" icon="rocket">
+    In contexts where conventional governance is not yet accessible — across borders, in early-stage communities, or for contributors without legal entity status — Powers provides a governance layer that can operate independently or alongside formal structures that may follow later.
   </Card>
   
-  <Card title="⚖️ Separation of Powers" icon="approve-check">
-    Implement classic checks and balances on-chain, preventing the concentration of power in any single entity. Distribute authority across multiple roles to create robust governance frameworks that are resistant to capture and ensure no single actor can push through decisions unilaterally.
+  <Card title="Devolved Responsibilities" icon="lock">
+    Specialized bodies — grants committees, working groups, review boards — need clear, enforceable boundaries. In Powers, delegation is structural: a committee can only act within the scope defined by the parent organization, its actions are transparently recorded, and its authority can be adjusted at any time.
   </Card>
-  
-  <Card title="🌐 Asynchronous Coordination" icon="information">
-    Manage interactions that span multiple environments through the protocol's inherently asynchronous architecture. Handle processes involving time delays, external events, or cross-chain communication, enabling true operational coordination between the digital and physical worlds.
-  </Card>
-  
-  <Card title="🔄 Gradual Governance Reforms" icon="rocket">
-    Upgrade existing on-chain organizations without requiring complete overhaul. Integrate traditional token-governed DAOs into a Powers system as role-holders, then gradually introduce new roles and devolve responsibilities in a modular fashion, building confidence over time before fully transitioning.
+
+  <Card title="Multi-Party Coordination" icon="information">
+    Multi-party governance — joint funds, industry consortiums, shared oversight processes — is administratively expensive and typically depends on a neutral administrator. Powers acts as a coordination layer alongside existing legal agreements, making compliance continuously verifiable and reducing overhead without displacing the agreements themselves.
   </Card>
 </CardGrid>

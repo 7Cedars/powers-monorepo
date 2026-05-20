@@ -35,14 +35,14 @@ export default function Page() {
                     </div>
                     <div className="w-full flex justify-center items-center text-pretty text-xl sm:text-2xl py-4 font-mono text-slate-300 max-w-4xl text-center p-4">
                         {/* Separate and distribute power through on-chain institutional governance. */}
-                        Trustless institutional governance for on-chain organisations.  
+                        Trustless governance systems for on-chain organisations.  
                     </div>
                 </section>
 
-                <a className="w-fit h-fit max-w-3xl flex flex-row justify-center items-center text-center py-3 px-12 sm:text-xl text-lg font-mono text-white hover:text-slate-300 border border-slate-600 hover:border-white text-center uppercase tracking-wider transition-colors"
+                {/* <a className="w-fit h-fit max-w-3xl flex flex-row justify-center items-center text-center py-3 px-12 sm:text-xl text-lg font-mono text-white hover:text-slate-300 border border-slate-600 hover:border-white text-center uppercase tracking-wider transition-colors"
                     href={`https://powers-docs.vercel.app/for-developers/litepaper`} target="_blank" rel="noopener noreferrer">
                         Litepaper 
-                </a>
+                </a> */}
 
                 {/* arrow down */}
                 <div className="flex flex-col align-center justify-end pb-8 pt-12"> 
