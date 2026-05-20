@@ -510,7 +510,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-[600px]">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-1 border-b border-border bg-muted/10">
+      <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/10">
         <div className="flex items-center gap-3">
           {/* <ChatroomIcon className="h-8 w-8 text-muted-foreground" /> */}
           <h4 className="text-xs text-muted-foreground uppercase tracking-wider">{chatroomType.toUpperCase()} CHATROOM</h4>
@@ -526,12 +526,6 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         </div>
         {isConnected && groupChat && (
          <div className="flex items-center justify-between gap-3 relative">
-          {/* <SearchFilterSort 
-              onSearchChange={(query) => console.log('Search:', query)}
-              onFilterChange={(filter) => console.log('Filter:', filter)}
-              onSortChange={(sort) => console.log('Sort:', sort)}
-            />
-           */}
             <button
               onClick={() => setShowMembersList(!showMembersList)}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -568,7 +562,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
           <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
-            Due to the risk of spamming, publically accesible mandates do not have xmtp chat enabled.
+            Due to the risk of spamming, publically accesible mandates do not have chat enabled.
           </p>
         </div>
       ) : !address || !isConnected ? (
@@ -579,7 +573,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
             These chatrooms use XMTP, an encrypted Web3 messaging protocol.
           </p>
           <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-2xl mb-4">
-            Connect your wallet and log in to XMTP to participate in governance discussions.
+            Connect your wallet and log in to chat to participate in governance discussions.
           </p>
           {address && !isConnected && (
             <> 
@@ -588,7 +582,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
                 disabled={isLoading}
                 className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider font-mono"
               >
-                {isLoading ? 'Logging in...' : !client?.inboxId ? 'Login to XMTP' : 'Connect to XMTP'}
+                {isLoading ? 'Logging in...' : !client?.inboxId ? 'Login to chat' : 'Connect to chatroom'}
               </button>
             </>
           )}
