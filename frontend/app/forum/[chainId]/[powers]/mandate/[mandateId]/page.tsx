@@ -20,7 +20,7 @@ export default function MandatePage() {
   const powers = usePowersStore();
   const { chainId, powers: powersAddress, mandateId } = useParams<{ chainId: string; powers: string; mandateId: string }>();
   const mandate: Mandate | undefined = powers?.mandates?.find(m => m.index.toString() === mandateId); 
-  const { data: currentBlockNumber } = useBlockNumber({ chainId: parseChainId(chainId) || undefined });
+  const { data: currentBlockNumber } = useBlockNumber({ chainId: parseChainId(chainId) || undefined, watch: true });
 
   // Redirect to overview page if powers data is not loaded yet
   useEffect(() => {

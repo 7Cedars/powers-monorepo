@@ -118,7 +118,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             {ready && authenticated && walletsReady && wallets[0] &&
             <>
                 <button
-                onClick={() => router.push('/profile')}
+                onClick={() => router.push('/forum/profile')}
                 className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors">
                   {isLoading ? 'Loading...' : displayName}
                 </button>
