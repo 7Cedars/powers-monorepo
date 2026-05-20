@@ -419,7 +419,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         </div>
         <button
           onClick={() => onOpenChange(false)}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           <XMarkIcon className="h-4 w-4" />
         </button>
@@ -431,7 +431,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           <button
             type="button"
             onClick={() => setShowSelectInput(true)}
-            className="w-full flex items-center justify-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap bg-foreground text-background hover:bg-foreground/80 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap bg-foreground text-background hover:bg-foreground/80 transition-colors cursor-pointer"
           >
             Select Input
           </button>
@@ -494,7 +494,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           />
           <button
             type="button"
-            className="h-9 w-9 flex items-center justify-center  bg-background border border-border hover:bg-muted transition-colors"
+            className="h-9 w-9 flex items-center justify-center  bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
             onClick={(e) => {
               e.preventDefault();
               setAction({
@@ -522,7 +522,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
             onClick={handleSimulate}
             className={cn(
               "w-full border border-border px-4 py-2.5 text-xs text-foreground",
-              "bg-muted/10 hover:bg-muted/50 hover:border-foreground/40 transition-colors",
+              "bg-muted/10 hover:bg-muted/50 hover:border-foreground/40 transition-colors cursor-pointer",
               "uppercase tracking-wider font-mono"
             )}
           >

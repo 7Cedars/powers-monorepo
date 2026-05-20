@@ -74,7 +74,7 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                                 e.stopPropagation();
                                 onArchive(powers.contractAddress);
                             }}
-                            className="text-foreground hover:text-foreground/80 transition-colors">
+                            className="text-foreground hover:text-foreground/80 transition-colors cursor-pointer">
                             <XMarkIcon className="h-4 w-4" />
                         </button>
                     )}

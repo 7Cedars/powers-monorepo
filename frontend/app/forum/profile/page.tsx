@@ -54,7 +54,7 @@ export default function UserProfile() {
                         {ensLoading ? '···' : displayName}
                       </h2>
                       {!ensLoading && userAddress && !ensName && (
-                        <button onClick={copyAddress} title="Copy address" className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
+                        <button onClick={copyAddress} title="Copy address" className="shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                           {copied
                             ? <CheckIcon className="h-3.5 w-3.5 text-green-500" />
                             : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
@@ -66,7 +66,7 @@ export default function UserProfile() {
                         <p className="font-mono text-xs text-muted-foreground">
                           {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
                         </p>
-                        <button onClick={copyAddress} title="Copy address" className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
+                        <button onClick={copyAddress} title="Copy address" className="shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                           {copied
                             ? <CheckIcon className="h-3 w-3 text-green-500" />
                             : <ClipboardDocumentIcon className="h-3 w-3" />}

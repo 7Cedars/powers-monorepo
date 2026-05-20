@@ -586,7 +586,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
               <button
                 onClick={initializeClient}
                 disabled={isLoading}
-                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider font-mono"
               >
                 {isLoading ? 'Logging in...' : !client?.inboxId ? 'Login to XMTP' : 'Connect to XMTP'}
               </button>
@@ -625,7 +625,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           <button
             onClick={handleRequestAccess}
             disabled={isRequestingAccess}
-            className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+            className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider font-mono"
           >
             {isRequestingAccess ? 'Requesting Access...' : 'Request Access'}
           </button>
@@ -721,7 +721,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
               <button
                 onClick={handleSendMessage}
                 disabled={!messageInput.trim() || isSending}
-                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSending ? 'Sending...' : 'Send'}
               </button>

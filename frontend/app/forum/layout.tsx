@@ -121,13 +121,13 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             <>
                 <button
                 onClick={() => router.push('/forum/profile')}
-                className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors">
+                className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors cursor-pointer">
                   {isLoading ? 'Loading...' : displayName}
                 </button>
                 <button
                 onClick={ logout }
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+
                   <ArrowRightStartOnRectangleIcon className="h-3 w-3" />
                   <span className="hidden sm:inline">DISCONNECT</span>
                 </button>
@@ -142,7 +142,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                   // State 1: Connected to XMTP - clickable to disconnect
                   <button
                     onClick={disconnectXmtp}
-                    className="flex items-center gap-2 font-mono text-xs text-foreground hover:text-muted-foreground transition-colors"
+                    className="flex items-center gap-2 font-mono text-xs text-foreground hover:text-muted-foreground transition-colors cursor-pointer"
                   >
                     <span>XMTP</span>
                   </button>
@@ -150,7 +150,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                   // State 2: Has inbox but not connected
                   <button
                     onClick={initializeClient}
-                    className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     <span>XMTP</span>
                   </button>
@@ -158,7 +158,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                   // State 3: No inbox - show in red
                   <button
                     onClick={() => setShowXmtpModal(true)}
-                    className="flex items-center gap-2 font-mono text-xs text-red-500 hover:text-red-400 transition-colors"
+                    className="flex items-center gap-2 font-mono text-xs text-red-500 hover:text-red-400 transition-colors cursor-pointer"
                   >
                     <span>XMTP</span>
                   </button>
@@ -173,8 +173,8 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             {ready && !authenticated &&
             <button
               onClick={ login }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
+              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200 cursor-pointer">
+
                 <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
                 <span className="text-muted-foreground">NOT CONNECTED</span>
               </button>
@@ -182,8 +182,8 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             {ready && authenticated && walletsReady && !wallets[0] &&
             <button
               onClick={ connectWallet }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
+              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200 cursor-pointer">
+
                 <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
                 <span className="text-muted-foreground">NOT CONNECTED</span>
               </button>
@@ -233,14 +233,14 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 }
               }}
               disabled={statusPowers.status === "pending" || !publicClient}
-              className="p-2 text-foreground hover:text-foreground/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-foreground hover:text-foreground/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               aria-label="Refresh"
             >
               <ArrowPathIcon className={`h-5 w-5 ${statusPowers.status === "pending" ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 text-foreground hover:text-foreground/80 transition-colors"
+              className="p-2 text-foreground hover:text-foreground/80 transition-colors cursor-pointer"
               aria-label="Open menu"
             >
               <Bars3Icon className="h-6 w-6" />
@@ -270,7 +270,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             </span>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-foreground hover:text-foreground/80 transition-colors"
+              className="p-2 text-foreground hover:text-foreground/80 transition-colors cursor-pointer"
               aria-label="Close menu"
             >
               <XMarkIcon className="h-6 w-6" />
@@ -305,7 +305,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                       router.push('/profile');
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full text-left text-sm text-foreground font-mono py-2 hover:text-foreground/80 transition-colors"
+                    className="w-full text-left text-sm text-foreground font-mono py-2 hover:text-foreground/80 transition-colors cursor-pointer"
                   >
                     {isLoading ? 'Loading...' : displayName}
                   </button>
@@ -318,7 +318,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                     <span>DISCONNECT</span>
@@ -330,7 +330,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                     login();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <CheckCircleIcon className="h-3 w-3" />
                   <span>NOT CONNECTED - TAP TO LOGIN</span>
@@ -341,7 +341,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                     connectWallet();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <CheckCircleIcon className="h-3 w-3" />
                   <span>NOT CONNECTED - TAP TO CONNECT</span>
@@ -361,7 +361,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                     disconnectXmtp();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 font-mono text-sm text-foreground hover:text-muted-foreground transition-colors"
+                  className="flex items-center gap-2 font-mono text-sm text-foreground hover:text-muted-foreground transition-colors cursor-pointer"
                 >
                   <CheckCircleIcon className="h-3 w-3 text-green-500" />
                   <span>XMTP CONNECTED - TAP TO DISCONNECT</span>
@@ -372,7 +372,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                     initializeClient();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <span>XMTP - TAP TO CONNECT</span>
                 </button>
@@ -382,7 +382,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                     setShowXmtpModal(true);
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 font-mono text-sm text-red-500 hover:text-red-400 transition-colors"
+                  className="flex items-center gap-2 font-mono text-sm text-red-500 hover:text-red-400 transition-colors cursor-pointer"
                 >
                   <span>XMTP - TAP TO LOGIN</span>
                 </button>
@@ -433,7 +433,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           <div className="flex gap-3 pt-4">
             <button
               onClick={() => setShowXmtpModal(false)}
-              className="flex-1 px-4 py-2 border border-border font-mono text-sm hover:bg-muted transition-colors"
+              className="flex-1 px-4 py-2 border border-border font-mono text-sm hover:bg-muted transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -442,7 +442,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 await initializeClient();
                 setShowXmtpModal(false);
               }}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors cursor-pointer"
             >
               Login
             </button>

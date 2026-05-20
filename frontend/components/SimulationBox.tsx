@@ -273,7 +273,7 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
             <div className="flex gap-1">
               <button
                 onClick={scrollLeft}
-                className="p-1 hover:bg-muted transition-colors"
+                className="p-1 hover:bg-muted transition-colors cursor-pointer"
                 aria-label="Scroll left"
               >
                 <svg
@@ -292,7 +292,7 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
               </button>
               <button
                 onClick={scrollRight}
-                className="p-1 hover:bg-muted  transition-colors"
+                className="p-1 hover:bg-muted transition-colors cursor-pointer"
                 aria-label="Scroll right"
               >
                 <svg
