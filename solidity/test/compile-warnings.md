@@ -2,21 +2,6 @@
 
 Generated from `forge build` output. Warnings are grouped by type. Severity levels: `Warning` (Solidity compiler), `warning` (forge-lint, higher severity), `note` (forge-lint suggestions).
 
----
-
-## Warning (2072): Unused local variable
-
-A variable is declared and assigned but never subsequently read. Fix: remove the declaration or use the variable.
-
-| File | Line | Variable |
-|------|------|----------|
-| `test/unit/Mandate.t.sol` | 594 | `uint256 actionId` |
-| `test/unit/mandates/Integrations.t.sol` | 313 | `address functionTarget` |
-| `test/unit/mandates/Integrations.t.sol` | 314 | `bytes4 functionSelector` |
-| `test/unit/mandates/Integrations.t.sol` | 485 | `uint256 actionId` |
-
----
-
 ## Warning (2018): Function state mutability can be restricted to `view`
 
 The function does not modify state; it can be declared `view`. This saves a small amount of gas and clarifies intent.
@@ -28,32 +13,6 @@ The function does not modify state; it can be declared `view`. This saves a smal
 | `test/unit/mandates/Electoral.t.sol` | 165 | `testRoleByRolesInitialization()` |
 | `test/unit/mandates/Electoral.t.sol` | 214 | `testSelfSelectInitialization()` |
 | `test/unit/mandates/Electoral.t.sol` | 302 | `testRevokeInactiveAccountsInitialization()` |
-
----
-
-## Warning: AST source not found
-
-Forge could not locate the source AST for these files. They are referenced in the build graph but their source is missing or not compiled. This usually means the files do not exist on disk yet (stubs / planned files) or are excluded from the build.
-
-| File |
-|------|
-| `test/integration/organisations/Powers101.t.sol` |
-| `test/integration/organisations/PowerBase.t.sol` |
-| `test/integration/organisations/OpenElectionsDAO.t.sol` |
-| `src/mandates/integrations/Snapshot/Snapshot_CheckSnapExists.sol` |
-| `src/mandates/integrations/Snapshot/Snapshot_CheckSnapPassed.sol` |
-| `src/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol` |
-| `src/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol` |
-| `script/DeployAllowanceModule.s.sol` |
-| `test/fuzz/laws/ElectoralFuzz.t.sol` |
-| `test/fuzz/laws/ExecutiveFuzz.t.sol` |
-| `test/fuzz/laws/MultiFuzz.t.sol` |
-| `test/fuzz/LawFuzz.t.sol` |
-| `test/fuzz/PowersFuzz.t.sol` |
-| `test/unit/Helpers.t.sol` |
-| `test/unit/mandates/Async.t.sol` |
-| `test/integration/flows/Executive.t.sol` |
-| `test/integration/flows/Async.t.sol` |
 
 ---
 
