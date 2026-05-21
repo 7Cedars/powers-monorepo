@@ -22,7 +22,7 @@ contract BespokeAction_Simple is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         (,, string[] memory params_) = abi.decode(config, (address, bytes4, string[]));

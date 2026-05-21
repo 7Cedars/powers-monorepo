@@ -53,7 +53,7 @@ contract PauseMandates is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         // Validate that the config arrays have the same length

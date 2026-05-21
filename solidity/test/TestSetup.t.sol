@@ -35,10 +35,9 @@ import { Erc20Taxed } from "./mocks/Erc20Taxed.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
-import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
 import { PowersFactory } from "@src/helpers/PowersFactory.sol";
 import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
-import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
+import { Soulbound1155 } from "./mocks/Soulbound1155.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
@@ -65,8 +64,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     Nominees nominees;
     ElectionRegistry openElection;
     Erc20DelegateElection erc20DelegateElection;
-    SimpleGovernor simpleGovernor;
-    AllowedTokens allowedTokens;
+    SimpleGovernor simpleGovernor; 
     PowersFactory powersFactory;
     Soulbound1155 soulbound1155;
     ElectionRegistry electionList;
@@ -654,7 +652,6 @@ abstract contract TestSetupIntegrations is BaseSetup {
         vm.startPrank(address(daoMock));
         simpleErc20Votes = new SimpleErc20Votes();
         simpleGovernor = new SimpleGovernor(address(simpleErc20Votes));
-        allowedTokens = new AllowedTokens();
         soulbound1155 = new Soulbound1155("this is a test uri");
         electionList = new ElectionRegistry(300,300);
         PowersDeployer powersDeployer = new PowersDeployer();

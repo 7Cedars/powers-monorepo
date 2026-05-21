@@ -6,17 +6,8 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "./Configurations.s.sol";
 
-// --- Library Imports ---
-import { Checks } from "@src/libraries/Checks.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-
 // --- Interfaces ---
-import { IPowers } from "@src/interfaces/IPowers.sol";
-import { IMandate } from "@src/interfaces/IMandate.sol";
 import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
-
-// --- Library Imports ---
-import { Checks } from "@src/libraries/Checks.sol";
 
 // ELECTORAL MANDATES
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";

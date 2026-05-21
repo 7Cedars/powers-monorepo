@@ -2,9 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
-import { IPowers } from "../../../interfaces/IPowers.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IGoverned721 } from "../../../helpers/Governed721.sol";
 
@@ -43,7 +41,7 @@ contract GovernedToken_CollectSplitPayment is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         string[] memory params = new string[](1);

@@ -8,14 +8,6 @@ export const powersApplications = [
     ]
   },
   {
-    title: "Continuous Accountability",
-    details: [
-      "Foundations, governments, and industry bodies typically rely on periodic audits.",
-      "Powers adds a real-time transparency layer: any party can verify decisions followed agreed rules between audit cycles.",
-      "Reduce the cost of oversight without replacing existing reporting structures."
-    ]
-  },
-  {
     title: "Separation of Powers",
     details: [
       "Proposal, deliberation, veto, and execution can be assigned to distinct roles and mandates.",
@@ -37,6 +29,14 @@ export const powersApplications = [
       "Grants committees, working groups, and review boards need clear, enforceable boundaries.",
       "Delegation is structural: a committee can only act within the scope defined by the parent organization.",
       "Actions are transparently recorded and authority can be adjusted at any time."
+    ]
+  },
+  {
+    title: "Continuous Accountability",
+    details: [
+      "Foundations, governments, and industry bodies typically rely on periodic audits.",
+      "Powers adds a real-time transparency layer: any party can verify decisions followed agreed rules between audit cycles.",
+      "Reduce the cost of oversight without replacing existing reporting structures."
     ]
   },
   {

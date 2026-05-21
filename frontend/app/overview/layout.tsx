@@ -14,11 +14,11 @@ import { BlockCounter } from "@/components/BlockCounter";
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
-interface EditorLayoutProps {
+interface OverviewLayoutProps {
   children: React.ReactNode;
 }
 
-export default function EditorLayout({ children }: EditorLayoutProps) {
+export default function OverviewLayout({ children }: OverviewLayoutProps) {
     const router = useRouter(); 
     const pathname = usePathname();
     const powers = usePowersStore();
@@ -35,7 +35,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
     const action = useActionStore();
     const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
 
-    const isEditorPage = pathname === '/editor';
+    const isOverviewPage = pathname === '/overview';
 
     // reset status and error when pathname changes
     useEffect(() => {
@@ -119,7 +119,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
           
           <div className="space-y-4">
             <p className="text-foreground">
-              The Editor is designed for larger screens to provide the best experience when building and managing governance protocols.
+              The Overview is designed for larger screens to provide the best experience when building and managing governance protocols.
             </p>
             <p className="text-muted-foreground text-sm">
               Please visit the Forum to view and interact with existing protocols on mobile devices.
@@ -144,15 +144,15 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
         </div>
       </div>
 
-      {/* Main editor content - hidden on small screens */}
+      {/* Main overview content - hidden on small screens */}
       <div className="hidden lg:flex lg:flex-col lg:h-full bg-background">
       <header className="z-25 border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-background">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <a href="/editor" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
+            <a href="/overview" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
               {powers.name ? powers.name : "EDITOR"} 
             </a>
-            {!isEditorPage && powersAddress && chainId &&
+            {!isOverviewPage && powersAddress && chainId &&
               <BlockCounter onRefresh={() => {
                 fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
                 fetchBlockNumber();

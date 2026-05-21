@@ -26,7 +26,7 @@ export function Assets({powers}: {status: Status, powers: Powers | undefined}) {
   return (
     <div className="flex flex-col max-h-96  border border-border min-h-0">
       <div className="px-4 py-2 bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
-        onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/treasury`)}
+        onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/treasury`)}
       >
         <span className="font-mono text-muted-foreground uppercase tracking-wider text-base text-sm">TREASURY</span>
         <ArrowUpRightIcon className="w-4 h-4 text-muted-foreground" />

@@ -48,7 +48,7 @@ contract ZKPassport_Check is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         (string[] memory params_,,,,,) = abi.decode(config, (string[], address, uint256, bool, bytes4, bytes));

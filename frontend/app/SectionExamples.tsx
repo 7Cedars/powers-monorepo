@@ -27,9 +27,9 @@ export function SectionExamples() {
     }
   };
 
-  const handleViewEditor = () => {
+  const handleViewOverview = () => {
     if (currentExample.address && !isComingSoon) {
-      router.push(`/editor/${currentExample.chainId}/${currentExample.address}/home`);
+      router.push(`/overview/${currentExample.chainId}/${currentExample.address}/home`);
     }
   };
 
@@ -116,7 +116,7 @@ export function SectionExamples() {
                 </p>
               </div>
 
-              {/* View Forum and Editor Buttons */}
+              {/* View Forum and Overview Buttons */}
               <div className="w-full grow mt-4 flex justify-center items-center gap-4">
                 <button
                   className={`flex-1 sm:min-w-[180px] sm:flex-none h-12 px-8 font-mono font-medium uppercase tracking-wider text-sm transition-colors duration-200 flex items-center justify-center ${
@@ -135,10 +135,10 @@ export function SectionExamples() {
                       ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border'
                       : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                   }`}
-                  onClick={handleViewEditor}
+                  onClick={handleViewOverview}
                   disabled={isComingSoon}
                 >
-                  {isComingSoon ? 'Coming Soon' : 'View Editor'}
+                  {isComingSoon ? 'Coming Soon' : 'Overview'}
                 </button>
               </div>
             </div>

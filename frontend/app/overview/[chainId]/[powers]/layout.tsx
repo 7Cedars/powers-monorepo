@@ -9,7 +9,7 @@ import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { usePowers } from "@/hooks/usePowers";
 import { parseChainId } from "@/utils/parsers"; 
 
-interface EditorLayoutProps {
+interface OverviewLayoutProps {
   children: React.ReactNode;
 }
 
@@ -76,11 +76,11 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
   
   // Navigation items
   const navItems = [
-    { label: 'Home', path: `/editor/${chainId}/${powers}/home` },
-    { label: 'Actions', path: `/editor/${chainId}/${powers}/actions` },
-    { label: 'Mandates', path: `/editor/${chainId}/${powers}/mandates` },
-    { label: 'Roles', path: `/editor/${chainId}/${powers}/roles` },
-    { label: 'Treasury', path: `/editor/${chainId}/${powers}/treasury` },
+    { label: 'Home', path: `/overview/${chainId}/${powers}/home` },
+    { label: 'Actions', path: `/overview/${chainId}/${powers}/actions` },
+    { label: 'Mandates', path: `/overview/${chainId}/${powers}/mandates` },
+    { label: 'Roles', path: `/overview/${chainId}/${powers}/roles` },
+    { label: 'Treasury', path: `/overview/${chainId}/${powers}/treasury` },
   ]
   
   // Check if current page matches nav item
@@ -205,7 +205,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-export default function EditorLayout({ children }: EditorLayoutProps) {
+export default function OverviewLayout({ children }: OverviewLayoutProps) {
   const pathname = usePathname(); 
   const { fetchPowers } = usePowers(); 
   const action = useActionStore();
@@ -221,7 +221,7 @@ export default function EditorLayout({ children }: EditorLayoutProps) {
     }
   }, [powersAddress, chainId, fetchPowers])
 
-  console.log('@EditorLayout rendered:', {powersAddress, chainId, action, powers})
+  console.log('@OverviewLayout rendered:', {powersAddress, chainId, action, powers})
 
   // reset status, error, and action when pathname changes
   useEffect(() => {

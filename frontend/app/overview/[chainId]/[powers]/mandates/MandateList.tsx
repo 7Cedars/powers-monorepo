@@ -74,7 +74,7 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
                       <tr 
                         key={i}
                         className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => { router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`); }}
+                        onClick={() => { router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`); }}
                       >
                         <td className="px-4 py-3">
                           <span className="text-muted-foreground">

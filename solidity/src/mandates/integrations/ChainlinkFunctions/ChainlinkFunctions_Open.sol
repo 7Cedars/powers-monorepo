@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 // Base contracts
-import { IPowers } from "../../../interfaces/IPowers.sol";
 import { AsyncMandate } from "../../../AsyncMandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 

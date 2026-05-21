@@ -300,6 +300,7 @@ update-builds:
  
 ANVIL_DEPLOY_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) --broadcast --ffi -vv
 # NB: turned off verify --verify NB: I now verify the contracts seperately. See below. 
+# --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 11155111 --verify 
 SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast -vv
 
 ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 421614 --verify --ffi -vv 
@@ -332,19 +333,19 @@ examples-deploy :
 # 	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 	@echo "Bicameralism:"
 	forge script governance/examples/Bicameralism.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-# 	@echo "Election List DAO:"
+# 	@echo "Election List:"
 # 	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Governed 721:"
 # 	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Nested Safe Governance:"
 # 	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Optimistic Execution:"
-# 	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-# 	@echo "Powers 101:"
-# 	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
-# 	@echo "Token Delegates:"
-# 	forge script governance/examples/TokenDelegates.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
-# 	@echo "All example contracts deployed."
+	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	@echo "Powers 101:"
+	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+	@echo "Token Delegates:"
+	forge script governance/examples/TokenDelegates.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+	@echo "All example contracts deployed."
 
 organisation-deploy : 
 	@echo "Deploying organisation..."
