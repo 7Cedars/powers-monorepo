@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
-import { IPowers } from "../../../interfaces/IPowers.sol";
 import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
@@ -33,7 +32,7 @@ contract GovernedToken_MintEncodedToken is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         string[] memory params = new string[](1);

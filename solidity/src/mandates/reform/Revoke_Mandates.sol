@@ -20,7 +20,7 @@ contract Revoke_Mandates is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         string[] memory params = new string[](1);

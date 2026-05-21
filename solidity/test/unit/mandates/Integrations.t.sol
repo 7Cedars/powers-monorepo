@@ -2,14 +2,10 @@
 pragma solidity ^0.8.26;
 
 import { console2 } from "forge-std/console2.sol";
-import { TestSetupIntegrations, TestSetupExecutive } from "../../TestSetup.t.sol";
-import { PowersMock } from "../../mocks/PowersMock.sol";
+import { TestSetupIntegrations } from "../../TestSetup.t.sol";
 import { Governor_CreateProposal } from "@src/mandates/integrations/Governor/Governor_CreateProposal.sol";
 import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
 
-import { SafeAllowance_Transfer } from "@src/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
-import { Safe_ExecTransaction } from "@src/mandates/integrations/Safe/Safe_ExecTransaction.sol";
-import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
@@ -19,14 +15,8 @@ import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol";
 import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleManager.sol";
 import { Enum } from "@lib/safe-smart-account/contracts/common/Enum.sol";
 
-import { SimpleGovernor } from "../../mocks/SimpleGovernor.sol";
-import { SimpleErc20Votes } from "../../mocks/SimpleErc20Votes.sol";
-import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { Governor } from "@lib/openzeppelin-contracts/contracts/governance/Governor.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
-import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 
 /// @notice Comprehensive unit tests for all executive mandates
 /// @dev Tests all functionality of executive mandates including initialization, execution, and edge cases
@@ -285,7 +275,7 @@ contract SafeAllowanceTest is TestSetupIntegrations {
         // Now that the treasury is set, we can constitute the child DAO.
         // This ensures the child DAO is configured with the correct treasury address.
         (PowersTypes.MandateInitData[] memory mandateInitData2_) =
-            testConstitutions.integrationsTestConstitution2(address(daoMock), address(allowedTokens));
+            testConstitutions.integrationsTestConstitution2(address(daoMock));
         daoMockChild1.constitute(mandateInitData2_);
         daoMockChild1.closeConstitute();
     }

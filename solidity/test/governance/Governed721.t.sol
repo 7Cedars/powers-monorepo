@@ -1,19 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { Test, console, console2 } from "forge-std/Test.sol";
+import { console2 } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
-import { IPowers } from "@src/interfaces/IPowers.sol";
-import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { Mandate } from "@src/Mandate.sol";
-import { IPowers } from "@src/interfaces/IPowers.sol";
-import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Deploy } from "@governance/examples/Governed721.s.sol";
-import { Safe } from "@lib/safe-smart-account/contracts/Safe.sol";
 import { Configurations } from "@script/Configurations.s.sol";
-import { DeployHelpers } from "@governance/DeployHelpers.s.sol";
-import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol"; 
-import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
+import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 import { IGoverned721 } from "@src/helpers/Governed721.sol";
 
 import { Initialise } from "@governance/examples/actions/Initialise.s.sol"; 

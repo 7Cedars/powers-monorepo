@@ -2,16 +2,14 @@
 pragma solidity ^0.8.26;
 
 import { Mandate } from "../../../Mandate.sol";
-import { IPowers } from "../../../interfaces/IPowers.sol";
 import { IERC1155 } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
-import { ISoulbound1155 } from "../../../helpers/Soulbound1155.sol";
+import { ISoulbound1155 } from "../../../../test/mocks/Soulbound1155.sol";
 import { IGoverned721 } from "../../../helpers/Governed721.sol";
 import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
-import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
-import { console2 } from "forge-std/console2.sol"; // remove before deploying.
+// import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
 /**
  * @title GovernedToken_BurnToAccess
@@ -27,20 +25,20 @@ contract GovernedToken_BurnToAccess is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
-        console2.log("waypoint 1");
+        // console2.log("waypoint 1");
         (string[] memory params,) = abi.decode(config, (string[], address));
-        console2.log("waypoint 2");
+        // console2.log("waypoint 2");
         string[] memory newParams = new string[](params.length + 1);
-        console2.log("waypoint 3");
+        // console2.log("waypoint 3");
         for (uint256 i = 0; i < params.length; i++) {
             newParams[i] = params[i];
         }
-        console2.log("waypoint 4");
+        // console2.log("waypoint 4");
         newParams[params.length] = "uint256 tokenId";
-        console2.log("waypoint 5");
+        // console2.log("waypoint 5");
         super.initializeMandate(index, nameDescription, abi.encode(newParams), config);
     }
 
