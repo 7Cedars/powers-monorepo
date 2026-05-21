@@ -228,7 +228,7 @@ const FlowContent: React.FC = () => {
       mandateId: BigInt(mandateId),
       upToDate: false
     })
-    router.push(`/editor/${powers?.chainId}/${powers?.contractAddress}/mandates/${mandateId}`)
+    router.push(`/overview/${powers?.chainId}/${powers?.contractAddress}/mandates/${mandateId}`)
     // console.log("@handleNodeClick: waypoint 1", {action})
   }, [router, powers?.contractAddress, action, getViewport])
 

@@ -14,7 +14,7 @@ export function BlockCounter({ onRefresh, blockNumber }: { onRefresh: () => void
       <button
         onClick={onRefresh} 
         disabled={statusPowers.status == "pending" || !publicClient}
-        className="w-full flex gap-2 items-center justify-between px-4 py-2 bg-muted/50 hover:bg-muted/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex gap-2 items-center justify-between px-4 py-2 bg-muted/50 hover:bg-muted/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         title="Refresh block number"
       >
         <span className="text-xs text-muted-foreground uppercase tracking-wider">

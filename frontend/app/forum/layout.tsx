@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore, useStatusStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 
 import { NavigationDropdownMenu } from './NavigationDropdownMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -15,11 +16,9 @@ import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon, Bars3Ic
 import { usePowers } from "@/hooks/usePowers";
 import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { BlockCounter } from "@/components/BlockCounter";
-import { useXmtpClient } from "@/hooks/useXmtpClient";
-import { ForumModal } from "@/components/ForumModal";
+import { useXmtpClient } from "@/hooks/useXmtpClient"; 
 
-import { parseChainId } from "@/utils/parsers";
-import { Footer } from "@/components/Footer";
+import { parseChainId } from "@/utils/parsers"; 
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
@@ -36,9 +35,9 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
     const action = useActionStore();
-    const { displayName, isLoading } = useAddressDisplay(wallets[0]?.address);
+    const effectiveAddress = useEffectiveAddress();
+    const { displayName, isLoading } = useAddressDisplay(effectiveAddress);
     const { client, isConnected: xmtpConnected, initializeClient, disconnect: disconnectXmtp} = useXmtpClient();
-    const [showXmtpModal, setShowXmtpModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const statusPowers = useStatusStore();
 
@@ -118,14 +117,14 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             {ready && authenticated && walletsReady && wallets[0] &&
             <>
                 <button
-                onClick={() => router.push('/profile')}
-                className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors">
+                onClick={() => router.push('/forum/profile')}
+                className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors cursor-pointer">
                   {isLoading ? 'Loading...' : displayName}
                 </button>
                 <button
-                onClick={ logout }
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                
+                onClick={() => { logout(); disconnectXmtp(); }}
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+
                   <ArrowRightStartOnRectangleIcon className="h-3 w-3" />
                   <span className="hidden sm:inline">DISCONNECT</span>
                 </button>
@@ -133,46 +132,14 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 <div className="flex items-center gap-2 font-mono text-xs">
                   {/* <CheckCircleIcon className="h-2 w-2 fill-primary text-primary" /> */}
                   <span className="text-foreground">CONNECTED</span>
-                </div>
-                <span className="text-muted-foreground">|</span>
-                {/* XMTP Status - Three states */}
-                {xmtpConnected && client?.inboxId ? (
-                  // State 1: Connected to XMTP - clickable to disconnect
-                  <button
-                    onClick={disconnectXmtp}
-                    className="flex items-center gap-2 font-mono text-xs text-foreground hover:text-muted-foreground transition-colors"
-                  >
-                    <span>XMTP</span>
-                  </button>
-                ) : client?.inboxId && !xmtpConnected ? (
-                  // State 2: Has inbox but not connected
-                  <button
-                    onClick={initializeClient}
-                    className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <span>XMTP</span>
-                  </button>
-                ) : !client?.inboxId ? (
-                  // State 3: No inbox - show in red
-                  <button
-                    onClick={() => setShowXmtpModal(true)}
-                    className="flex items-center gap-2 font-mono text-xs text-red-500 hover:text-red-400 transition-colors"
-                  >
-                    <span>XMTP</span>
-                  </button>
-                ) : (
-                  // Loading/Unknown state
-                  <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-                    <span>XMTP</span>
-                  </div>
-                )}
+                </div> 
               </>
             }
             {ready && !authenticated &&
             <button
               onClick={ login }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
+              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200 cursor-pointer">
+
                 <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
                 <span className="text-muted-foreground">NOT CONNECTED</span>
               </button>
@@ -180,8 +147,8 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             {ready && authenticated && walletsReady && !wallets[0] &&
             <button
               onClick={ connectWallet }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
+              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200 cursor-pointer">
+
                 <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
                 <span className="text-muted-foreground">NOT CONNECTED</span>
               </button>
@@ -231,14 +198,14 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                 }
               }}
               disabled={statusPowers.status === "pending" || !publicClient}
-              className="p-2 text-foreground hover:text-foreground/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-foreground hover:text-foreground/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               aria-label="Refresh"
             >
               <ArrowPathIcon className={`h-5 w-5 ${statusPowers.status === "pending" ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 text-foreground hover:text-foreground/80 transition-colors"
+              className="p-2 text-foreground hover:text-foreground/80 transition-colors cursor-pointer"
               aria-label="Open menu"
             >
               <Bars3Icon className="h-6 w-6" />
@@ -268,7 +235,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             </span>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-foreground hover:text-foreground/80 transition-colors"
+              className="p-2 text-foreground hover:text-foreground/80 transition-colors cursor-pointer"
               aria-label="Close menu"
             >
               <XMarkIcon className="h-6 w-6" />
@@ -303,7 +270,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                       router.push('/profile');
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full text-left text-sm text-foreground font-mono py-2 hover:text-foreground/80 transition-colors"
+                    className="w-full text-left text-sm text-foreground font-mono py-2 hover:text-foreground/80 transition-colors cursor-pointer"
                   >
                     {isLoading ? 'Loading...' : displayName}
                   </button>
@@ -314,9 +281,10 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                   <button
                     onClick={() => {
                       logout();
+                      disconnectXmtp();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                     <span>DISCONNECT</span>
@@ -328,7 +296,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                     login();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <CheckCircleIcon className="h-3 w-3" />
                   <span>NOT CONNECTED - TAP TO LOGIN</span>
@@ -339,7 +307,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
                     connectWallet();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <CheckCircleIcon className="h-3 w-3" />
                   <span>NOT CONNECTED - TAP TO CONNECT</span>
@@ -348,48 +316,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             </div>
             
             {/* Divider */}
-            <div className="border-t border-border" />
-            
-            {/* XMTP Connection */}
-            <div className="space-y-3">
-              <span className="text-xs text-muted-foreground font-mono uppercase">XMTP Messaging</span>
-              {xmtpConnected && client?.inboxId ? (
-                <button
-                  onClick={() => {
-                    disconnectXmtp();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 font-mono text-sm text-foreground hover:text-muted-foreground transition-colors"
-                >
-                  <CheckCircleIcon className="h-3 w-3 text-green-500" />
-                  <span>XMTP CONNECTED - TAP TO DISCONNECT</span>
-                </button>
-              ) : client?.inboxId && !xmtpConnected ? (
-                <button
-                  onClick={() => {
-                    initializeClient();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <span>XMTP - TAP TO CONNECT</span>
-                </button>
-              ) : !client?.inboxId ? (
-                <button
-                  onClick={() => {
-                    setShowXmtpModal(true);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 font-mono text-sm text-red-500 hover:text-red-400 transition-colors"
-                >
-                  <span>XMTP - TAP TO LOGIN</span>
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 font-mono text-sm text-muted-foreground">
-                  <span>XMTP</span>
-                </div>
-              )}
-            </div>
+            <div className="border-t border-border" /> 
             
             {/* Divider */}
             <div className="border-t border-border" />
@@ -405,49 +332,6 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           </div>
         </div>
       </div>
-
-      {/* XMTP Login Modal */}
-      <ForumModal 
-        open={showXmtpModal} 
-        onOpenChange={setShowXmtpModal}
-        className="max-w-md"
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h2 className="text-xl font-mono font-bold text-foreground">Login to XMTP</h2>
-            <p className="text-sm text-muted-foreground font-mono">
-              Please log in to your XMTP identity to send and receive messages on the XMTP network.
-            </p>
-          </div>
-          
-          <div className="space-y-3 pt-2">
-            <div className="bg-muted/50 p-3 rounded border border-border">
-              <p className="text-xs text-muted-foreground font-mono">
-                This will require a signature from your wallet to log in to your encrypted XMTP identity.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => setShowXmtpModal(false)}
-              className="flex-1 px-4 py-2 border border-border font-mono text-sm hover:bg-muted transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={async () => {
-                await initializeClient();
-                setShowXmtpModal(false);
-              }}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors"
-            >
-              Login
-            </button>
-          </div>
-        </div>
-      </ForumModal>
-
     </div> 
     )
 }

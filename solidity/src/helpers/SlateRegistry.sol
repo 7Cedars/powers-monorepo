@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import { IPowers } from "../interfaces/IPowers.sol";
-import { IMandate } from "../interfaces/IMandate.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 
@@ -24,7 +23,8 @@ contract SlateRegistry is Ownable {
     }
 
     mapping(uint256 electionId => Election) public elections;
-    mapping(uint256 electionId => uint16[]) slates; 
+    mapping(uint256 electionId => uint16[]) slates;
+    mapping(uint256 electionId => mapping(uint16 slate => bool)) public slateRegistered;
     mapping(uint256 electionId => mapping(uint16 slate => uint32)) votesCount;
     mapping(uint256 electionId => mapping(address voter => bool)) hasVoted;
     
@@ -37,6 +37,8 @@ contract SlateRegistry is Ownable {
     // Events
     event SlateReceived(uint256 indexed electionId, address indexed slate);
     event SlateRevoked(uint256 indexed electionId, address indexed slate);
+    event SlateRegistered(uint256 indexed electionId, uint16 indexed mandateId);
+    event SlateRemoved(uint256 indexed electionId, uint16 indexed mandateId);
     event ElectionCreated(uint256 indexed electionId, string electionTitle, uint48 startBlock, uint48 endBlock);
     event VoteCast(address indexed voter, uint16 indexed slate, uint256 indexed electionId);
 
@@ -83,9 +85,42 @@ contract SlateRegistry is Ownable {
         return electionId;
     }
 
+    /// @notice Registers a slate (mandate ID) as a participant in an election.
+    /// @dev Called by Powers (owner) as part of the AddSlate mandate execution.
+    /// @param electionId ID of the election.
+    /// @param mandateId The mandate ID of the slate to register.
+    function registerSlate(uint256 electionId, uint16 mandateId) external onlyOwner() {
+        if (block.number >= elections[electionId].startBlock) revert("submission phase closed");
+        if (slateRegistered[electionId][mandateId]) revert("slate already registered");
+        slateRegistered[electionId][mandateId] = true;
+        slates[electionId].push(mandateId);
+        emit SlateRegistered(electionId, mandateId);
+    }
+
+    /// @notice Unregisters a slate from an election, to be called when a slate is revoked.
+    /// @dev Called by Powers (owner) as part of the RemoveSlate mandate execution.
+    /// @param electionId ID of the election.
+    /// @param mandateId The mandate ID of the slate to remove.
+    function removeSlate(uint256 electionId, uint16 mandateId) external onlyOwner() {
+        if (block.number >= elections[electionId].startBlock) revert("submission phase closed");
+        if (!slateRegistered[electionId][mandateId]) revert("slate not registered");
+        slateRegistered[electionId][mandateId] = false;
+
+        // Swap-and-pop removal from the slates array
+        uint16[] storage slateArr = slates[electionId];
+        for (uint256 i = 0; i < slateArr.length; i++) {
+            if (slateArr[i] == mandateId) {
+                slateArr[i] = slateArr[slateArr.length - 1];
+                slateArr.pop();
+                break;
+            }
+        }
+        emit SlateRemoved(electionId, mandateId);
+    }
+
     /// Election for nominees in a vote
     /// @param electionId ID of the vote.
-    /// @param caller Address of the voter. 
+    /// @param caller Address of the voter.
     function vote(uint256 electionId, address caller, uint16[] memory slateIndexes) external onlyOwner() {        
         Election storage currentElection = elections[electionId];
         if (block.number < currentElection.startBlock || block.number > currentElection.endBlock) {

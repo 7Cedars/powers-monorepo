@@ -3,16 +3,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { MapIcon, DocumentCheckIcon, BoltIcon, LockClosedIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline'
 import { useXmtpClient } from '@/hooks/useXmtpClient'
-import { useConnection, useSignMessage } from 'wagmi' 
+import { useEffectiveAddress } from '@/hooks/useEffectiveAddress'
+import { useConnection, useSignMessage } from 'wagmi'
 import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk'
-import { ConsentState, IdentifierKind } from '@xmtp/browser-sdk'
+import { IdentifierKind } from '@xmtp/browser-sdk'
 import { SearchFilterSort } from './SearchFilterSort'
 import { useAddressDisplay } from '@/hooks/useAddressDisplay'
 
 function MemberItem({ address }: { address: string }) {
   const { displayName } = useAddressDisplay(address)
   return (
-    <div className="text-xs font-mono py-1.5 px-3 hover:bg-muted/50 cursor-default truncate transition-colors border-b border-border/20 last:border-0" title={address}>
+    <div className="text-xs font-mono py-1.5 px-3 hover:bg-muted/50 cursor-default transition-colors border-b border-border/20 last:border-0" title={address}>
       {displayName}
     </div>
   )
@@ -47,7 +48,9 @@ const chatroomIcons = {
 export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRole = false, chainId, powersAddress, contextId, xmtpAgentAddress }: ChatroomProps) {
   // Get the appropriate icon for this chatroom type
   const ChatroomIcon = chatroomIcons[chatroomType] || ChatBubbleBottomCenterTextIcon
-  const { address } = useConnection ()
+  const { address: eoaAddress } = useConnection()
+  const effectiveAddress = useEffectiveAddress()
+  const address = effectiveAddress ?? eoaAddress
   const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations } = useXmtpClient()
   const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null)
   const [messages, setMessages] = useState<DecodedMessage[]>([])
@@ -58,7 +61,8 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   const [sendError, setSendError] = useState<string | null>(null)
   const [isAddingMember, setIsAddingMember] = useState(false)
   const [addMemberError, setAddMemberError] = useState<string | null>(null)
-  const [showMembersList, setShowMembersList] = useState(false) 
+  const [showMembersList, setShowMembersList] = useState(false)
+  const membersDropdownRef = useRef<HTMLDivElement>(null)
   const [isRequestingAccess, setIsRequestingAccess] = useState(false)
   const [requestAccessError, setRequestAccessError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -77,9 +81,18 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   const baseChatroomId = getBaseChatroomId()
  
   // Check if connected user is in the uninitialized members list
-  const connectedUserNeedsInit = address && groupChat?.uninitializedMembers.some(
-    addr => addr.toLowerCase() === address.toLowerCase()
+  // XMTP member addresses are EOA-based, so compare against eoaAddress
+  const connectedUserNeedsInit = eoaAddress && groupChat?.uninitializedMembers.some(
+    addr => addr.toLowerCase() === eoaAddress.toLowerCase()
   )
+
+  // Map XMTP-stored EOA to effective address (smart wallet) for display
+  const resolveDisplayAddress = (addr: string): string => {
+    if (effectiveAddress && eoaAddress && addr.toLowerCase() === eoaAddress.toLowerCase()) {
+      return effectiveAddress
+    }
+    return addr
+  }
   
   // Check if user's inbox is already in the group
   const isUserInGroup = useCallback(async (): Promise<boolean> => {
@@ -106,6 +119,18 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   }, [groupChat, client, isUserInGroup])
   
   console.log('NB: XMTP Chatroom render:', { client, address, isConnected, connectedUserNeedsInit, groupChat, messages, error, baseChatroomId })
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (membersDropdownRef.current && !membersDropdownRef.current.contains(e.target as Node)) {
+        setShowMembersList(false)
+      }
+    }
+    if (showMembersList) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showMembersList])
 
   // Scroll to bottom of messages
   const scrollToBottom = useCallback(() => {
@@ -291,34 +316,37 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
 
   // Stream all messages
   useEffect(() => {
-    console.log('Setting up message stream with client:', client, 'isConnected:', isConnected, 'groupChat:', groupChat)
     if (!client || !isConnected || !groupChat) return
-    console.log('Streaming messages for conversation ID:', groupChat.conversation.id)
+
+    const conversationId = groupChat.conversation.id
+    let cancelled = false
 
     const streamMessages = async () => {
       try {
-        await client.conversations.streamAllMessages({
-          consentStates: [ConsentState.Allowed],
-          onValue: (message) => {
-            if (message.conversationId === groupChat.conversation.id) {
-              setMessages(prev => {
-                const exists = prev.some(m => m.id === message.id)
-                if (exists) return prev
-                return [...prev, message]
-              })
-            }
-          },
-          onError: (error) => {
-            console.error('@streamMessages: Error streaming messages:', error)
-          },
-        })
+        const stream = await client.conversations.streamAllMessages()
+        for await (const message of stream) {
+          if (cancelled) break
+          if (message.conversationId === conversationId) {
+            setMessages(prev => {
+              const exists = prev.some(m => m.id === message.id)
+              if (exists) return prev
+              return [...prev, message]
+            })
+          }
+        }
       } catch (err) {
-        console.error('@streamMessages: Error setting up message stream:', err)
+        if (!cancelled) {
+          console.error('@streamMessages: Error setting up message stream:', err)
+        }
       }
     }
 
     streamMessages()
-  }, [client, isConnected, groupChat])
+
+    return () => {
+      cancelled = true
+    }
+  }, [client, isConnected, groupChat?.conversation.id])
 
   const handleSendMessage = async () => {
     console.log('@handleSendMessage: Attempting to send message:', messageInput)
@@ -510,7 +538,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-[600px]">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-1 border-b border-border bg-muted/10">
+      <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/10">
         <div className="flex items-center gap-3">
           {/* <ChatroomIcon className="h-8 w-8 text-muted-foreground" /> */}
           <h4 className="text-xs text-muted-foreground uppercase tracking-wider">{chatroomType.toUpperCase()} CHATROOM</h4>
@@ -525,13 +553,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           )} */}
         </div>
         {isConnected && groupChat && (
-         <div className="flex items-center justify-between gap-3 relative">
-          {/* <SearchFilterSort 
-              onSearchChange={(query) => console.log('Search:', query)}
-              onFilterChange={(filter) => console.log('Filter:', filter)}
-              onSortChange={(sort) => console.log('Sort:', sort)}
-            />
-           */}
+         <div ref={membersDropdownRef} className="relative">
             <button
               onClick={() => setShowMembersList(!showMembersList)}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -540,15 +562,10 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
             </button>
 
             {showMembersList && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-background border border-border shadow-md z-50 max-h-60 overflow-y-auto scrollbar-thin">
-                <div className="p-2 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 bg-background/95 backdrop-blur">
-                  Members List
-                </div>
-                <div className="flex flex-col">
-                  {groupChat.memberAddresses.map((addr) => (
-                    <MemberItem key={addr} address={addr} />
-                  ))}
-                </div>
+              <div className="absolute right-0 top-full mt-1 w-auto min-w-[8rem] bg-background border border-border shadow-md z-50 max-h-60 overflow-y-auto scrollbar-thin">
+                {groupChat.memberAddresses.map((addr) => (
+                  <MemberItem key={addr} address={resolveDisplayAddress(addr)} />
+                ))}
               </div>
             )}
         </div>
@@ -568,7 +585,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
           <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
-            Due to the risk of spamming, publically accesible mandates do not have xmtp chat enabled.
+            Due to the risk of spamming, publically accesible mandates do not have chat enabled.
           </p>
         </div>
       ) : !address || !isConnected ? (
@@ -579,16 +596,16 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
             These chatrooms use XMTP, an encrypted Web3 messaging protocol.
           </p>
           <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-2xl mb-4">
-            Connect your wallet and log in to XMTP to participate in governance discussions.
+            Connect your wallet and log in to chat to participate in governance discussions.
           </p>
           {address && !isConnected && (
             <> 
               <button
                 onClick={initializeClient}
                 disabled={isLoading}
-                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider font-mono"
               >
-                {isLoading ? 'Logging in...' : !client?.inboxId ? 'Login to XMTP' : 'Connect to XMTP'}
+                {isLoading ? 'Logging in...' : !client?.inboxId ? 'Login to chat' : 'Connect to chatroom'}
               </button>
             </>
           )}
@@ -625,7 +642,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           <button
             onClick={handleRequestAccess}
             disabled={isRequestingAccess}
-            className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+            className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider font-mono"
           >
             {isRequestingAccess ? 'Requesting Access...' : 'Request Access'}
           </button>
@@ -668,7 +685,8 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
                   }
                   
                   // Use Ethereum address if available, otherwise use inbox ID
-                  const displayAddress = inboxToAddress.get(message.senderInboxId) || message.senderInboxId
+                  // Resolve EOA to effective address (smart wallet) for the current user
+                  const displayAddress = resolveDisplayAddress(inboxToAddress.get(message.senderInboxId) || message.senderInboxId)
                   
                   return (
                     <div
@@ -721,7 +739,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
               <button
                 onClick={handleSendMessage}
                 disabled={!messageInput.trim() || isSending}
-                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-primary text-primary-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSending ? 'Sending...' : 'Send'}
               </button>

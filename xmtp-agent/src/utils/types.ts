@@ -1,5 +1,11 @@
 import type { Address } from 'viem';
 
+export interface Flow {
+  index: number;
+  mandateIds: bigint[];
+  nameDescription: string;
+}
+
 export interface Mandate {
   index: bigint;
   targetMandate: Address;

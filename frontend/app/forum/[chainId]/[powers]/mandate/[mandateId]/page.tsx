@@ -8,11 +8,11 @@ import { Action, Mandate } from '@/context/types';
 import { bigintToRole } from '@/utils/bigintTo';
 import { NewActionDialog } from './NewActionDialog';
 import { Chatroom } from '@/components/Chatroom';
-import { useWallets } from '@privy-io/react-auth';
+import { useEffectiveAddress } from '@/hooks/useEffectiveAddress';
 import { useReadContract, useBlockNumber } from 'wagmi';
 import { powersAbi } from '@/context/abi';
 import { parseChainId } from '@/utils/parsers';
-import { calculateVoteTimeRemaining } from '@/public/organisations/helpers';
+import { calculateVoteTimeRemaining, calculateTimelockRemaining } from '@/public/organisations/helpers';
 
 export default function MandatePage() {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -20,7 +20,7 @@ export default function MandatePage() {
   const powers = usePowersStore();
   const { chainId, powers: powersAddress, mandateId } = useParams<{ chainId: string; powers: string; mandateId: string }>();
   const mandate: Mandate | undefined = powers?.mandates?.find(m => m.index.toString() === mandateId); 
-  const { data: currentBlockNumber } = useBlockNumber({ chainId: parseChainId(chainId) || undefined });
+  const { data: currentBlockNumber } = useBlockNumber({ chainId: parseChainId(chainId) || undefined, watch: true });
 
   // Redirect to overview page if powers data is not loaded yet
   useEffect(() => {
@@ -29,17 +29,15 @@ export default function MandatePage() {
     }
   }, [powers, router, chainId, powersAddress]);
   
-  // Get wallet address
-  const { wallets, ready: walletsReady } = useWallets();
-  const walletAddress = walletsReady && wallets[0] ? wallets[0].address : undefined;
-  
+  const effectiveAddress = useEffectiveAddress();
+
   // Check if user has the required role
   const { data: hasRoleSinceData } = useReadContract({
     address: powersAddress as `0x${string}`,
     abi: powersAbi,
     functionName: 'hasRoleSince',
-    args: walletAddress && mandate?.conditions?.allowedRole !== undefined
-      ? [walletAddress as `0x${string}`, BigInt(mandate.conditions.allowedRole)]
+    args: effectiveAddress && mandate?.conditions?.allowedRole !== undefined
+      ? [effectiveAddress, BigInt(mandate.conditions.allowedRole)]
       : undefined
   });
   
@@ -88,9 +86,9 @@ export default function MandatePage() {
   const getActionStatus = (action: Action): { text: string; color: string; isActive: boolean } => {
     if (action.state === undefined) return { text: 'UNKNOWN', color: 'text-gray-500', isActive: false };
     
-    if (action.state === 3 && 
-        action.proposedAt && 
-        mandate?.conditions?.votingPeriod && 
+    if (action.state === 3 &&
+        action.proposedAt &&
+        mandate?.conditions?.votingPeriod &&
         currentBlockNumber &&
         chainId) {
       const parsedChainId = parseChainId(chainId);
@@ -102,6 +100,28 @@ export default function MandatePage() {
           parsedChainId
         );
         return { text: timeRemaining, color: 'text-green-600', isActive: true };
+      }
+    }
+
+    // Timelock countdown: state 5 (Succeeded) + active timelock = waiting to execute
+    if (action.state === 5 &&
+        action.proposedAt &&
+        mandate?.conditions?.timelock &&
+        BigInt(mandate.conditions.timelock) > 0n &&
+        currentBlockNumber &&
+        chainId) {
+      const parsedChainId = parseChainId(chainId);
+      if (parsedChainId) {
+        const timeRemaining = calculateTimelockRemaining(
+          BigInt(action.proposedAt),
+          BigInt(mandate.conditions.timelock),
+          currentBlockNumber,
+          parsedChainId
+        );
+        if (timeRemaining !== "Ready") {
+          return { text: timeRemaining, color: 'text-yellow-600', isActive: true };
+        }
+        return { text: 'READY', color: 'text-green-600', isActive: true };
       }
     }
     

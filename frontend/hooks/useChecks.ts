@@ -7,36 +7,40 @@ import { readContract } from "wagmi/actions";
 import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
 import { hashAction } from "@/utils/hashAction";
-import { getBlockNumber } from '@wagmi/core' 
+import { getBlockNumber } from '@wagmi/core'
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress"
 
 export const useChecks = () => {
-  const { chainId } = useParams<{ chainId: string }>() 
+  const { chainId } = useParams<{ chainId: string }>()
   const [checks, setChecks] = useState<Checks | undefined>()
   const [status, setStatus ] = useState<Status>("idle")
-  const [error, setError] = useState<any | null>(null) 
+  const [error, setError] = useState<any | null>(null)
+  const effectiveAddress = useEffectiveAddress()
   // note: the state of checks is not stored here, it is stored in the Zustand store
 
   // console.log("useChecks: waypoint 0", {error, status})
 
   const checkAccountAuthorised = useCallback(
     async (mandate: Mandate, powers: Powers, wallets: ConnectedWallet[]) => {
+        const address = effectiveAddress ?? wallets[0]?.address
+        if (!address) return false
         try {
-          // console.log("@checkAccountAuthorised: waypoint 0", {mandate, powers, wallets})
+          // console.log("@checkAccountAuthorised: waypoint 0", {mandate, powers, address})
           const result =  await readContract(wagmiConfig, {
                   abi: powersAbi,
                   address: powers.contractAddress as `0x${string}`,
-                  functionName: 'canCallMandate', 
-                  args: [wallets[0].address, mandate.index],
+                  functionName: 'canCallMandate',
+                  args: [address, mandate.index],
                   chainId: parseChainId(chainId)
                 })
           // console.log("@checkAccountAuthorised: waypoint 1", {result})
-          return result as boolean 
+          return result as boolean
         } catch (error) {
-            setStatus("error") 
+            setStatus("error")
             setError(error as Error)
             // console.log("@checkAccountAuthorised: waypoint 2", {error})
         }
-  }, [])
+  }, [effectiveAddress])
 
   const getActionState = useCallback(
     async (mandate: Mandate, mandateId: bigint, mandateCalldata: `0x${string}`, nonce: bigint): Promise<bigint | undefined> => {
@@ -156,14 +160,15 @@ export const useChecks = () => {
 
         if (wallets[0] && powers?.contractAddress && mandate.conditions) { 
           // console.log("fetchChecks triggered, waypoint 1", {mandate, callData, nonce, wallets, powers, actionMandateId, caller})
+          const address = effectiveAddress ?? wallets[0]?.address as `0x${string}`
           const checksData = await Promise.all([
             checkThrottledExecution(mandate),
             checkAccountAuthorised(mandate, powers, wallets),
             getActionState(mandate, mandate.index, callData, nonce),
             getActionState(mandate, mandate.conditions.needFulfilled, callData, nonce),
             getActionState(mandate, mandate.conditions.needNotFulfilled, callData, nonce),
-            checkDelayedExecution(mandate.index, nonce, callData, powers), 
-            checkHasVoted(mandate.index, nonce, callData, powers, wallets[0].address as `0x${string}`)
+            checkDelayedExecution(mandate.index, nonce, callData, powers),
+            checkHasVoted(mandate.index, nonce, callData, powers, address)
           ])
           const [throttled, authorised, actionState, actionStateNeedFulfilled, actionStateNeedNotFulfilled, delayed, hasVoted] = checksData
 

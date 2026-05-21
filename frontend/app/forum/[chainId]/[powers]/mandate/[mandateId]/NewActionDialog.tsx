@@ -15,6 +15,7 @@ import { hashAction } from "@/utils/hashAction";
 import { useWallets } from "@privy-io/react-auth";
 import { useMandate } from "@/hooks/useMandate";
 import { useChecks } from "@/hooks/useChecks";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 import { cn } from "@/utils/utils";
 import { useRouter, useParams } from "next/navigation";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -47,6 +48,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
   const { wallets, ready } = useWallets();
   const { simulation, simulate, request, propose } = useMandate();
   const { checks, fetchChecks } = useChecks();
+  const effectiveAddress = useEffectiveAddress();
 
   // Track if we're submitting a transaction (not just simulating)
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -289,7 +291,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         actionId,
         state: 0,
         mandateId: mandate.index,
-        caller: wallets[0] ? wallets[0].address as `0x${string}` : '0x0',
+        caller: effectiveAddress ?? '0x0',
         dataTypes: mandate.params?.map(param => param.dataType),
         paramValues: sanitizedParamValues,
         nonce: action.nonce,
@@ -304,7 +306,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
 
       try {
         await simulate(
-          wallets[0] ? wallets[0].address as `0x${string}` : '0x0',
+          effectiveAddress ?? '0x0',
           newAction.callData as `0x${string}`,
           BigInt(newAction.nonce as string),
           mandate
@@ -321,14 +323,12 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
       return;
     }
 
-    const needsVote = mandate.conditions?.quorum && mandate.conditions.quorum > 0n;
-
     // Mark that we're submitting a transaction
     setIsSubmitting(true);
 
     try {
-      if (needsVote) {
-        // Needs a vote - use propose
+      if (needsVote || needsProposalFirst) {
+        // Voting mandate OR timelock-only mandate: propose first
         await propose(
           mandate.index,
           action.callData as `0x${string}`,
@@ -337,7 +337,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           powers
         );
       } else {
-        // Direct execution - use request
+        // Direct execution (no quorum, no timelock)
         await request(
           mandate,
           action.callData as `0x${string}`,
@@ -390,20 +390,19 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
     }
   }, [flowActions, dataTypes, mandate.index, action]);
 
-  const needsVote = mandate.conditions?.quorum && mandate.conditions.quorum > 0n;
-  console.log("@NewActionDialog: ", {action, error, status, simulation, checks, needsVote});
-  
-  // For NEW proposals, we need different checks than for executing existing actions
-  // When proposing, the action shouldn't exist yet (actionExists should be false)
-  // We only care about: authorised, throttlePassed, actionNotFulfilled, mandateFulfilled, mandateNotFulfilled
+  const needsVote = !!(mandate.conditions?.quorum && mandate.conditions.quorum > 0n);
+  // Timelock-only: quorum == 0 but timelock > 0 — must propose first, then wait, then request
+  const needsProposalFirst = !needsVote && !!(mandate.conditions?.timelock && BigInt(mandate.conditions.timelock) > 0n);
+  console.log("@NewActionDialog: ", {action, error, status, simulation, checks, needsVote, needsProposalFirst});
+
+  // For NEW proposals (voting OR timelock-only), we only gate on auth + throttle + not-yet-fulfilled.
+  // delayPassed is NOT checked here because no proposal exists yet (nothing to delay against).
   const canSubmit = action.upToDate && checks && (() => {
-    if (needsVote) {
-      // For proposals: action should NOT exist yet, so we skip actionExists and proposalPassed checks
+    if (needsVote || needsProposalFirst) {
       return checks.authorised === true &&
              checks.throttlePassed === true &&
-             checks.actionNotFulfilled === true; 
+             checks.actionNotFulfilled === true;
     } else {
-      // For direct execution: use all checks
       return checks.allPassed === true;
     }
   })();
@@ -420,7 +419,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         </div>
         <button
           onClick={() => onOpenChange(false)}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           <XMarkIcon className="h-4 w-4" />
         </button>
@@ -432,7 +431,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           <button
             type="button"
             onClick={() => setShowSelectInput(true)}
-            className="w-full flex items-center justify-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap bg-foreground text-background hover:bg-foreground/80 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap bg-foreground text-background hover:bg-foreground/80 transition-colors cursor-pointer"
           >
             Select Input
           </button>
@@ -495,7 +494,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
           />
           <button
             type="button"
-            className="h-9 w-9 flex items-center justify-center  bg-background border border-border hover:bg-muted transition-colors"
+            className="h-9 w-9 flex items-center justify-center  bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
             onClick={(e) => {
               e.preventDefault();
               setAction({
@@ -523,7 +522,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
             onClick={handleSimulate}
             className={cn(
               "w-full border border-border px-4 py-2.5 text-xs text-foreground",
-              "bg-muted/10 hover:bg-muted/50 hover:border-foreground/40 transition-colors",
+              "bg-muted/10 hover:bg-muted/50 hover:border-foreground/40 transition-colors cursor-pointer",
               "uppercase tracking-wider font-mono"
             )}
           >
@@ -545,7 +544,7 @@ export const NewActionDialog: React.FC<NewActionDialogProps> = ({
         onSubmit={handleSubmit}
         status={status.status}
         isSubmitting={isSubmitting}
-        needsVote={!!needsVote}
+        needsVote={needsVote || needsProposalFirst}
         showFallback={action.upToDate}
         checks={checks}
       />

@@ -41,8 +41,8 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
 
     // Determine navigation path based on current pathname
     const getNavigationPath = () => {
-        if (pathname?.startsWith('/editor')) {
-            return `/editor/${powers.chainId}/${powers.contractAddress}/home`;
+        if (pathname?.startsWith('/overview')) {
+            return `/overview/${powers.chainId}/${powers.contractAddress}/home`;
         }
         return `/forum/${powers.chainId}/${powers.contractAddress}`;
     };
@@ -74,7 +74,7 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                                 e.stopPropagation();
                                 onArchive(powers.contractAddress);
                             }}
-                            className="text-foreground hover:text-foreground/80 transition-colors">
+                            className="text-foreground hover:text-foreground/80 transition-colors cursor-pointer">
                             <XMarkIcon className="h-4 w-4" />
                         </button>
                     )}

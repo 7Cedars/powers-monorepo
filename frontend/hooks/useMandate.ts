@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { mandateAbi, powersAbi } from "../context/abi";
 import { MandateSimulation, Mandate, Powers, Action, ActionVote, Status } from "../context/types"
 import { readContract, readContracts, simulateContract, writeContract } from "@wagmi/core";
@@ -25,6 +25,13 @@ export const useMandate = () => {
   
   const hasSmartWalletAccount = user?.linkedAccounts.find((a) => a.type === 'smart_wallet') !== undefined;
   const isSmartWallet = hasSmartWalletAccount && !!client && !!client.account;
+
+  // Refs written on every render so callbacks always read the latest values,
+  // even if they were memoized before client finished initialising.
+  const clientRef = useRef(client);
+  const isSmartWalletRef = useRef(isSmartWallet);
+  clientRef.current = client;
+  isSmartWalletRef.current = isSmartWallet;
  
   const [transactionHash, setTransactionHash ] = useState<`0x${string}` | undefined>()
   const {data: dataReceipt, error: errorReceipt, status: statusReceipt} = useTransactionConfirmations({
@@ -64,18 +71,19 @@ export const useMandate = () => {
     data: `0x${string}`,
     powers: Powers
   ): Promise<`0x${string}`> => {
+    const currentClient = clientRef.current;
     console.log("@sendSmartWalletTx, waypoint 0", {to, data, powers})
-    if (!client) throw new Error("Smart wallet client not found");
-    
+    if (!currentClient) throw new Error("Smart wallet client not found");
+
     // If no specific paymaster is set, use the default Privy client behavior
     if (!powers.paymaster || powers.paymaster === '0x0000000000000000000000000000000000000000') {
-      return await client.sendTransaction({ to, data, value: 0n });
+      return await currentClient.sendTransaction({ to, data, value: 0n });
     }
     console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
 
     const { createSmartAccountClient } = await import('permissionless');
     const { http } = await import('viem');
-    
+
     const pimlicoUrl = process.env.NEXT_PUBLIC_PIMLICO_BUNDLER_URL || "";
     let bundlerUrl = pimlicoUrl;
     if (bundlerUrl.includes('11155111') && chainId.toString() !== '11155111') {
@@ -89,7 +97,7 @@ export const useMandate = () => {
     console.log("@sendSmartWalletTx, waypoint 3", {chain})
 
     const customClient = createSmartAccountClient({
-      account: client.account as any,
+      account: currentClient.account as any,
       chain,
       bundlerTransport: http(bundlerUrl),
       paymaster: {
@@ -131,7 +139,7 @@ export const useMandate = () => {
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
-          if (isSmartWallet && client) {
+          if (isSmartWalletRef.current && clientRef.current) {
             result = await sendSmartWalletTx(
               powers.contractAddress,
               encodeFunctionData({
@@ -158,7 +166,7 @@ export const useMandate = () => {
             setError({error: error as Error})
         }
         return false
-  }, [chainId, isSmartWallet, client])
+  }, [chainId])
 
   const cancel = useCallback( 
     async (
@@ -170,7 +178,7 @@ export const useMandate = () => {
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
-          if (isSmartWallet && client) {
+          if (isSmartWalletRef.current && clientRef.current) {
             result = await sendSmartWalletTx(
               powers.contractAddress,
               encodeFunctionData({
@@ -196,7 +204,7 @@ export const useMandate = () => {
           setError({error: error as Error})
           return false
       }
-  }, [chainId, isSmartWallet, client])
+  }, [chainId])
 
   const castVote = useCallback( 
     async (
@@ -207,7 +215,7 @@ export const useMandate = () => {
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
-          if (isSmartWallet && client) {
+          if (isSmartWalletRef.current && clientRef.current) {
             result = await sendSmartWalletTx(
               powers.contractAddress,
               encodeFunctionData({
@@ -233,7 +241,7 @@ export const useMandate = () => {
           setError({error: error as Error})
           return false
       }
-  }, [chainId, isSmartWallet, client])
+  }, [chainId])
 
   const castVoteWithReason = useCallback( 
     async (
@@ -245,7 +253,7 @@ export const useMandate = () => {
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
-          if (isSmartWallet && client) {
+          if (isSmartWalletRef.current && clientRef.current) {
             result = await sendSmartWalletTx(
               powers.contractAddress,
               encodeFunctionData({
@@ -271,7 +279,7 @@ export const useMandate = () => {
           setError({error: error as Error})
           return false
       }
-  }, [chainId, isSmartWallet, client])
+  }, [chainId])
 
   const fetchVoteData = useCallback(
     async (
@@ -368,12 +376,12 @@ export const useMandate = () => {
       description: string,
       powers: Powers
     ): Promise<boolean> => {
-        console.log("@execute: waypoint 1", {mandate, mandateCalldata, nonce, description, isSmartWallet, client})
+        console.log("@execute: waypoint 1", {mandate, mandateCalldata, nonce, description, isSmartWallet: isSmartWalletRef.current, client: clientRef.current})
         setError({error: null})
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
-          if (isSmartWallet && client) {
+          if (isSmartWalletRef.current && clientRef.current) {
             result = await sendSmartWalletTx(
               mandate.powers,
               encodeFunctionData({
@@ -410,7 +418,7 @@ export const useMandate = () => {
         }
         setStatus({status: "idle"})
         return false
-      }, [chainId, isSmartWallet, client])
+      }, [chainId])
 
   return {simulation, actionVote, transactionHash, resetStatus, simulate, request, propose, cancel, castVote, castVoteWithReason, fetchVoteData}
 }

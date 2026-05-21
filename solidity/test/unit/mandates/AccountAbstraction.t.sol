@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import { Powers } from "@src/Powers.sol";
 import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol"; 
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "@lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";

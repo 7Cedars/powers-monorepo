@@ -1,46 +1,50 @@
 export const powersApplications = [
   {
-    title: "Granular Upgrades", 
+    title: "Pseudonymous Participation",
     details: [
-      "Start with a centralized-but-constrained team mandate: Core teams can spend funds within strict code-enforced limits.",
-      "Progressively introduce Veto or Council Mandates as the organization scales.",
-      "No need for treasury migration: avoid a governance cliffedge."
-    ]
-  }, 
-  {
-    title: "Bespoke Delegation",
-    details: [
-      "Delegate tasks to specialized bodies with clear boundaries.",
-      "Grant working groups high degrees of freedom within budget caps or domain restrictions.",
-      "Teams act swiftly while remaining trustlessly aligned with community goals.",
-      "Replace fragile off-chain mandates with transparent on-chain commitments."
-    ]
-  },  
-  {
-    title: "Increased Efficiency",
-    details: [
-      "Technical constraints are embedded directly into Mandates.",
-      "Voters evaluate and approve the scope of a Mandate once, not every execution.",
-      "Heavy security checks can be reserved for rare moments when Mandates are adopted or revoked.",
-      "Balance rigorous security with operational speed."
+      "Combined with ZKPassport and Account Abstraction, participants can prove eligibility without revealing identity.",
+      "Extend formal governance to sensitive contexts: journalism, activism, confidential research.",
+      "Participation rights are enforced on-chain, not dependent on a trusted intermediary."
     ]
   },
   {
-    title: "Asynchronous Coordination",
-    details: [  
-      "Handle workflows that span different environments: off-chain or cross-chain.",
-      "One Mandate's fulfillment can trigger another at a later time.",
-      "Governance can start on one chain, wait for state verification from another.",
-      "Pause for off-chain signals before unlocking final execution."
+    title: "Separation of Powers",
+    details: [
+      "Proposal, deliberation, veto, and execution can be assigned to distinct roles and mandates.",
+      "Roles cannot exceed their mandate — no procedural override is possible without the required parties acting in concert.",
+      "Enforce foundational governance principles structurally, not by convention."
     ]
   },
   {
-    title: "AI Guardian Integration",
+    title: "Beyond Institutional Reach",
     details: [
-      "Assign AI agents roles with specific Mandates constrained by strict Degrees of Freedom.",
-      "AI agents interact only with whitelisted pools or approved actions.",
-      "Guardian AI or human committee holds linked Veto Mandate for safety.",
-      "Serve as an Accountability Protocol for Autonomous Agents."
+      "In contexts where conventional governance is inaccessible — across borders or for contributors without legal status.",
+      "Powers provides a governance layer that can operate independently or alongside formal structures that may follow later.",
+      "Early-stage communities can adopt rigorous governance before legal entities are established."
+    ]
+  },
+  {
+    title: "Devolved Responsibilities",
+    details: [
+      "Grants committees, working groups, and review boards need clear, enforceable boundaries.",
+      "Delegation is structural: a committee can only act within the scope defined by the parent organization.",
+      "Actions are transparently recorded and authority can be adjusted at any time."
+    ]
+  },
+  {
+    title: "Continuous Accountability",
+    details: [
+      "Foundations, governments, and industry bodies typically rely on periodic audits.",
+      "Powers adds a real-time transparency layer: any party can verify decisions followed agreed rules between audit cycles.",
+      "Reduce the cost of oversight without replacing existing reporting structures."
+    ]
+  },
+  {
+    title: "Multi-Party Coordination",
+    details: [
+      "Joint funds, industry consortiums, and shared oversight processes are administratively expensive.",
+      "Powers acts as a coordination layer alongside existing legal agreements.",
+      "Compliance becomes continuously verifiable, reducing overhead without displacing the agreements themselves."
     ]
   }
 ]

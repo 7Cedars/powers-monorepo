@@ -6,17 +6,8 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "./Configurations.s.sol";
 
-// --- Library Imports ---
-import { Checks } from "@src/libraries/Checks.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-
 // --- Interfaces ---
-import { IPowers } from "@src/interfaces/IPowers.sol";
-import { IMandate } from "@src/interfaces/IMandate.sol";
 import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
-
-// --- Library Imports ---
-import { Checks } from "@src/libraries/Checks.sol";
 
 // ELECTORAL MANDATES
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
@@ -39,6 +30,7 @@ import { BespokeAction_OnReturnValue } from "@src/mandates/executive/BespokeActi
 import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Advanced.sol";
 import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
 import { ExternalAction_Simple } from "@src/mandates/executive/ExternalAction_Simple.sol";
+import { ExternalAction_OnReturnValue } from "@src/mandates/executive/ExternalAction_OnReturnValue.sol";
 import { ExternalAction_Flexible } from "@src/mandates/executive/ExternalAction_Flexible.sol";
 import { PresetActions_OnOwnPowers } from "@src/mandates/executive/PresetActions_OnOwnPowers.sol";
 
@@ -288,6 +280,10 @@ contract DeployMandates is Script {
         names.push("ExternalAction_Simple");
         creationCodes.push(type(ExternalAction_Simple).creationCode);
         constructorArgs.push(abi.encode("ExternalAction_Simple"));
+
+        names.push("ExternalAction_OnReturnValue");
+        creationCodes.push(type(ExternalAction_OnReturnValue).creationCode);
+        constructorArgs.push(abi.encode("ExternalAction_OnReturnValue"));
 
         names.push("ExternalAction_Flexible");
         creationCodes.push(type(ExternalAction_Flexible).creationCode);
