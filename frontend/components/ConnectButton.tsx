@@ -2,6 +2,7 @@
 
 import { usePrivy, useCreateWallet } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 import { 
   FingerPrintIcon,
   PlusCircleIcon,
@@ -14,6 +15,7 @@ export const ConnectButton = () => {
   const {ready, authenticated, login, logout, connectWallet} = usePrivy();
   const {createWallet} = useCreateWallet();
   const [isCreating, setIsCreating] = useState(false);
+  const effectiveAddress = useEffectiveAddress();
 
   const handleCreateEmbeddedWallet = async () => {
     setIsCreating(true);
@@ -94,7 +96,7 @@ export const ConnectButton = () => {
         >
           <div className={`flex flex-row items-center text-center text-muted-foreground md:gap-2 gap-0 w-full h-full md:py-1 px-2 py-0 font-mono`}>
             <div className="md:w-fit w-0 opacity-0 md:opacity-100">
-              {`${wallets[0].address.slice(0, 6)}...${wallets[0].address.slice(-6)}`}
+              {effectiveAddress ? `${effectiveAddress.slice(0, 6)}...${effectiveAddress.slice(-6)}` : ''}
             </div>
           </div>
         </button>

@@ -1,17 +1,28 @@
 'use client'
 
-import { UserCircleIcon, DocumentTextIcon, BoltIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import { UserCircleIcon, DocumentTextIcon, BoltIcon, HandRaisedIcon, ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Roles } from './Roles';
 import { Inbox } from './Inbox';
 import { useWallets } from '@privy-io/react-auth';
 import { useAddressDisplay } from '@/hooks/useAddressDisplay';
 import { useProfileStats } from '@/hooks/useProfileStats';
+import { useEffectiveAddress } from '@/hooks/useEffectiveAddress';
 
 export default function UserProfile() {
   const { wallets, ready: walletsReady } = useWallets();
-  const userAddress = wallets[0]?.address as `0x${string}` | undefined;
+  const userAddress = useEffectiveAddress();
   const { displayName, ensName, isLoading: ensLoading } = useAddressDisplay(userAddress);
   const { proposals, executions, votes, isLoadingVotes } = useProfileStats(userAddress);
+  const [copied, setCopied] = useState(false);
+
+  const copyAddress = () => {
+    if (userAddress) {
+      navigator.clipboard.writeText(userAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background scanlines">
@@ -38,13 +49,29 @@ export default function UserProfile() {
                     <UserCircleIcon className="h-full w-full" />
                   </div>
                   <div className="min-w-0">
-                    <h2 className={`font-mono text-base text-foreground tracking-wider truncate${ensName ? '' : ' uppercase'}`}>
-                      {ensLoading ? '···' : displayName}
-                    </h2>
+                    <div className="flex items-center gap-1.5">
+                      <h2 className={`font-mono text-base text-foreground tracking-wider truncate${ensName ? '' : ' uppercase'}`}>
+                        {ensLoading ? '···' : displayName}
+                      </h2>
+                      {!ensLoading && userAddress && !ensName && (
+                        <button onClick={copyAddress} title="Copy address" className="shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                          {copied
+                            ? <CheckIcon className="h-3.5 w-3.5 text-green-500" />
+                            : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
+                        </button>
+                      )}
+                    </div>
                     {ensName && userAddress && (
-                      <p className="font-mono text-xs text-muted-foreground mt-0.5">
-                        {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+                        </p>
+                        <button onClick={copyAddress} title="Copy address" className="shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                          {copied
+                            ? <CheckIcon className="h-3 w-3 text-green-500" />
+                            : <ClipboardDocumentIcon className="h-3 w-3" />}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

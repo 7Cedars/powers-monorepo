@@ -133,7 +133,7 @@ function ShowAllMandatesToggle() {
   return (
     <button
       onClick={toggleShowAllMandates}
-      className="p-2 ml-auto bg-background border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-primary"
+      className="p-2 ml-auto bg-background border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-primary cursor-pointer"
       aria-label={showAllMandates ? 'Show only your roles' : 'Show all mandates'}
       title={showAllMandates ? 'Showing all mandates - click to filter by your roles' : 'Filtered by your roles - click to show all mandates'}
     >

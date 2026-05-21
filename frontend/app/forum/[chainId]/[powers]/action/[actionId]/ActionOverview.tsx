@@ -8,6 +8,7 @@ import { parseParamValues } from "@/utils/parsers";
 import { SimulationBox } from "@/components/SimulationBox";
 import { useMandate } from "@/hooks/useMandate";
 import { useWallets } from "@privy-io/react-auth";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 import { useChainId } from "wagmi";
 
 interface ActionOverviewProps {
@@ -25,6 +26,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
   const { simulation, simulate } = useMandate();
   const { wallets, ready } = useWallets();
   const chainId = useChainId();
+  const effectiveAddress = useEffectiveAddress();
   const [decodedParams, setDecodedParams] = useState<any[]>([]);
   const [hasSimulated, setHasSimulated] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -64,7 +66,7 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
 
       try {
         await simulate(
-          action.caller || (wallets[0].address as `0x${string}`),
+          action.caller || effectiveAddress || '0x0',
           action.callData as `0x${string}`,
           BigInt(action.nonce || 0),
           mandate
