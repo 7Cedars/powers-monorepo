@@ -97,7 +97,7 @@ export function Footer() {
             <div className="text-sm font-bold flex flex-row gap-1">
                 <p>Made with</p> 
                 <HeartIcon className="w-4 h-4 text-red-700" />
-                <p>by 7Cedars</p>
+                <p>by Publius Projects</p>
             </div>
             <div className="flex flex-row gap-2">
                 <a
