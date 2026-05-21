@@ -138,7 +138,7 @@ export function SectionExamples() {
                   onClick={handleViewOverview}
                   disabled={isComingSoon}
                 >
-                  {isComingSoon ? 'Coming Soon' : 'View Overview'}
+                  {isComingSoon ? 'Coming Soon' : 'Overview'}
                 </button>
               </div>
             </div>
