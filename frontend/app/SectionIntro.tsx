@@ -28,7 +28,7 @@ export function SectionIntro() {
                 Composable Governance
               </div>
               <div className="w-full flex justify-center items-center md:text-xl text-lg font-mono text-slate-300 max-w-4xl text-center pt-1">
-                Powers allows any community to compose resilient and dynamic governance systems by configuring relationships between institutional roles.
+                Create resilient and dynamic governance systems by assigning powers to roles and configuring cross-role relationships.
               </div>
           </section>
 

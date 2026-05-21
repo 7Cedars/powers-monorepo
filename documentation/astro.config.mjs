@@ -17,9 +17,7 @@ export default defineConfig({
 				{
 					label: 'Getting Started',
 					items: [
-						{ label: 'Intro', slug: 'index' },
 						{ label: 'Welcome', slug: 'welcome' },
-						{ label: 'Use Cases', slug: 'use-cases' },
 						{ label: 'Development', slug: 'development' },
 					],
 				},

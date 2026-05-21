@@ -146,9 +146,9 @@ export function SectionExamples() {
         </div>
 
         {/* Arrow down */}
-        <div className="flex flex-col align-center justify-center pb-8">
+        {/* <div className="flex flex-col align-center justify-center pb-8">
           <ChevronDownIcon className="w-16 h-16 text-muted-foreground" />
-        </div>
+        </div> */}
       </div>
     </section>
   );
