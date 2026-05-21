@@ -1,14 +1,15 @@
 'use client'
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Powers, Mandate } from '@/context/types';
 import { bigintToRole } from "@/utils/bigintTo";
 import { useRouter, useParams } from 'next/navigation';
 import { SearchFilterSort } from '@/components/SearchFilterSort';
 import { useUIStateStore } from '@/context/store';
-import { useAccount, useReadContracts } from 'wagmi';
+import { useReadContracts } from 'wagmi';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { powersAbi } from '@/context/abi';
 import { usePrivy } from '@privy-io/react-auth';
+import { useEffectiveAddress } from '@/hooks/useEffectiveAddress';
 
 // PUBLIC_ROLE is max uint256 - mandates with this role are accessible to everyone
 const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
@@ -19,7 +20,7 @@ interface ActivityOverviewProps {
 
 export function ActivityOverview({ powers }: ActivityOverviewProps) {
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>();
-  const { address: userAddress } = useAccount();
+  const userAddress = useEffectiveAddress();
   const { authenticated, login } = usePrivy();
   const showAllMandates = useUIStateStore((state) => state.showAllMandates);
   const toggleShowAllMandates = useUIStateStore((state) => state.toggleShowAllMandates);
@@ -69,10 +70,10 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
 
   // Check if user can access a mandate (either has the role or it's public)
   // Unauthenticated users cannot access any mandate in the filtered view
-  const userCanAccessMandate = (mandate: Mandate): boolean => {
+  const userCanAccessMandate = useCallback((mandate: Mandate): boolean => {
     if (!authenticated || !userAddress) return false;
     return isMandatePublic(mandate) || userHasRoleForMandate(mandate);
-  };
+  }, [authenticated, userAddress, userRoleIds]);
 
   // Extract flows and mandates
   const flowBoxes = useMemo(() => {
@@ -117,7 +118,7 @@ export function ActivityOverview({ powers }: ActivityOverviewProps) {
     return flowBoxes.filter(box => 
       box.mandates.some(m => userCanAccessMandate(m))
     );
-  }, [flowBoxes, showAllMandates, userRoleIds]);
+  }, [flowBoxes, showAllMandates, userCanAccessMandate]);
 
   // Check if user has no roles at all and showAllMandates is false
   const showEmptyState = !showAllMandates && filteredFlowBoxes.length === 0 && flowBoxes.length > 0;

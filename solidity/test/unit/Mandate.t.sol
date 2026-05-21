@@ -588,7 +588,7 @@ contract MandateHandleRequestTest is TestSetupMandate {
 
         // act: call handleRequest
         (
-            uint256 actionId,
+            ,
             address[] memory returnedTargets,
             uint256[] memory returnedValues,
             bytes[] memory returnedCalldatas
