@@ -468,7 +468,7 @@ export function SectionDeployDemo() {
 
   const handleSeeYourPowers = () => {
     if (deployedPowersAddress && selectedChainId) {
-      router.push(`/editor/${selectedChainId}/${deployedPowersAddress}`);
+      router.push(`/overview/${selectedChainId}/${deployedPowersAddress}`);
     }
   };
 

@@ -32,10 +32,10 @@ export function Footer() {
                         Forum
                     </a>  
                        <a
-                        href={`/editor`} rel="noopener noreferrer"
+                        href={`/overview`} rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                     >
-                        Editor
+                        Overview
                     </a>                  
                     
                      <a

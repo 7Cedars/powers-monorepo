@@ -20,7 +20,7 @@ export function Mandates({powers, status}: MandatesProps) {
   return (
     <div className="flex flex-col max-h-96 border border-border min-h-0">
       <div className="px-4 py-2 bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
-        onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates`)}
+        onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates`)}
       >
         <span className="font-mono text-muted-foreground uppercase tracking-wider text-base text-sm">ACTIVE MANDATES</span>
         <ArrowUpRightIcon className="w-4 h-4 text-muted-foreground" />
@@ -54,7 +54,7 @@ export function Mandates({powers, status}: MandatesProps) {
                   <tr
                     key={i}
                     className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`)}
+                    onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates/${mandate.index}`)}
                   >
                     <td className="px-4 py-3">
                       <span className="text-muted-foreground">{mandate.index.toString()}</span>

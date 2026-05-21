@@ -24,7 +24,7 @@ export default defineConfig({
 				{
 					label: 'For Organisations',
 					items: [
-						{ label: 'Deploy your Powers', slug: 'for-organisations/deploy-powers-editor' },
+						{ label: 'Deploy your Powers', slug: 'for-organisations/deploy-powers-overview' },
 						{ label: 'Best Practices', slug: 'for-organisations/best-practices' },
 						{ label: 'Compliance', slug: 'for-organisations/compliance' }
 					],
