@@ -38,7 +38,7 @@ export function RoleList({powers}: RoleListProps) {
                   key={i} 
                   className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
                   onClick={() => {
-                    router.push(`/editor/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`);
+                    router.push(`/overview/${chainId}/${powers?.contractAddress}/roles/${role.roleId}`);
                   }}
                 >
                   <td className="px-4 py-3">

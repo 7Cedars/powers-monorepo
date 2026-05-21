@@ -75,7 +75,7 @@ type MetadataLinksProps = {
   parentContracts?: familyMember[];
   childContracts?: familyMember[];
   chainId?: bigint | number;
-  isEditorView?: boolean;
+  isOverviewView?: boolean;
 }
 
 // Helper function to get Etherscan URL based on chain ID
@@ -178,7 +178,7 @@ export function MetadataLinks({
   parentContracts,
   childContracts,
   chainId,
-  isEditorView = false
+  isOverviewView = false
 }: MetadataLinksProps) {
   const params = useParams<{ chainId?: string; powers?: string }>() || {};
   const { address: userAddress } = useAccount()
@@ -322,8 +322,8 @@ export function MetadataLinks({
 
         {/* Parent Contracts */}
         {validParents.map((parent, index) => {
-          const basePath = isEditorView ? '/editor' : '/forum'
-          const suffix = isEditorView ? '/home' : ''
+          const basePath = isOverviewView ? '/overview' : '/forum'
+          const suffix = isOverviewView ? '/home' : ''
           const href = `${basePath}/${chainId ? Number(chainId) : ''}/${parent.address}${suffix}`
           
           return (
@@ -341,8 +341,8 @@ export function MetadataLinks({
 
         {/* Child Contracts */}
         {validChildren.map((child, index) => {
-          const basePath = isEditorView ? '/editor' : '/forum'
-          const suffix = isEditorView ? '/home' : ''
+          const basePath = isOverviewView ? '/overview' : '/forum'
+          const suffix = isOverviewView ? '/home' : ''
           const href = `${basePath}/${chainId ? Number(chainId) : ''}/${child.address}${suffix}`
           
           return (

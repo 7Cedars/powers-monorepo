@@ -8,7 +8,7 @@ import { Powers } from './types'
  * for understanding the Powers protocol.
  */
 export const defaultPowers101: Powers = {
-  contractAddress: '0x1f2610BA002A093A499B49c684EB9F27EDAb7CAC' as `0x${string}`,
+  contractAddress: '0x7EF3396E64BcdF5b58dE2A097BC5b72712059098' as `0x${string}`,
   chainId: 11155111n,
   name: 'Powers 101',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/powers101.json",
@@ -31,7 +31,7 @@ export const defaultPowers101: Powers = {
  * It has a policy setting (the split) and enforcement (blacklisting of addresses). 
  */
 export const Governed721DAO: Powers = {
-  contractAddress: '0x5Fa4380D7Baa174906F02704Ea9Af6D7Fa645308' as `0x${string}`,
+  contractAddress: '0x9a33e55B4469c7fAe580e5C13200A4E6386BDAd6' as `0x${string}`,
   chainId: 11155111n,
   name: 'Governed 721',
   uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidklnn4b7heysrhr5pqtiabvcl5aldnzuv2mdybotdtx5vvq44nqi",

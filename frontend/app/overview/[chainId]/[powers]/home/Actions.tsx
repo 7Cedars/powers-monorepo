@@ -64,7 +64,7 @@ export function Actions({ powers, status}: ActionsProps) {
   return ( 
     <div className="flex flex-col max-h-96  border border-border min-h-0">
       <div className="px-4 py-2 border-b border-border bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors"
-        onClick={() => router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates`)}
+        onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates`)}
       >
         <span className="font-mono text-muted-foreground uppercase tracking-wider text-base text-sm">LATEST ACTIONS</span>
         <ArrowUpRightIcon className="w-4 h-4 text-muted-foreground" />
@@ -95,7 +95,7 @@ export function Actions({ powers, status}: ActionsProps) {
                           const paramValues = callDataToActionParams(action, powers)
                           setAction({...action, paramValues: paramValues, upToDate: false})
                           e.preventDefault()
-                          router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
+                          router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
                         }}
                         className="text-foreground hover:text-primary hover:underline cursor-pointer"
                       >

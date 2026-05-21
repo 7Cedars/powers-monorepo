@@ -109,7 +109,7 @@ export function ActionsList({powers}: {powers: Powers | undefined}) {
                                   const dataTypes = mandate?.params?.map(p => p.dataType)
                                   setAction({...action, paramValues: paramValues, dataTypes: dataTypes, upToDate: false})
                                   e.preventDefault()
-                                  router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
+                                  router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
                                 }}
                                 className="text-xs whitespace-nowrap py-1 px-1 underline text-muted-foreground hover:text-foreground cursor-pointer"
                               >

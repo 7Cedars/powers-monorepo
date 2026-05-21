@@ -20,7 +20,7 @@ contract ExternalAction_Flexible is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         (string[] memory params_) = abi.decode(config, (string[]));
@@ -37,7 +37,7 @@ contract ExternalAction_Flexible is Mandate {
     /// @param mandateCalldata the calldata _without function signature_ to send to the function
     function handleRequest(
         address, /*caller*/
-        address powers,
+        address, /*powers*/
         uint16 mandateId,
         bytes calldata mandateCalldata,
         uint256 nonce

@@ -38,15 +38,12 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "./Mandate.sol";
 import { PowersUtilities } from "./libraries/PowersUtilities.sol";
 import { IMandate } from "./interfaces/IMandate.sol";
 import { IPowers, IERC721Receiver, IERC1155Receiver } from "./interfaces/IPowers.sol";
 import { Checks } from "./libraries/Checks.sol";
 import { ERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
-import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
-import { Address } from "@lib/openzeppelin-contracts/contracts/utils/Address.sol";
 import { EIP712 } from "@lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
 import { Context } from "@lib/openzeppelin-contracts/contracts/utils/Context.sol";
 

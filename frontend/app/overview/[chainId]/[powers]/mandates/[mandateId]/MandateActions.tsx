@@ -96,7 +96,7 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
                               const dataTypes = mandate?.params?.map(p => p.dataType)
                               setAction({...action, paramValues: paramValues, dataTypes: dataTypes, upToDate: false})
                               e.preventDefault()
-                              router.push(`/editor/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
+                              router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates/${Number(action.mandateId)}`)
                             }}
                             className="text-foreground hover:text-primary hover:underline cursor-pointer"
                           >
