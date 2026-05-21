@@ -300,9 +300,6 @@ contract SafeAllowanceTest is TestSetupIntegrations {
 
     function test_SafeAllowance_Transfer_Success() public {
         // 1. Assign Delegate Status to Child DAO
-        address functionTarget = helperConfig.getSafeAllowanceModule(block.chainid);
-        bytes4 functionSelector = bytes4(0xe71bdf41); // addDelegate(address)
-
         // Execute via DAO
         vm.prank(alice);
         daoMock.request(safeAssignDelegateId, abi.encode(address(daoMockChild1)), nonce, "Assign Delegate to Child DAO");
@@ -472,7 +469,7 @@ contract GovernedToken_BurnToAccessTest is TestSetupIntegrations {
         assertEq(soulbound1155.balanceOf(alice, tokenId), 1);
 
         // 2. Request BurnToAccess using the minted token
-        uint256 actionId = daoMock.request(burnToAccessId, abi.encode(tokenId), nonce + 1, "Request Burn");
+        daoMock.request(burnToAccessId, abi.encode(tokenId), nonce + 1, "Request Burn");
 
         // 3. Verify token was burned
         assertEq(soulbound1155.balanceOf(alice, tokenId), 0);
