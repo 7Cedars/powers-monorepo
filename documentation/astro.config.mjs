@@ -17,16 +17,14 @@ export default defineConfig({
 				{
 					label: 'Getting Started',
 					items: [
-						{ label: 'Intro', slug: 'index' },
 						{ label: 'Welcome', slug: 'welcome' },
-						{ label: 'Use Cases', slug: 'use-cases' },
 						{ label: 'Development', slug: 'development' },
 					],
 				},
 				{
 					label: 'For Organisations',
 					items: [
-						{ label: 'Deploy your Powers', slug: 'for-organisations/deploy-powers-editor' },
+						{ label: 'Deploy your Powers', slug: 'for-organisations/deploy-powers' },
 						{ label: 'Best Practices', slug: 'for-organisations/best-practices' },
 						{ label: 'Compliance', slug: 'for-organisations/compliance' }
 					],

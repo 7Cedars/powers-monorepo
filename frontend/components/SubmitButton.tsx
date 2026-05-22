@@ -78,7 +78,7 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
           "w-full mt-4 border  px-4 py-2.5 text-xs font-mono",
           "uppercase tracking-wider transition-colors",
           "flex items-center justify-center gap-2",
-          status === "pending" && isSubmitting && "opacity-70 cursor-not-allowed",
+          status === "pending" && isSubmitting ? "opacity-70 cursor-not-allowed" : "cursor-pointer",
           status === "success" && isSubmitting && "bg-green-600 text-white border-green-600",
           status === "error" && isSubmitting && "bg-red-600 text-white border-red-600",
           (!isSubmitting || status === "idle") && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary/90"

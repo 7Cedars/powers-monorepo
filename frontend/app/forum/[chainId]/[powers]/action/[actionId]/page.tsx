@@ -12,6 +12,7 @@ import { ActionOverview } from './ActionOverview';
 import { PastVotes } from './PastVotes';
 import { setAction, useActionStore } from '@/context/store';
 import { Timeline } from './Timeline';
+import { TimelockExecute } from './TimelockExecute';
 
 export default function ActionPage() {
   const router = useRouter();
@@ -124,7 +125,7 @@ export default function ActionPage() {
             </div>
             <button
               onClick={() => router.push(`/forum/${chainId}/${powersAddress}/flow/${action.mandateId}?actionId=${action.actionId}`)}
-              className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80"
+              className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80 cursor-pointer"
             >
               View Flow Sequence
               <ArrowLongRightIcon className="h-4 w-4" />
@@ -178,6 +179,17 @@ export default function ActionPage() {
                       </div>
                     </div>
                   </div>
+                </>
+              )}
+
+              {/* Timelock Execute Section (Right) - Only show if mandate has timelock but no vote */}
+              {(mandate.conditions?.quorum ? BigInt(mandate.conditions.quorum) : 0n) === 0n &&
+               (mandate.conditions?.timelock ? BigInt(mandate.conditions.timelock) : 0n) > 0n && (
+                <>
+                  {/* Separator */}
+                  <div className="w-full h-px lg:w-px lg:h-auto bg-border shrink-0" />
+
+                  <TimelockExecute action={action} mandate={mandate} />
                 </>
               )}
             </div>

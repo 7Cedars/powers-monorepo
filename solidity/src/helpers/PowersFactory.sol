@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import { PowersDeployer } from "./PowersDeployer.sol";
 import { PowersTypes } from "../interfaces/PowersTypes.sol";
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 /// @title Powers Factory
 /// @notice Factory contract to deploy configured Powers instances.
@@ -104,6 +103,10 @@ contract PowersFactory is IPowersFactory, Ownable {
         return flows[index];
     }
 
+    ////////////////////////////////
+    ///      DEPLOY ORGS         ///
+    ////////////////////////////////
+
     /// @notice Deploys a new Powers contract and constitutes it with the stored mandates.
     /// @dev The newly deployed Powers contract becomes the admin of the deployed Powers contract.
     /// @return The address of the deployed Powers contract.
@@ -125,6 +128,10 @@ contract PowersFactory is IPowersFactory, Ownable {
 
         return powers;
     }
+
+    ////////////////////////////////
+    ///         GETTERS          ///
+    ////////////////////////////////
 
     /// @notice Returns the address of the latest deployed Powers contract.
     /// @return The address of the latest deployment.

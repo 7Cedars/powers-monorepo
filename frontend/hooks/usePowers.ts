@@ -680,9 +680,21 @@ export const usePowers = () => {
         }
       }
 
-      // If no events found, just update lastFetched and return
+      // If no events found, check for actions in state 3 (Active voting).
+      // The 3→4/5 transition is block-time-based (no event fires), so we must
+      // re-fetch those action states explicitly to catch an ended voting period.
       if (logs.length === 0) {
+        const hasActiveVotingActions = updatedPowers.mandates?.some(
+          m => m.actions?.some(a => a.state === 3)
+        )
         updatedPowers.lastFetched = toBlock
+        if (!hasActiveVotingActions) {
+          return updatedPowers
+        }
+        if (updatedPowers.mandates) {
+          const refreshedMandates = await fetchActions(updatedPowers.mandates, chainId)
+          if (refreshedMandates) updatedPowers.mandates = refreshedMandates
+        }
         return updatedPowers
       }
 

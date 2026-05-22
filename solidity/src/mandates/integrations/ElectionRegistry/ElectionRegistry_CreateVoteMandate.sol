@@ -18,7 +18,6 @@ import { Mandate } from "../../../Mandate.sol";
 import { IPowers } from "../../../interfaces/IPowers.sol";
 import { PowersTypes } from "../../../interfaces/PowersTypes.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { ElectionRegistry } from "../../../helpers/ElectionRegistry.sol";
 
 contract ElectionRegistry_CreateVoteMandate is Mandate {
     struct Mem {
@@ -42,7 +41,7 @@ contract ElectionRegistry_CreateVoteMandate is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         string[] memory params = new string[](1);

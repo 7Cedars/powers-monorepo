@@ -14,6 +14,7 @@ import { hashAction } from "@/utils/hashAction";
 import { ConnectedWallet, useWallets } from "@privy-io/react-auth";
 import { useChecks } from "@/hooks/useChecks";
 import { useMandate } from "@/hooks/useMandate";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 import { SimulationBox } from "./SimulationBox";
 
 type DynamicFormProps = {
@@ -35,6 +36,7 @@ export function DynamicForm({mandate, params, status, checks, chainId, onCheck}:
   const powers = usePowersStore();
   const {wallets, ready} = useWallets();
   const { simulation, simulate } = useMandate();
+  const effectiveAddress = useEffectiveAddress();
 
   const handleChange = (input: InputType | InputType[], index: number) => {
     // console.log("@handleChange: ", {input, index, action})
@@ -156,7 +158,7 @@ export function DynamicForm({mandate, params, status, checks, chainId, onCheck}:
         actionId: actionId,
         state: 0, // non existent
         mandateId: mandate.index,
-        caller: wallets[0] ? wallets[0].address as `0x${string}` : '0x0',
+        caller: effectiveAddress ?? '0x0',
         dataTypes: mandate.params?.map(param => param.dataType),
         paramValues: sanitizedParamValues,
         nonce: nonce.toString(),
@@ -172,7 +174,7 @@ export function DynamicForm({mandate, params, status, checks, chainId, onCheck}:
       try {
       // simulating mandate. 
         const success = await simulate(
-          wallets[0] ? wallets[0].address as `0x${string}` : '0x0', // needs to be wallet! 
+          effectiveAddress ?? '0x0',
           newAction.callData as `0x${string}`,
           BigInt(newAction.nonce as string),
           mandate

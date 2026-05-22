@@ -29,7 +29,7 @@ contract RevokeAccountsRoleId is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         (, string[] memory inputParams_) = abi.decode(config, (uint256, string[]));

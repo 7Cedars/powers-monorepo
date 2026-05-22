@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { Test } from "forge-std/Test.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
@@ -10,8 +9,6 @@ import { IERC165 } from "@lib/openzeppelin-contracts/contracts/interfaces/IERC16
 import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
 import { TestSetupMandate } from "../TestSetup.t.sol";
 import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
-import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
-import { EmptyTargetsMandate, MockTargetsMandate } from "../mocks/MandateMocks.sol";
 
 /// @notice Comprehensive unit tests for Mandate.sol contract
 /// @dev Tests all functionality of the Mandate base contract including initialization, execution, and helper functions
@@ -591,7 +588,7 @@ contract MandateHandleRequestTest is TestSetupMandate {
 
         // act: call handleRequest
         (
-            uint256 actionId,
+            ,
             address[] memory returnedTargets,
             uint256[] memory returnedValues,
             bytes[] memory returnedCalldatas

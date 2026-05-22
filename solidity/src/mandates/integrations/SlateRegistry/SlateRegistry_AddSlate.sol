@@ -143,8 +143,8 @@ contract SlateRegistry_AddSlate is Mandate {
             })
         });
 
-        // Create arrays for 2 calls: adoptMandate and editFlowByIndex
-        (targets, values, calldatas) = MandateUtilities.createEmptyArrays(2);
+        // Create arrays for 3 calls: adoptMandate, editFlowByIndex, registerSlate
+        (targets, values, calldatas) = MandateUtilities.createEmptyArrays(3);
 
         // Call 1: Adopt the PresetActions mandate
         targets[0] = powers;
@@ -158,6 +158,10 @@ contract SlateRegistry_AddSlate is Mandate {
             mem.emptySlotIndex,
             mem.newMandateId
         );
+
+        // Call 3: Register the slate in SlateRegistry so it appears in vote tallying
+        targets[2] = mem.slateRegistry;
+        calldatas[2] = abi.encodeWithSelector(SlateRegistry.registerSlate.selector, mem.electionId, mem.newMandateId);
 
         return (actionId, targets, values, calldatas);
     }

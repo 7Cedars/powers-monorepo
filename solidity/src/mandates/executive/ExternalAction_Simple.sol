@@ -20,7 +20,7 @@ contract ExternalAction_Simple is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         (,,, string[] memory params_) = abi.decode(config, (address, uint16, string, string[]));

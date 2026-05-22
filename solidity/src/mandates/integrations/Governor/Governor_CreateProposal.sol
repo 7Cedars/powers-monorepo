@@ -31,7 +31,7 @@ contract Governor_CreateProposal is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         super.initializeMandate(

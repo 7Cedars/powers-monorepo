@@ -5,6 +5,7 @@ import { setAction, setError, useActionStore, useErrorStore, usePowersStore, use
 import { StaticInput } from "@/components/StaticInput";
 import { Action, InputType, Mandate, Powers } from "@/context/types";
 import { ConnectedWallet, useWallets } from "@privy-io/react-auth";
+import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 import { decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from "viem";
 import { parseMandateError, parseParamValues, parseChainId } from "@/utils/parsers";
 import { hashAction } from "@/utils/hashAction";
@@ -24,6 +25,7 @@ export function StaticForm({ mandate, chainId, staticDescription = true, onCheck
   const { simulation, simulate } = useMandate();
   const { wallets, ready } = useWallets();
   const powers = usePowersStore();
+  const effectiveAddress = useEffectiveAddress();
   const status = useStatusStore();
   const error = useErrorStore();
 
@@ -56,7 +58,7 @@ export function StaticForm({ mandate, chainId, staticDescription = true, onCheck
         actionId: actionId,
         state: 0, // non existent
         mandateId: mandate.index,
-        caller: wallets[0] ? wallets[0].address as `0x${string}` : '0x0',
+        caller: effectiveAddress ?? '0x0',
         dataTypes: mandate.params?.map(param => param.dataType),
         paramValues,
         nonce: nonce.toString(),
@@ -72,7 +74,7 @@ export function StaticForm({ mandate, chainId, staticDescription = true, onCheck
       try {
       // simulating mandate. 
         const success = await simulate(
-          wallets[0] ? wallets[0].address as `0x${string}` : '0x0', // needs to be wallet! 
+          effectiveAddress ?? '0x0',
           newAction.callData as `0x${string}`,
           BigInt(newAction.nonce as string),
           mandate

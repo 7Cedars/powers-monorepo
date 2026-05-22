@@ -4,6 +4,7 @@
 import type { Agent } from '@xmtp/agent-sdk';
 import { IdentifierKind } from '@xmtp/agent-sdk';
 import type { Address } from 'viem';
+import { recoverMessageAddress } from 'viem';
 import { parseGroupName } from '../utils/naming.js';
 import {
   findGroupByName,
@@ -34,8 +35,16 @@ export async function handleAccessRequestMessage(
 ): Promise<void> {
   const trimmed = messageText.trim();
 
+  // Parse optional Abstract Account proof: "chatroomId|smartWalletAddress|eoa_signature"
+  // When present, the EOA that owns the XMTP identity signs "${chatroomId}:${smartWalletAddress}"
+  // to prove they control the smart wallet holding the on-chain role.
+  const parts = trimmed.split('|');
+  const chatroomId = parts[0];
+  const providedSmartWallet = parts.length === 3 ? (parts[1] as Address) : null;
+  const smartWalletSignature = parts.length === 3 ? (parts[2] as `0x${string}`) : null;
+
   // 1. Try to parse as a chatroom name
-  const parsed = parseGroupName(trimmed);
+  const parsed = parseGroupName(chatroomId);
 
   if (!parsed) {
     // Not a chatroom name - ignore or reply with help
@@ -48,7 +57,7 @@ export async function handleAccessRequestMessage(
   const { type, chainId, powersAddress, contextId } = parsed;
 
   console.log(
-    `[messageHandler] Access request from inbox ${senderInboxId} for ${trimmed}`
+    `[messageHandler] Access request from inbox ${senderInboxId} for ${chatroomId}`
   );
 
   // 2. Resolve the sender's Ethereum address from their inboxId
@@ -87,6 +96,40 @@ export async function handleAccessRequestMessage(
     return;
   }
 
+  // 2b. If a smart wallet proof was provided, verify the EOA signed the claim and use the smart wallet for role checks.
+  // This handles Abstract Accounts where the on-chain role is held by the smart wallet, not the EOA.
+  let addressToCheck = senderAddress;
+
+  if (providedSmartWallet && smartWalletSignature) {
+    const messageToVerify = `${chatroomId}:${providedSmartWallet}`;
+    let recoveredAddress: Address;
+    try {
+      recoveredAddress = await recoverMessageAddress({
+        message: messageToVerify,
+        signature: smartWalletSignature,
+      });
+    } catch (err) {
+      console.error('[messageHandler] Failed to recover address from signature:', err);
+      await replyFn('Invalid smart wallet proof signature. Please try again.');
+      return;
+    }
+
+    if (recoveredAddress.toLowerCase() !== senderAddress!.toLowerCase()) {
+      console.warn(
+        `[messageHandler] Signature mismatch: recovered ${recoveredAddress}, expected ${senderAddress}`
+      );
+      await replyFn(
+        'Smart wallet proof signature does not match your XMTP identity. Please try again.'
+      );
+      return;
+    }
+
+    console.log(
+      `[messageHandler] Smart wallet proof verified. Using ${providedSmartWallet} for role check instead of EOA ${senderAddress}`
+    );
+    addressToCheck = providedSmartWallet;
+  }
+
   // 3. Check if sender has the required role on-chain
   let authorizedMembers: Address[] = [];
 
@@ -110,7 +153,7 @@ export async function handleAccessRequestMessage(
         contextId
       );
     }
-    console.log(`[messageHandler] Authorized members for ${trimmed}:`, authorizedMembers);
+    console.log(`[messageHandler] Authorized members for ${chatroomId}:`, authorizedMembers);
   } catch (err) {
     console.error('[messageHandler] Failed to fetch authorized members:', err);
     await replyFn(
@@ -120,38 +163,38 @@ export async function handleAccessRequestMessage(
   }
 
   const isAuthorized = authorizedMembers.some(
-    (member) => member.toLowerCase() === senderAddress!.toLowerCase()
+    (member) => member.toLowerCase() === addressToCheck!.toLowerCase()
   );
 
   if (!isAuthorized) {
     console.log(
-      `[messageHandler] Address ${senderAddress} is NOT authorized for ${trimmed}`
+      `[messageHandler] Address ${addressToCheck} is NOT authorized for ${chatroomId}`
     );
     await replyFn(
-      `Your address ${senderAddress} does not have the required role for this ${type.toLowerCase()} chatroom.`
+      `Your address ${addressToCheck} does not have the required role for this ${type.toLowerCase()} chatroom.`
     );
     return;
   }
 
   console.log(
-    `[messageHandler] Address ${senderAddress} IS authorized for ${trimmed}`
+    `[messageHandler] Address ${addressToCheck} IS authorized for ${chatroomId}`
   );
 
   // 4. Find or create the group
-  let group = await findGroupByName(agent, trimmed);
-  console.log(`[messageHandler] Fetched group for ${trimmed}:`, group);
+  let group = await findGroupByName(agent, chatroomId);
+  console.log(`[messageHandler] Fetched group for ${chatroomId}:`, group);
 
   if (!group) {
     console.log(
-      `[messageHandler] Group "${trimmed}" not found, creating it...`
+      `[messageHandler] Group "${chatroomId}" not found, creating it...`
     );
     try {
-      group = await createGroupWithSuperAdminPermissions(agent, trimmed);
+      group = await createGroupWithSuperAdminPermissions(agent, chatroomId);
 
       const welcomeMessage = `Welcome to the ${type} coordination group!\n\nThis group is managed by the Powers XMTP Agent. Members are added automatically when they have the correct role.`;
       await sendMessageToGroup(group, welcomeMessage);
 
-      console.log(`[messageHandler] Group "${trimmed}" created successfully`);
+      console.log(`[messageHandler] Group "${chatroomId}" created successfully`);
     } catch (err) {
       console.error('[messageHandler] Failed to create group:', err);
       await replyFn('Failed to create the group chat. Please try again later.');
@@ -168,7 +211,7 @@ export async function handleAccessRequestMessage(
 
     if (alreadyMember) {
       console.log(
-        `[messageHandler] Sender ${senderInboxId} is already in group "${trimmed}"`
+        `[messageHandler] Sender ${senderInboxId} is already in group "${chatroomId}"`
       );
       await replyFn(
         `You are already a member of the ${type} chatroom. Check your conversations list.`
@@ -187,7 +230,7 @@ export async function handleAccessRequestMessage(
       identifierKind: IdentifierKind.Ethereum,
     }]);
     console.log(
-      `[messageHandler] Successfully added ${senderAddress} (inbox: ${senderInboxId}) to group "${trimmed}"`
+      `[messageHandler] Successfully added ${senderAddress} (inbox: ${senderInboxId}) to group "${chatroomId}"`
     );
     await replyFn(
       `You've been added to the ${type} chatroom! Check your conversations list.`

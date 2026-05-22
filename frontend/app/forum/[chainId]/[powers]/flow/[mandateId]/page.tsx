@@ -99,7 +99,7 @@ export default function FlowSequencePage() {
                     </div>
                     <button 
                         onClick={() => setActionDialogOpen(true)}
-                        className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80"
+                        className="flex-shrink-0 flex items-center gap-2 px-6 py-2 text-sm uppercase tracking-wider whitespace-nowrap transition-opacity bg-foreground text-background hover:bg-foreground/80 cursor-pointer"
                     >
                         Select Action
                     </button>

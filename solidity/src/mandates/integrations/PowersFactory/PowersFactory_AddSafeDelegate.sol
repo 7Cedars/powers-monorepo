@@ -26,7 +26,7 @@ contract PowersFactory_AddSafeDelegate is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory inputParams,
+        bytes memory,
         bytes memory config
     ) public override {
         // Decode the config to get the input params description string

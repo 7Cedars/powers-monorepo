@@ -166,7 +166,44 @@ export const calculateVoteTimeRemaining = (
   if (days > 0) parts.push(`${days}d`);
   if (hours > 0) parts.push(`${hours}h`);
   if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
-  
+
+  return parts.join(' ');
+}
+
+/**
+ * Calculate remaining time for a timelock based on block numbers
+ * @param proposedAt - Block number when the action was proposed
+ * @param timelock - Number of blocks for the timelock period
+ * @param currentBlock - Current block number
+ * @param chainId - Chain ID
+ * @returns "Ready" when expired, or formatted string with time remaining
+ */
+export const calculateTimelockRemaining = (
+  proposedAt: bigint,
+  timelock: bigint,
+  currentBlock: bigint,
+  chainId: number
+): string => {
+  const constants = getConstants(chainId);
+
+  const timelockEndBlock = BigInt(proposedAt) + BigInt(timelock);
+
+  if (BigInt(currentBlock) >= timelockEndBlock) {
+    return "Ready";
+  }
+
+  const blocksRemaining = Number(timelockEndBlock - BigInt(currentBlock));
+  const minutesRemaining = (blocksRemaining * 60) / constants.BLOCKS_PER_HOUR;
+
+  const days = Math.floor(minutesRemaining / (60 * 24));
+  const hours = Math.floor((minutesRemaining % (60 * 24)) / 60);
+  const minutes = Math.floor(minutesRemaining % 60);
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+
   return parts.join(' ');
 }
 

@@ -155,6 +155,13 @@ contract Configurations is Script {
         return 0x0000000000000000000000000000000000000123;
     }
 
+    function getZkPassportRegistry(uint256 chainId) public pure returns (address) {
+        if (chainId == ETH_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID) {
+            return 0xc554958CE7559eCcD08AEdbB8b72B1BE54Fde9ed;
+        }
+        return 0x0000000000000000000000000000000000000000;
+    }
+
     function getZkPassportVerifier(uint256 chainId) public pure returns (address) {
         if (chainId == ETH_SEPOLIA_CHAIN_ID || chainId == LOCAL_CHAIN_ID) {
             return 0x1D000001000EFD9a6371f4d90bB8920D5431c0D8;

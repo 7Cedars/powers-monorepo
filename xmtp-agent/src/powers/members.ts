@@ -1,10 +1,8 @@
 // Helper functions for getting role holders from Powers contracts
 
 import { type Address } from 'viem';
-import { getPublicClient } from './contract.js';
+import { getPublicClient, getFlows } from './contract.js';
 import { powersAbi } from './abi.js';
-import { getAllMandates } from './contract.js';
-import { identifyFlows } from './flows.js';
 
 /**
  * Gets the PUBLIC_ROLE constant from the Powers contract
@@ -133,35 +131,27 @@ export async function getFlowMembers(
   flowId: bigint
 ): Promise<Address[]> {
   try {
-    // Get all mandates to identify the flow
-    const allMandates = await getAllMandates(chainId, powersAddress);
-    
-    if (allMandates.length === 0) {
-      return [];
-    }
-    
-    // Identify flows
-    const flows = identifyFlows(allMandates);
-    
-    // Find the specific flow
-    const flow = flows.find(f => f[0] === flowId);
-    
+    const flows = await getFlows(chainId, powersAddress);
+    const flow = flows.find(f => f.mandateIds[0] === flowId);
+
     if (!flow) {
-      console.error(`Flow ${flowId} not found`);
+      console.error(`Flow with first mandate ${flowId} not found`);
       return [];
     }
-    
-    // Get role IDs for all mandates in the flow
+
+    const client = getPublicClient(chainId);
     const roleIds: bigint[] = [];
-    
-    for (const mandateId of flow) {
-      const mandate = allMandates.find(m => m.index === mandateId);
-      if (mandate) {
-        roleIds.push(mandate.conditions.allowedRole);
-      }
+
+    for (const mandateId of flow.mandateIds) {
+      const conditions = await client.readContract({
+        address: powersAddress,
+        abi: powersAbi,
+        functionName: 'getConditions',
+        args: [Number(mandateId)],
+      }) as { allowedRole: bigint };
+      roleIds.push(conditions.allowedRole);
     }
-    
-    // Get all unique accounts with these roles
+
     return await getAccountsWithRoles(chainId, powersAddress, roleIds);
   } catch (error) {
     console.error(`Failed to get flow members for flow ${flowId}:`, error);

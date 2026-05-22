@@ -1,7 +1,7 @@
 // Powers contract interaction utilities
 
 import { createPublicClient, http, webSocket, type Address, type PublicClient } from 'viem';
-import type { Mandate } from '../utils/types.js';
+import type { Flow, Mandate } from '../utils/types.js';
 import { config } from '../config/env.js';
 import { powersAbi } from './abi.js';
 
@@ -242,6 +242,57 @@ export async function getAllActions(
     return actions;
   } catch (error) {
     console.error(`Failed to fetch actions from ${contractAddress}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Gets all flows from a Powers contract
+ */
+export async function getFlows(
+  chainId: number,
+  contractAddress: Address
+): Promise<Flow[]> {
+  const client = getPublicClient(chainId);
+
+  try {
+    const flowCount = await client.readContract({
+      address: contractAddress,
+      abi: powersAbi,
+      functionName: 'getFlowCount',
+    }) as bigint;
+
+    const flows: Flow[] = [];
+
+    for (let i = 0; i < Number(flowCount); i++) {
+      try {
+        const mandateIds = await client.readContract({
+          address: contractAddress,
+          abi: powersAbi,
+          functionName: 'getFlowMandatesAtIndex',
+          args: [i],
+        }) as number[];
+
+        const nameDescription = await client.readContract({
+          address: contractAddress,
+          abi: powersAbi,
+          functionName: 'getFlowDescriptionAtIndex',
+          args: [i],
+        }) as string;
+
+        flows.push({
+          index: i,
+          mandateIds: mandateIds.map(id => BigInt(id)),
+          nameDescription,
+        });
+      } catch (error) {
+        console.error(`Failed to fetch flow ${i}:`, error);
+      }
+    }
+
+    return flows;
+  } catch (error) {
+    console.error(`Failed to fetch flows from ${contractAddress}:`, error);
     return [];
   }
 }

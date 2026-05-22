@@ -53,7 +53,7 @@ import { MetadataLinks } from '@/components/MetadataLinks';
                  <button
                    onClick={handleFetchPowers}
                    disabled={statusPowers.status === "pending"}
-                   className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                  >
                    <ArrowPathIcon 
                      className={`w-4 h-4 ${statusPowers.status === "pending" ? 'animate-spin' : ''}`}
@@ -105,7 +105,7 @@ import { MetadataLinks } from '@/components/MetadataLinks';
                   parentContracts={powers?.metadatas?.parentContracts}
                   childContracts={powers?.metadatas?.childContracts}
                   chainId={powers?.chainId}
-                  isEditorView={false}
+                  isOverviewView={false}
                 />
                 
             </div>

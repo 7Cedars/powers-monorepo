@@ -32,10 +32,10 @@ export function Footer() {
                         Forum
                     </a>  
                        <a
-                        href={`/editor`} rel="noopener noreferrer"
+                        href={`/overview`} rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-foreground transition-colors text-xs"
                     >
-                        Editor
+                        Overview
                     </a>                  
                     
                      <a
@@ -97,7 +97,7 @@ export function Footer() {
             <div className="text-sm font-bold flex flex-row gap-1">
                 <p>Made with</p> 
                 <HeartIcon className="w-4 h-4 text-red-700" />
-                <p>by 7Cedars</p>
+                <p>by Publius Projects</p>
             </div>
             <div className="flex flex-row gap-2">
                 <a

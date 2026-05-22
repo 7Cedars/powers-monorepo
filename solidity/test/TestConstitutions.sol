@@ -8,10 +8,8 @@ import { Configurations } from "@script/Configurations.s.sol";
 import { DeployMandates } from "@script/DeployMandates.s.sol";
 import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
 
-import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
 import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
-import { ISoulbound1155 } from "@src/helpers/Soulbound1155.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -335,9 +333,9 @@ contract TestConstitutions is Test {
     function electoralTestConstitution(
         address daoMock,
         address nominees,
-        address openElection,
-        address erc20DelegateElection,
-        address erc20Taxed
+        address, /*openElection*/
+        address, /*erc20DelegateElection*/
+        address /*erc20Taxed*/
     ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
         delete constitution; // restart constitution array.
 
@@ -1026,7 +1024,7 @@ contract TestConstitutions is Test {
         return constitution;
     }
 
-    function integrationsTestConstitution2(address daoMock, address allowedTokens)
+    function integrationsTestConstitution2(address daoMock)
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
     {
@@ -1063,7 +1061,7 @@ contract TestConstitutions is Test {
     //               INTEGRATION TEST: ELECTORAL                //
     //////////////////////////////////////////////////////////////
     // Delegate Token election flow
-    function delegateToken_IntegrationTestConstitution(address nominees, address openElection, address simpleErc20Votes)
+    function delegateToken_IntegrationTestConstitution(address nominees, address, /*openElection*/ address simpleErc20Votes)
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
     {
@@ -1297,9 +1295,8 @@ contract TestConstitutions is Test {
     }
 
     function checkExternalActionState_Child_IntegrationTestConstitution(
-        address,
-        /*daoMock*/
-        address parent
+        address, /*daoMock*/
+        address /*parent*/
     )
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
