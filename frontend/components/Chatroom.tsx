@@ -51,6 +51,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   const { address: eoaAddress } = useConnection()
   const effectiveAddress = useEffectiveAddress()
   const address = effectiveAddress ?? eoaAddress
+  const { signMessageAsync } = useSignMessage()
   const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations } = useXmtpClient()
   const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null)
   const [messages, setMessages] = useState<DecodedMessage[]>([])
@@ -439,8 +440,16 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         identifierKind: IdentifierKind.Ethereum
       })
       
-      // Send the chatroom ID as the message
-      await dm.sendText(baseChatroomId)
+      // Send the chatroom ID, plus a signed proof of the smart wallet address when using an Abstract Account
+      // The agent resolves the EOA from the XMTP inboxId, but roles are held by the smart wallet address.
+      // The EOA signs "${baseChatroomId}:${effectiveAddress}" so the agent can verify the link.
+      let messageToSend = baseChatroomId
+      if (effectiveAddress && eoaAddress && effectiveAddress.toLowerCase() !== eoaAddress.toLowerCase()) {
+        const messageToSign = `${baseChatroomId}:${effectiveAddress}`
+        const signature = await signMessageAsync({ message: messageToSign })
+        messageToSend = `${baseChatroomId}|${effectiveAddress}|${signature}`
+      }
+      await dm.sendText(messageToSend)
       
       console.log('@handleRequestAccess: Access request sent to agent via DM')
       
