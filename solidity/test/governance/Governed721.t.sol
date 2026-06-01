@@ -8,9 +8,7 @@ import { Configurations } from "@script/Configurations.s.sol";
 import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 import { IGoverned721 } from "@src/helpers/Governed721.sol";
 
-import { Initialise } from "@governance/examples/actions/Initialise.s.sol"; 
-import { Governed721_Management } from "@governance/examples/actions/Governed721_Management.s.sol";
-import { Governed721_Roles } from "@governance/examples/actions/Governed721_Roles.s.sol";
+import { Governed721Actions } from "@governance/examples/actions/Governed721Actions.s.sol";
 import { TestHelperFunctions } from "../TestSetup.t.sol"; 
 
 interface IAllowanceModule {
@@ -30,10 +28,8 @@ contract Governed721_test is TestHelperFunctions {
     address governed721;
     address electionRegistry;
     
-    // actions 
-    Initialise initialise;
-    Governed721_Management management;
-    Governed721_Roles roles; 
+    // actions
+    Governed721Actions actions;
 
     address treasury;
     address safeAllowanceModule; 
@@ -59,10 +55,8 @@ contract Governed721_test is TestHelperFunctions {
         deploy = new Deploy();
         (governed721Org, governed721, electionRegistry) = deploy.run();
 
-        initialise = new Initialise();
-        management = new Governed721_Management();
-        roles = new Governed721_Roles();
-        initialise.runSetupMandate(governed721Org, block.timestamp);
+        actions = new Governed721Actions();
+        actions.runSetupMandate(governed721Org, block.timestamp, privateKeys);
         helperConfig = new Configurations();
     }
 
@@ -91,30 +85,30 @@ contract Governed721_test is TestHelperFunctions {
         console2.log("Block per hour:", helperConfig.getBlocksPerHour(block.chainid));
 
         // step 1: whitelist token (native ETH in this case)
-        management.whitelistPaymentTokensPropose(governed721Org, address(0), privateKeys, block.timestamp);
+        actions.whitelistPaymentTokensPropose(governed721Org, address(0), privateKeys, block.timestamp);
 
         vm.roll(block.number + minutesToBlocks(10,  helperConfig.getBlocksPerHour(block.chainid)));
-        management.whitelistPaymentTokensExecute(governed721Org, address(0), privateKeys, block.timestamp);
+        actions.whitelistPaymentTokensExecute(governed721Org, address(0), privateKeys, block.timestamp);
 
         // step 2: mintTokens. Intermediary = cedars, Owner = testAccount1, Artist = testAccount2.
-        management.mintNftAtGoverned721(governed721, testAccount1, privateKeys[2], testAccount2, 1);
+        actions.mintNftAtGoverned721(governed721, testAccount1, privateKeys[2], testAccount2, 1);
         
-        // step 3: claim roles.
-        roles.getOwnerArtistIntermediaryRole(governed721Org, 1, block.timestamp);
+        // step 3: claim actions.
+        actions.getOwnerArtistIntermediaryRole(governed721Org, 1, block.timestamp);
         
         assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount1, 3) > 0, "Test Account 1 should have Intermediary role");
         assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount2, 1) > 0, "Test Account 2 should have Artist role");
         assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount3, 2) > 0, "Test Account 3 should have Owner role"); 
 
         // step 5: claim vote role. 
-        roles.claimVoterRole(governed721Org, privateKeys, block.timestamp);
+        actions.claimVoterRole(governed721Org, privateKeys, block.timestamp);
         for (uint256 i = 0; i < privateKeys.length; i++) {
             address claimant = vm.addr(privateKeys[i]);
             assertTrue(Powers(payable(governed721Org)).hasRoleSince(claimant, 4) > 0, string.concat("Test Account ", Strings.toString(i + 1), " should have Voter role"));
         }
 
         // step 6: elect executives. 
-        uint256 electionId = roles.createExecutiveElection(governed721Org, privateKeys, block.timestamp);
+        uint256 electionId = actions.createExecutiveElection(governed721Org, privateKeys, block.timestamp);
 
         // set votes: everyone votes for 1st nominee.
         bool[] memory voteSelection = new bool[](3);
@@ -125,22 +119,22 @@ contract Governed721_test is TestHelperFunctions {
         }
 
         vm.roll(block.number + minutesToBlocks(6,  helperConfig.getBlocksPerHour(block.chainid)));
-        roles.voteInExecutiveElection(governed721Org, electionRegistry, voteSelections, electionId, privateKeys, block.timestamp);
+        actions.voteInExecutiveElection(governed721Org, electionRegistry, voteSelections, electionId, privateKeys, block.timestamp);
 
         vm.roll(block.number + minutesToBlocks(6,  helperConfig.getBlocksPerHour(block.chainid)));
-        roles.tallyExecutiveElection(governed721Org, privateKeys, block.timestamp);
+        actions.tallyExecutiveElection(governed721Org, privateKeys, block.timestamp);
 
         assertTrue(Powers(payable(governed721Org)).hasRoleSince(testAccount1, 5) > 0, "Test Account 1 should have Executive role");
     }
 
     function test_setSplitPayment() public { 
         // note roleId 1 = Artist, roleId 2 = Owner, roleId 3 = Intermediary. The old owner gets the remainder after Artist and Intermediary split.
-        management.initiateSplitPayment(governed721Org, 1, 15, privateKeys, block.timestamp);
-        management.initiateSplitPayment(governed721Org, 3, 10, privateKeys, block.timestamp); 
+        actions.initiateSplitPayment(governed721Org, 1, 15, privateKeys, block.timestamp);
+        actions.initiateSplitPayment(governed721Org, 3, 10, privateKeys, block.timestamp); 
 
         vm.roll(block.number + minutesToBlocks(11,  helperConfig.getBlocksPerHour(block.chainid))); 
-        management.executeSplitPayment(governed721Org, 1, 15, privateKeys, block.timestamp);
-        management.executeSplitPayment(governed721Org, 3, 10, privateKeys, block.timestamp);
+        actions.executeSplitPayment(governed721Org, 1, 15, privateKeys, block.timestamp);
+        actions.executeSplitPayment(governed721Org, 3, 10, privateKeys, block.timestamp);
 
         assertTrue(IGoverned721(governed721).getSplit(IGoverned721.Role.Artist) == 15, "Artist should have 15% split");
         assertTrue(IGoverned721(governed721).getSplit(IGoverned721.Role.Intermediary) == 10, "Intermediary should have 10% split");
@@ -154,11 +148,11 @@ contract Governed721_test is TestHelperFunctions {
         // the token first has to be sold.. 
         test_mintTokenAndClaimRoles();
 
-        management.buyNftAtGoverned721(governed721, 1, 1 ether, testAccount3, testAccount4, privateKeys[0], 123);
+        actions.buyNftAtGoverned721(governed721, 1, 1 ether, testAccount3, testAccount4, privateKeys[0], 123);
         // the calculation of transferId is not correct 
         // transferId is only emited, not stored. So we here work with fixed nonce and hard coded transferId for the test.  
         transferId = 75563888685347931465250278609645497862873052394463244380052361800918482156059; // should match the transferId emitted in the event during buy.
 
-        management.collectPayment(governed721Org, transferId, privateKeys, block.timestamp);
+        actions.collectPayment(governed721Org, transferId, privateKeys, block.timestamp);
     }
 }

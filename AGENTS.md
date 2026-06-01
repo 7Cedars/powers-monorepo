@@ -4,7 +4,7 @@ Welcome, Agent. This document serves as your primary context and guide for worki
 
 ## 1. Project Overview
 
-**Powers v0.4** is a governance protocol for on-chain organizations. It distinguishes itself by:
+**Powers v0.6** is a governance protocol for on-chain organizations. It distinguishes itself by:
 -   **Role-Based Governance**: Restricting governance processes along access roles.
 -   **Separation of Powers**: Enabling checks and balances (e.g., one role proposes, another vetos, another executes).
 -   **Modular Design**: Using small, single-purpose smart contracts called **Mandates**.

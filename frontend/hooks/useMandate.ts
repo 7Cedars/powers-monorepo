@@ -81,11 +81,11 @@ export const useMandate = () => {
     }
     console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
 
-    const { createSmartAccountClient } = await import('permissionless');
+    const { createKernelAccountClient } = await import('@zerodev/sdk');
     const { http } = await import('viem');
 
-    const pimlicoUrl = process.env.NEXT_PUBLIC_PIMLICO_BUNDLER_URL || "";
-    let bundlerUrl = pimlicoUrl;
+    const zeroDevUrl = process.env.NEXT_PUBLIC_ZERODEV_BUNDLER_URL || "";
+    let bundlerUrl = zeroDevUrl;
     if (bundlerUrl.includes('11155111') && chainId.toString() !== '11155111') {
       bundlerUrl = bundlerUrl.replace('11155111', chainId.toString());
     }
@@ -96,7 +96,7 @@ export const useMandate = () => {
 
     console.log("@sendSmartWalletTx, waypoint 3", {chain})
 
-    const customClient = createSmartAccountClient({
+    const customClient = createKernelAccountClient({
       account: currentClient.account as any,
       chain,
       bundlerTransport: http(bundlerUrl),
@@ -111,16 +111,6 @@ export const useMandate = () => {
           paymasterVerificationGasLimit: 100000n,
           paymasterPostOpGasLimit: 100000n
         })
-      },
-      userOperation: {
-        estimateFeesPerGas: async () => {
-          const { createPimlicoClient } = await import('permissionless/clients/pimlico');
-          const pimlicoClient = createPimlicoClient({ 
-            transport: http(bundlerUrl), 
-            entryPoint: { address: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", version: "0.7" } 
-          });
-          return await pimlicoClient.getUserOperationGasPrice().then((res: any) => res.fast);
-        }
       }
     });
 
