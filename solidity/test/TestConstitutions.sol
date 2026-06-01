@@ -49,7 +49,7 @@ contract TestConstitutions is Test {
     // minimum mandate version to be used in testing. 
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 7;
 
     // function setUp() public {
         // Set up any common state or variables needed for the tests
