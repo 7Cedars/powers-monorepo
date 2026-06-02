@@ -175,10 +175,11 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
                   <div className="flex-1 min-w-0">
                     <span className="text-muted-foreground line-clamp-3">{item.action.description || '—'}</span>
                   </div>
-                  <div className="shrink-0 flex flex-col gap-0.5 w-28 text-right">
+                  <div className="shrink-0 flex flex-col gap-0.5 w-40 text-right">
                     <span className={color}>{label}</span>
-                    <span className="text-muted-foreground">{ts ? toFullDateFormat(Number(ts.timestamp)) : '···'}</span>
-                    <span className="text-muted-foreground">{ts ? toEurTimeFormat(Number(ts.timestamp)) : ''}</span>
+                    <span className="text-muted-foreground">
+                      {ts ? `${toFullDateFormat(Number(ts.timestamp))} ${toEurTimeFormat(Number(ts.timestamp))}` : '···'}
+                    </span>
                   </div>
                 </div>
               </div>

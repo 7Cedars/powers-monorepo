@@ -1,17 +1,96 @@
-# How to Create a Reference Reading Guide for a New Source
+# How to Add a New Reference Source
 
-This document is a process template. Use it whenever a new governance theory source is added to
-`ai/references/`. The goal is to produce a concise lookup entry that maps the source's content
-to the specific governance design decisions made by the `/design-org` skill.
+Adding a new source is a two-step process:
 
-The output is a new section appended to `reading_guide.md`.
+1. **Create a source file** — a dedicated `author_year.md` in `ai/references/` with the full
+   reading guide for the source (150–300 lines).
+2. **Update the index** — add a row to the source table and routing entries to `reading_guide.md`.
 
 ---
 
-## Step 1 — Identify the Source's Analytical Level
+## Step 1 — Create the source file
 
-Before reading in detail, determine which of the three levels the source primarily operates at.
-This tells you which design decisions it will inform most directly.
+Name the file `[first_author_lastname]_[year].md` (e.g., `ostrom_1990.md`).
+
+Use this structure:
+
+```markdown
+# [Author(s) Year] — [Short Title]
+
+**Citation:** [Full citation]
+**Analytical level:** [Structural / Parametric / Dynamic — may combine]
+**Most relevant design decisions:** [list Q numbers]
+
+---
+
+## Q1 — Role Structure
+
+[Chapter/section reference]: [actionable claim mapped to Powers mandate/role terminology]
+
+[Additional entries as needed — each a separate paragraph]
+
+---
+
+## Q2 — Voting Parameters
+
+[Omit this section entirely if the source has nothing actionable to say on Q2]
+
+---
+
+## Q3 — Mandate Selection
+
+...
+
+## Q4 — Dependency Chains
+
+...
+
+## Q5 — Membership Design
+
+...
+
+## Q6 — Adaptive Capacity
+
+...
+
+## Q7 — Accountability
+
+...
+
+---
+
+## What to skip
+
+[One or two sentences on what parts of the source are too context-specific, too formal/
+mathematical, or otherwise not actionable for Powers mandate design.]
+
+---
+
+## Mandate implications
+
+- [Bullet: a design rule directly derived from this source, with the specific mandate or
+  parameter it affects]
+- [...]
+```
+
+**Rules for the source file:**
+
+- Omit any Q section where the source has nothing actionable to say. A source strong on Q3 and
+  Q6 but silent on Q2 should leave Q2 out entirely.
+- Every claim must cite a specific chapter, section, or page — not just "the book argues..."
+- Every claim must be actionable: it should change a design choice (mandate type, parameter
+  value, role structure), not just provide vocabulary or background.
+- Use Powers mandate names in their exact form: `OpenAction`, `BespokeAction_Simple`,
+  `PresetActions`, `StatementOfIntent`, `PeerSelect`, `SelfSelect`, `RevokeAccountsRoleId`,
+  `Adopt_Mandates`, `Revoke_Mandates`, `MandatePackage`, `PauseMandates`, `needFulfilled`,
+  `needNotFulfilled`, `allowedRole`, `votingPeriod`, `throttleExecution`.
+- Target 150–300 lines per source file.
+
+---
+
+## Step 2 — Determine the analytical level
+
+Before writing, identify which of the three levels the source primarily operates at:
 
 | Level | What it addresses | Relevant design decisions |
 |---|---|---|
@@ -23,146 +102,95 @@ A source may span more than one level. Note the primary level and any secondary 
 
 ---
 
-## Step 2 — Extract Answers to the Seven Core Design Questions
+## Step 3 — Extract answers to the seven core design questions
 
-Read the source with these seven questions in mind. For each one, note the relevant passage
-(chapter, section, or page) and the core claim that is actionable for governance design.
+Read the source with these questions in mind. For each one, note the relevant passage and the
+core claim that is actionable for governance design.
 
-### Q1 — Role Structure and Separation of Powers
+**Q1 — Role Structure and Separation of Powers**
 *Who should hold authority over what, and how should it be distributed?*
+Look for: typologies of governance forms; arguments for/against concentrating authority; conditions
+under which separation of powers increases accountability or creates gridlock; vocabulary that maps
+to Powers roles (proposer, deliberator, executor, auditor).
 
-Look for:
-- Typologies of governance forms (unitary, bicameral, federated, polycentric)
-- Arguments for or against concentrating decision authority in one body
-- Conditions under which separation of powers increases accountability or creates gridlock
-- Vocabulary the source uses that maps to Powers roles (proposer, deliberator, executor, auditor)
-
-### Q2 — Voting Parameters
+**Q2 — Voting Parameters**
 *What makes a vote legitimate? How long, how many, what threshold?*
+Look for: minimum conditions for a decision to be valid; trade-offs between quorum and quality;
+time-horizon arguments; empirical benchmarks.
 
-Look for:
-- Minimum conditions for a decision to be considered valid or legitimate
-- Trade-offs between participation breadth (quorum) and decision quality (supermajority)
-- Time horizon arguments — when does a longer deliberation period improve outcomes?
-- Any empirical benchmarks (e.g., "organisations of N members tend to use X% quorum")
-
-### Q3 — Mandate Selection
+**Q3 — Mandate Selection**
 *Which governance pattern fits this organisation's purpose and stakeholder structure?*
+Look for: typologies of governance problems (collective action, principal-agent, commons); which
+structural features match which problem types; arguments for redundancy vs. simplicity; conditions
+under which permissive governance is safe vs. risky.
 
-Look for:
-- Typologies of governance problems (collective action, principal-agent, commons management, etc.)
-- Which structural features are associated with which problem types
-- Arguments for redundancy (overlapping mandates) vs. simplicity (minimal mandates)
-- Conditions under which optimistic/permissive governance is safe vs. risky
-
-### Q4 — Dependency Chains
+**Q4 — Dependency Chains**
 *Which decisions must follow others, and which must be mutually exclusive?*
+Look for: sequential vs. parallel decision processes; veto and override mechanisms; feedback loop
+analysis; sequencing failures (what goes wrong when a step is skipped or reordered).
 
-Look for:
-- Sequential vs. parallel decision processes and when each is appropriate
-- Veto and override mechanisms — what triggers them, who holds them
-- Feedback loop analysis: does the source identify reinforcing or balancing loops in governance?
-- Sequencing failures (what goes wrong when a step is skipped or reordered)
-
-### Q5 — Membership Design
+**Q5 — Membership Design**
 *Who belongs, how do they join, and how can they be removed?*
+Look for: boundary definitions; entry and exit conditions and their effects on participation
+incentives; removal mechanisms; open vs. closed membership trade-offs.
 
-Look for:
-- Boundary definitions — how does the source define who is inside or outside a governance system?
-- Entry and exit conditions and their effects on participation incentives
-- Removal mechanisms — who holds them, under what conditions, with what safeguards?
-- Open vs. closed membership trade-offs
-
-### Q6 — Adaptive Capacity and Reform
+**Q6 — Adaptive Capacity and Reform**
 *Can the governance system modify its own rules, and how?*
+Look for: conditions under which self-modification is stabilising vs. destabilising; minimum
+requirements for governed reform; distinction between incremental adjustment and wholesale
+restructuring; what happens to governance systems that cannot adapt.
 
-Look for:
-- Conditions under which self-modification is stabilising vs. destabilising
-- Minimum structural requirements for governed reform (as opposed to top-down change)
-- Distinction between incremental rule adjustment and wholesale restructuring
-- What the source says about governance systems that *cannot* adapt (brittleness, capture)
-
-### Q7 — Accountability and Monitoring
+**Q7 — Accountability and Monitoring**
 *How does the system detect and correct role-holder behaviour that violates its rules?*
-
-Look for:
-- Monitoring mechanisms and who performs them (internal vs. external, peer vs. hierarchical)
-- Enforcement mechanisms and proportionality (graduated sanctions vs. binary removal)
-- What the source says about the cost of monitoring relative to the cost of non-compliance
-- Accountability gaps — structural conditions that make accountability fail
+Look for: monitoring mechanisms (internal vs. external, peer vs. hierarchical); enforcement
+mechanisms and proportionality (graduated sanctions vs. binary removal); accountability gaps.
 
 ---
 
-## Step 3 — Identify What Is NOT Useful
+## Step 4 — Check against the mandate catalogue
 
-Note explicitly what to skip. This prevents the lookup guide from becoming a general summary.
-Common things to exclude:
-- Empirical case material that is too context-specific to generalise (particular countries,
-  agencies, historical periods)
-- Mathematical or formal models that the protocol cannot implement
-- Historical/genealogical narrative about the development of the concept
-- Normative arguments about what governance *should* be (useful for framing, not for parameters)
+After drafting the source file, scan `ai/prompts/institutionalDesign.md` Section 3 (Mandate
+Catalogue) and ask: does anything in this new source change how a mandate should be used or when
+it should be recommended? If yes, note it in the **Mandate implications** section.
 
 ---
 
-## Step 4 — Write the Lookup Entry
+## Step 5 — Update reading_guide.md
 
-Use this structure for each source entry. Keep each cell to one or two sentences — the goal is
-a quick lookup, not a summary.
+Add two things to `reading_guide.md`:
+
+**A. Add a row to the source table:**
 
 ```markdown
-## [Author(s) Year] — [Short Title]
-
-**Analytical level:** [Structural / Parametric / Dynamic]
-**Most relevant design decisions:** [list Q numbers from Step 2]
-
-### Q1 — Role Structure
-[Chapter/section reference]: [one actionable claim]
-
-### Q2 — Voting Parameters
-[Chapter/section reference]: [one actionable claim]
-
-### Q3 — Mandate Selection
-[Chapter/section reference]: [one actionable claim]
-
-### Q4 — Dependency Chains
-[Chapter/section reference]: [one actionable claim]
-
-### Q5 — Membership Design
-[Chapter/section reference]: [one actionable claim]
-
-### Q6 — Adaptive Capacity
-[Chapter/section reference]: [one actionable claim]
-
-### Q7 — Accountability
-[Chapter/section reference]: [one actionable claim]
-
-### What to skip
-[One sentence on what is not useful for design decisions]
+| [`author_year.md`](author_year.md) | Full citation | Structural / Parametric / Dynamic |
 ```
 
-Omit any Q entry where the source has nothing actionable to say. A source strong on Q3 and Q6
-but silent on Q2 should leave Q2 out entirely rather than filling it with a weak observation.
+**B. Add routing entries under the relevant Q headings:**
+
+For each Q the source covers meaningfully, add a **Primary / Secondary / Tertiary** entry
+under that heading. Use this format:
+
+```markdown
+**[Primary / Secondary / Tertiary]:** `author_year.md`
+One sentence on what this source adds that the primary (or higher-ranked) source does not.
+Use it when [specific condition: the question being asked, the design situation, the
+organisation type].
+```
+
+If any cross-cutting design rule from the new source appears independently in two or more
+existing sources, add it to the **Cross-cutting design rules** section at the bottom of
+`reading_guide.md`.
 
 ---
 
-## Step 5 — Check Against the Mandate Catalogue
+## Checklist before finalising
 
-After drafting the entry, scan `ai/prompts/institutionalDesign.md` Section 3 (Mandate Catalogue)
-and ask: does anything in this new source change how a mandate should be used or when it should
-be recommended? If yes, note it in the entry under a short **Mandate implications** heading.
-
-Example candidates:
-- A new argument for when `OpenAction` is too risky → add to Q3 entry
-- Evidence that veto periods shorter than 48h tend to be ignored → add to Q4 entry
-- A framework for when `RevokeInactiveAccounts` creates perverse incentives → add to Q5 entry
-
----
-
-## Checklist Before Finalising
-
-- [ ] Every Q entry cites a specific chapter, section, or page — not just "the book argues..."
+- [ ] Source file named `author_year.md` following the convention
+- [ ] Every Q entry cites a specific chapter, section, or page
 - [ ] Every claim is actionable: it changes a design choice, not just provides vocabulary
-- [ ] The "What to skip" section is present and honest
-- [ ] The entry has been checked against the mandate catalogue (Step 5)
-- [ ] The new source is added to the table at the top of `reading_guide.md`
+- [ ] Powers mandate names used in their exact form throughout
+- [ ] "What to skip" section is present and honest
+- [ ] Mandate implications checked against `institutionalDesign.md` Section 3
+- [ ] Source table row added to `reading_guide.md`
+- [ ] Routing entries added under the relevant Q headings in `reading_guide.md`
+- [ ] Any cross-cutting rules added to the bottom section of `reading_guide.md`

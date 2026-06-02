@@ -1,338 +1,234 @@
 # Reference Reading Guide — Powers Protocol Governance Design
 
-This file maps each source in `ai/references/` to the specific governance design decisions made
-by the `/design-org` skill. For each source, entries follow the format defined in
-`reading_guide_template.md`. New sources should be appended here as new sections.
+This file is the index layer. Use it to decide which source to consult for a given design
+question. Each entry summarises what a source contributes and which design decisions it covers
+most directly. Full guides are in the individual source files listed below.
 
 ---
 
-## Sources in this folder
+## Source files
 
 | File | Citation | Analytical level |
 |---|---|---|
-| `Podger_Chan_Wanna_2020_...` | Podger, Su, Wanna & Chan (eds.), 2020. *Designing Governance Structures for Performance and Accountability.* ANU Press. | Structural + Parametric |
-| `Carlisle_Gruby_2019_...` | Carlisle & Gruby, 2019. "Polycentric Systems of Governance: A Theoretical Model for the Commons." *Policy Studies Journal* 47(4): 927–952. | Structural + Dynamic |
-| `May_2022_...` | May, 2022. *Complex Adaptive Governance Systems.* | **FILE UNREADABLE** — see note below |
-| `879c4f7a-en.pdf` | Hynes, Lees & Müller (eds.), 2020. *Systemic Thinking for Policy Making.* OECD/IIASA. | Dynamic |
+| [`podger_2020.md`](podger_2020.md) | Podger, Su, Wanna & Chan (eds.), 2020. *Designing Governance Structures for Performance and Accountability.* ANU Press. | Structural + Parametric |
+| [`carlisle_gruby_2019.md`](carlisle_gruby_2019.md) | Carlisle & Gruby, 2019. "Polycentric Systems of Governance: A Theoretical Model for the Commons." *Policy Studies Journal* 47(4): 927–952. | Structural + Dynamic |
+| [`hynes_oecd_2020.md`](hynes_oecd_2020.md) | Hynes, Lees & Müller (eds.), 2020. *Systemic Thinking for Policy Making.* OECD/IIASA. | Dynamic |
+| [`ostrom_2009.md`](ostrom_2009.md) | Ostrom, Elinor. 2010. "Beyond Markets and States: Polycentric Governance of Complex Economic Systems." Nobel Prize Lecture, Dec 8, 2009. *American Economic Review* 100(3): 641–672. | Structural + Dynamic |
+| [`ostrom_2011.md`](ostrom_2011.md) | Ostrom, Elinor. 2011. "Background on the Institutional Analysis and Development Framework." *Policy Studies Journal* 39(1): 7–27. | Structural + Parametric |
 
 ---
 
-## Podger, Chan & Wanna 2020 — Designing Governance Structures
+## Which source to read for which design question
 
-**Analytical level:** Structural + Parametric  
-**Most relevant design decisions:** Q1 (role structure), Q3 (mandate selection), Q5 (membership), Q7 (accountability)
+### Q1 — Role structure and separation of powers
 
-### Q1 — Role Structure
+**Primary:** `podger_2020.md`
+The book provides the most actionable typology for role design: a spectrum from high-political-
+control (departments) to high-independence (judicial bodies), with each point on the spectrum
+mapping to specific mandate type and appointment mechanism choices. Use it when the core question
+is "how much autonomy should this role have, and what mandate type follows from that?"
 
-Ch 1, p. 11 (Podger, Chan, Wanna): The book's central conclusion is that functions can be "usefully
-mapped to different degrees of independence (and different areas of autonomy) to optimise
-performance and accountability." Specifically: core policy-setting functions should sit towards the
-high-political-control end; regulatory and integrity functions towards the high-independence end;
-service delivery in between. In Powers terms: assign `OpenAction` only to roles at the high-trust,
-low-political-control end; use `BespokeAction_Simple` or `PresetActions` for roles that need
-constrained discretion.
+**Secondary:** `carlisle_gruby_2019.md`
+Adds the de facto vs. formal autonomy test: after drafting roles, use this source to verify that
+roles with different labels genuinely have different authority scopes and mandate sets, not just
+different names.
 
-Ch 2, Figure 2.1 (Wanna, p. 20): Spectrum of political control over public sector organisations
-(departments → cost centres → non-statutory bodies → advisory statutory bodies → marketing bodies
-→ government business enterprises → judicial bodies). The section "Dimensions of independence —
-balancing 'control' and 'relative autonomy'" (pp. 19–22) distinguishes *formal* independence from
-*de facto* independence — formal grants of autonomy can be undermined by budgetary control or
-appointment power. In Powers: a role assigned through `PeerSelect` has higher de facto autonomy
-than one assigned through admin-controlled `RevokeAccountsRoleId`, even if both are nominally
-"elected."
+**Tertiary:** `ostrom_2011.md`
+Adds the three-tier IAD structure (operational / collective-choice / constitutional) as a
+completeness check: confirm that mandates exist at all three tiers and that the seven rule
+types (boundary, position, scope, choice, aggregation, information, payoff) are each addressed
+by at least one mandate or parameter. Use it when auditing a completed constitution for gaps.
 
-### Q3 — Mandate Selection
-
-Ch 1, pp. 5–6 (Podger): Inconsistency between similar functions having different levels of
-political control "may adversely affect performance." The argument is for coherence: the mandate
-type selected for a governance function should be consistently applied across similar functions.
-Do not mix `OpenAction` (broad discretion) and `BespokeAction_Simple` (narrow discretion) for
-functionally equivalent roles.
-
-Ch 6 (Gilchrist): The Delivering Community Services Partnership (DCSP) established a Partnership
-Forum — a formal cross-sector deliberation body between government and the not-for-profit sector.
-This is a structural analogue for `StatementOfIntent` used as a deliberation mandate rather than
-a blocking veto: it creates a recorded signal without immediately stopping execution.
-
-### Q5 — Membership Design
-
-Ch 7, pp. 6–7 (Godwin): Integrity organisations with formal independence protections in their
-statutes still had membership controlled through politically sensitive appointment processes.
-The lesson: formal membership rules (who can join) and actual appointment mechanisms (how they
-get there) must both be designed. In Powers, `SelfSelect` sets the formal rule (anyone can join);
-but a subsequent `PeerSelect` or `RevokeAccountsRoleId` is what governs the actual composition.
-
-Ch 8, pp. 8–9 (Chen & Liu): Community-based organisations in Hong Kong and Taiwan provide "a
-degree of independence from the vicissitudes of contemporary politics" and "space for active
-deliberation." This maps to the open-membership pattern: `SelfSelect` with a broad `allowedRole`
-creates a base membership layer that is insulated from top-down control.
-
-### Q7 — Accountability
-
-Ch 1, p. 2 (Wanna): Accountability runs both "upward" (to governing supervisors) and "outward"
-(to the public and clients). Powers' on-chain action record provides upward accountability
-automatically (all votes and executions are attributable). Outward accountability — to those
-affected but not participating — requires additional design, such as a public `StatementOfIntent`
-mandate accessible to a broad role.
-
-Ch 7, pp. 5–6 (Godwin): The merit protection commissioner describes a "more complex balancing of
-control and autonomy" between enforcement (binary: revoke) and educational accountability
-(graduated: signal, warn, then revoke). In Powers: `RevokeAccountsRoleId` is binary enforcement;
-a deliberation mandate (`StatementOfIntent`) used as a censure or warning step is the graduated
-alternative. For accountability-sensitive roles, prefer graduated before binary.
-
-### What to skip
-
-The empirical case material on Australia, Taiwan, and PRC governance reforms (Chapters 3–6, 9–11)
-is too jurisdiction-specific. The performance monitoring chapters (Bennis Wai Yip So on Taiwan's
-historical performance management; Meng et al. on provincial environmental pilots in China) have
-no direct mapping to mandate parameters.
-
-### Mandate implications
-
-- The "form should follow function" principle (Ch 1) supports a design rule: select mandates that
-  match the functional independence level of the role. High-independence roles (regulatory,
-  integrity) → `PeerSelect` + veto chain. Low-independence roles (service delivery) →
-  `BespokeAction_Simple` with admin timelock.
-- The distinction between formal and de facto independence (Ch 2) warns against assuming that
-  assigning a role via `PeerSelect` guarantees independent behaviour if the admin role can
-  unilaterally revoke that assignment. Consider adding a `needFulfilled` requirement on any
-  revocation mandate — revocation should itself require a vote, not just admin action.
+**Tertiary:** `ostrom_2009.md`
+Adds the polycentric independence test: formal independence (different labels) + functional
+interdependence (`needFulfilled` chains) must both be present for a structure to be genuinely
+polycentric. Also provides the three-mechanism framework for why smaller, specialised roles
+outperform large monolithic ones. Use it when choosing between a single broad role and
+multiple specialised roles.
 
 ---
 
-## Carlisle & Gruby 2019 — Polycentric Systems of Governance
+### Q2 — Voting parameters
 
-**Analytical level:** Structural + Dynamic  
-**Most relevant design decisions:** Q1, Q3, Q4, Q5, Q6, Q7
+**Primary:** `ostrom_2009.md`
+The six microsituational cooperation variables (Section 7C) are the most directly actionable
+source on voting design: communication channel (`votingPeriod > 0`), reputation visibility
+(on-chain record), marginal per-capita return (role size), exit capability (`SelfSelect`),
+time horizon (`votingPeriod` length), and agreed sanctioning (graduated chain design). Use it
+when calibrating `votingPeriod` and when choosing between small specialised roles and large
+member roles for high-stakes decisions.
 
-### Q1 — Role Structure
-
-Section 3.1 (pp. 931–933): The first attribute of a polycentric system is "multiple, overlapping
-decision-making centers with some degree of autonomy." The key test is *de facto* autonomy: "A
-grant of formal independence to decision-making centers does not guarantee them considerable de
-facto autonomy" (p. 933). In Powers: verify that roles with different labels genuinely have
-different mandate sets and different authority scopes. A veto role with the same quorum threshold
-as the proposing role has limited de facto independence.
-
-Section 3.2 (pp. 934–935): The second attribute is "choosing to act in ways that take account of
-others through cooperation, competition, conflict, and conflict resolution." This is the on-chain
-definition of `needFulfilled` / `needNotFulfilled`: mandate B takes account of mandate A by
-requiring (or being blocked by) its prior completion. Any governance structure where mandates do
-not reference each other is monocentric by this definition, regardless of how many roles exist.
-
-### Q3 — Mandate Selection
-
-Section 4.2.2 (pp. 943–944): "The jurisdiction or scope of authority of decision-making centers
-should be coterminous with the boundaries of the problem being addressed." Scale mismatches
-between a mandate's `allowedRole` and the actual scope of the governed action create either
-under-governance (role too broad) or over-governance (role too narrow). An `OpenAction` mandate
-granted to a role that governs only treasury spending is a scope overmatch.
-
-Table 1 (p. 946): Theoretical model of a functional polycentric governance system. Use this as a
-design checklist: for each of the three posited advantages (adaptive capacity, institutional fit,
-risk mitigation through redundancy), confirm that the corresponding enabling conditions are
-present in the governance structure. A structure claiming resilience through redundancy must have
-"decision-making centers at different levels and across political jurisdictions" (or in Powers
-terms: multiple overlapping mandates or roles that can perform the same function).
-
-Section 4.3 (pp. 944–945): Redundancy illustration — if three independent authorities each face
-a 1/10 failure probability, the probability of simultaneous coastwide failure drops from 1/10 to
-1/1000. In Powers: two overlapping execution paths (e.g., a preset action + an open action for
-the same function, held by different roles) reduce the risk that a governance breakdown in one
-role makes the action impossible.
-
-### Q4 — Dependency Chains
-
-Section 3.2, p. 935: "Intense competition over distributional issues can undermine cooperation
-and impede a governance system's capacity for self-organization." A `needNotFulfilled` chain that
-creates winner-take-all competition between two roles (whoever acts first blocks the other)
-without a cooperation mechanism is structurally fragile. Add a `StatementOfIntent` deliberation
-step before the blocking mandate to create a cooperation channel.
-
-Section 4.1.5 (pp. 940–941): E. Ostrom (2008) proposes "multiple tiers of arenas that can
-engage in rapid discovery of conflicts and effective conflict resolution" — conflict resolution
-systems should offer "a variety of approaches (conciliation, mediation, arbitration)" so
-disputants can choose the forum appropriate to their circumstances. In Powers: the veto mandate
-is the only built-in conflict resolution mechanism; for high-stakes governance, consider a
-graduated veto chain (signal → formal veto → execution block) rather than a single binary veto.
-
-### Q5 — Membership Design
-
-Section 4.1.2 (pp. 937–938): "The possibility of entry allows for the influx of fresh ideas and
-methods." Rules and norms should "allow the entry of new actors and enable new institutional
-pathways when existing governance actors cannot meet the needs and objectives of the governance
-system." A constitution with only `PeerSelect` (existing members approve all new members) cannot
-admit new members if existing membership stalls. Pair `PeerSelect` with an emergency `SelfSelect`
-path or an admin override for the initial bootstrapping period.
-
-### Q6 — Adaptive Capacity
-
-Section 4.1 (pp. 936–937): Adaptive capacity is "the ability of a resource governance system to
-first alter processes and if required convert structural elements as response to experienced or
-expected changes" (Pahl-Wostl, 2009, p. 355). In Powers: `Adopt_Mandates` = alter processes
-(add a new mandate); `MandatePackage` = convert structural elements (adopt a bundle replacing
-an entire flow). Use `Adopt_Mandates` for incremental adaptation, `MandatePackage` for
-structural reform.
-
-Section 4.1.1 (p. 937): "Decision-making centers employ diverse institutions" is the enabling
-condition for adaptive capacity. Institutional diversity means different mandate types for
-different functions. A constitution where every governance step uses `StatementOfIntent` is
-institutionally homogeneous and cannot adapt — it has no structural variation to draw on.
-
-Section 4.1.3 (pp. 938–939): Cross-scale linkages support adaptation, but warning: "reliance on
-informal networks may result in ad hoc decision making and foster group homophily that diminishes
-adaptive capacity." In Powers: `StatementOfIntent` used as a formal deliberation step converts
-informal consensus into an on-chain record. This prevents homophily-driven drift by requiring
-deliberation to be visible and attributable.
-
-### Q7 — Accountability
-
-Section 4.1.4 (pp. 939–940): In polycentric systems, dispersed responsibility makes
-accountability harder. Lieberman (2011) found that when multiple actors were responsible for the
-same task, "governance actors had strong incentives to shirk responsibilities because they could
-rely upon other actors who were assigned the same responsibilities." In Powers: when two roles
-share a mandate (e.g., both can veto), clearly distinguish their accountability domains — either
-assign each a different mandate with overlapping `needFulfilled` requirements, or accept that
-shared mandates have shared (diffuse) accountability.
-
-Section 4.1.4 (p. 940): E. Ostrom (2000) notes that polycentric systems "provide more
-opportunity for citizens and officials to correct maldistributions of authority and takeover by
-opportunistic individuals." Multiple overlapping roles make capture harder — this is the
-accountability argument for bicameral or multi-role structures even when a simpler structure
-would be faster.
-
-### What to skip
-
-Section 2 (historical genealogy of the polycentricity concept, pp. 928–931) provides background
-but no actionable design claims. Section 5 (research agenda, pp. 947–948) discusses empirical
-gaps in the literature and is not actionable. The specific Pearl River Basin governance failure
-case (da Silveira & Richards, 2013) is too context-specific.
-
-### Mandate implications
-
-- The "de facto autonomy" test (Section 3.1) should be applied as a review step: after drafting a
-  governance structure, check that each role's actual mandate set gives it genuinely different
-  authority from adjacent roles, not just a different label.
-- The redundancy claim (Section 4.3) provides the theoretical justification for adding veto
-  mandates even when the organisation prefers speed: redundancy is a risk mitigation strategy, not
-  overhead.
-- The conflict resolution diversity argument (Section 4.1.5) supports graduated accountability
-  chains (`StatementOfIntent` censure → `PauseMandates` → `RevokeAccountsRoleId`) over binary
-  revocation.
+**Secondary:** `ostrom_2011.md`
+Adds the aggregation rule framework: majority, supermajority, and unanimity rules should be
+calibrated to the expected active membership size, not set as absolute values. Also introduces
+the cross-type interaction: changing `allowedRole` (boundary rule) may require adjusting
+`votingPeriod` (aggregation rule). Use it when a role membership change prompts a review of
+voting parameters.
 
 ---
 
-## May 2022 — Complex Adaptive Governance Systems
+### Q3 — Mandate selection
 
-**FILE UNREADABLE.** The file `May_2022_Complex_Adaptive_Governance_Systems.pdf` fails to parse
-as a valid PDF and appears to be stored in a different format (HTML or corrupted). No content
-could be extracted.
+**Primary:** `carlisle_gruby_2019.md`
+The institutional fit framework (Section 4.2) is the most directly applicable tool: it frames
+mandate selection as a matching problem between the governance institution and the problem it
+addresses. Use it when deciding between mandate types for a specific governance function.
 
-**Expected contribution based on title and context in `institutionalDesign.md`:**
+**Secondary:** `podger_2020.md`
+Adds the coherence principle: similar functions should use similar mandate types. Use it to check
+that the mandate selection across roles is internally consistent.
 
-Based on the title and the references in `ai/prompts/institutionalDesign.md`, this source is
-expected to address:
-- Q6 (Adaptive Capacity): conditions under which governance systems can self-modify without
-  collapsing; distinction between designed adaptability (explicit reform rules) and emergent
-  adaptability (informal workarounds).
-- Q3 (Mandate Selection): when `MandatePackage` (bundle upgrade) is preferable to incremental
-  `Adopt_Mandates`.
-- Q7 (Accountability): monitoring and sensing mechanisms that enable adaptation.
+**Tertiary:** `hynes_oecd_2020.md`
+Adds the systemic perspective: mandates for contested or multi-stakeholder domains should include
+a `StatementOfIntent` deliberation step; constitutions without reform mandates are structurally
+incomplete. Use it when the organisation's governance domain is complex or contested.
 
-**Action required:** Replace the file with a valid PDF copy of the source before creating the
-reading guide entry. When replacing, follow the template in `reading_guide_template.md` and
-append the entry to this file.
+**Tertiary:** `ostrom_2009.md`
+Adds the four-type goods taxonomy (private / toll-club / public / common-pool resource) as the
+mandate selection entry point: identify the good type first, then select the mandate pattern
+from the table in `ostrom_2009.md`. Use it when the organisation type is ambiguous or when
+the designer is applying a template without checking whether it matches the resource type.
+
+**Tertiary:** `ostrom_2011.md`
+Adds the three-tier IAD match: operational mandates for execution, collective-choice mandates
+for rule modification, constitutional mandates for wholesale restructuring. Use it to confirm
+that the mandate type selected matches the decision tier being addressed.
 
 ---
 
-## Hynes, Lees & Müller (OECD/IIASA) 2020 — Systemic Thinking for Policy Making
+### Q4 — Dependency chains
 
-**Analytical level:** Dynamic  
-**Most relevant design decisions:** Q3 (mandate selection), Q4 (dependency chains), Q6 (adaptive capacity), Q7 (accountability)
+**Primary:** `hynes_oecd_2020.md`
+The cascading failure analysis (Ch 12) is the most specific source on dependency chain risks.
+Use it when designing `needFulfilled` chains: it provides the fault-tolerance constraint (max 3
+sequential dependencies) and the fat-tailed risk argument for robust emergency paths.
 
-### Q3 — Mandate Selection
+**Secondary:** `carlisle_gruby_2019.md`
+Adds the conflict resolution dimension: dependency chains that create winner-take-all competition
+need a deliberation step. Also provides the "rapid access" argument for keeping conflict
+resolution mandates short in `votingPeriod`.
 
-Ch 13, p. 135 (Jacobzone et al.): The key principle — a systems approach must be applied to
-"both the system to be governed and the governance system itself" (citing Jentoft et al., 2007).
-In Powers: the governance constitution is itself a system to be governed. This is the argument
-for including reform mandates (`Adopt_Mandates`, `MandatePackage`) as first-class design elements,
-not afterthoughts.
+---
 
-Ch 13, p. 137: For "wicked problems" with no agreed definition or solution, the linear
-analyse-prioritise-implement approach fails. The alternative is "adaptive, evolutionary, and
-participatory learning." In Powers: for contested governance domains (multi-stakeholder
-organisations, organisations managing shared resources), prefer a `StatementOfIntent`-based
-deliberation chain before any execution mandate, rather than direct `BespokeAction` with no
-intermediate deliberation step.
+### Q5 — Membership design
 
-### Q4 — Dependency Chains
+**Primary:** `podger_2020.md`
+The most detailed treatment of the formal vs. actual membership distinction. Use it when designing
+the combination of open entry (`SelfSelect`) and gatekeeping (`PeerSelect`, `RevokeAccountsRoleId`)
+— the key insight is that both layers must be designed, not just the formal rule.
 
-Ch 12, p. 124 (Poledna et al.): Systemic risk arises from "cascading failures" — the default of
-one node triggers defaults in connected nodes, potentially "wiping out the financial system via a
-deleveraging cascade." In Powers: long `needFulfilled` chains create systemic interdependence.
-If mandate A stalls (no quorum, no proposer), all downstream mandates B, C, D are permanently
-blocked. Design for fault tolerance: avoid chains longer than 3 steps; use `throttleExecution`
-to prevent single mandates from becoming permanent chokepoints.
+**Secondary:** `carlisle_gruby_2019.md`
+Adds the bootstrapping problem (Section 4.1.2): pure `PeerSelect` constitutions can stall if no
+seed members exist. Also adds the homophily warning: informal networks without on-chain
+deliberation records reduce membership diversity over time.
 
-Ch 12, p. 124: "Systemic risks overwhelmingly do not follow normal risk distributions, but tend
-to be fat-tailed." Emergency mandates (pause, veto, revoke) are rarely used but must be robust
-precisely when the system is under stress. Test emergency paths separately from the happy path.
+**Tertiary:** `ostrom_2009.md`
+Adds the dual boundary requirement (Design Principles 1A + 1B): user boundaries (`allowedRole`)
+and resource boundaries (`target` + `value` limits) must both be designed. A mandate specifying
+only one is structurally incomplete. Also provides empirical evidence that no self-organised
+institution in the meta-analysis used binary revocation (grim trigger) as its only enforcement
+mechanism — use it to justify graduated accountability chains.
 
-IRGC 7-step approach (Ch 12, p. 129): Step 7 is "Monitor, learn, review, and adapt." In Powers:
-the reform mandate is the on-chain implementation of this step. A constitution with no reform
-mandate has no built-in step 7.
+**Tertiary:** `ostrom_2011.md`
+Adds the three-component boundary design (entry mechanism, eligibility criteria, exit
+mechanism) and the rules-in-form vs. rules-in-use gap: informal membership conventions cannot
+drift into on-chain constitutions automatically — they must be formally codified via
+`Adopt_Mandates`. Use it when auditing whether informal membership practices match the formal
+mandate rules.
 
-### Q6 — Adaptive Capacity
+---
 
-Executive Summary, p. 13: "Even if policymakers as individuals are systems thinkers, it does not
-mean the policies they design are systemic; one needs institutions to support systems policy
-making." In Powers: individual good actors are not sufficient. The mandate structure must
-institutionalise good governance behaviour, not depend on role holders voluntarily behaving well.
-This justifies mandatory deliberation steps (`StatementOfIntent` with `votingPeriod > 0`) rather
-than optional ones.
+### Q6 — Adaptive capacity and reform
 
-Ch 13, pp. 137–138 (cogeneration example): IIASA's three-year stakeholder cogeneration process
-brought together groups with "very different perspectives on the problem" to co-generate a
-compromise solution. In Powers: reform mandates should have a broad `allowedRole` during reform
-phases — limiting `Adopt_Mandates` to an admin-only role contradicts the cogeneration principle
-and concentrates adaptive capacity in a single point of failure.
+**Primary:** `carlisle_gruby_2019.md`
+Provides the clearest conceptual distinction between process-level adaptation (`Adopt_Mandates`)
+and structural adaptation (`MandatePackage`). Use it when deciding which reform mandate type
+fits the scope of the intended change.
 
-### Q7 — Accountability
+**Secondary:** `hynes_oecd_2020.md`
+Adds the institutional argument: good governance must be built into the mandate structure, not
+depend on individuals. Provides the IRGC 7-step completeness check — does the constitution cover
+monitoring and adaptation (step 7), or only execution (steps 1–6)?
 
-Ch 13, p. 135: "A fundamental challenge to governing systemic risk is understanding the system as
-a complex network of individual and institutional actors with different and often conflicting
-interests, values, and worldviews." Standard accountability mechanisms (elections, hearings) are
-inadequate when responsibility is dispersed (p. 135). Powers' on-chain action record provides
-explicit, attributable accountability — every vote, proposal, and execution is permanently
-associated with a specific account. This is a structural advantage that should be made visible
-to designers: the record is the accountability mechanism.
+**Tertiary:** `ostrom_2009.md`
+Adds empirically validated design principles for adaptive capacity: Design Principle 3
+(collective-choice arrangements must include affected roles, not only admin) and Principle 8
+(nested enterprises for polycentric resilience). Use it when justifying why `Adopt_Mandates`
+must be accessible to member roles, not restricted to admin.
 
-Ch 13, p. 135 (Helbing 2013): "Collective responsibility" as a principle of systemic risk
-governance raises the attribution problem: when everyone is responsible, diffuse accountability
-means no one is effectively held to account. In Powers: avoid mandates where accountability is
-collective without individual attribution (e.g., a role where all members jointly propose but no
-individual can be identified). `StatementOfIntent` with per-account vote tracking solves this.
+**Gap:** `may_2022.md` is expected to be the strongest source for this question but is currently
+unreadable. Replacing that file is the highest-priority scholarship gap.
 
-### What to skip
+---
 
-Chapters 2–11 (economic paradigms, environment and sustainable development, social and economic
-change, innovation policy) address macro-policy domains with no direct mapping to mandate
-parameters. Chapter 15 (training dimensions for systems thinking) and Chapter 16 (OECD-IIASA
-work programme) are institutional planning documents. All quantitative financial network
-modelling (DebtRank, CoVaR, SES, systemic expected shortfall) is not applicable to on-chain
-governance design.
+### Q7 — Accountability and monitoring
 
-### Mandate implications
+**Primary:** `hynes_oecd_2020.md`
+On-chain attributable accountability is framed here as a structural advantage of Powers vs.
+conventional governance — every vote and execution is permanently associated with a specific
+account. Use it to argue for broad `allowedRole` on accountability mandates and against
+collective-responsibility structures without individual attribution.
 
-- The cascading failure analysis (Ch 12) adds a design constraint: mandate chains longer than 3
-  sequential `needFulfilled` dependencies should be reviewed for resilience. If the first mandate
-  in a chain can stall indefinitely (e.g., no quorum mechanism), the entire downstream chain is
-  at risk.
-- The "institutions must support good governance" argument (Executive Summary) supports requiring
-  `votingPeriod > 0` on any mandate that controls treasury funds or role assignment, even when
-  the organisation is small enough that informal consensus would suffice. The mandate structure
-  should work correctly even when actors are adversarial.
-- The cogeneration principle (Ch 13) supports broad `allowedRole` on reform mandates — opening
-  `Adopt_Mandates` to general members, not only admins, increases the organisation's adaptive
-  capacity.
+**Secondary:** `podger_2020.md`
+Adds the upward vs. outward accountability distinction and the graduated vs. binary enforcement
+distinction (signal → warn → revoke). Use it when designing the accountability chain for
+integrity or veto roles.
+
+**Tertiary:** `carlisle_gruby_2019.md`
+Adds the diffuse-accountability warning: shared mandates between multiple roles create shared
+(and therefore weakened) accountability. Use it when two roles have overlapping mandate authority.
+
+**Tertiary:** `ostrom_2009.md`
+Adds the four empirically validated accountability design principles (4A monitoring users,
+4B monitoring resource, 5 graduated sanctions, 6 conflict resolution). These are the most
+directly specified accountability requirements in the library — sourced from meta-analysis of
+institutions that survived long-term. Use it when designing or reviewing the accountability
+chain for any execution or role-assignment mandate.
+
+**Tertiary:** `ostrom_2011.md`
+Adds the six evaluative criteria (efficiency, fiscal equivalence, redistribution, accountability,
+conformance to values, sustainability) as a post-design review checklist. Also distinguishes
+between accountability (attributable, on-chain) and conformance to values (reputation-building
+over time). Use it when the designer asks "how do we know the governance is working?"
+
+---
+
+## Cross-cutting design rules supported by all three sources
+
+These rules appear independently in all three readable sources and can be treated as
+well-grounded design constraints:
+
+1. **Formal ≠ de facto independence.** A role's actual independence is determined by its
+   appointment and revocation mechanisms, not only its execution mandate. (Podger Ch 2,
+   Carlisle Section 3.1, OECD Ch 13)
+
+2. **Reform mandates are first-class.** A constitution without `Adopt_Mandates` or equivalent
+   is structurally incomplete — it cannot adapt, learn, or correct itself. (Podger Ch 2 Weberian
+   paradox, Carlisle Section 4.1, OECD IRGC step 7)
+
+3. **Mandate diversity enables resilience.** A constitution that assigns the same mandate type
+   to every function has no repertoire to draw on when the normal path fails. (Podger Ch 2
+   twin-forces, Carlisle Section 4.1.1, OECD Ch 12 fat-tailed risk)
+
+4. **Broad `allowedRole` on reform and accountability mandates.** Restricting reform or
+   censure to an admin-only role concentrates adaptive capacity in a single point of failure
+   and weakens outward accountability. (Podger Ch 1, Carlisle Section 4.1, OECD Ch 13)
+
+5. **On-chain vote records are the accountability mechanism.** Mandates with `votingPeriod = 0`
+   on treasury or role-assignment actions remove the social decision process that gives the
+   constitution its legitimacy claim. (Podger Ch 1, Carlisle Section 4.1.4, OECD Ch 13)
+
+6. **Dual boundary requirement.** Every mandate must specify both user boundaries (`allowedRole`)
+   and resource boundaries (`target` + `value` limits). A mandate with only one boundary type
+   is structurally incomplete against Ostrom's Design Principle 1A+1B. (Ostrom 2009 Section 4E,
+   Ostrom 2011 p. 21, Carlisle Section 4.2)
+
+7. **Graduated sanctions over binary revocation.** No long-surviving self-organised institution
+   used binary exclusion as its only enforcement mechanism. The graduated chain
+   (`StatementOfIntent` → `PauseMandates` → `RevokeAccountsRoleId`) is the empirically
+   supported pattern. (Ostrom 2009 Design Principle 5, Podger Ch 7, Carlisle Section 4.1.5)
+
+8. **Collective-choice reform must include the affected role.** Restricting `Adopt_Mandates`
+   to admin violates Ostrom's Design Principle 3, which is associated with institutional failure
+   in the empirical record. (Ostrom 2009 Section 4E, Carlisle Section 4.1, OECD Ch 13
+   cogeneration principle)
