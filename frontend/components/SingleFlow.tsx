@@ -18,7 +18,7 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { Mandate, Powers, Action, Status } from '@/context/types'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { usePowersStore } from '@/context/store'
 import { bigintToRole } from '@/utils/bigintTo'
 import { hashAction } from '@/utils/hashAction'
@@ -148,14 +148,13 @@ function createSingleFlowLayout(mandates: Mandate[], flowMandateIds: bigint[]): 
 interface MandateNodeData {
   mandate: Mandate
   powers: Powers
-  onNodeClick: (mandateId: string) => void
   chainActionData: Map<string, Action>
   chainId: string
   isHighlighted?: boolean
 }
 
 const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
-  const { mandate, powers, onNodeClick, chainActionData, chainId, isHighlighted } = data
+  const { mandate, powers, chainActionData, chainId, isHighlighted } = data
   const { timestamps, fetchTimestamps } = useBlocks()
   const { data: blockNumber } = useBlockNumber()
   const cond = mandate.conditions
@@ -394,14 +393,9 @@ const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
       className={`bg-background border font-mono transition-all ${
         isHighlighted ? 'border-primary/60 border-2' : 'border-border'
       } ${
-        !mandate.active ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'
+        !mandate.active ? 'opacity-50' : ''
       }`}
       style={{ width: NODE_WIDTH }}
-      onClick={() => {
-        if (mandate.active) {
-          onNodeClick(String(mandate.index))
-        }
-      }}
     >
       <div className="px-3 py-2 border-b border-border bg-muted/50">
         <div className="flex items-baseline gap-1.5">
@@ -473,7 +467,6 @@ interface SingleFlowProps {
 const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId, actionId }) => {
   const { fitView, getViewport, setViewport, getNodes } = useReactFlow()
   const powers = usePowersStore()
-  const router = useRouter()
   const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>()
   const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
@@ -550,19 +543,6 @@ const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId, actionId }) =
     }
   }, [actionId, powers, flowMandates])
 
-  const handleNodeClick = useCallback((id: string) => {
-    // Check if this mandate has an associated action in chainActionData
-    const action = chainActionData.get(id)
-    
-    if (action && action.actionId) {
-      // Navigate to action page when action exists
-      router.push(`/forum/${chainId}/${powersAddress}/action/${action.actionId}`)
-    } else {
-      // Navigate to mandate page when no action exists
-      router.push(`/forum/${chainId}/${powersAddress}/mandate/${id}`)
-    }
-  }, [router, chainId, powersAddress, chainActionData])
-
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!powers || flowMandates.length === 0) return { initialNodes: [], initialEdges: [] }
 
@@ -578,10 +558,9 @@ const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId, actionId }) =
         id,
         type: 'mandateNode',
         position: layout.get(id) ?? { x: 0, y: 0 },
-        data: { 
-          mandate, 
-          powers, 
-          onNodeClick: handleNodeClick,
+        data: {
+          mandate,
+          powers,
           chainActionData,
           chainId,
           isHighlighted
@@ -626,7 +605,7 @@ const SingleFlowContent: React.FC<SingleFlowProps> = ({ mandateId, actionId }) =
     })
 
     return { initialNodes: nodes, initialEdges: edges }
-  }, [powers, flowMandates, layout, handleNodeClick, chainActionData, chainId, highlightedMandateId])
+  }, [powers, flowMandates, layout, chainActionData, chainId, highlightedMandateId])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)

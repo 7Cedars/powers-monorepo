@@ -1,16 +1,16 @@
 'use client'
 
 import React from "react";
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, useStatusStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
+import { useConnection, useSwitchChain } from "wagmi";
 import { usePowers } from "@/hooks/usePowers";
+import { usePowersLive } from "@/hooks/usePowersLive";
 import { parseChainId } from "@/utils/parsers";
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAddressDisplay } from "@/hooks/useAddressDisplay";
-import { BlockCounter } from "@/components/BlockCounter";
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
@@ -26,10 +26,12 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
     const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
-    const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
     const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>();
     const { fetchPowers } = usePowers();
-    const publicClient = usePublicClient();
+    usePowersLive(
+      powersAddress as `0x${string}` | undefined,
+      chainId ? parseChainId(chainId) : undefined
+    );
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
     const action = useActionStore();
@@ -67,20 +69,6 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
       
       loadAndFetchData();
     }, []);
-
-    const fetchBlockNumber = async () => {
-      if (!publicClient) return;
-      try {
-        const number = await publicClient.getBlockNumber();
-        setBlockNumber(number);
-      } catch (error) {
-        console.error('Failed to fetch block number:', error);
-      }
-    };
-
-    useEffect(() => {
-        fetchBlockNumber();
-    }, [ publicClient ])
 
     // Switch chain when selected chain changes
     useEffect(() => {
@@ -152,12 +140,6 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
             <a href="/overview" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
               {powers.name ? powers.name : "EDITOR"} 
             </a>
-            {!isOverviewPage && powersAddress && chainId &&
-              <BlockCounter onRefresh={() => {
-                fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                fetchBlockNumber();
-              }} blockNumber={blockNumber} />
-            }
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {ready && authenticated && walletsReady && wallets[0] &&

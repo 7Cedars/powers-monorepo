@@ -14,6 +14,7 @@ import { useChainId } from "wagmi";
 interface ActionOverviewProps {
   action: Action;
   mandate: Mandate;
+  showOutput?: boolean;
 }
 
 /**
@@ -22,7 +23,7 @@ interface ActionOverviewProps {
  * - Input data (decoded parameters)
  * - Executable output data (simulation results)
  */
-export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate }) => {
+export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate, showOutput = true }) => {
   const { simulation, simulate } = useMandate();
   const { wallets, ready } = useWallets();
   const chainId = useChainId();
@@ -198,22 +199,24 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate 
       </div>
 
       {/* Executable Output Data Section */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <CodeBracketIcon className="h-4 w-4 text-muted-foreground" />
-          <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Executable Output Data</h4>
-        </div>
-
-        {simulation ? (
-          <div>
-            <SimulationBox mandate={mandate} simulation={simulation} chainId={chainId} />
+      {showOutput && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <CodeBracketIcon className="h-4 w-4 text-muted-foreground" />
+            <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Executable Output Data</h4>
           </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            {hasSimulated ? 'No simulation data available' : 'Loading simulation...'}
-          </p>
-        )}
-      </div>
+
+          {simulation ? (
+            <div>
+              <SimulationBox mandate={mandate} simulation={simulation} chainId={chainId} />
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {hasSimulated ? 'No simulation data available' : 'Loading simulation...'}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

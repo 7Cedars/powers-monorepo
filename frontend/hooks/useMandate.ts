@@ -44,6 +44,7 @@ export const useMandate = () => {
  
   // NB: here the powers object is updated after a transaction is successful.
   useEffect(() => {
+    if (!transactionHash) return
     if (statusReceipt === "pending") {
       setStatus({status: "pending"})
       fetchPowers(addressPowers, parseChainId(chainId))
@@ -56,7 +57,7 @@ export const useMandate = () => {
       setStatus({status: "error"})
       setError({error: errorReceipt as Error})
     }
-  }, [statusReceipt])
+  }, [statusReceipt, transactionHash])
 
   // reset // 
   const resetStatus = () => {
@@ -276,11 +277,6 @@ export const useMandate = () => {
       actionObject: Action,
       powers: Powers
     ): Promise<ActionVote | undefined> => {
-      setError({error: null})
-      setStatus({status: "pending"})
-
-      // console.log("@fetchVoteData, waypoint 0", {actionObject, powers})
-      
       try {
         const [{ result: voteData }, { result: state }] = await readContracts(wagmiConfig, {
           contracts: [
@@ -301,8 +297,6 @@ export const useMandate = () => {
           ]
         })
 
-        // console.log("@fetchVoteData, waypoint 1", {voteData, state})
-
         const [voteStart, voteDuration, voteEnd, againstVotes, forVotes, abstainVotes] = voteData as unknown as [
           bigint, bigint, bigint, bigint, bigint, bigint
         ]
@@ -318,44 +312,29 @@ export const useMandate = () => {
           abstainVotes: abstainVotes as bigint,
         }
 
-        // console.log("@fetchVoteData, waypoint 2", {vote})
-
         setActionVote(vote)
-        setStatus({status: "success"})
         return vote
       } catch (error) {
-        // console.log("@fetchVoteData, waypoint 3", {error})
-        setStatus({status: "error"})
-        setError({error: error as Error})
         return undefined
       }
     }, [chainId])
   
-  const simulate = useCallback( 
+  const simulate = useCallback(
     async (caller: `0x${string}`, mandateCalldata: `0x${string}`, nonce: bigint, mandate: Mandate): Promise<boolean> => {
-      // console.log("@simulate: waypoint 1", {caller, mandateCalldata, nonce, mandate})
-      setError({error: null})
-      setStatus({status: "pending"})
-
       try {
           const result = await readContract(wagmiConfig, {
             abi: mandateAbi,
             address: mandate.mandateAddress as `0x${string}`,
-            functionName: 'handleRequest', 
+            functionName: 'handleRequest',
             args: [caller, mandate.powers, mandate.index, mandateCalldata, nonce],
             chainId: parseChainId(chainId)
             })
-          // console.log("@simulate: waypoint 2a", {result})
-          // console.log("@simulate: waypoint 2b", {result: result as MandateSimulation})
           setSimulation(result as MandateSimulation)
-          setStatus({status: "success"})
           return true
         } catch (error) {
-          setStatus({status: "error"}) 
-          setError({error: error as Error})
           console.log("@simulate: ERROR", {error})
           return false
-        } 
+        }
   }, [chainId])
 
   const request = useCallback( 

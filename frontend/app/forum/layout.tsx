@@ -1,7 +1,7 @@
 'use client'
 
 import React from "react";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore, useStatusStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
@@ -14,11 +14,11 @@ import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon, Bars3Icon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { usePowers } from "@/hooks/usePowers";
+import { usePowersLive } from "@/hooks/usePowersLive";
 import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
-import { BlockCounter } from "@/components/BlockCounter";
-import { useXmtpClient } from "@/hooks/useXmtpClient"; 
+import { useXmtpClient } from "@/hooks/useXmtpClient";
 
-import { parseChainId } from "@/utils/parsers"; 
+import { parseChainId } from "@/utils/parsers";
 
 export default function ForumLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const router = useRouter(); 
@@ -27,10 +27,13 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
-    const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
     const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
     const { chainId } = useParams<{ chainId: string }>()
     const { fetchPowers } = usePowers();
+    usePowersLive(
+      powersAddress as `0x${string}` | undefined,
+      chainId ? parseChainId(chainId) : undefined
+    );
     const publicClient = usePublicClient();
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
@@ -44,25 +47,14 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     console.log("layout being triggered")
 
     const triggerName =
-      pathname.includes('/profile') ? "Profile" :  
+      pathname.includes('/profile') ? "Profile" :
       !chainId ? "Navigation" :
       "Main"
 
-    const fetchBlockNumber = async () => {
-      if (!publicClient) return;
-      try {
-        const number = await publicClient.getBlockNumber();
-        setBlockNumber(number);
-      } catch (error) {
-        console.error('Failed to fetch block number:', error);
-      }
-    };
+    const powersBasePath = chainId && powersAddress ? `/forum/${chainId}/${powersAddress}` : null
+    const isOnSubPage = powersBasePath !== null && pathname !== powersBasePath
 
-    useEffect(() => {
-        fetchBlockNumber();
-    }, [publicClient, powers])
-
-    // Load powers instance if not loaded yet. 
+    // Load powers instance if not loaded yet.
     // Switch chain when selected chain changes
     useEffect(() => {
       if (chainId && chain?.id !== Number(chainId)) {
@@ -98,22 +90,14 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
   return (  
     <div className="h-screen w-screen flex flex-col bg-background scanlines overflow-hidden">
       <header className="hidden sm:flex w-full flex-col items-center border-b border-border px-3 sm:px-4 py-4 flex-shrink-0">
-        <div className="w-full flex flex-wrap md:flex-nowrap items-center justify-center md:justify-between max-w-6xl gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0 md:flex-1">
+        <div className="w-full flex flex-nowrap items-center justify-between max-w-4xl gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-4">
             <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider truncate hover:text-foreground/80 transition-colors">{
                 powers.name ? powers.name : "FORUM"
             } 
             </a>
-              {triggerName === "Main" &&
-                <BlockCounter onRefresh={() => {
-                  if (powersAddress && chainId) {
-                    fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                    fetchBlockNumber();
-                  }
-                }} blockNumber={blockNumber} />
-              }
           </div> 
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4">
             {ready && authenticated && walletsReady && wallets[0] &&
             <>
                 <button
@@ -159,12 +143,12 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       </header>
 
       <div className="border-b border-border px-4 py-1.5 bg-muted/5 flex-shrink-0">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
       
-          { pathname.includes('/action') || pathname.includes('/mandate') || pathname.includes('/flow') ?
-              <button 
-                onClick={() => router.push(`/forum/${powers.chainId}/${powers.contractAddress}`)} 
+          { isOnSubPage ?
+              <button
+                onClick={() => router.push(`/forum/${chainId}/${powersAddress}`)}
                 className="flex items-center justify-center gap-2 px-3 py-2 border border-border border-foreground cursor-pointer hover:bg-foreground hover:text-background transition-all text-xs uppercase font-mono leading-none">
                 <ArrowLeftIcon className="h-3 w-3" />
                 <span className="leading-none">BACK TO ORGANISATION</span>
@@ -194,7 +178,6 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
               onClick={() => {
                 if (powersAddress && chainId) {
                   fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                  fetchBlockNumber();
                 }
               }}
               disabled={statusPowers.status === "pending" || !publicClient}
@@ -244,19 +227,6 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           
           {/* Menu content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            {/* Block Counter */}
-            {triggerName === "Main" && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground font-mono uppercase">Block:</span>
-                <BlockCounter onRefresh={() => {
-                  if (powersAddress && chainId) {
-                    fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                    fetchBlockNumber();
-                  }
-                }} blockNumber={blockNumber} />
-              </div>
-            )}
-            
             {/* Divider */}
             <div className="border-t border-border" />
             
