@@ -1,13 +1,15 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { usePowersStore } from '@/context/store'
 import { CommunicationChannels } from '@/context/types'
 import { OrgMetadata } from '@/components/forum/OrgMetadata'
+import { Button } from '@/components/Button'
 
 export default function OrganisationPage() {
   const powers = usePowersStore()
-  const { chainId } = useParams<{ chainId: string }>()
+  const { chainId, powers: powersAddress } = useParams<{ chainId: string; powers: string }>()
+  const router = useRouter()
 
   return (
     <div className="flex flex-col pt-16">
@@ -46,6 +48,20 @@ export default function OrganisationPage() {
           powersAddress={powers?.contractAddress}
           xmtpAgentAddress={powers?.metadatas?.xmtpAgentAddress}
         />
+      </div>
+
+      {/* Forum button */}
+      <div className="px-4 py-6">
+        <Button
+          size={0}
+          role={6}
+          selected={true}
+          filled={false}
+          showBorder={true}
+          onClick={() => router.push(`/forum/${chainId}/${powersAddress}`)}
+        >
+          <div className="text-xs px-1">To Forum</div>
+        </Button>
       </div>
     </div>
   )

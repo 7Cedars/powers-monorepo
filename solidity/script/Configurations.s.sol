@@ -15,7 +15,7 @@ contract Configurations is Script {
 
     function getBlocksPerHour(uint256 chainId) public pure returns (uint256) {
         if (chainId == ETH_SEPOLIA_CHAIN_ID) return 300;
-        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 14_400;
+        if (chainId == ARB_SEPOLIA_CHAIN_ID) return 300; // 14_400; it works with sepolia mainnet blocknumbers.. 
         if (chainId == OPT_SEPOLIA_CHAIN_ID) return 1800;
         if (chainId == BASE_SEPOLIA_CHAIN_ID) return 1800;
         if (chainId == MANTLE_SEPOLIA_CHAIN_ID) return 360_000;
