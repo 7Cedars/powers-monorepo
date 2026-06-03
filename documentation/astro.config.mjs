@@ -11,7 +11,50 @@ export default defineConfig({
 	},
 	integrations: [
 		starlight({
-			title: 'Powers',
+			title: 'Powers Protocol',
+			logo: {
+				src: './src/assets/powers-icon.svg',
+				alt: 'Powers Protocol',
+			},
+			customCss: ['./src/styles/custom.css'],
+			head: [
+				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
+				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true } },
+				{ tag: 'link', attrs: { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&display=block' } },
+				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-400-Regular.otf', crossorigin: true } },
+				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-700-Regular.otf', crossorigin: true } },
+				{
+					tag: 'script',
+					content: `
+						function setupHeadingAnchors() {
+							document.querySelectorAll('.sl-anchor-link').forEach(anchor => {
+								if (anchor.dataset.copyBound) return;
+								anchor.dataset.copyBound = 'true';
+								anchor.addEventListener('click', (e) => {
+									e.preventDefault();
+									const url = location.origin + location.pathname + anchor.getAttribute('href');
+									const markCopied = () => {
+										anchor.dataset.copied = 'true';
+										setTimeout(() => delete anchor.dataset.copied, 2000);
+									};
+									navigator.clipboard.writeText(url).then(markCopied).catch(() => {
+										try {
+											const el = Object.assign(document.createElement('textarea'), { value: url });
+											document.body.appendChild(el);
+											el.select();
+											document.execCommand('copy');
+											el.remove();
+											markCopied();
+										} catch {}
+									});
+								});
+							});
+						}
+						document.addEventListener('DOMContentLoaded', setupHeadingAnchors);
+						document.addEventListener('astro:page-load', setupHeadingAnchors);
+					`,
+				},
+			],
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/7Cedars/powers' }],
 			sidebar: [
 				{
