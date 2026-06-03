@@ -1,0 +1,45 @@
+---
+title: "SlateRegistry_ExecuteResult"
+description: "SlateRegistry_ExecuteResult is an integration mandate that executes the winning slate after a SlateRegistry election has closed."
+---
+
+SlateRegistry_ExecuteResult is an integration mandate that triggers the execution of the winning slate once a SlateRegistry election has ended. It calls `executeResults` on the SlateRegistry, which tallies votes and requests execution of the winning slate's actions.
+
+## Overview
+
+This is the final step in the SlateRegistry election lifecycle. Once voting has closed (the current block has passed `endBlock`), this mandate can be called to tally the results and execute the winning slate's pre-configured actions.
+
+## Configuration
+
+When adopting a SlateRegistry_ExecuteResult instance, the following parameter is required:
+
+1.  `SlateRegistry` (address): The address of the SlateRegistry helper contract.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, one parameter must be provided:
+
+1.  `ElectionTitle` (string): The title of the election to execute results for.
+
+### Execution Flow
+
+1.  **Timing Check**
+    *   Computes the `electionId` as `keccak256(powers + ElectionTitle)`.
+    *   Retrieves the election's `endBlock` from the SlateRegistry.
+    *   Reverts with `"vote not yet closed"` if the current block is at or before `endBlock`.
+
+2.  **Execute Results**
+    *   Calls `SlateRegistry.executeResults(electionId)`.
+    *   The SlateRegistry tallies votes and calls `Powers.request` for the winning slate's mandate, triggering its execution.
+
+### Error Conditions
+
+*   `"vote not yet closed"` — The election's end block has not yet been reached.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

@@ -50,18 +50,8 @@ When calling the mandate, four parameters must be provided:
    - Bypasses governor contract execution
    - Executes actions directly
 
-4. **State Management**
-   - Records proposal execution
-   - Updates governance state
-   - Tracks execution history
 
 ## Technical Specifications
-
-### State Variables
-
-```solidity
-mapping(bytes32 mandateHash => address governorContract) public governorContracts;
-```
 
 ### Functions
 
@@ -111,15 +101,7 @@ function handleRequest(
    - "Governor_ExecuteProposal: Description cannot be empty"
 
 3. **Proposal Errors**
-   - "Governor_ExecuteProposal: Proposal not found"
-   - "Governor_ExecuteProposal: Proposal not succeeded"
-   - Invalid proposal state
-
-4. **Validation Errors**
-   - Zero address governor contract
-   - Empty targets array
-   - Mismatched array lengths
-   - Empty description
+   - `"Governor_ExecuteProposal: Proposal not succeeded"` — the proposal exists but has not reached the Succeeded state.
 
 ## Current Deployments
 

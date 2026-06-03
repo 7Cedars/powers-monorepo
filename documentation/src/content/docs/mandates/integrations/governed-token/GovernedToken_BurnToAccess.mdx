@@ -1,0 +1,49 @@
+---
+title: "GovernedToken_BurnToAccess"
+description: "GovernedToken_BurnToAccess is an integration mandate that requires the caller to burn a token (ERC1155 or ERC721) in order to pass the mandate check and gain access to a subsequent governance action."
+---
+
+GovernedToken_BurnToAccess is an integration mandate that gates access by requiring the caller to burn a token. It works with both ERC1155 (Soulbound1155) and ERC721 (Governed721) tokens. Burning the token is the price of admission for the subsequent action.
+
+## Overview
+
+This mandate is useful for throttling access — for example, requiring members to spend a token earned through participation in order to trigger a privileged action. The mandate auto-detects whether the configured token is ERC1155 or ERC721 and burns accordingly.
+
+## Configuration
+
+When adopting a GovernedToken_BurnToAccess instance, the following parameters are required:
+
+1.  `inputParams` (string[]): UI hints for any additional parameters the caller must provide (beyond the required `tokenId`).
+2.  `governedTokenAddress` (address): The address of the ERC1155 or ERC721 token contract.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the following input must be provided:
+
+1.  Any additional parameters defined in `inputParams`.
+2.  `tokenId` (uint256): The ID of the token to burn. This is always appended as the last input parameter.
+
+### Execution Flow
+
+1.  **Token Type Detection**
+    *   Calls `supportsInterface(IERC1155)` on the token contract.
+    *   If ERC1155: checks the caller's balance for `tokenId`. Reverts with `"Insufficient balance"` if zero.
+    *   If ERC721: checks ownership of `tokenId`. Reverts with `"Not token owner"` if the caller is not the owner.
+
+2.  **Burn**
+    *   ERC1155: calls `burn(caller, tokenId, 1)`.
+    *   ERC721: calls `burn(tokenId)`.
+
+### Error Conditions
+
+*   `"Insufficient balance"` — The caller does not hold the ERC1155 token.
+*   `"Not token owner"` — The caller does not own the ERC721 token.
+*   `"Invalid token contract"` — The token contract does not support ERC1155 or ERC721.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |
