@@ -168,6 +168,17 @@ export default defineConfig({
 								},
 							],
 						},
+					{
+						label: 'Reform',
+						collapsed: true,
+						items: [
+							{ label: 'Adopt Mandates', slug: 'mandates/reform/adopt_mandates' },
+							{ label: 'Mandate Package', slug: 'mandates/reform/mandatepackage' },
+							{ label: 'Mandate Package (Static)', slug: 'mandates/reform/mandatepackage_static' },
+							{ label: 'Pause Mandates', slug: 'mandates/reform/pausemandates' },
+							{ label: 'Revoke Mandates', slug: 'mandates/reform/revoke_mandates' },
+						],
+					},
 					],
 				},
 				{
