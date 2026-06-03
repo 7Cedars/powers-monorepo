@@ -14,7 +14,7 @@ To establish institutional governance on-chain, the Powers protocol provides thr
 
 These principles are managed through a combination of the `Powers.sol` engine and role-restricted implementations of `Mandate.sol`.
 
-## ⚡ Powers
+## Powers
 
 `Powers.sol` is the engine of the protocol that manages governance flows. It has the following primary functionalities:
 
@@ -30,7 +30,7 @@ Since mandates encode power relations, the ability to adopt or revoke mandates i
 In the Powers protocol, reform is treated like any other executive action and has to be managed through a dedicated mandate. 
 :::
 
-## 📜 Mandates
+## Mandates
 
 Mandates define under what conditions a role is allowed to execute which actions.
 
@@ -70,7 +70,7 @@ Additionally, mandates have the following functionalities:
 * They have a `_replyPowers` function that calls back to the `Powers` contract to fulfill the action.
 * All functionalities are restricted along the `Powers.sol` deployment that adopted the mandate by calling `initializeMandate`.
 
-## 🏛️ Powers + Mandates = Institutional Governance
+## Powers + Mandates = Institutional Governance
 
 Institutional governance emerges not just from assigning powers, but from encoding the relationships between them. In Powers, these relationships are established through cross-mandate conditions, where the execution of one mandate is made dependent on the state of another.
 
@@ -98,7 +98,7 @@ Together, Powers and Mandates allow communities to build any governance structur
 
 This DAO is deployed as [Powers 101](powers-protocol.vercel.app/overview/11155420/0x7f62d52c9b176dc6c27e2870bba57ff67adb28c2) on Optimism sepolia.
 
-## 🌊 Technical Flow: `Powers.sol` and `Mandate.sol`
+## Technical Flow: `Powers.sol` and `Mandate.sol`
 
 While the protocol is flexible, the core flow between `Powers.sol` and `Mandate.sol` is strictly defined.
 

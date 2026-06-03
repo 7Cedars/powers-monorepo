@@ -1,0 +1,54 @@
+---
+title: "PresetActions"
+description: "PresetActions is an executive mandate that executes a fully pre-configured set of contract calls. The targets, values, and calldatas are all fixed at configuration time and cannot be changed by the caller."
+---
+
+PresetActions is an executive mandate that executes a fixed set of contract calls defined entirely at configuration time. When executed, it simply returns the pre-configured targets, values, and calldatas — the caller provides no input.
+
+## Overview
+
+This mandate is useful when a governance body needs to approve and execute a specific, known action with no variation. Because all parameters are locked in at deployment, there is no risk of a caller modifying the payload. The mandate enforces exactly what was agreed upon when it was adopted.
+
+## Configuration
+
+When adopting a PresetActions instance, the following parameters are required:
+
+1.  `targets` (address[]): The contract addresses to call.
+2.  `values` (uint256[]): The ETH amounts (in wei) to send with each call.
+3.  `calldatas` (bytes[]): The encoded function call data for each target.
+
+All three arrays must have the same length and are fixed permanently at configuration time.
+
+## Usage
+
+### Proposing an Action
+
+This mandate does not require any input parameters. The caller simply submits the action — the execution payload is entirely defined by the configuration.
+
+### Execution Flow
+
+1.  **Retrieval**
+    *   Reads the pre-configured `targets`, `values`, and `calldatas` arrays from the mandate's stored configuration.
+
+2.  **Execution**
+    *   Returns the arrays directly to the Powers contract for execution. No modification or validation occurs.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Decodes and returns the pre-configured execution arrays from config.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur if the pre-configured calls are invalid at execution time (e.g., the target contract has changed state).
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

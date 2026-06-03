@@ -1,0 +1,77 @@
+---
+title: "ZKPassport_Check"
+description: "ZKPassport_Check is an integration mandate that verifies a caller's ZKPassport proof against a configured criterion (age, nationality, expiry date, etc.) before allowing a governance action to proceed."
+---
+
+ZKPassport_Check is an integration mandate that verifies a caller has a valid ZKPassport proof registered with specific disclosed data. It acts as a privacy-preserving identity gate — the caller proves something about themselves (e.g. age, nationality) without revealing their full identity.
+
+## Overview
+
+This mandate checks:
+1. That the caller has a registered ZKPassport proof that is not stale.
+2. Optionally, that the caller has passed a FaceMatch verification.
+3. That the caller's disclosed passport data satisfies a configured check (e.g. `isAgeAbove(18)`, `isNationalityIn(["GBR","DEU"])`).
+
+If all checks pass, it returns the caller's address as output data (for use by downstream mandates).
+
+## Configuration
+
+When adopting a ZKPassport_Check instance, the following parameters are required:
+
+1.  `inputParams` (string[]): Optional additional UI input hints. An `address AccountToCheck` is always appended automatically.
+2.  `registry` (address): The address of the ZKPassport_PowersRegistry contract where proofs are stored.
+3.  `staleAfterSeconds` (uint256): The maximum age of a valid proof in seconds. Proofs older than this are rejected.
+4.  `facematchRequired` (bool): If `true`, the caller must have passed FaceMatch verification.
+5.  `functionSelector` (bytes4): The selector of the check to run against the disclosed passport data (see supported checks below).
+6.  `input` (bytes): The ABI-encoded parameter for the selected check (e.g. `abi.encode(uint8(18))` for age checks).
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, any parameters defined in `inputParams` must be provided first, followed by:
+
+1.  `AccountToCheck` (address): The account whose ZKPassport proof should be verified. Must match the caller.
+
+### Execution Flow
+
+1.  **Input Validation** — Verifies the registry address and account are non-zero, and that the account matches the caller.
+2.  **Staleness Check** — Verifies the proof timestamp is within `staleAfterSeconds`.
+3.  **FaceMatch Check** — If required, verifies FaceMatch status in the registry.
+4.  **Passport Data Check** — Retrieves disclosed data and runs the configured `functionSelector` check.
+5.  **Output** — Returns the caller's address as calldata output for use by downstream mandates.
+
+## Supported Checks
+
+| Function Selector | Description |
+| :--- | :--- |
+| `isAgeAbove(uint8)` | Caller's age is strictly above the threshold |
+| `isAgeAboveOrEqual(uint8)` | Caller's age is at or above the threshold |
+| `isAgeBelow(uint8)` | Caller's age is strictly below the threshold |
+| `isAgeBelowOrEqual(uint8)` | Caller's age is at or below the threshold |
+| `isAgeBetween(uint8,uint8)` | Caller's age is between two thresholds (inclusive) |
+| `isAgeEqual(uint8)` | Caller's age equals the threshold |
+| `isBirthdateAfter(uint256)` | Birthdate is after the given timestamp |
+| `isBirthdateBefore(uint256)` | Birthdate is before the given timestamp |
+| `isExpiryDateAfter(uint256)` | Passport expiry is after the given timestamp |
+| `isExpiryDateBefore(uint256)` | Passport expiry is before the given timestamp |
+| `isIssuingCountryIn(string[])` | Issuing country is in the provided list |
+| `isIssuingCountryOut(string[])` | Issuing country is not in the provided list |
+| `isNationalityIn(string[])` | Nationality is in the provided list |
+| `isNationalityOut(string[])` | Nationality is not in the provided list |
+
+### Error Conditions
+
+*   `"ZKPassport: Invalid registry address"` — Registry is set to zero address.
+*   `"ZKPassport: Invalid zero address for account to check"` — AccountToCheck is zero.
+*   `"ZKPassport: Caller is not the account to check"` — Caller does not match AccountToCheck.
+*   `"Proof is stale"` — The proof timestamp exceeds `staleAfterSeconds`.
+*   `"FaceMatch requirement not met"` — FaceMatch is required but not verified.
+*   `"ZKPassport: Proof verification failed"` — The configured check failed against the disclosed data.
+*   `"Unsupported function selector"` — The configured selector is not one of the supported checks.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

@@ -1,0 +1,53 @@
+---
+title: "PresetActions_OnOwnPowers"
+description: "PresetActions_OnOwnPowers is an executive mandate that executes a pre-configured set of calls all directed at the Powers contract itself."
+---
+
+PresetActions_OnOwnPowers is an executive mandate that executes a fixed set of internal governance calls, all targeting the Powers contract that the mandate belongs to. The calls are fully defined at configuration time.
+
+## Overview
+
+This mandate is similar to `PresetActions` but is specifically designed for actions that modify the Powers contract's own state — such as assigning roles, revoking mandates, or updating governance settings. All targets are automatically set to the Powers contract address; the configuration only needs to specify the encoded calldata for each call.
+
+## Configuration
+
+When adopting a PresetActions_OnOwnPowers instance, the following parameter is required:
+
+1.  `callDatas` (bytes[]): An array of encoded function calls to execute on the Powers contract. Each entry should be a full ABI-encoded call including the function selector.
+
+## Usage
+
+### Proposing an Action
+
+This mandate does not require any input parameters. The caller simply submits the action — the full execution payload is defined by the configuration.
+
+### Execution Flow
+
+1.  **Retrieval**
+    *   Reads the pre-configured `callDatas` array from the mandate's stored configuration.
+
+2.  **Execution**
+    *   Sets every target to the Powers contract address.
+    *   Returns the assembled targets and calldatas for execution. No values (ETH) are sent.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Reads the `callDatas` array from config.
+-   Sets all targets to the Powers contract address.
+-   Returns the assembled arrays for execution.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur if any of the pre-configured calls are invalid or rejected by the Powers contract at execution time.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

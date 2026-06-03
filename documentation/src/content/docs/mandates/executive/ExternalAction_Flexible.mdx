@@ -1,0 +1,66 @@
+---
+title: "ExternalAction_Flexible"
+description: "ExternalAction_Flexible is an executive mandate that submits a request to any mandate at any external Powers instance, with the target address and mandate ID provided at execution time rather than fixed in configuration."
+---
+
+ExternalAction_Flexible is an executive mandate that submits a governance request to an external Powers contract. Unlike `ExternalAction_Simple`, the target Powers address and mandate ID are provided by the caller at execution time, not fixed in configuration.
+
+## Overview
+
+This mandate is the most flexible form of cross-contract governance action. The caller specifies which external Powers contract and which mandate to target at the moment of execution. This allows a single mandate instance to route requests to different external contracts depending on the situation.
+
+Note: the calling Powers contract must hold the correct role on the target Powers instance to be permitted to call the target mandate.
+
+## Configuration
+
+When adopting an ExternalAction_Flexible instance, the following parameter is required:
+
+1.  `Params` (string[]): UI hints describing any additional input parameters the user must provide beyond `PowersTarget` and `MandateIdTarget`. These extra params are passed as the calldata to the target mandate.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the following inputs must be provided:
+
+1.  `PowersTarget` (address): The address of the external Powers contract to call.
+2.  `MandateIdTarget` (uint16): The mandate ID on the target Powers contract to submit the request to.
+3.  Additional parameters as defined in `Params` — these become the calldata forwarded to the target mandate.
+
+### Execution Flow
+
+1.  **Decoding**
+    *   Decodes `PowersTarget`, `MandateIdTarget`, and the remaining `callData` from the provided input.
+
+2.  **Request Assembly**
+    *   Encodes a call to `IPowers.request(mandateIdTarget, callData, nonce, "")` targeting `PowersTarget`.
+
+3.  **Execution**
+    *   Submits the request to the specified external Powers instance.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Sets input parameters to `[address PowersTarget, uint16 MandateIdTarget]` prepended to the configured `Params`.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view virtual override returns (...)
+```
+-   Decodes the target address, mandate ID, and calldata from user input.
+-   Builds and returns the `request` call.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur at the target Powers contract if the request is invalid or the calling contract lacks the required role.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

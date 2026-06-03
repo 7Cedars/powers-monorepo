@@ -37,6 +37,7 @@ When calling the mandate, the input (`mandateCalldata`) must match the input use
 
 3.  **Execution**
     *   Calls the `TargetContract` with the assembled data.
+    *   If `TargetContract` is set to `address(0)`, the call is directed at the Powers contract itself.
 
 ## Technical Specifications
 
