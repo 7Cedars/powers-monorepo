@@ -1,6 +1,54 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+/* Override Tailwind v4 font CSS variables */
+@theme {
+  --font-mono: 'Commit Mono', 'Courier New', monospace;
+  --font-sans: 'Commit Mono', 'Courier New', monospace;
+  --font-display: 'Commit Mono', 'Courier New', monospace;
+}
+
+/* Brand fonts */
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-400-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-400-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-700-Regular.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-700-Italic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/CormorantGaramond-400-latin.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-latin-ext.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-cyrillic.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-cyrillic-ext.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-vietnamese.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Theme Color Variables */
 /*
 *linear-gradient(to bottom right, #111827, #1f2937);
@@ -24,7 +72,7 @@ body {
   padding-bottom: constant(safe-area-inset-bottom); /* iOS < 11.2 */
   padding-bottom: env(safe-area-inset-bottom);      /* Standard */
   background: #f1f5f9; /* slate-100 */
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Commit Mono', 'Courier New', monospace;
   color: var(--text-color);
   display: flex;
   height: 100vh;
