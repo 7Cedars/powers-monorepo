@@ -18,9 +18,7 @@ export default defineConfig({
 			},
 			customCss: ['./src/styles/custom.css'],
 			head: [
-				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
-				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true } },
-				{ tag: 'link', attrs: { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&display=block' } },
+				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/CormorantGaramond-400-latin.woff2', crossorigin: true } },
 				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-400-Regular.otf', crossorigin: true } },
 				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-700-Regular.otf', crossorigin: true } },
 				{
