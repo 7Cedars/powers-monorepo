@@ -80,6 +80,13 @@ export default defineConfig({
 							collapsed: true,
 							items: [
 								{
+									label: 'Chainlink',
+									collapsed: true,
+									items: [
+										{ label: 'Chainlink Functions (Open)', slug: 'mandates/integrations/chainlink/chainlinkfunctions_open' },
+									],
+								},
+								{
 									label: 'Election List',
 									collapsed: true,
 									items: [
@@ -91,11 +98,20 @@ export default defineConfig({
 									],
 								},
 								{
-									label: 'Github',
+									label: 'ERC721',
 									collapsed: true,
 									items: [
-										{ label: 'Assign Role With Sig', slug: 'mandates/integrations/github/github_assignrolewithsig' },
-										{ label: 'Claim Role With Sig', slug: 'mandates/integrations/github/github_claimrolewithsig' },
+										{ label: 'Gated Access', slug: 'mandates/integrations/erc721/erc721_gatedaccess' },
+									],
+								},
+								{
+									label: 'Governed Token',
+									collapsed: true,
+									items: [
+										{ label: 'Burn To Access', slug: 'mandates/integrations/governed-token/governedtoken_burntoaccess' },
+										{ label: 'Collect Split Payment', slug: 'mandates/integrations/governed-token/governedtoken_collectsplitpayment' },
+										{ label: 'Gated Access', slug: 'mandates/integrations/governed-token/governedtoken_gatedaccess' },
+										{ label: 'Mint Encoded Token', slug: 'mandates/integrations/governed-token/governedtoken_mintencodedtoken' },
 									],
 								},
 								{
@@ -122,7 +138,17 @@ export default defineConfig({
 										{ label: 'Exec Transaction (On Return Value)', slug: 'mandates/integrations/safe/safe_exectransaction_onreturnvalue' },
 										{ label: 'Recover Tokens', slug: 'mandates/integrations/safe/safe_recovertokens' },
 										{ label: 'Safe Allowance Action', slug: 'mandates/integrations/safe/safeallowance_action' },
+										{ label: 'Safe Allowance Preset Transfer', slug: 'mandates/integrations/safe/safeallowance_presettransfer' },
 										{ label: 'Safe Allowance Transfer', slug: 'mandates/integrations/safe/safeallowance_transfer' },
+									],
+								},
+								{
+									label: 'Slate Registry',
+									collapsed: true,
+									items: [
+										{ label: 'Add Slate', slug: 'mandates/integrations/slate-registry/slateregistry_addslate' },
+										{ label: 'Execute Result', slug: 'mandates/integrations/slate-registry/slateregistry_executeresult' },
+										{ label: 'Remove Slate', slug: 'mandates/integrations/slate-registry/slateregistry_removeslate' },
 									],
 								},
 								{
@@ -137,7 +163,7 @@ export default defineConfig({
 									label: 'ZK Passport',
 									collapsed: true,
 									items: [
-										{ label: 'Select', slug: 'mandates/integrations/zkpassport/zkpassport_select' },
+										{ label: 'ZKPassport Check', slug: 'mandates/integrations/zkpassport/zkpassport_check' },
 									],
 								},
 							],
