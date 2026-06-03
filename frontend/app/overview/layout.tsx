@@ -142,45 +142,6 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
             </a>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            {ready && authenticated && walletsReady && wallets[0] &&
-            <>
-                <button
-                onClick={() => router.push('/profile')}
-                className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors">
-                  {isLoading ? 'Loading...' : displayName}
-                </button>
-                <button
-                onClick={ logout }
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                
-                  <ArrowRightStartOnRectangleIcon className="h-3 w-3" />
-                  <span className="hidden sm:inline">DISCONNECT</span>
-                </button>
-                <span className="text-muted-foreground">|</span>
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <CheckCircleIcon className="h-2 w-2 fill-primary text-primary" />
-                  <span className="text-foreground">CONNECTED</span>
-                </div>
-              </>
-            }
-            {ready && !authenticated &&
-            <button
-              onClick={ login }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
-                <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
-                <span className="text-muted-foreground">NOT CONNECTED</span>
-              </button>
-            }
-            {ready && authenticated && walletsReady && !wallets[0] &&
-            <button
-              onClick={ connectWallet }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
-                <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
-                <span className="text-muted-foreground">NOT CONNECTED</span>
-              </button>
-            }
             <ThemeToggle />
           </div>
         </div>

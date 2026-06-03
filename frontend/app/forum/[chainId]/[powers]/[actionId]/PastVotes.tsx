@@ -78,7 +78,6 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
   // Fetch votes from blockchain
   const fetchVotes = async () => {
     if (!action?.actionId || !action?.proposedAt || !voteEnd) {
-      setError("Invalid action data");
       return;
     }
 
@@ -93,7 +92,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
         eventName: "VoteCast",
         args: { actionId: BigInt(action.actionId) },
         fromBlock: BigInt(action.proposedAt),
-        toBlock: BigInt(voteEnd),
+        toBlock: "latest",
       });
 
       if (!logs || logs.length === 0) {
@@ -108,7 +107,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
 
         try {
           ensName = await getEnsName(wagmiConfig, {
-            address: log.args.voter as `0x${string}`,
+            address: log.args.account as `0x${string}`,
           });
         } catch (ensError) {
           // ENS lookup failed, continue without ENS name
@@ -159,7 +158,7 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
     if (powers && action && mandate) {
       fetchVotes();
     }
-  }, [action?.actionId, powers?.contractAddress]);
+  }, [action?.actionId, action?.proposedAt, powers?.contractAddress]);
 
   return (
     <div className="w-full space-y-3">

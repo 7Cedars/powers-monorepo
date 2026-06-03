@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Action, Mandate } from '@/context/types';
-import { useBlocks } from '@/hooks/useBlocks';
+import { useBlocks, L2_TO_L1_CHAIN_MAP } from '@/hooks/useBlocks';
 import { parseChainId } from '@/utils/parsers';
 import { toFullDateFormat, toEurTimeFormat } from '@/utils/toDates';
 import { fromFutureBlockToDateTime } from '@/public/organisations/helpers';
@@ -17,7 +17,9 @@ interface TimelineProps {
 
 export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) => {
   const { timestamps, fetchTimestamps } = useBlocks();
-  const { data: blockNumber } = useBlockNumber();
+  const parsedChainId = parseChainId(chainId) as number;
+  const blockChainId = (L2_TO_L1_CHAIN_MAP[parsedChainId] ?? parsedChainId) as number;
+  const { data: blockNumber } = useBlockNumber({ chainId: blockChainId });
   const powers = usePowersStore();
 
   const cond = mandate.conditions;
@@ -183,9 +185,9 @@ export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) 
     <div className="flex-1 min-w-0">
       <div className="lg:overflow-y-auto lg:max-h-[300px] pr-2">
         {timelineItems.length > 0 ? (
-          <div className="space-y-2 text-sm">
+          <div className="flex flex-col gap-y-1.5 text-xs">
             {timelineItems.map((item, idx) => (
-              <div key={idx} className="flex justify-between">
+              <div key={idx} className="flex justify-between gap-2">
                 <span className="text-muted-foreground">{item.label}</span>
                 <span className="text-foreground">{item.value}</span>
               </div>

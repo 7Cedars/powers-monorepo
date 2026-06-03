@@ -17,7 +17,7 @@ const PAGE_SIZE = 25
 type ActionItem = {
   mandate: Mandate
   action: Action
-  event: 'proposed' | 'requested' | 'fulfilled' | 'cancelled'
+  event: 'proposed' | 'requested' | 'fulfilled' | 'cancelled' | 'defeated' | 'succeeded'
   blockNumber: bigint
 }
 
@@ -26,6 +26,8 @@ const EVENT_DISPLAY: Record<ActionItem['event'], { label: string; color: string 
   requested: { label: 'Requested', color: 'text-yellow-500' },
   fulfilled: { label: 'Fulfilled', color: 'text-green-600'  },
   cancelled: { label: 'Cancelled', color: 'text-orange-500' },
+  defeated:  { label: 'Defeated',  color: 'text-red-500'    },
+  succeeded: { label: 'Succeeded', color: 'text-teal-500'   },
 }
 
 interface ActionsListProps {
@@ -106,18 +108,25 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
           if (action.requestedAt) candidates.push({ event: 'requested', blockNumber: action.requestedAt })
           if (action.fulfilledAt) candidates.push({ event: 'fulfilled', blockNumber: action.fulfilledAt })
           if (action.cancelledAt) candidates.push({ event: 'cancelled', blockNumber: action.cancelledAt })
+          // Defeated/Succeeded have no on-chain timestamp; derive from action.state
+          if (action.state === 4 && !action.cancelledAt && !action.fulfilledAt && !action.requestedAt) {
+            candidates.push({ event: 'defeated',  blockNumber: action.voteEnd ?? action.proposedAt ?? 0n })
+          }
+          if (action.state === 5 && !action.cancelledAt && !action.fulfilledAt && !action.requestedAt) {
+            candidates.push({ event: 'succeeded', blockNumber: action.voteEnd ?? action.proposedAt ?? 0n })
+          }
         } else if (flowAccess) {
           if (action.fulfilledAt) candidates.push({ event: 'fulfilled', blockNumber: action.fulfilledAt })
         }
         if (candidates.length > 0) {
-          const STATE_RANK: Record<ActionItem['event'], number> = { proposed: 1, cancelled: 2, requested: 6, fulfilled: 7 }
+          const STATE_RANK: Record<ActionItem['event'], number> = { proposed: 1, cancelled: 2, defeated: 4, succeeded: 5, requested: 6, fulfilled: 7 }
           const latest = candidates.reduce((a, b) => STATE_RANK[a.event] >= STATE_RANK[b.event] ? a : b)
           addItem(mandate, action, latest.event, latest.blockNumber)
         }
       }
     }
 
-    const EVENT_ORDER: Record<ActionItem['event'], number> = { proposed: 0, requested: 1, cancelled: 2, fulfilled: 3 }
+    const EVENT_ORDER: Record<ActionItem['event'], number> = { proposed: 0, requested: 1, cancelled: 2, defeated: 2, succeeded: 2, fulfilled: 3 }
     items.sort((a, b) => {
       if (a.blockNumber !== b.blockNumber) return a.blockNumber > b.blockNumber ? -1 : 1
       return EVENT_ORDER[b.event] - EVENT_ORDER[a.event]

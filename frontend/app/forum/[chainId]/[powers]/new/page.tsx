@@ -170,6 +170,7 @@ export default function NewActionPage() {
         caller: effectiveAddress ?? '0x0', dataTypes: mandate.params?.map(p => p.dataType),
         paramValues: sanitizedValues, nonce: action.nonce, description: action.description,
         callData, upToDate: true,
+        proposedAt: undefined, requestedAt: undefined, fulfilledAt: undefined, cancelledAt: undefined,
       }
       setAction(newAction)
       try {

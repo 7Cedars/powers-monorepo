@@ -128,7 +128,7 @@ export default function OverviewPage() {
 
           {/* Overview — external link */}
           <a
-            href={`/overview/${chainId}/${powersAddress}/home`}
+            href={`/overview/${chainId}/${powersAddress}/organisation`}
             className="ml-auto flex items-center gap-1.5 px-5 py-2.5 text-xs font-mono uppercase tracking-wider whitespace-nowrap text-muted-foreground hover:text-primary transition-colors border-b-2 border-transparent -mb-px"
             title="Go to overview page"
           >

@@ -183,13 +183,12 @@ export default function ActionPage() {
           {/* Tab content */}
           <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
             {activeTab === 'action' && (
-              <div className="space-y-6">
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Description</p>
-                  <p className="text-sm text-foreground">{action.description || 'No Description'}</p>
-                </div>
-                <ActionOverview action={action} mandate={mandate} showOutput={false} />
-              </div>
+              <ActionOverview
+                action={action}
+                mandate={mandate}
+                showOutput={false}
+                description={action.description}
+              />
             )}
 
             {activeTab === 'timeline' && (
@@ -199,47 +198,47 @@ export default function ActionPage() {
             )}
 
             {activeTab === 'conditions' && (
-              <div className="max-w-sm space-y-2 text-sm">
-                <div className="flex justify-between">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                <div className="flex justify-between gap-2">
                   <span className="text-muted-foreground">Role</span>
                   <span className="text-foreground">{bigintToRole(allowedRole, powers)}</span>
                 </div>
                 {mandate.conditions?.quorum != null && BigInt(mandate.conditions.quorum) !== 0n && (
                   <>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-muted-foreground">Quorum</span>
                       <span className="text-foreground">{mandate.conditions.quorum.toString()}%</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-muted-foreground">Succeed At</span>
                       <span className="text-foreground">{mandate.conditions?.succeedAt?.toString() ?? '0'}%</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-muted-foreground">Voting Period</span>
                       <span className="text-foreground">{mandate.conditions?.votingPeriod?.toString() ?? '0'} blocks</span>
                     </div>
                   </>
                 )}
                 {mandate.conditions?.timelock != null && BigInt(mandate.conditions.timelock) !== 0n && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground">Timelock</span>
                     <span className="text-foreground">{mandate.conditions.timelock.toString()} blocks</span>
                   </div>
                 )}
                 {mandate.conditions?.throttleExecution != null && BigInt(mandate.conditions.throttleExecution) !== 0n && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground">Throttle</span>
                     <span className="text-foreground">{mandate.conditions.throttleExecution.toString()} blocks</span>
                   </div>
                 )}
                 {mandate.conditions?.needFulfilled != null && BigInt(mandate.conditions.needFulfilled) !== 0n && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground">Need Fulfilled</span>
                     <span className="text-foreground">#{mandate.conditions.needFulfilled.toString()}</span>
                   </div>
                 )}
                 {mandate.conditions?.needNotFulfilled != null && BigInt(mandate.conditions.needNotFulfilled) !== 0n && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground">Need Not Fulfilled</span>
                     <span className="text-foreground">#{mandate.conditions.needNotFulfilled.toString()}</span>
                   </div>
@@ -248,9 +247,13 @@ export default function ActionPage() {
             )}
 
             {activeTab === 'votes' && hasVoting && (
-              <div className="space-y-8 max-w-lg">
-                <Vote action={action} mandate={mandate} />
-                <PastVotes action={action} mandate={mandate} powers={powers} />
+              <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+                <div className="lg:w-80 flex-shrink-0">
+                  <Vote action={action} mandate={mandate} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <PastVotes action={action} mandate={mandate} powers={powers} />
+                </div>
               </div>
             )}
 

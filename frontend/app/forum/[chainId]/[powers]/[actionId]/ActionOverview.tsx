@@ -15,6 +15,7 @@ interface ActionOverviewProps {
   action: Action;
   mandate: Mandate;
   showOutput?: boolean;
+  description?: string;
 }
 
 /**
@@ -23,7 +24,7 @@ interface ActionOverviewProps {
  * - Input data (decoded parameters)
  * - Executable output data (simulation results)
  */
-export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate, showOutput = true }) => {
+export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate, showOutput = true, description }) => {
   const { simulation, simulate } = useMandate();
   const { wallets, ready } = useWallets();
   const chainId = useChainId();
@@ -118,65 +119,77 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate,
   };
 
   return (
-    <div className="space-y-6">
-      {/* Action ID */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <KeyIcon className="h-4 w-4 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Action ID</p>
+    <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+      {/* Left column: description + action ID */}
+      <div className="space-y-6">
+        {description !== undefined && (
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Description</p>
+            <p className="text-sm text-foreground">{description || 'No Description'}</p>
+          </div>
+        )}
+
+        {/* Action ID */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <KeyIcon className="h-4 w-4 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Action ID</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-foreground font-mono" title={action.actionId}>
+              {abbreviateActionId(action.actionId)}
+            </p>
+            <button
+              onClick={handleCopyActionId}
+              className="h-5 w-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              title="Copy full Action ID"
+            >
+              {copied ? (
+                <CheckIcon className="h-4 w-4 text-green-500" />
+              ) : (
+                <ClipboardDocumentIcon className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-foreground font-mono" title={action.actionId}>
-            {abbreviateActionId(action.actionId)}
-          </p>
-          <button
-            onClick={handleCopyActionId}
-            className="h-5 w-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            title="Copy full Action ID"
-          >
-            {copied ? (
-              <CheckIcon className="h-4 w-4 text-green-500" />
-            ) : (
-              <ClipboardDocumentIcon className="h-4 w-4" />
-            )}
-          </button>
-        </div>
+
+        {/* Copy Success Toast */}
+        {copied && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 shadow-lg z-50 text-xs font-mono animate-in fade-in slide-in-from-top-2 duration-200">
+            Action ID copied to clipboard!
+          </div>
+        )}
       </div>
 
-      {/* Copy Success Toast */}
-      {copied && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2  shadow-lg z-50 text-xs font-mono animate-in fade-in slide-in-from-top-2 duration-200">
-          Action ID copied to clipboard!
-        </div>
-      )}
-
-      {/* Input Data Section */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
-          <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Input Data</h4>
-        </div>
-
-        <div className="space-y-3">
-          {/* Nonce */}
-          <div className="space-y-1">
-            <div className="flex items-start gap-2">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">
-                nonce
-              </span>
-              <span className="text-[10px] text-muted-foreground/60 font-mono">
-                (uint256)
-              </span>
-            </div>
-            <div className="bg-muted/50 p-2  border border-border">
-              <p className="text-xs text-foreground font-mono break-all">
-                {action.nonce !== undefined ? action.nonce.toString() : '0'}
-              </p>
-            </div>
+      {/* Right column: input data + optional output */}
+      <div className="space-y-6 mt-6 lg:mt-0">
+        {/* Input Data Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
+            <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Input Data</h4>
           </div>
 
-          {/* Mandate Parameters */}
-          {mandate.params && mandate.params.length > 0 && mandate.params.map((param, idx) => (
+          <div className="space-y-3">
+            {/* Nonce */}
+            <div className="space-y-1">
+              <div className="flex items-start gap-2">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">
+                  nonce
+                </span>
+                <span className="text-[10px] text-muted-foreground/60 font-mono">
+                  (uint256)
+                </span>
+              </div>
+              <div className="bg-muted/50 p-2 border border-border">
+                <p className="text-xs text-foreground font-mono break-all">
+                  {action.nonce !== undefined ? action.nonce.toString() : '0'}
+                </p>
+              </div>
+            </div>
+
+            {/* Mandate Parameters */}
+            {mandate.params && mandate.params.length > 0 && mandate.params.map((param, idx) => (
               <div key={idx} className="space-y-1">
                 <div className="flex items-start gap-2">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider min-w-24">
@@ -186,37 +199,38 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate,
                     ({param.dataType})
                   </span>
                 </div>
-                <div className="bg-muted/50 p-2  border border-border">
+                <div className="bg-muted/50 p-2 border border-border">
                   <p className="text-xs text-foreground font-mono break-all">
-                    {decodedParams[idx] !== undefined 
+                    {decodedParams[idx] !== undefined
                       ? formatParamValue(decodedParams[idx], param.dataType)
                       : 'Loading...'}
                   </p>
                 </div>
               </div>
             ))}
-        </div>
-      </div>
-
-      {/* Executable Output Data Section */}
-      {showOutput && (
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <CodeBracketIcon className="h-4 w-4 text-muted-foreground" />
-            <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Executable Output Data</h4>
           </div>
-
-          {simulation ? (
-            <div>
-              <SimulationBox mandate={mandate} simulation={simulation} chainId={chainId} />
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              {hasSimulated ? 'No simulation data available' : 'Loading simulation...'}
-            </p>
-          )}
         </div>
-      )}
+
+        {/* Executable Output Data Section */}
+        {showOutput && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <CodeBracketIcon className="h-4 w-4 text-muted-foreground" />
+              <h4 className="text-xs text-muted-foreground uppercase tracking-wider">Executable Output Data</h4>
+            </div>
+
+            {simulation ? (
+              <div>
+                <SimulationBox mandate={mandate} simulation={simulation} chainId={chainId} />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {hasSimulated ? 'No simulation data available' : 'Loading simulation...'}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

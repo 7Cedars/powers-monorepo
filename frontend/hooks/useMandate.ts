@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { mandateAbi, powersAbi } from "../context/abi";
 import { MandateSimulation, Mandate, Powers, Action, ActionVote, Status } from "../context/types"
-import { readContract, readContracts, simulateContract, writeContract } from "@wagmi/core";
+import { readContract, readContracts, simulateContract, writeContract, estimateFeesPerGas } from "@wagmi/core";
 import { encodeFunctionData } from "viem";
 import { wagmiConfig } from "@/context/wagmiConfig";
 import { useConnection, useTransactionConfirmations } from "wagmi";
@@ -66,6 +66,14 @@ export const useMandate = () => {
     setTransactionHash(undefined)
   }
 
+  const getFeesWithBuffer = async (targetChainId: number) => {
+    const fees = await estimateFeesPerGas(wagmiConfig, { chainId: targetChainId as any })
+    return {
+      maxFeePerGas: fees.maxFeePerGas * 13n / 10n,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+    }
+  }
+
   // Helper to send smart wallet transaction with custom per-Powers paymaster
   const sendSmartWalletTx = async (
     to: `0x${string}`,
@@ -78,7 +86,8 @@ export const useMandate = () => {
 
     // If no specific paymaster is set, use the default Privy client behavior
     if (!powers.paymaster || powers.paymaster === '0x0000000000000000000000000000000000000000') {
-      return await currentClient.sendTransaction({ to, data, value: 0n });
+      const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
+      return await currentClient.sendTransaction({ to, data, value: 0n, ...feeOverride });
     }
     console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
 
@@ -115,7 +124,8 @@ export const useMandate = () => {
       }
     });
 
-    return await customClient.sendTransaction({ account: customClient.account, to, data, value: 0n });
+    const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
+    return await customClient.sendTransaction({ account: customClient.account, to, data, value: 0n, ...feeOverride });
   };
   
   // Actions //  
@@ -148,12 +158,13 @@ export const useMandate = () => {
               args: [mandateId, mandateCalldata, nonce, description],
               chainId: parseChainId(chainId)
             })
-            result = await writeContract(wagmiConfig, simulatedRequest)
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
+            result = await writeContract(wagmiConfig, Object.assign({}, simulatedRequest, feeOverride) as typeof simulatedRequest)
           }
           setTransactionHash(result)
           return true
         } catch (error) {
-            setStatus({status: "error"}) 
+            setStatus({status: "error"})
             setError({error: error as Error})
         }
         return false
@@ -180,12 +191,14 @@ export const useMandate = () => {
               powers
             );
           } else {
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
               address: powers.contractAddress,
-              functionName: 'cancel', 
+              functionName: 'cancel',
               args: [mandateId, mandateCalldata, nonce],
-              chainId: parseChainId(chainId)
+              chainId: parseChainId(chainId),
+              ...feeOverride
             })
           }
           setTransactionHash(result)
@@ -217,12 +230,14 @@ export const useMandate = () => {
               powers
             );
           } else {
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
               address: powers.contractAddress,
-              functionName: 'castVote', 
-              args: [actionId, support], 
-              chainId: parseChainId(chainId)
+              functionName: 'castVote',
+              args: [actionId, support],
+              chainId: parseChainId(chainId),
+              ...feeOverride
             })
           }
           setTransactionHash(result)
@@ -255,12 +270,14 @@ export const useMandate = () => {
               powers
             );
           } else {
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
               address: powers.contractAddress,
-              functionName: 'castVoteWithReason', 
-              args: [actionId, support, reason], 
-              chainId: parseChainId(chainId)
+              functionName: 'castVoteWithReason',
+              args: [actionId, support, reason],
+              chainId: parseChainId(chainId),
+              ...feeOverride
             })
           }
           setTransactionHash(result)
@@ -373,7 +390,8 @@ export const useMandate = () => {
             
             if (simulatedRequest) {
               console.log("@execute: waypoint 3", {request})
-              result = await writeContract(wagmiConfig, simulatedRequest)
+              const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
+              result = await writeContract(wagmiConfig, Object.assign({}, simulatedRequest, feeOverride) as typeof simulatedRequest)
               setTransactionHash(result)
               console.log("@execute: waypoint 4", {result})
               return true

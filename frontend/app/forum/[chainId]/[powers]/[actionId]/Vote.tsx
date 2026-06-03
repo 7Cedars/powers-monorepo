@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePowersStore, useActionStore, useStatusStore, setError, setAction } from "@/context/store";
 import { useMandate } from "@/hooks/useMandate";
-import { useBlocks } from "@/hooks/useBlocks";
+import { useBlocks, L2_TO_L1_CHAIN_MAP } from "@/hooks/useBlocks";
 import { useBlockNumber } from "wagmi";
 import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
@@ -26,8 +26,10 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const action = useActionStore();
   const status = useStatusStore();
   const { chainId } = useParams<{ chainId: string }>();
-  const { data: blockNumber } = useBlockNumber();
-  const constants = getConstants(parseChainId(chainId) as number);
+  const parsedChainId = parseChainId(chainId) as number;
+  const blockChainId = (L2_TO_L1_CHAIN_MAP[parsedChainId] ?? parsedChainId) as number;
+  const { data: blockNumber } = useBlockNumber({ chainId: blockChainId });
+  const constants = getConstants(parsedChainId);
   const { castVoteWithReason, actionVote, fetchVoteData, request } = useMandate();
   const { checks, fetchChecks, status: checksStatus } = useChecks();
   const { timestamps, fetchTimestamps } = useBlocks();
@@ -38,7 +40,8 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const [populatedAction, setPopulatedAction] = useState<Action | undefined>();
   const [voteReason, setVoteReason] = useState<string>("");
 
-  console.log({checks, checksStatus })
+  console.log({checks, checksStatus, populatedAction })
+  
 
   // Calculate vote parameters
   const roleHolders = Number(
@@ -69,6 +72,8 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const thresholdPassed = Number(actionVote?.forVotes || 0) >= threshold;
   const voteActive = populatedAction?.state === 3;
   const voteEnded = blockNumber && voteEnd ? BigInt(blockNumber) >= voteEnd : false;
+
+  console.log({ voteEnd, blockNumber, voteEnded, hasVoted: checks?.hasVoted });
 
   // Fetch action data
   useEffect(() => {
