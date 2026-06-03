@@ -26,6 +26,12 @@ interface GroupChatInfo {
   isOptimistic: boolean
 }
 
+interface ChatroomTab {
+  label: string
+  active: boolean
+  onClick: () => void
+}
+
 interface ChatroomProps {
   chatroomType?: 'Mandate' | 'Flow' | 'Action' | 'Vote' | 'General'
   hasRole?: boolean
@@ -34,6 +40,7 @@ interface ChatroomProps {
   powersAddress?: string
   contextId?: string  // mandateId or actionId depending on type
   xmtpAgentAddress?: string
+  tabs?: ChatroomTab[]
 }
 
 // Icon mapping based on chatroom type
@@ -45,7 +52,7 @@ const chatroomIcons = {
   General: ChatBubbleBottomCenterTextIcon,
 } as const
 
-export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRole = false, chainId, powersAddress, contextId, xmtpAgentAddress }: ChatroomProps) {
+export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRole = false, chainId, powersAddress, contextId, xmtpAgentAddress, tabs }: ChatroomProps) {
   // Get the appropriate icon for this chatroom type
   const ChatroomIcon = chatroomIcons[chatroomType] || ChatBubbleBottomCenterTextIcon
   const { address: eoaAddress } = useConnection()
@@ -547,38 +554,38 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-[600px]">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-2 border-b border-border bg-muted/10">
-        <div className="flex items-center gap-3">
-          {/* <ChatroomIcon className="h-8 w-8 text-muted-foreground" /> */}
-          <h4 className="text-xs text-muted-foreground uppercase tracking-wider">{chatroomType.toUpperCase()} CHATROOM</h4>
-          {/* {isConnected && (
+      <div className="flex items-center px-6 py-2 border-b border-border bg-muted/50">
+        <h4 className="text-xs text-muted-foreground uppercase tracking-wider shrink-0">CHATROOM</h4>
+        <div className="ml-auto flex items-center gap-4">
+          {tabs && tabs.map(tab => (
             <button
-              onClick={removeAllInstallations}
-              disabled={isLoading}
-              className="ml-2 px-3 py-1 bg-destructive text-destructive-foreground  text-xs hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider font-mono"
+              key={tab.label}
+              onClick={tab.onClick}
+              className={`text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors ${
+                tab.active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
-              Remove All Installations
+              {tab.label}
             </button>
-          )} */}
+          ))}
+          {isConnected && groupChat && (
+            <div ref={membersDropdownRef} className="relative">
+              <button
+                onClick={() => setShowMembersList(!showMembersList)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                {groupChat.memberAddresses.length}/250 members
+              </button>
+              {showMembersList && (
+                <div className="absolute right-0 top-full mt-1 w-auto min-w-[8rem] bg-background border border-border shadow-md z-50 max-h-60 overflow-y-auto scrollbar-thin">
+                  {groupChat.memberAddresses.map((addr) => (
+                    <MemberItem key={addr} address={resolveDisplayAddress(addr)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        {isConnected && groupChat && (
-         <div ref={membersDropdownRef} className="relative">
-            <button
-              onClick={() => setShowMembersList(!showMembersList)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              {groupChat.memberAddresses.length}/250 members
-            </button>
-
-            {showMembersList && (
-              <div className="absolute right-0 top-full mt-1 w-auto min-w-[8rem] bg-background border border-border shadow-md z-50 max-h-60 overflow-y-auto scrollbar-thin">
-                {groupChat.memberAddresses.map((addr) => (
-                  <MemberItem key={addr} address={resolveDisplayAddress(addr)} />
-                ))}
-              </div>
-            )}
-        </div>
-        )}
       </div>
 
       {/* Content Area */}

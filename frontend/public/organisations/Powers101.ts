@@ -39,12 +39,14 @@ export const Powers101: Organization = {
     }
   ],
   allowedChains: [
-    sepolia.id, 
-    optimismSepolia.id
+    sepolia.id,
+    optimismSepolia.id,
+    arbitrumSepolia.id
   ],
   allowedChainsLocally: [
-    sepolia.id, 
+    sepolia.id,
     optimismSepolia.id,
+    arbitrumSepolia.id,
     foundry.id
   ],
 

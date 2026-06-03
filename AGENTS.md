@@ -4,7 +4,7 @@ Welcome, Agent. This document serves as your primary context and guide for worki
 
 ## 1. Project Overview
 
-**Powers v0.4** is a governance protocol for on-chain organizations. It distinguishes itself by:
+**Powers v0.6** is a governance protocol for on-chain organizations. It distinguishes itself by:
 -   **Role-Based Governance**: Restricting governance processes along access roles.
 -   **Separation of Powers**: Enabling checks and balances (e.g., one role proposes, another vetos, another executes).
 -   **Modular Design**: Using small, single-purpose smart contracts called **Mandates**.
@@ -51,12 +51,19 @@ Mandates are the building blocks of governance. They transform input data into e
 ## 4. Common Agent Workflows
 
 ### A. Institutional Design
-When asked to design a governance structure, follow the **5-Step Process** (detailed in `ai/prompts/institutionalDesign.md`):
-1.  **Review**: Understand `Powers.sol`, `Mandate.sol`, and existing documentation.
-2.  **Inventory**: List assets, actions, roles, and their relationships.
-3.  **Design**: Map governance flows to execute actions and assign roles.
-4.  **Spec**: Create a `.mdx` specification in `documentation/powers/docs/pages/organisations`.
-5.  **Implement**: Create a Solidity deploy script in `solidity/script/organisations`.
+Use the `/design-org` skill (`.claude/commands/design-org.md`) for end-to-end governance design.
+The skill follows a **5-Phase Process** guided by `ai/prompts/institutionalDesign.md`:
+1.  **Load context**: Read protocol docs, mandate catalogue, and reference papers in `ai/references/`.
+2.  **Elicit**: Structured dialogue to understand stakeholders, decisions, and trust assumptions.
+3.  **Spec**: Create a `.mdx` specification in `documentation/src/content/docs/organisations/`.
+4.  **Implement**: Generate deploy script (`solidity/governance/examples/`), actions, runners, and tests.
+5.  **Verify**: Compile (`forge build`) and run tests (`forge test --match-contract <Name>`).
+
+**Reference materials for governance design:**
+-   `ai/prompts/institutionalDesign.md` — mandate catalogue, encoding templates, design heuristics
+-   `ai/templates/orgSpec.md` — governance specification template
+-   `ai/templates/deployScript.md` — annotated deploy script template
+-   `ai/references/` — governance theory papers (add new PDFs here; Ostrom, Dahl, etc.)
 
 ### B. Smart Contract Development
 -   **Refactoring**: When refactoring contracts (e.g., `Mandate.sol`), ensure you update related tests in `test/`.
