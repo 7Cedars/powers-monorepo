@@ -284,6 +284,11 @@ h1#_top {
   padding: 2rem;
 }
 
+/* Hide empty content panel (e.g. splash/hero pages with no body content) */
+.sl-markdown-content:not(:has(*)) {
+  display: none;
+}
+
 /* Sidebar right border */
 nav.sidebar {
   border-inline-end: 1px solid var(--sl-color-gray-5);
