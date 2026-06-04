@@ -1,0 +1,53 @@
+---
+title: "GovernedToken_CollectSplitPayment"
+description: "GovernedToken_CollectSplitPayment is an integration mandate that allows an eligible party to collect their share of a split payment when a Governed721 token is sold."
+---
+
+GovernedToken_CollectSplitPayment is an integration mandate designed to work with the Governed721 contract. When a Governed721 token is sold, this mandate allows an eligible party (Artist, Intermediary, or Old Owner) to collect their percentage share of the payment.
+
+## Overview
+
+This mandate retrieves a pending transfer record from the Governed721 contract, verifies the caller's role in that transfer, calculates their share of the payment, and generates an ERC20 token transfer to send them the correct amount.
+
+## Configuration
+
+When adopting a GovernedToken_CollectSplitPayment instance, the following parameter is required:
+
+1.  `Governed721Address` (address): The address of the Governed721 token contract.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, one parameter must be provided:
+
+1.  `TransferId` (uint256): The ID of the pending transfer record in the Governed721 contract.
+
+### Execution Flow
+
+1.  **Data Retrieval**
+    *   Fetches the `TransferData` from the Governed721 contract using the `TransferId`.
+    *   Validates that the transfer record exists and contains valid data.
+
+2.  **Authorization Check**
+    *   Verifies that the caller matches the expected role in the transfer (Artist, Intermediary, or Old Owner). Reverts if they don't match.
+
+3.  **Payment Calculation**
+    *   Retrieves the caller's split percentage from the Governed721 contract.
+    *   Calculates: `amount = quantity * percentage / 100`.
+
+4.  **Transfer**
+    *   Generates an ERC20 `transfer` call to send the calculated amount to the caller.
+
+### Error Conditions
+
+*   `"Transfer ID cannot be 0"` — A zero transfer ID was provided.
+*   `"Transfer data mismatch or not found"` — The transfer record does not exist or is incomplete.
+*   `"Caller is not the Artist"` / `"Caller is not the Intermediary"` / `"Caller is not the Old Owner"` — The caller does not match the expected role.
+*   `"Calculated amount is zero"` — The split percentage results in a zero payment.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

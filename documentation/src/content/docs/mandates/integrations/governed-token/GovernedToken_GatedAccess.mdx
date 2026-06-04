@@ -1,0 +1,49 @@
+---
+title: "GovernedToken_GatedAccess"
+description: "GovernedToken_GatedAccess is an integration mandate that assigns a role to a caller based on ownership of valid Soulbound1155 or Governed721 tokens, with optional checks on token age and minter role."
+---
+
+GovernedToken_GatedAccess is an integration mandate that gates access to a role based on ownership of Soulbound1155 or Governed721 tokens. It supports optional checks on token freshness (block threshold) and the minter's governance role.
+
+## Overview
+
+The mandate accepts a list of token IDs from the caller and validates each one against up to three checks. If a sufficient number of valid tokens are provided (meeting the configured threshold), the caller is assigned the target role.
+
+## Configuration
+
+When adopting a GovernedToken_GatedAccess instance, the following parameters are required:
+
+1.  `governedTokenAddress` (address): The address of the ERC1155 or ERC721 token contract.
+2.  `assignRoleId` (uint256): The role ID to assign if checks pass.
+3.  `checkRoleId` (uint256): An optional role ID. If non-zero, the minter of each token must hold this role in the Powers contract.
+4.  `blocksThreshold` (uint48): An optional block window. If non-zero, tokens minted more than this many blocks ago are rejected.
+5.  `tokensThreshold` (uint48): The minimum number of valid tokens the caller must provide to pass.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, one parameter must be provided:
+
+1.  `tokenIds` (uint256[]): An array of token IDs to validate.
+
+### Execution Flow
+
+For each token ID provided:
+
+1.  **Ownership Check** — Verifies the caller owns the token (ERC1155 balance > 0 or ERC721 ownership).
+2.  **Block Threshold Check** — If `blocksThreshold > 0`, rejects tokens minted more than `blocksThreshold` blocks ago.
+3.  **Minter Role Check** — If `checkRoleId > 0`, verifies the token's minter holds `checkRoleId` in the Powers contract.
+
+If the count of valid tokens meets `tokensThreshold`, assigns `assignRoleId` to the caller.
+
+### Error Conditions
+
+*   `"Invalid token address or tokenId"` — The token contract doesn't support the token or it doesn't exist.
+*   `"Insuffiicent valid tokens provided"` — The caller did not provide enough valid tokens to meet the threshold.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

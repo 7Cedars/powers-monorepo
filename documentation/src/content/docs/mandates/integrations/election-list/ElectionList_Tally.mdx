@@ -25,17 +25,15 @@ When adopting an ElectionList_Tally instance, the following parameters are requi
 
 ### Proposing an Action
 
-When calling the mandate, the inputs must identify the specific election to tally:
+When calling the mandate, one parameter must be provided:
 
-1.  `Title` (string): The title of the election.
-2.  `StartBlock` (uint48): The start block of the election.
-3.  `EndBlock` (uint48): The end block of the election.
+1.  `Title` (string): The title of the election. The unique election ID is derived from this title and the Powers contract address.
 
 ### Execution Flow
 
 1.  **Verification**
     *   Computes the unique `electionId`.
-    *   Checks the `ElectionList` contract to ensure the election is closed (current block > `EndBlock`). Reverts if the election is still ongoing.
+    *   Calls `isElectionOpen(electionId)` on the ElectionRegistry contract. Reverts with `"Election is still open"` if it returns true.
 
 2.  **Tallying**
     *   Retrieves the nominee ranking from the ElectionList.
@@ -55,7 +53,7 @@ When calling the mandate, the inputs must identify the specific election to tall
 function initializeMandate(...) public override
 ```
 -   Initializes the tally configuration.
--   Sets input parameters to `(string Title, uint48 StartBlock, uint48 EndBlock)`.
+-   Sets input parameters to `(string Title)`.
 
 #### `handleRequest`
 ```solidity

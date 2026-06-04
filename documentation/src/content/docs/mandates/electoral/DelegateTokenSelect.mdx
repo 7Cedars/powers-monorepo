@@ -72,8 +72,7 @@ function handleRequest(...) public view override returns (...)
 
 ### Error Conditions
 
-1.  **Configuration Errors**
-    *   Invalid contract addresses for `VotesToken` or `NomineesContract`.
+This mandate has no explicit error conditions. If invalid contract addresses are provided for `VotesToken` or `NomineesContract`, the transaction will fail at the external call level with a generic EVM error.
 
 ## Current Deployments
 

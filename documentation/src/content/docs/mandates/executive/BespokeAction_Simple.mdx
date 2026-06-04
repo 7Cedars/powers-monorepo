@@ -30,6 +30,7 @@ When calling the mandate, the input (`mandateCalldata`) must contain the encoded
 
 2.  **Execution**
     *   Calls the `TargetContract` with the assembled data.
+    *   If `TargetContract` is set to `address(0)`, the call is directed at the Powers contract itself.
 
 ## Technical Specifications
 

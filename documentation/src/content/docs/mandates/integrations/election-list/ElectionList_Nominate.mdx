@@ -17,7 +17,7 @@ Usually, two separate instances of this mandate are deployed for an election sys
 
 When adopting an ElectionList_Nominate instance, the following parameters are required:
 
-1.  `ElectionList` (address): The address of the ElectionList helper contract.
+1.  `ElectionRegistry` (address): The address of the ElectionRegistry helper contract.
 2.  `shouldNominate` (bool): The mode of operation.
     *   `true`: The mandate will nominate the caller.
     *   `false`: The mandate will revoke the caller's nomination.
@@ -26,11 +26,9 @@ When adopting an ElectionList_Nominate instance, the following parameters are re
 
 ### Proposing an Action
 
-When calling the mandate, the inputs must identify the specific election:
+When calling the mandate, one parameter must be provided:
 
-1.  `Title` (string): The title of the election.
-2.  `StartBlock` (uint48): The start block of the election.
-3.  `EndBlock` (uint48): The end block of the election.
+1.  `Title` (string): The title of the election. The unique election ID is derived from this title and the Powers contract address.
 
 ### Execution Flow
 
@@ -50,7 +48,7 @@ When calling the mandate, the inputs must identify the specific election:
 function initializeMandate(...) public override
 ```
 -   Initializes the ElectionList address and mode.
--   Sets input parameters to `(string Title, uint48 StartBlock, uint48 EndBlock)`.
+-   Sets input parameters to `(string Title)`.
 
 #### `handleRequest`
 ```solidity

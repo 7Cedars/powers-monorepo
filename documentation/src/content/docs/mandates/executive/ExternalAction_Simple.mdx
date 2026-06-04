@@ -1,0 +1,63 @@
+---
+title: "ExternalAction_Simple"
+description: "ExternalAction_Simple is an executive mandate that submits a request to a fixed mandate at a fixed external Powers instance."
+---
+
+ExternalAction_Simple is an executive mandate that submits a governance request to a specific mandate on another Powers contract. The target Powers address and mandate ID are fixed at configuration time.
+
+## Overview
+
+This mandate enables one Powers instance to trigger governance actions at another. When executed, it calls the `request` function on the configured target Powers contract, passing the user's input along as the calldata for the target mandate.
+
+This is useful for cross-contract governance flows where one organisation needs to formally submit a proposal or action to another.
+
+## Configuration
+
+When adopting an ExternalAction_Simple instance, the following parameters are required:
+
+1.  `PowersTarget` (address): The address of the external Powers contract to call.
+2.  `MandateIdTarget` (uint16): The mandate ID on the target Powers contract to submit the request to.
+3.  `Description` (string): A description string included in the request, providing context for the target contract's action history.
+4.  `Params` (string[]): UI hints describing the input parameters the user must provide at execution time.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the input (`mandateCalldata`) must contain the encoded arguments expected by the target mandate on the external Powers contract.
+
+### Execution Flow
+
+1.  **Request Assembly**
+    *   Encodes a call to `IPowers.request(mandateIdTarget, mandateCalldata, nonce, description)`.
+
+2.  **Execution**
+    *   Submits the call to `PowersTarget`, initiating governance at the external Powers instance.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Stores the target Powers address, mandate ID, and description.
+-   Sets input parameters from the configured `Params`.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view virtual override returns (...)
+```
+-   Reads `PowersTarget`, `MandateIdTarget`, and `Description` from config.
+-   Builds and returns the `request` call targeting the external Powers contract.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur at the target Powers contract if the request is invalid.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |
