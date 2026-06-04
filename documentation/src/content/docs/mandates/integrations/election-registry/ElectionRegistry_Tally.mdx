@@ -1,23 +1,23 @@
 ---
-title: "ElectionList_Tally"
-description: "Documentation for the ElectionList_Tally integration mandate, which tallies the results of an election and updates role assignments accordingly."
+title: "ElectionRegistry_Tally"
+description: "Documentation for the ElectionRegistry_Tally integration mandate, which tallies the results of an election and updates role assignments accordingly."
 ---
 
-ElectionList_Tally is an integration mandate that concludes an election, calculates the winners, and updates the role assignments accordingly.
+ElectionRegistry_Tally is an integration mandate that concludes an election, calculates the winners, and updates the role assignments accordingly.
 
 ## Overview
 
 This mandate is the final step in the PowerLabs election lifecycle. Once an election period has ended, this mandate can be called to:
 1.  Verify that the election is officially closed.
-2.  Retrieve the ranked list of nominees from the `ElectionList` contract based on votes cast.
+2.  Retrieve the ranked list of nominees from the `ElectionRegistry` contract based on votes cast.
 3.  Revoke the role from all current holders (effectively clearing the slate).
 4.  Assign the role to the top *N* candidates from the election, where *N* is the configured maximum.
 
 ## Configuration
 
-When adopting an ElectionList_Tally instance, the following parameters are required:
+When adopting an ElectionRegistry_Tally instance, the following parameters are required:
 
-1.  `electionContract` (address): The address of the ElectionList helper contract.
+1.  `electionContract` (address): The address of the ElectionRegistry helper contract.
 2.  `RoleId` (uint256): The role ID to be updated based on the election results.
 3.  `MaxRoleHolders` (uint256): The maximum number of winners to elect (the top candidates).
 
@@ -36,7 +36,7 @@ When calling the mandate, one parameter must be provided:
     *   Calls `isElectionOpen(electionId)` on the ElectionRegistry contract. Reverts with `"Election is still open"` if it returns true.
 
 2.  **Tallying**
-    *   Retrieves the nominee ranking from the ElectionList.
+    *   Retrieves the nominee ranking from the ElectionRegistry.
     *   Selects the top candidates up to `MaxRoleHolders`.
 
 3.  **Role Updates**

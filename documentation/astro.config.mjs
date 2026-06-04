@@ -131,14 +131,14 @@ export default defineConfig({
 									],
 								},
 								{
-									label: 'Election List',
+									label: 'Election Registry',
 									collapsed: true,
 									items: [
-										{ label: 'Clean Up Vote Mandate', slug: 'mandates/integrations/election-list/electionlist_cleanupvotemandate' },
-										{ label: 'Create Vote Mandate', slug: 'mandates/integrations/election-list/electionlist_createvotemandate' },
-										{ label: 'Nominate', slug: 'mandates/integrations/election-list/electionlist_nominate' },
-										{ label: 'Tally', slug: 'mandates/integrations/election-list/electionlist_tally' },
-										{ label: 'Vote', slug: 'mandates/integrations/election-list/electionlist_vote' },
+										{ label: 'Clean Up Vote Mandate', slug: 'mandates/integrations/election-registry/electionregistry_cleanupvotemandate' },
+										{ label: 'Create Vote Mandate', slug: 'mandates/integrations/election-registry/electionregistry_createvotemandate' },
+										{ label: 'Nominate', slug: 'mandates/integrations/election-registry/electionregistry_nominate' },
+										{ label: 'Tally', slug: 'mandates/integrations/election-registry/electionregistry_tally' },
+										{ label: 'Vote', slug: 'mandates/integrations/election-registry/electionregistry_vote' },
 									],
 								},
 								{

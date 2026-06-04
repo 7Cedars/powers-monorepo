@@ -56,14 +56,26 @@ These patterns appear in `solidity/governance/examples/` and `solidity/test/Test
 
 ### Election Lists
 **File:** `ElectionListsDao.s.sol`  
-**Structure:** Candidates are nominated, voters elect slates, elected members govern.  
-**Use when:** You want periodic representative elections with slate voting.  
-**Key mandates:** `ElectionRegistry_CreateVoteMandate` → `ElectionRegistry_Nominate` → `ElectionRegistry_Vote` → `ElectionRegistry_Tally`
+**Structure:** Candidates are nominated, voters elect from the nominee list, elected members govern.  
+**Use when:** You want periodic representative elections with a nomination + voting cycle.  
+**Key mandates:** `ElectionRegistry_CreateVoteMandate` → `ElectionRegistry_Nominate` → `ElectionRegistry_Vote` → `ElectionRegistry_Tally` → `ElectionRegistry_CleanUpVoteMandate`
 
 ### Powers 101 (Basic)
 **File:** `Powers101.s.sol`  
 **Structure:** Open membership → delegates propose → admin veto → execute  
 **Use when:** A small organisation wants a simple, learnable structure.
+
+### Slate Voting
+**File:** `SlateVoting.s.sol`  
+**Structure:** Grantees compose competing slates (bundles of executable actions) → community votes → winning slates execute automatically.  
+**Use when:** You want to elect between *programs of action* rather than between *people*. Ideal for grants rounds, budget allocation, or protocol upgrade elections where different factions propose complete packages.  
+**Key mandates:** `SlateRegistry_AddSlate` (grantees submit slates) → `BespokeAction_Simple → SlateRegistry.vote` (community votes) → `SlateRegistry_ExecuteResult` (anyone triggers execution after voting closes)  
+**Key helper:** `SlateRegistry` — manages elections, slate registration, vote tallying, and calls `Powers.request` on the winning slate mandate IDs. Must be assigned its own unique `roleId` in Powers and given ownership of the registry.  
+**Design notes:**
+- `SlateRegistry_AddSlate` dynamically adopts a `PresetActions` mandate for each slate and registers it in the election's flow slot. The slate's `allowedRole` is set to the `SlateRegistry.roleId` so only the registry can trigger execution.
+- `SlateRegistry_RemoveSlate` uses `needFulfilled = addSlateMandateId` so the *same calldata and nonce* used to submit a slate must be re-submitted to withdraw it — this uniquely identifies the original action.
+- Voting is handled via `BespokeAction_Simple → SlateRegistry.vote`; voters pass their own address as the `caller` argument so the registry can prevent double-voting.
+- `SlateRegistry_ExecuteResult` reverts if `block.number <= endBlock`, so timing enforcement is in-contract rather than relying on governance conditions.
 
 ### Nested Safe Governance
 **File:** `NestedSafeGovernance.s.sol`  
@@ -104,18 +116,19 @@ conditions.allowedRole = type(uint256).max; // PUBLIC = anyone
 ```
 
 #### `Nominate`
-**Purpose:** An account nominates itself (or another) as a candidate, recorded in a `Nominees` contract.  
+**Purpose:** An account nominates or de-nominates itself as a candidate in a `Nominees` contract.  
 **Config:** `abi.encode(address nomineesContract)`  
-**inputParams:** `address nominee, bool nominateMe`  
+**inputParams:** `bool shouldNominate` — true to nominate, false to withdraw nomination (caller always nominates themselves)  
 **Use when:** First step of a multi-step election (followed by `PeerSelect` or `DelegateTokenSelect`)  
 **Note:** Requires deploying a `Nominees` helper contract and transferring its ownership to Powers.
 
 #### `PeerSelect`
-**Purpose:** Role holders vote to assign a role to a nominee.  
-**Config:** `abi.encode(address nomineesContract, uint256 roleToAssign, uint256 maxRoleHolders)`  
-**inputParams:** `address nominee`  
+**Purpose:** Role holders vote to elect nominees into a role. Executes once: installs winners, evicts previous holders, and self-revokes.  
+**Config:** `abi.encode(uint8 numberToSelect, uint256 roleId, address NomineesContract)`  
+**inputParams:** `bool[]` — dynamic array, one entry per nominee in the current nominees list (true = vote for)  
 **Conditions:** Set `votingPeriod`, `quorum`, `succeedAt`  
-**Use when:** Democratic election by existing members
+**Use when:** One-shot democratic election by existing members; pair with `Nominate` to build a two-step election flow  
+**Note:** Input params are generated dynamically at initialization time from the current `Nominees` list.
 
 #### `DelegateTokenSelect`
 **Purpose:** Nominees are elected based on delegated token weight (not one-account-one-vote).  
@@ -124,27 +137,27 @@ conditions.allowedRole = type(uint256).max; // PUBLIC = anyone
 **Use when:** Token-based representative democracy
 
 #### `RoleByRoles`
-**Purpose:** Automatically assign a role to an account based on it holding another role.  
-**Config:** `abi.encode(uint256 sourceRoleId, uint256 targetRoleId)`  
+**Purpose:** Assign or revoke a role from an account based on whether it holds any of a set of prerequisite roles.  
+**Config:** `abi.encode(uint256 newRoleId, uint256[] roleIdsNeeded)` — assigns `newRoleId` if account holds any role in `roleIdsNeeded`; revokes it if not  
 **inputParams:** `address account`  
-**Use when:** Cascading role assignment (e.g., all executives are also council members)
+**Use when:** Cascading role assignment (e.g., all executives are also council members); supports multiple prerequisite roles
 
 #### `RenounceRole`
-**Purpose:** An account voluntarily gives up a role.  
-**Config:** `abi.encode(uint256 roleId)`  
-**inputParams:** none  
+**Purpose:** An account voluntarily gives up one of a configured list of roles.  
+**Config:** `abi.encode(uint256[] allowedRoleIds)` — the roles the caller is permitted to renounce  
+**inputParams:** `uint256 RoleId` — the specific role the caller wants to renounce (must be in the allowedRoleIds list)  
 **Use when:** Any governance structure where members should be able to exit voluntarily
 
 #### `RevokeAccountsRoleId`
-**Purpose:** An authorised role holder revokes a role from a specific account.  
-**Config:** `abi.encode(uint256 roleId)`  
-**inputParams:** `address account`  
+**Purpose:** An authorised role holder revokes a role from all current holders of that role.  
+**Config:** `abi.encode(uint256 RoleId, string[] InputParams)` — `InputParams` labels any additional inputs used to identify the account to revoke  
+**inputParams:** defined by `InputParams` in config (typically `address account`)  
 **Use when:** Governance needs ability to remove bad actors
 
 #### `RevokeInactiveAccounts`
-**Purpose:** Revoke a role from accounts that have not participated above a threshold.  
-**Config:** `abi.encode(uint256 roleId, uint256 inactivityThreshold)` (threshold in blocks)  
-**inputParams:** `address account`  
+**Purpose:** Revoke a role from all holders who have not met a minimum participation threshold.  
+**Config:** `abi.encode(uint256 RoleId, uint256 minimumActionsNeeded, uint256 numberActionsToCheck)` — checks the last `numberActionsToCheck` actions and revokes if fewer than `minimumActionsNeeded` were cast  
+**inputParams:** none (scans all role holders automatically)  
 **Use when:** Membership should lapse for inactive participants
 
 #### `AssignExternalRole`
@@ -206,14 +219,28 @@ config: abi.encode(
 **Use when:** Chaining two on-chain calls where output of step 1 is input of step 2
 
 #### `ExternalAction_Simple`
-**Purpose:** Execute a pre-configured external call (similar to `BespokeAction_Simple` but simpler config).  
-**Config:** `abi.encode(address target, bytes4 selector, bytes calldata)`  
-**Use when:** Fixed external calls with no user input required
+**Purpose:** Submit a governance request to a specific mandate on a fixed external Powers contract.  
+**Config:** `abi.encode(address PowersTarget, uint16 MandateIdTarget, string Description, string[] Params)`  
+**inputParams:** defined by `Params` in config (forwarded as calldata to the target mandate)  
+**Use when:** One Powers instance needs to formally trigger an action on another (fixed target at config time)
+
+#### `ExternalAction_Flexible`
+**Purpose:** Like `ExternalAction_Simple` but the target Powers address and mandate ID are provided at runtime, not fixed in config.  
+**Config:** `abi.encode(string[] Params)` — labels for the extra inputs forwarded to the target mandate  
+**inputParams:** `address PowersTarget, uint16 MandateIdTarget, ...` (extra params per config)  
+**Use when:** A single mandate instance needs to route to different external contracts depending on the situation
+
+#### `ExternalAction_OnReturnValue`
+**Purpose:** Forward the return value of a prior mandate execution as calldata to an external Powers instance.  
+**Config:** `abi.encode(bytes paramsBefore, string[] Params, uint16 parentMandateId, bytes paramsAfter)` — return value is sandwiched between the two static byte arrays  
+**inputParams:** `address PowersTarget, uint16 MandateIdTarget, ...` (extra params per config)  
+**Use when:** Chaining a local computation (e.g. a factory that deploys a contract) into a cross-chain governance request
 
 #### `CheckExternalActionState`
-**Purpose:** Check that an action in a *parent* Powers organisation has been fulfilled before proceeding.  
-**Config:** `abi.encode(address parentPowers, uint256 requiredState)`  
-**Use when:** Child organisation must wait for parent organisation to approve first
+**Purpose:** Check that a specific mandate's action has been fulfilled on a parent Powers contract before proceeding.  
+**Config:** `abi.encode(address parentPowers, uint16 mandateId, string[] inputParams)` — `inputParams` must match the parent mandate's inputs so the action ID can be recomputed  
+**inputParams:** same as the parent mandate's inputParams  
+**Use when:** Child organisation must wait for parent organisation to approve or execute a specific action first
 
 ---
 
@@ -235,40 +262,143 @@ config: abi.encode(
 **Use when:** Emergency pause capability
 
 #### `MandatePackage`
-**Purpose:** Adopt a bundle of mandates in a single governance action.  
-**Config:** pre-encoded set of `MandateInitData[]`  
-**Use when:** Major governance reforms that add many mandates at once
+**Purpose:** Adopt a bundle of mandates in a single governance action. The bundle is defined at constructor time.  
+**Config:** none (all `MandateInitData[]` are baked into the contract at deployment)  
+**inputParams:** none  
+**Use when:** Major governance reforms where the set of new mandates is known at deploy time
+
+#### `MandatePackage_Static`
+**Purpose:** Like `MandatePackage` but fully pre-configured and self-revoking — installs the bundle then removes itself.  
+**Config:** none (mandates stored in constructor)  
+**inputParams:** none  
+**Use when:** One-shot governance upgrade where the full bundle is known at deploy time and no further customisation is needed at execution
 
 ---
 
 ### KEY INTEGRATION MANDATES
 
 #### `Safe_ExecTransaction`
-**Purpose:** Execute a transaction on a Gnosis Safe where Powers is an owner.  
-**Config:** `abi.encode(address safeAddress)`  
-**Use when:** The organisation controls funds in a Gnosis Safe multisig
+**Purpose:** Execute a specific function on a target contract via the Gnosis Safe treasury (Powers must be a Safe owner).  
+**Config:** `abi.encode(string[] InputParams, bytes4 FunctionSelector, address Target)` — `InputParams` labels the caller-provided arguments; the function call is `Target.FunctionSelector(mandateCalldata)`  
+**inputParams:** defined by `InputParams` in config  
+**Use when:** The organisation controls a Gnosis Safe and needs governed calls to an external contract routed through the Safe
+
+#### `Safe_ExecTransaction_OnReturnValue`
+**Purpose:** Execute a Safe transaction using the return value of a prior mandate as a dynamic argument.  
+**Config:** `abi.encode(address TargetContract, bytes4 FunctionSelector, bytes paramsBefore, string[] Params, uint16 parentMandateId, bytes paramsAfter)` — return value is sandwiched between the static byte arrays  
+**inputParams:** defined by `Params` in config (must match parent mandate inputs so action ID can be recomputed)  
+**Use when:** A prior action (e.g. deploying a contract) produces a value that must be passed to the Safe
+
+#### `Safe_RecoverTokens`
+**Purpose:** Sweep all ERC20 tokens held by the Powers contract itself into the Safe treasury.  
+**Config:** `abi.encode(address safeTreasury, address allowanceModule)` — uses the allowance module's token list to discover which tokens to check  
+**inputParams:** none (auto-discovers tokens and balances)  
+**Use when:** Tokens have been accidentally sent to the Powers contract address and need to be recovered
 
 #### `SafeAllowance_Transfer`
-**Purpose:** Transfer up to an allowance limit from a Safe without full Safe approval.  
-**Config:** `abi.encode(address safeAddress, address allowanceModule, address token)`  
-**Use when:** Role holders need regular spending authority within set limits
+**Purpose:** Transfer tokens from a Gnosis Safe via the Allowance Module. Powers must be registered as a delegate.  
+**Config:** `abi.encode(address allowanceModule, address safeProxy)`  
+**inputParams:** `address Token, uint256 Amount, address PayableTo`  
+**Use when:** Role holders need regular spending authority within pre-approved allowance limits
+
+#### `SafeAllowance_PresetTransfer`
+**Purpose:** Like `SafeAllowance_Transfer` but the token and amount are fixed at config time; the caller only provides the recipient.  
+**Config:** `abi.encode(address Token, uint256 Amount, address allowanceModule, address safeProxy)`  
+**inputParams:** `address PayableTo`  
+**Use when:** Recurring payments of a fixed amount (e.g. contributor salaries, grants)
+
+#### `SafeAllowance_Action`
+**Purpose:** Call an arbitrary function on the Allowance Module via the Safe (e.g. update allowance parameters, add delegates).  
+**Config:** `abi.encode(string[] inputParams, bytes4 functionSelector, address allowanceModule)`  
+**inputParams:** defined by `inputParams` in config  
+**Use when:** Governance needs to modify Allowance Module settings directly through the Safe
 
 #### `ElectionRegistry_CreateVoteMandate` / `_Nominate` / `_Vote` / `_Tally` / `_CleanUpVoteMandate`
-**Purpose:** Full election cycle using a standalone `ElectionRegistry` contract.  
+**Purpose:** Full election cycle using a standalone `ElectionRegistry` helper contract.  
 **Use when:** Formal periodic elections with nomination periods, voting periods, and tallying  
-**Note:** These five mandates must all be present and configured together.
+**Note:** These five mandates must all be present and configured together. The helper contract is `ElectionRegistry` (not `ElectionList`).
 
-#### `GovernedToken_MintEncodedToken` / `_GatedAccess` / `_BurnToAccess`
-**Purpose:** Issue or gate access using a soulbound ERC-1155 token.  
-**Use when:** Membership credentials, proof of participation, or burn-to-access mechanics
+#### `GovernedToken_MintEncodedToken` / `_GatedAccess` / `_BurnToAccess` / `_CollectSplitPayment`
+**Purpose:** Issue or gate access using a `Governed721` token (ERC-721 based, not ERC-1155).  
+**Use when:** Membership credentials, proof of participation, burn-to-access mechanics, or collecting split payments from token sales  
+
+- **`GovernedToken_MintEncodedToken`** — Mints a `Governed721` token whose ID encodes the caller's address and the current block number. Config: `abi.encode(address governedToken)`. inputParams: `address To`.  
+- **`GovernedToken_GatedAccess`** — Assigns a role to callers who hold sufficient valid `Governed721` tokens. Config: `abi.encode(address governedTokenAddress, uint256 assignRoleId, uint256 checkRoleId, uint48 blocksThreshold, uint48 tokensThreshold)`. inputParams: `uint256[] tokenIds`.  
+- **`GovernedToken_BurnToAccess`** — Burns a `Governed721` token to grant access (caller must hold the token). Config: `abi.encode(string[] inputParams, address governedTokenAddress)`. inputParams: `uint256 tokenId`.  
+- **`GovernedToken_CollectSplitPayment`** — Lets an Artist, Intermediary, or Old Owner collect their percentage share of a `Governed721` token sale. Config: `abi.encode(address Governed721Address)`. inputParams: `uint256 TransferId`.
 
 #### `ZKPassport_Check`
 **Purpose:** Verify age or nationality via zero-knowledge proof (ZKPassport).  
 **Use when:** Age-gated governance, jurisdiction-based access control
 
+#### `SlateRegistry_AddSlate` / `_RemoveSlate` / `_ExecuteResult`
+**Purpose:** Full slate-voting election cycle using a standalone `SlateRegistry` contract.  
+**Use when:** Elections where voters choose between *programs of action* (slates of executable calls) rather than between candidates.  
+**Deployment:** These mandate contracts are **not** in the `MandateRegistry` — deploy them directly with `new SlateRegistry_AddSlate()` etc. and use the deployed addresses as `targetMandate`.  
+**SlateRegistry constructor:** `new SlateRegistry(uint48 submitSlateDuration, uint48 voteDuration, uint256 roleId)` — the registry must be given ownership of Powers *after* `closeConstitute`, and its `roleId` must be assigned to the registry contract address in the initial setup mandate.
+
+**`SlateRegistry_AddSlate`**  
+Config: `abi.encode(address slateRegistry, address presetActions)`  
+inputParams: `string ElectionTitle, string NameDescription, address[] Targets, uint256[] Values, bytes[] Calldatas`  
+Effect: adopts a `PresetActions` mandate, places it in the election's flow slot, registers it in the `SlateRegistry`.
+
+**`SlateRegistry_RemoveSlate`**  
+Config: `abi.encode(address slateRegistry, uint16 addSlateMandateId)`  
+inputParams: same as `_AddSlate` (identical calldata + nonce required — links back to the original submission)  
+Conditions: set `needFulfilled = addSlateMandateId`  
+Effect: revokes the slate's `PresetActions` mandate, frees the flow slot, unregisters from `SlateRegistry`.
+
+**`SlateRegistry_ExecuteResult`**  
+Config: `abi.encode(address slateRegistry)`  
+inputParams: `string ElectionTitle`  
+Conditions: `allowedRole = type(uint256).max` (anyone can trigger after voting closes)  
+Effect: calls `SlateRegistry.executeResults`, which tallies votes and calls `Powers.request` on each winning slate mandate.
+
+**Required election cycle:**
+1. A governance member calls `SlateRegistry.createElection` (via `BespokeAction_Simple`) to open a new election and set `maxSlates`, `maxVotes`, `maxWinners`.
+2. Grantees submit slates during the `submitSlateDuration` window via `_AddSlate`.
+3. Community members vote during the `voteDuration` window via `BespokeAction_Simple → SlateRegistry.vote(electionId, caller, slateIndexes)`. Voters must pass their own address as `caller`.
+4. After `endBlock`, anyone calls `_ExecuteResult` to tally and execute.
+
+#### `ERC721_GatedAccess`
+**Purpose:** Assign a role to the caller if they hold at least a minimum balance of a specified ERC721 token.  
+**Config:** `abi.encode(address erc721Address, uint256 assignRoleId, uint256 minBalance)`  
+**inputParams:** none  
+**Use when:** Token-gated role onboarding (NFT holder membership)
+
+#### `Governor_CreateProposal` / `Governor_ExecuteProposal`
+**Purpose:** Create or execute proposals on an OpenZeppelin-compatible Governor contract.  
+**Config:** `abi.encode(address GovernorContract)`  
+**inputParams:** `address[] targets, uint256[] values, bytes[] calldatas, string description`  
+**`Governor_ExecuteProposal`** reverts unless the proposal is in the `Succeeded` state.  
+**Use when:** Bridging Powers governance into an existing OZ Governor deployment
+
 #### `PowersFactory_AssignRole`
-**Purpose:** Assign a role in a newly spawned child Powers organisation.  
+**Purpose:** Assign a role in a newly spawned child Powers organisation using the return value of a factory mandate.  
+**Config:** `abi.encode(uint16 factoryMandateId, uint256 roleIdNewOrg, string[] inputParams)`  
 **Use when:** Federated structures where a parent organisation governs child organisations
+
+#### `PowersFactory_AddSafeDelegate`
+**Purpose:** Add a delegate to the Gnosis Safe Allowance Module using the return value of a factory mandate.  
+**Config:** `abi.encode(uint16 factoryMandateId, address allowanceModule, string[] inputParams)`  
+**inputParams:** same as the factory mandate's inputs (used to recompute the action ID)  
+**Use when:** Automatically appointing a new delegate based on the output of a prior factory action
+
+#### `ChainlinkFunctions_Open`
+**Purpose:** Generic async oracle mandate (extends `AsyncMandate`) that forwards string inputs to a configurable Chainlink Functions JavaScript script and awaits the result.  
+**Config:** `abi.encode(string source, string[] inputParams, uint64 subscriptionId, uint32 gasLimit, bytes32 donId)` — all `inputParams` must be of type `string`  
+**inputParams:** defined by `inputParams` in config  
+**Use when:** Any governance flow that requires off-chain data verification (API checks, web2 credentials, computed values) before proceeding  
+**Note:** Async — the Powers action is only completed once the Chainlink oracle responds.
+
+#### `Snapshot_CheckSnapExists` / `Snapshot_CheckSnapPassed`
+**Purpose:** Async mandates that use Chainlink Functions to verify the state of a Snapshot proposal.  
+- **`_CheckSnapExists`** — verifies the proposal exists, is pending, and includes the specified voting choice.  
+- **`_CheckSnapPassed`** — verifies the proposal is closed and the specified choice won.  
+**Config:** `abi.encode(string spaceId, uint64 subscriptionId, uint32 gasLimit, bytes32 donID)`  
+**inputParams:** `string proposalId, string choice, ...`  
+**Use when:** Bridging off-chain Snapshot votes into on-chain execution  
+**Note:** These contracts exist in source but are currently paused / under active development. Do not use in production.
 
 ---
 
@@ -357,7 +487,15 @@ config: abi.encode(
 )
 
 // Safe_ExecTransaction
-config: abi.encode(address(safeAddress))
+config: abi.encode(
+    inputParams,          // string[] of parameter labels for the caller-provided args
+    bytes4(keccak256("functionName(type1,type2)")),  // function selector
+    address(targetContract)  // the contract the Safe will call
+)
+
+// SafeAllowance_Transfer
+config: abi.encode(address(allowanceModule), address(safeProxy))
+// inputParams at runtime: (address token, uint256 amount, address payableTo)
 ```
 
 ---

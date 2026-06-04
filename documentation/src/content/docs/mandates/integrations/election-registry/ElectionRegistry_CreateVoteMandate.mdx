@@ -1,22 +1,22 @@
 ---
-title: "ElectionList_CreateVoteMandate"
-description: "Documentation for the ElectionList_CreateVoteMandate integration mandate, which creates a new vote mandate for a specific election event."
+title: "ElectionRegistry_CreateVoteMandate"
+description: "Documentation for the ElectionRegistry_CreateVoteMandate integration mandate, which creates a new vote mandate for a specific election event."
 ---
 
-ElectionList_CreateVoteMandate is an integration mandate that initiates a new election by deploying a dedicated "Vote Mandate".
+ElectionRegistry_CreateVoteMandate is an integration mandate that initiates a new election by deploying a dedicated "Vote Mandate".
 
 ## Overview
 
-In the PowerLabs election system, voting rights and logic are encapsulated in a temporary mandate (an instance of `ElectionList_Vote`). This mandate factory handles the creation of these instances. When executed, it:
+In the PowerLabs election system, voting rights and logic are encapsulated in a temporary mandate (an instance of `ElectionRegistry_Vote`). This mandate factory handles the creation of these instances. When executed, it:
 1.  Calculates a unique ID for the new election based on the proposal details.
-2.  Deploys/Adopts a new `ElectionList_Vote` mandate configured for that specific election.
+2.  Deploys/Adopts a new `ElectionRegistry_Vote` mandate configured for that specific election.
 3.  Configures the new mandate to be accessible only by a specific `voterRoleId`.
 
 This separation ensures that each election is isolated and access-controlled.
 
 ## Configuration
 
-When adopting an ElectionList_CreateVoteMandate instance, the following parameters are required:
+When adopting an ElectionRegistry_CreateVoteMandate instance, the following parameters are required:
 
 1.  `ElectionRegistry` (address): The address of the ElectionRegistry helper contract.
 2.  `ElectionRegistry_Vote` (address): The address of the `ElectionRegistry_Vote` mandate implementation (used as a template).
