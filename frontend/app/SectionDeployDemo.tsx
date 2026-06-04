@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/Button"; 
-import { ConnectButton } from "@/components/ConnectButton";
+import { ConnectButton } from "../components/ConnectButton";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useSwitchChain, useConnection } from "wagmi";

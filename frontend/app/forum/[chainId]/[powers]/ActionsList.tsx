@@ -177,7 +177,19 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
                 onClick={() => handleItemClick(item)}
                 className="font-mono text-xs border border-border px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-start gap-3">
+                {/* Mobile: stacked */}
+                <div className="flex flex-col gap-1 sm:hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground truncate mr-2">{mandateName}</span>
+                    <span className={`${color} shrink-0`}>{label}</span>
+                  </div>
+                  <span className="text-muted-foreground line-clamp-2">{item.action.description || '—'}</span>
+                  <span className="text-muted-foreground text-right">
+                    {ts ? `${toFullDateFormat(Number(ts.timestamp))} ${toEurTimeFormat(Number(ts.timestamp))}` : '···'}
+                  </span>
+                </div>
+                {/* Desktop: three columns */}
+                <div className="hidden sm:flex items-start gap-3">
                   <div className="shrink-0 w-32 overflow-hidden">
                     <span className="text-foreground truncate block">{mandateName}</span>
                   </div>
