@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { SparklesIcon } from '@heroicons/react/24/outline'
+import { SparklesIcon, ClipboardDocumentListIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { SingleFlow } from '@/components/SingleFlow'
 import { usePowersStore, useActionStore, useErrorStore, useStatusStore, setAction, setError, setStatus } from '@/context/store'
 import { DynamicInput } from './DynamicInput'
@@ -39,13 +39,6 @@ export default function NewActionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSelectInput, setShowSelectInput] = useState(false)
   const [activeInfoTab, setActiveInfoTab] = useState<'conditions' | 'flow'>('conditions')
-  const [hoverReady, setHoverReady] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setHoverReady(true), 2000)
-    return () => clearTimeout(t)
-  }, [])
-
   // Redirect to org home if powers not loaded
   useEffect(() => {
     if (!powers?.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
@@ -234,38 +227,49 @@ export default function NewActionPage() {
   return (
     <div className="flex-1 flex flex-col bg-background scanlines font-mono">
       <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 overflow-y-auto">
-        <div className="flex-1 flex flex-col border border-border">
-          {/* Banner with overlay */}
+        <div className="flex-1 flex flex-col">
+          {/* Banner */}
           <div
-            className={`aspect-[2/1] relative overflow-hidden flex-shrink-0 cursor-default${hoverReady ? ' group' : ''}`}
+            className="aspect-[2/1] flex-shrink-0"
             style={{
               backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
-          >
-            <div className="absolute inset-0 bg-background/80 group-hover:bg-background/15 transition-all duration-500" />
-            <div className="absolute bottom-0 left-0 right-0 px-6 py-4 group-hover:opacity-0 transition-opacity duration-500">
-              <h3 className="text-foreground text-sm truncate">New Action — #{mandate.index.toString()} {mandateName}</h3>
-              {mandateDesc && <p className="text-muted-foreground text-xs truncate">{mandateDesc}</p>}
-            </div>
+          />
+
+          {/* Description */}
+          <div className="px-6 py-3 bg-muted/50">
+            <h3 className="text-foreground text-sm truncate">New Action — #{mandate.index.toString()} {mandateName}</h3>
+            {mandateDesc && <p className="text-muted-foreground text-xs truncate">{mandateDesc}</p>}
           </div>
 
           {/* Info tab nav */}
           <div className="flex bg-muted/50 border-b border-border overflow-x-auto">
-            {(['conditions', 'flow'] as const).map(tab => (
+            {([
+              { id: 'conditions', label: 'Conditions', icon: ClipboardDocumentListIcon },
+              { id: 'flow',       label: 'Flow',       icon: ArrowsRightLeftIcon },
+            ] as const).map(tab => (
               <button
-                key={tab}
-                onClick={() => setActiveInfoTab(tab)}
-                className={`px-5 py-2.5 text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors border-b-2 -mb-px ${
-                  activeInfoTab === tab
+                key={tab.id}
+                onClick={() => setActiveInfoTab(tab.id)}
+                className={`flex items-center gap-1.5 px-5 py-2.5 text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors border-b-2 -mb-px ${
+                  activeInfoTab === tab.id
                     ? 'border-foreground text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tab === 'conditions' ? 'Conditions' : 'Flow'}
+                <tab.icon className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
+          </div>
+
+          {/* Active tab title — small screens only */}
+          <div className="sm:hidden flex items-center px-6 py-2 border-b border-border">
+            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              {activeInfoTab === 'conditions' ? 'Conditions' : 'Flow'}
+            </span>
           </div>
 
           {/* Info tab content */}
@@ -313,7 +317,7 @@ export default function NewActionPage() {
             <h4 className="text-xs text-muted-foreground uppercase tracking-wider">INPUT</h4>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-4 px-1 space-y-6">
 
             {/* Select Input from flow */}
             {flowActions.length > 0 && (
@@ -379,7 +383,7 @@ export default function NewActionPage() {
                   type="button"
                   onClick={handleSimulate}
                   className={cn(
-                    'w-full border border-border px-4 py-2.5 text-xs text-foreground',
+                    'w-full border border-border px-1 py-2.5 text-xs text-foreground',
                     'bg-muted/10 hover:bg-muted/50 hover:border-foreground/40 transition-colors cursor-pointer',
                     'uppercase tracking-wider font-mono'
                   )}
