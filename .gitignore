@@ -78,3 +78,6 @@ typings/
 
 # VSCode settings
 .vscode/
+
+# AI reference PDFs — distilled into ai/references/reading_guide.md
+ai/references/*.pdf

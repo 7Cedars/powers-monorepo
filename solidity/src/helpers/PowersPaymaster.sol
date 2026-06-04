@@ -11,10 +11,12 @@ import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntr
 /// @dev does NOT support batch execute calls. Powers itself allows for batch calls. There is no need to also batch mandate calls to the paymaster. 
 contract PowersPaymaster is BasePaymaster {
     address[] public sponsoredTargets; // List of contract addresses that this Paymaster will sponsor calls to.
-    
-    /// @notice Standard execute(address,uint256,bytes) selector used by most AA wallets
-    bytes4 public constant EXECUTE_SELECTOR = 0x541d63c8; 
- 
+
+    /// @notice executeUserOpWithErrorString(address,uint256,bytes,uint8) — Privy LightAccount
+    bytes4 public constant EXECUTE_SELECTOR = 0x541d63c8;
+    /// @notice execute(bytes32,bytes) — ZeroDev Kernel v3 / ERC-7579
+    bytes4 public constant EXECUTE_SELECTOR_KERNEL = 0xe9ae5c53;
+
     error PowersPaymaster__TargetNotAuthorized();
     error PowersPaymaster__InvalidCallData();
     error PowersPaymaster__UnsupportedSelector();
@@ -57,7 +59,10 @@ contract PowersPaymaster is BasePaymaster {
         emit sponsoredTargetRemoved(target);
     }
 
-    /// @notice Validates that the UserOperation targets one of the sponsored targets
+    /// @notice Validates that the UserOperation targets one of the sponsored targets.
+    /// Supports two account types:
+    /// - LightAccount (Privy default): executeUserOpWithErrorString(address,uint256,bytes,uint8) — target at callData[4:36]
+    /// - Kernel v3 / ERC-7579: execute(bytes32,bytes) — target is packed at the start of executionCalldata (callData offset 100)
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
         bytes32,
@@ -69,25 +74,36 @@ contract PowersPaymaster is BasePaymaster {
         override
         returns (bytes memory context, uint256 validationData)
     {
-        // execute(address,uint256,bytes)
         if (userOp.callData.length < 68) {
             revert PowersPaymaster__InvalidCallData();
         }
 
         bytes4 selector = bytes4(userOp.callData[0:4]);
-        if (selector != EXECUTE_SELECTOR) {
+        address target;
+
+        if (selector == EXECUTE_SELECTOR) {
+            // LightAccount: target is ABI-encoded as first param at [4:36]
+            target = abi.decode(userOp.callData[4:36], (address));
+        } else if (selector == EXECUTE_SELECTOR_KERNEL) {
+            // Kernel v3: execute(bytes32 mode, bytes executionCalldata)
+            // Layout: [4:36] mode | [36:68] offset=64 | [68:100] length | [100:...] abi.encodePacked(to, value, data)
+            if (userOp.callData.length < 120) revert PowersPaymaster__InvalidCallData();
+            bytes calldata execCalldata = userOp.callData[100:];
+            assembly {
+                // execCalldata.offset is the absolute calldata position of the packed 'to' address.
+                // shr(96, calldataload(...)) extracts the top 20 bytes as an address.
+                target := shr(96, calldataload(execCalldata.offset))
+            }
+        } else {
             revert PowersPaymaster__UnsupportedSelector();
         }
-        
-        address target = abi.decode(userOp.callData[4:36], (address));
+
         for (uint256 i = 0; i < sponsoredTargets.length; i++) {
             if (sponsoredTargets[i] == target) {
-                // Target is authorized, return success
                 return ("", 0);
             }
         }
 
-        // If we get here, the target was not in the sponsored list
         revert PowersPaymaster__TargetNotAuthorized();
     }
 }

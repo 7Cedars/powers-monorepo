@@ -10,6 +10,19 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'display': ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        'mono': ['"Commit Mono"', '"Courier New"', 'monospace'],
+      },
+      fontSize: {
+        'display': ['6rem', { lineHeight: '1.2', fontWeight: '400' }],      // 96px
+        'h1':      ['3rem', { lineHeight: '1.2', fontWeight: '400' }],      // 48px
+        'h2':      ['2rem', { lineHeight: '1.2', fontWeight: '400' }],      // 32px
+        'h3':      ['1.5rem', { lineHeight: '1.6', fontWeight: '400' }],    // 24px
+        'body':    ['1rem', { lineHeight: '1.6', fontWeight: '400' }],      // 16px
+        'label':   ['0.75rem', { lineHeight: '1.6', fontWeight: '400', letterSpacing: '0.05em' }], // 12px
+        'code':    ['0.875rem', { lineHeight: '1.6', fontWeight: '400' }],  // 14px
+      },
       textShadow: {
         'lg': '0 2px 4px rgba(0,0,0,0.8)',
       },

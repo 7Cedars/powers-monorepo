@@ -1,4 +1,4 @@
-// ok, what does this need to do? 
+// ok, what does this need to do?
 
 import { Status } from "@/context/types"
 import { useCallback, useEffect, useState } from "react"
@@ -6,8 +6,16 @@ import { GetBlockReturnType } from "wagmi/actions";
 import { wagmiConfig } from "@/context/wagmiConfig"
 import { getBlock } from "wagmi/actions";
 import { parseChainId } from "@/utils/parsers";
+
 import { toEurTimeFormat } from "@/utils/toDates";
 import { toFullDateFormat } from "@/utils/toDates";
+
+// On Arbitrum chains, block.number in Solidity returns the L1 block number (not the L2 block number).
+// So we must query the L1 parent chain to get the correct timestamp for a stored block number.
+export const L2_TO_L1_CHAIN_MAP: Record<number, number> = {
+  421614: 11155111, // Arbitrum Sepolia → Sepolia
+  42161:  1,        // Arbitrum One → Ethereum mainnet
+}
 
 type BlockTimestamp = {
   chainId: string
@@ -36,6 +44,7 @@ const bigintReviver = (key: string, value: any) => {
 
 // Helper function to safely load timestamps from localStorage
 const loadTimestampsFromStorage = (): Map<string, BlockTimestamp> => {
+  if (typeof window === 'undefined') return new Map()
   try {
     const localStore = localStorage.getItem("blockTimestamps")
     // console.log("@useBlocks, raw localStorage data: ", localStore)
@@ -91,7 +100,7 @@ const loadTimestampsFromStorage = (): Map<string, BlockTimestamp> => {
 export const useBlocks = () => {
   const [status, setStatus ] = useState<Status>("idle")
   const [error, setError] = useState<any | null>(null)
-  const [timestamps, setTimestamps] = useState<Map<string, BlockTimestamp>>(new Map())
+  const [timestamps, setTimestamps] = useState<Map<string, BlockTimestamp>>(() => loadTimestampsFromStorage())
   
   const fetchTimestamps = useCallback(
     async (blockNumbers: bigint[], chainId: string) => {
@@ -106,9 +115,11 @@ export const useBlocks = () => {
         const cacheKey = `${chainId}:${blockNumber}`
         if (saved.size == 0 || saved.get(cacheKey) == undefined) {
           try {
+            const contractChainId = parseChainId(chainId)
+            const lookupChainId = (L2_TO_L1_CHAIN_MAP[contractChainId] ?? contractChainId) as typeof contractChainId
             const block = await getBlock(wagmiConfig, {
               blockNumber: BigInt(blockNumber),
-              chainId: parseChainId(chainId)
+              chainId: lookupChainId
             })
             const blockParsed = block as GetBlockReturnType
             
@@ -146,9 +157,8 @@ export const useBlocks = () => {
   )
 
   useEffect(() => {
-    if (status == "success") {
-      const saved = loadTimestampsFromStorage()
-      setTimestamps(saved)
+    if (status === "success" || status === "error") {
+      setTimestamps(loadTimestampsFromStorage())
     }
   }, [status])
   
