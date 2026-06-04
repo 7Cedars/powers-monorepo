@@ -26,7 +26,7 @@ import {
   getActionDataForChain,
   createAllFlowsLayout,
   FlowGroupLayoutData,
-} from '../../../../components/FlowNodes'
+} from './FlowNodes'
 
 const VIEWPORT_STORAGE_KEY = 'powersflow-viewport'
 

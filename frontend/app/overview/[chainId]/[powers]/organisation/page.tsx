@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { usePowersStore } from '@/context/store'
 import { CommunicationChannels } from '@/context/types'
-import { OrgMetadata } from '@/components/forum/OrgMetadata'
+import { OrgMetadata } from '@/components/OrgMetadata'
 import { Button } from '@/components/Button'
 
 export default function OrganisationPage() {

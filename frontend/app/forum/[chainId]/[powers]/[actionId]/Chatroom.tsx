@@ -7,7 +7,6 @@ import { useEffectiveAddress } from '@/hooks/useEffectiveAddress'
 import { useConnection, useSignMessage } from 'wagmi'
 import type { Conversation, DecodedMessage, Identifier } from '@xmtp/browser-sdk'
 import { IdentifierKind } from '@xmtp/browser-sdk'
-import { SearchFilterSort } from './SearchFilterSort'
 import { useAddressDisplay } from '@/hooks/useAddressDisplay'
 
 function MemberItem({ address }: { address: string }) {
