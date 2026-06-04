@@ -21,6 +21,7 @@ export const usePowersLive = (
     const unwatch = publicClient.watchContractEvent({
       address: powersAddress,
       abi: powersAbi,
+      pollingInterval: 30_000,
       onLogs: (logs) => {
         for (const log of logs) {
           void handleLog(log, powersAddress, chainId)

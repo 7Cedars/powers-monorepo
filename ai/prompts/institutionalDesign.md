@@ -88,6 +88,28 @@ These patterns appear in `solidity/governance/examples/` and `solidity/test/Test
 **Structure:** Powers + ERC-4337 paymaster for gasless governance.  
 **Use when:** Lowering the technical barrier to participation is a priority.
 
+### Federated Sub-org Governance
+**Reference:** `solidity/governance/claude/global-environmental-movement/Deploy.s.sol`  
+**Structure:** A parent organisation spawns fully-constituted child organisations from a pre-loaded `PowersFactory`. Each child holds a role at the parent (e.g. "Recognised Sub-org"), giving it a formal vote in parent-level governance. Children call parent mandates via `ExternalAction_Simple`.  
+**Use when:** A movement, protocol, or federation needs autonomous sub-units that remain formally connected to a parent constitution.
+
+**Key mandates and wiring:**
+
+1. **Pre-loaded factory** — Deploy a `PowersFactory`, call `addMandates(subOrgConstitution)` and `addFlows(subOrgFlows)` before transferring ownership to the parent Powers. Every subsequent `createPowers(name)` call deploys a fully-constituted child. Transfer factory ownership to parent Powers after loading.
+
+2. **Spawn + register in one flow** — Chain two mandates:
+   - `BespokeAction_Simple → factory.createPowers(name)` returns the child address.
+   - `BespokeAction_OnReturnValue → parentPowers.assignRole(childRoleId, returnValue)` reads the child address from step 1 and assigns it a role at the parent. Config: `staticPrefix = abi.encode(childRoleId)`, `priorMandateId = createMandateId`, `dynamicParams = []`, `staticSuffix = abi.encode()`.
+
+3. **Child-to-parent governance calls** — Assign the child Powers contract address a role at the parent (step 2). The child's constitution includes an `ExternalAction_Simple` mandate targeting the parent's approval/ratification mandate. When the child executes this mandate, the parent sees the caller as the child's contract address, which holds the child role — so `allowedRole` checks pass. Config: `abi.encode(parentPowersAddress, parentMandateId, description, params)`.
+
+4. **Placeholder patching problem** — The sub-org factory template is built *before* the parent constitution (because it must be loaded into the factory before the factory is constituted). At that point the parent's mandate IDs are not yet known. Solution: use `address(0)` / `uint16(0)` placeholders in the sub-org's `ExternalAction_Simple` config, then call `factory.replaceMandate(index, updatedInitData)` in the deploy script *after* building the parent constitution but *before* calling `factory.transferOwnership(address(parentPowers))`. The deployer still owns the factory in that window. See §8 of `ai/templates/deployScript.md` for the deploy order.
+
+**Design notes:**
+- One-sub-org-one-vote (regardless of local membership size) is a deliberate design choice that protects small sub-orgs from being outvoted. Document this explicitly in the spec.
+- The sub-org constitution template is frozen at factory-deploy time. Changing the template for future sub-orgs requires deploying a new factory and adopting a new `BespokeAction_Simple → newFactory.createPowers()` mandate at the parent level.
+- The `ElectionRegistry` used inside the sub-org template must be deployed before the sub-org constitution is built; its address is baked into the template at build time. All sub-orgs from the same factory share the same `ElectionRegistry` instance.
+
 ---
 
 ## 3. Mandate Catalogue
@@ -258,8 +280,14 @@ config: abi.encode(
 **Use when:** Governance needs ability to remove outdated or unsafe mandates
 
 #### `PauseMandates`
-**Purpose:** Temporarily suspend mandates without removing them.  
-**Use when:** Emergency pause capability
+**Purpose:** Pause **or restart** specific mandates at pre-configured flow positions. A single mandate handles both directions — the caller provides `bool paused` at runtime.  
+**Config:** `abi.encode(uint8[] indexFlow, uint8[] indexMandate)` — the flow and mandate positions this instance is allowed to target. Fixed at deploy time; a `PauseMandates` instance cannot affect positions outside its configured list.  
+**inputParams:** `bool paused` — `true` revokes the target mandates; `false` re-adopts them from their stored config and updates the flow indices.  
+**Use when:** Emergency pause with guaranteed restart path. Assign to a high-trust role with no voting period.  
+**Critical notes:**
+- The restart path (`paused = false`) re-adopts the mandate with its *original* config — parameters cannot be changed during a pause/restart cycle, preventing emergency powers from quietly modifying governance.
+- The flow/mandate position indices are 0-based within the `flows` array. Verify indices after adding mandates via reform, as `Adopt_Mandates` may shift positions.
+- Deploy separate `PauseMandates` instances for logically distinct groups (e.g., one for treasury execution, one for membership mandates) to keep emergency scope explicit.
 
 #### `MandatePackage`
 **Purpose:** Adopt a bundle of mandates in a single governance action. The bundle is defined at constructor time.  

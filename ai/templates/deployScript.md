@@ -290,3 +290,59 @@ contract Deploy is DeployHelpers {
 - [ ] Veto timelock > voting period of the proposal being vetoed
 - [ ] All external helper contracts (Nominees, ElectionRegistry, etc.) have `transferOwnership(address(powers))` called
 - [ ] `MAJOR`, `MINOR`, `PATCH` constants are set to 0, 1, 7
+
+---
+
+## Federated deploy order (parent + factory pattern)
+
+When deploying a parent organisation that spawns child organisations via `PowersFactory`, there is a circular reference problem: the child template needs the parent's address and mandate IDs, but the factory must be loaded before the parent constitution is built (because its address needs to be known for the spawn mandate config).
+
+**Correct deploy order:**
+
+```
+1. Deploy all helper contracts (ElectionRegistry, Nominees, etc.)
+2. Deploy the parent Powers (empty — not yet constituted)
+3. Build the sub-org (child) constitution using address(0) / uint16(0) as placeholders
+   wherever the parent's address or mandate IDs are needed.
+4. Deploy the factory. Load the sub-org constitution via addMandates() + addFlows().
+   The factory owner is still the deployer at this point.
+5. Build the parent constitution. This sets any mandate IDs needed for the child template
+   (e.g. the sub-org ratification mandate ID). Store these as state variables.
+6. PATCH: call factory.replaceMandate(index, updatedInitData) for every mandate that
+   had a placeholder. Use the real parent address and mandate IDs from step 5.
+   *** This MUST happen before transferOwnership in step 7 ***
+7. Constitute the parent: powers.constitute(constitution) + powers.closeConstitute(...)
+8. Transfer ownership of ALL helper contracts and the factory to the parent Powers:
+   electionRegistry.transferOwnership(address(powers))
+   factory.transferOwnership(address(powers))
+   etc.
+```
+
+**Why the order matters:** After step 8, the factory is owned by the parent Powers contract. `factory.replaceMandate()` is `onlyOwner`, so calling it post-transfer requires going through parent governance — which means adding a governed mandate for it. Doing the patch in step 6 (while the deployer still owns the factory) avoids needing a dedicated reform mandate just for deployment wiring.
+
+**Tracking placeholder indices:** Keep a comment in `_buildSubOrgConstitution()` noting which array index each placeholder mandate occupies (0-based). The patch function must use the exact same index. A mismatch silently corrupts the wrong mandate.
+
+```solidity
+// In run(), after _buildParentConstitution() sets subOrgRatifyMandateId:
+function _fixSubOrgRatificationMandate() internal {
+    // Rebuild the exact conditions used in _buildSubOrgConstitution() Flow D step 2.
+    PowersTypes.Conditions memory c;
+    c.allowedRole   = 1;
+    c.needFulfilled = 13; // proposeRatifyId — fixed position in sub-org template
+    c.timelock      = minutesToBlocks(1 * 24 * 60, helperConfig.getBlocksPerHour(block.chainid));
+
+    vm.startBroadcast();
+    subOrgFactory.replaceMandate(13, PowersTypes.MandateInitData({
+        nameDescription: "Sub-org: Send Parent Ratification — ...",
+        targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
+        config: abi.encode(
+            address(powers),        // real parent address
+            subOrgRatifyMandateId,  // real mandate ID
+            "description",
+            params
+        ),
+        conditions: c
+    }));
+    vm.stopBroadcast();
+}
+```
