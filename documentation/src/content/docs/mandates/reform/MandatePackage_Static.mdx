@@ -1,0 +1,47 @@
+---
+title: "MandatePackage_Static"
+description: "MandatePackage_Static is a reform mandate that adopts a fully pre-configured set of mandates into a Powers organisation in a single transaction, then self-destructs."
+---
+
+MandatePackage_Static is a reform mandate that installs a fully pre-configured bundle of mandates into a Powers organisation. Unlike `MandatePackage`, the complete `MandateInitData` for each mandate is defined at constructor time and stored in the contract — there is no dynamic generation at execution time.
+
+## Overview
+
+This mandate is the static counterpart to `MandatePackage`. It is deployed with a complete, fixed set of mandate configurations, adopted by a Powers organisation, and executed once to install the bundle. After installation it revokes itself.
+
+It is useful when the full governance configuration is known at deploy time and no customisation is needed at execution.
+
+## Configuration
+
+This mandate takes no configuration at adoption time. All mandate configurations are passed to the constructor at deployment as an array of `MandateInitData` structs.
+
+## Usage
+
+### Proposing an Action
+
+This mandate requires no input parameters. The caller simply executes it to trigger the bundle installation.
+
+### Execution Flow
+
+1.  **Adoption**
+    *   Iterates through the stored `MandateInitData` array.
+    *   Generates an `adoptMandate` call for each entry.
+
+2.  **Self-Revocation**
+    *   Appends a final `revokeMandate` call targeting itself, removing the package from the Powers contract after use.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Returns the pre-configured adoption calls plus a final self-revocation call.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

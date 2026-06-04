@@ -39,6 +39,12 @@ export default function NewActionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSelectInput, setShowSelectInput] = useState(false)
   const [activeInfoTab, setActiveInfoTab] = useState<'conditions' | 'flow'>('conditions')
+  const [hoverReady, setHoverReady] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setHoverReady(true), 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   // Redirect to org home if powers not loaded
   useEffect(() => {
@@ -229,21 +235,17 @@ export default function NewActionPage() {
     <div className="flex-1 flex flex-col bg-background scanlines font-mono">
       <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 overflow-y-auto">
         <div className="flex-1 flex flex-col border border-border">
-          {/* Banner — flush above header */}
+          {/* Banner with overlay */}
           <div
-            className="h-32 relative overflow-hidden flex-shrink-0"
+            className={`aspect-[2/1] relative overflow-hidden flex-shrink-0 cursor-default${hoverReady ? ' group' : ''}`}
             style={{
               backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
           >
-            <div className="absolute inset-0 bg-background/20" />
-          </div>
-
-          {/* Header */}
-          <div className="flex items-center px-6 py-3 border-b border-border bg-muted/50">
-            <div className="min-w-0 flex-1">
+            <div className="absolute inset-0 bg-background/80 group-hover:bg-background/15 transition-all duration-500" />
+            <div className="absolute bottom-0 left-0 right-0 px-6 py-4 group-hover:opacity-0 transition-opacity duration-500">
               <h3 className="text-foreground text-sm truncate">New Action — #{mandate.index.toString()} {mandateName}</h3>
               {mandateDesc && <p className="text-muted-foreground text-xs truncate">{mandateDesc}</p>}
             </div>

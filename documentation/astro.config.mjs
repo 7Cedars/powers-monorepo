@@ -11,7 +11,51 @@ export default defineConfig({
 	},
 	integrations: [
 		starlight({
-			title: 'Powers',
+			title: 'Powers Protocol',
+			logo: {
+				src: './src/assets/powers-icon.svg',
+				alt: 'Powers Protocol',
+			},
+			customCss: ['./src/styles/custom.css'],
+			components: {
+				ThemeSelect: './src/components/ThemeSelect.astro',
+			},
+			head: [
+				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/CormorantGaramond-400-latin.woff2', crossorigin: true } },
+				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-400-Regular.otf', crossorigin: true } },
+				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-700-Regular.otf', crossorigin: true } },
+				{
+					tag: 'script',
+					content: `
+						function setupHeadingAnchors() {
+							document.querySelectorAll('.sl-anchor-link').forEach(anchor => {
+								if (anchor.dataset.copyBound) return;
+								anchor.dataset.copyBound = 'true';
+								anchor.addEventListener('click', (e) => {
+									e.preventDefault();
+									const url = location.origin + location.pathname + anchor.getAttribute('href');
+									const markCopied = () => {
+										anchor.dataset.copied = 'true';
+										setTimeout(() => delete anchor.dataset.copied, 2000);
+									};
+									navigator.clipboard.writeText(url).then(markCopied).catch(() => {
+										try {
+											const el = Object.assign(document.createElement('textarea'), { value: url });
+											document.body.appendChild(el);
+											el.select();
+											document.execCommand('copy');
+											el.remove();
+											markCopied();
+										} catch {}
+									});
+								});
+							});
+						}
+						document.addEventListener('DOMContentLoaded', setupHeadingAnchors);
+						document.addEventListener('astro:page-load', setupHeadingAnchors);
+					`,
+				},
+			],
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/7Cedars/powers' }],
 			sidebar: [
 				{
@@ -65,7 +109,13 @@ export default defineConfig({
 								{ label: 'Bespoke Action (Advanced)', slug: 'mandates/executive/bespokeaction_advanced' },
 								{ label: 'Bespoke Action (On Return Value)', slug: 'mandates/executive/bespokeaction_onreturnvalue' },
 								{ label: 'Bespoke Action (Simple)', slug: 'mandates/executive/bespokeaction_simple' },
+								{ label: 'Check External Action State', slug: 'mandates/executive/checkexternalactionstate' },
+								{ label: 'External Action (Flexible)', slug: 'mandates/executive/externalaction_flexible' },
+								{ label: 'External Action (On Return Value)', slug: 'mandates/executive/externalaction_onreturnvalue' },
+								{ label: 'External Action (Simple)', slug: 'mandates/executive/externalaction_simple' },
 								{ label: 'Open Action', slug: 'mandates/executive/openaction' },
+								{ label: 'Preset Actions', slug: 'mandates/executive/presetactions' },
+								{ label: 'Preset Actions (On Own Powers)', slug: 'mandates/executive/presetactions_onownpowers' },
 								{ label: 'Statement of Intent', slug: 'mandates/executive/statementofintent' },
 							],
 						},
@@ -73,6 +123,13 @@ export default defineConfig({
 							label: 'Integrations',
 							collapsed: true,
 							items: [
+								{
+									label: 'Chainlink',
+									collapsed: true,
+									items: [
+										{ label: 'Chainlink Functions (Open)', slug: 'mandates/integrations/chainlink/chainlinkfunctions_open' },
+									],
+								},
 								{
 									label: 'Election List',
 									collapsed: true,
@@ -85,11 +142,20 @@ export default defineConfig({
 									],
 								},
 								{
-									label: 'Github',
+									label: 'ERC721',
 									collapsed: true,
 									items: [
-										{ label: 'Assign Role With Sig', slug: 'mandates/integrations/github/github_assignrolewithsig' },
-										{ label: 'Claim Role With Sig', slug: 'mandates/integrations/github/github_claimrolewithsig' },
+										{ label: 'Gated Access', slug: 'mandates/integrations/erc721/erc721_gatedaccess' },
+									],
+								},
+								{
+									label: 'Governed Token',
+									collapsed: true,
+									items: [
+										{ label: 'Burn To Access', slug: 'mandates/integrations/governed-token/governedtoken_burntoaccess' },
+										{ label: 'Collect Split Payment', slug: 'mandates/integrations/governed-token/governedtoken_collectsplitpayment' },
+										{ label: 'Gated Access', slug: 'mandates/integrations/governed-token/governedtoken_gatedaccess' },
+										{ label: 'Mint Encoded Token', slug: 'mandates/integrations/governed-token/governedtoken_mintencodedtoken' },
 									],
 								},
 								{
@@ -116,7 +182,17 @@ export default defineConfig({
 										{ label: 'Exec Transaction (On Return Value)', slug: 'mandates/integrations/safe/safe_exectransaction_onreturnvalue' },
 										{ label: 'Recover Tokens', slug: 'mandates/integrations/safe/safe_recovertokens' },
 										{ label: 'Safe Allowance Action', slug: 'mandates/integrations/safe/safeallowance_action' },
+										{ label: 'Safe Allowance Preset Transfer', slug: 'mandates/integrations/safe/safeallowance_presettransfer' },
 										{ label: 'Safe Allowance Transfer', slug: 'mandates/integrations/safe/safeallowance_transfer' },
+									],
+								},
+								{
+									label: 'Slate Registry',
+									collapsed: true,
+									items: [
+										{ label: 'Add Slate', slug: 'mandates/integrations/slate-registry/slateregistry_addslate' },
+										{ label: 'Execute Result', slug: 'mandates/integrations/slate-registry/slateregistry_executeresult' },
+										{ label: 'Remove Slate', slug: 'mandates/integrations/slate-registry/slateregistry_removeslate' },
 									],
 								},
 								{
@@ -131,11 +207,22 @@ export default defineConfig({
 									label: 'ZK Passport',
 									collapsed: true,
 									items: [
-										{ label: 'Select', slug: 'mandates/integrations/zkpassport/zkpassport_select' },
+										{ label: 'ZKPassport Check', slug: 'mandates/integrations/zkpassport/zkpassport_check' },
 									],
 								},
 							],
 						},
+					{
+						label: 'Reform',
+						collapsed: true,
+						items: [
+							{ label: 'Adopt Mandates', slug: 'mandates/reform/adopt_mandates' },
+							{ label: 'Mandate Package', slug: 'mandates/reform/mandatepackage' },
+							{ label: 'Mandate Package (Static)', slug: 'mandates/reform/mandatepackage_static' },
+							{ label: 'Pause Mandates', slug: 'mandates/reform/pausemandates' },
+							{ label: 'Revoke Mandates', slug: 'mandates/reform/revoke_mandates' },
+						],
+					},
 					],
 				},
 				{

@@ -93,7 +93,7 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
         <div className="w-full flex flex-nowrap items-center justify-between max-w-4xl gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4">
             <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider truncate hover:text-foreground/80 transition-colors">{
-                powers.name ? powers.name : "FORUM"
+                powers.name ? powers.name : "Forum"
             } 
             </a>
           </div> 
@@ -286,11 +286,11 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
             </div>
             
             {/* Divider */}
-            <div className="border-t border-border" /> 
-            
+            <div className="border-t border-border" />
+
             {/* Divider */}
             <div className="border-t border-border" />
-            
+
             {/* Theme Toggle */}
             <div className="space-y-3">
               <span className="text-xs text-muted-foreground font-mono uppercase">Theme</span>

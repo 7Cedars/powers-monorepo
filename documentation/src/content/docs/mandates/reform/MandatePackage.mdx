@@ -1,0 +1,65 @@
+---
+title: "MandatePackage"
+description: "MandatePackage is a reform mandate that adopts a predefined set of mandates into a Powers organisation in a single transaction, then self-destructs."
+---
+
+MandatePackage is a reform mandate that installs a curated bundle of mandates into a Powers organisation in one transaction. After all mandates have been adopted, the package revokes itself — it is designed as a one-time deployment tool.
+
+## Overview
+
+This mandate is intended to be deployed by a developer and then adopted by a Powers organisation (typically via `Adopt_Mandates`). When executed, it installs its bundled mandates and then calls `revokeMandate` on itself, cleaning up after use.
+
+The specific set of mandates it installs is defined in the `getNewMandates` function, which can be overridden in subclasses to create custom packages. The base implementation installs three mandates:
+1. **StatementOfIntent** — For community proposals (role 1, quorum 20%, majority 66%, 1200 block voting period).
+2. **Veto** — For admins to veto proposals (role 0, requires the StatementOfIntent action to be fulfilled first).
+3. **OpenAction** — For executing approved proposals (role 2, quorum 20%, majority 66%, requires StatementOfIntent fulfilled and Veto not fulfilled).
+
+## Configuration
+
+This mandate takes no configuration at adoption time. The mandate addresses it installs are passed to the constructor at deployment:
+
+- `mandateAddresses[0]` — OpenAction mandate address
+- `mandateAddresses[1]` — StatementOfIntent mandate address
+
+## Usage
+
+### Proposing an Action
+
+This mandate requires no input parameters. The caller simply executes it to trigger the bundle installation.
+
+### Execution Flow
+
+1.  **Bundle Generation**
+    *   Calls `getNewMandates` to produce the `MandateInitData` for each mandate to install.
+    *   Uses the current `mandateCounter` to correctly sequence mandate IDs.
+
+2.  **Adoption**
+    *   Generates `adoptMandate` calls for each mandate in the bundle.
+
+3.  **Self-Revocation**
+    *   Appends a final `revokeMandate` call targeting itself, removing the package from the Powers contract after use.
+
+## Technical Specifications
+
+### Functions
+
+#### `getNewMandates`
+```solidity
+function getNewMandates(address[] memory mandateAddresses, address powers, uint16 mandateCount)
+    public view virtual returns (PowersTypes.MandateInitData[] memory)
+```
+-   Builds the mandate init data for the bundle.
+-   Can be overridden in subclasses to create different packages.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Calls `getNewMandates`.
+-   Returns adoption calls plus the final self-revocation call.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

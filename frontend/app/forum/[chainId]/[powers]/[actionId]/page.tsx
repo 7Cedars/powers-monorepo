@@ -29,6 +29,12 @@ export default function ActionPage() {
   const [activeTab, setActiveTab] = useState<Tab>('action')
   const [chatroomMode, setChatroomMode] = useState<ChatroomMode>('mandate')
   const [isLoading, setIsLoading] = useState(true)
+  const [hoverReady, setHoverReady] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setHoverReady(true), 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   // Redirect to overview page if powers data is not loaded yet
   useEffect(() => {
@@ -141,26 +147,24 @@ export default function ActionPage() {
     <div className="flex-1 flex flex-col bg-background scanlines font-mono">
       <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-2 sm:px-4 py-4 gap-4 overflow-hidden">
         <div className="flex-1 flex flex-col border border-border overflow-hidden">
-          {/* Banner */}
+          {/* Banner with overlay */}
           <div
-            className="h-32 relative overflow-hidden flex-shrink-0"
+            className={`aspect-[2/1] relative overflow-hidden flex-shrink-0 cursor-default${hoverReady ? ' group' : ''}`}
             style={{
               backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
           >
-            <div className="absolute inset-0 bg-background/20" />
-          </div>
-
-          {/* Header */}
-          <div className="px-6 py-3 bg-muted/50 border-b border-border">
-            <h3 className="text-foreground text-sm truncate">
-              #{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] : ''}
-            </h3>
-            <p className="text-muted-foreground text-xs truncate">
-              {mandate?.nameDescription ? mandate.nameDescription.split(':')[1]?.trim() || '' : ''}
-            </p>
+            <div className="absolute inset-0 bg-background/80 group-hover:bg-background/15 transition-all duration-500" />
+            <div className="absolute bottom-0 left-0 right-0 px-6 py-4 group-hover:opacity-0 transition-opacity duration-500">
+              <h3 className="text-foreground text-sm truncate">
+                #{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] : ''}
+              </h3>
+              <p className="text-muted-foreground text-xs truncate">
+                {mandate?.nameDescription ? mandate.nameDescription.split(':')[1]?.trim() || '' : ''}
+              </p>
+            </div>
           </div>
 
           {/* Tab nav — underline style, matching forum main page */}

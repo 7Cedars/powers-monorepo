@@ -21,16 +21,14 @@ When adopting an ElectionList_CleanUpVoteMandate instance, the following paramet
 
 ### Proposing an Action
 
-When calling the mandate, the inputs must match exactly the inputs used to create the election (to ensure the Action ID matches):
+When calling the mandate, the input must match exactly the input used to create the election (to ensure the Action ID matches):
 
 1.  `Title` (string): The title of the election.
-2.  `StartBlock` (uint48): The start block of the election.
-3.  `EndBlock` (uint48): The end block of the election.
 
 ### Execution Flow
 
 1.  **Lookup**
-    *   Re-computes the `actionId` of the original `createVote` action using the inputs (`Title`, `StartBlock`, `EndBlock`) and the configured `CreateVoteMandate_Id`.
+    *   Re-computes the `actionId` of the original `createVote` action using the `Title` and the configured `CreateVoteMandate_Id`.
     *   Queries the Powers contract for the `returnData` of that action. The return data contains the ID of the deployed vote mandate.
 
 2.  **Revocation**
@@ -46,7 +44,7 @@ When calling the mandate, the inputs must match exactly the inputs used to creat
 function initializeMandate(...) public override
 ```
 -   Initializes the creator mandate ID.
--   Sets input parameters to `(string Title, uint48 StartBlock, uint48 EndBlock)`.
+-   Sets input parameters to `(string Title)`.
 
 #### `handleRequest`
 ```solidity

@@ -1,0 +1,69 @@
+---
+title: "ExternalAction_OnReturnValue"
+description: "ExternalAction_OnReturnValue is an executive mandate that retrieves the return data from a previously executed mandate and uses it to submit a request to an external Powers instance."
+---
+
+ExternalAction_OnReturnValue is an executive mandate that chains a previous action's output into a cross-contract governance request. It retrieves the return data from a parent mandate's execution and uses it as part of the calldata sent to an external Powers instance.
+
+## Overview
+
+This mandate combines the chaining behaviour of `BespokeAction_OnReturnValue` with the cross-contract routing of `ExternalAction_Flexible`. The target Powers address and mandate ID are provided at execution time, while the return data from a previously executed mandate is sandwiched between two static parameter blocks and forwarded as the calldata.
+
+## Configuration
+
+When adopting an ExternalAction_OnReturnValue instance, the following parameters are required:
+
+1.  `paramsBefore` (bytes): Encoded data to place *before* the parent mandate's return value in the forwarded calldata.
+2.  `Params` (string[]): UI hints for any additional parameters the user provides at execution time (beyond `PowersTarget` and `MandateIdTarget`).
+3.  `parentMandateId` (uint16): The ID of the mandate whose return data will be retrieved and forwarded.
+4.  `paramsAfter` (bytes): Encoded data to place *after* the parent mandate's return value in the forwarded calldata.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the following inputs must be provided:
+
+1.  `PowersTarget` (address): The address of the external Powers contract to submit the request to.
+2.  `MandateIdTarget` (uint16): The mandate ID on the target Powers contract.
+3.  Additional parameters as defined in `Params`.
+
+### Execution Flow
+
+1.  **Return Data Retrieval**
+    *   Recomputes the parent action ID using `parentMandateId`, the current `mandateCalldata`, and `nonce`.
+    *   Retrieves the return data from that action stored on the local Powers contract.
+
+2.  **Calldata Assembly**
+    *   Concatenates: `paramsBefore + returnData + paramsAfter`.
+
+3.  **Request Submission**
+    *   Encodes a call to `IPowers.request(mandateIdTarget, assembledCalldata, nonce, "")` and submits it to `PowersTarget`.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Stores the static parameter blocks and parent mandate ID.
+-   Sets input parameters to `[address PowersTarget, uint16 MandateIdTarget]` prepended to the configured `Params`.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view virtual override returns (...)
+```
+-   Retrieves the parent action's return data.
+-   Assembles and returns the cross-contract request call.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. If the parent action has no return data or the target contract rejects the request, the transaction will fail at the external call level.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |
