@@ -4,6 +4,7 @@ import { HeartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image'
 import { DiscordIcon, TelegramIcon, GithubIcon } from '@/components/MetadataLinks';
 import { useRouter, usePathname } from 'next/navigation';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function Footer() {
   const router = useRouter();
@@ -68,6 +69,11 @@ export function Footer() {
             <span className="text-xs text-muted-foreground">·</span>
             <a href="https://github.com/7Cedars/powers/tree/main/solidity" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Github</a>
           </div>
+        </div>
+
+        {/* Theme toggle */}
+        <div className="border-t border-border pt-6 flex justify-center">
+          <ThemeToggle />
         </div>
 
       </div>

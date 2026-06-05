@@ -1,62 +1,48 @@
 "use client";
 
-import Image from 'next/image'
-import { ArrowUpRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
-  
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { DemoFlow } from './DemoFlow';
 
-export function SectionIntro() { 
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  // Avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Determine which image to use based on theme
-  const imageSrc = mounted && theme === 'dark' 
-    ? "/powers101_dark.png" 
-    : "/powers101_light.png";
+export function SectionIntro() {
 
   return (
-    <section id="intro" className="w-full min-h-screen flex flex-col justify-between items-center bg-gradient-to-b from-slate-800 via-slate-700 to-slate-600 snap-start snap-always p-4">
+    <section id="intro" className="w-full flex flex-col items-center gap-4 bg-muted/25 border-t border-border px-4 py-8">
         {/* title  */}
-          <section className="w-full flex flex-col justify-center items-center pt-12">
-              <div className="w-full flex flex-col justify-center items-center md:text-4xl text-3xl font-mono font-bold text-white max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
+          <section className="w-full flex flex-col justify-center items-center pt-4">
+              <div className="w-full flex flex-col justify-center items-center md:text-4xl text-3xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
                 Composable Governance
               </div>
-              <div className="w-full flex justify-center items-center md:text-xl text-lg font-mono text-slate-300 max-w-4xl text-center pt-1">
-                Create resilient and dynamic governance systems by assigning powers to roles and configuring cross-role relationships.
+              <div className="w-full flex justify-center items-center md:text-lg text-base font-mono text-muted-foreground max-w-3xl text-center pt-1">
+                Most on-chain organisations run on a single multisig or a monolithic Governor contract. One group holds the keys. Proposals pass or fail in a single vote. There are no checks, no balances, no separation between who proposes, who deliberates, and who executes.
+                <br /><br />
+                Powers Protocol changes that. Governance is assembled from modular, role-restricted components — mandates — that can be combined into any structure an organisation requires.
               </div>
           </section>
 
-          {/* Image  */}
-          <section className="w-full max-w-6xl flex flex-col justify-center items-center relative aspect-video my-8"> 
-            <Image 
-                src={imageSrc} 
-                className="p-2" 
-                style={{objectFit: "contain"}}
-                fill={true}
-                alt="Screenshot Powers App"
-                priority
-                >
-            </Image>
+          {/* Interactive flow demo */}
+          <section className="relative w-full border border-border overflow-hidden group" style={{ height: '500px' }}>
+            <DemoFlow />
+            <div className="absolute inset-0 flex items-end justify-center pb-5 pointer-events-none opacity-100 group-hover:opacity-0 transition-opacity duration-500">
+              <span className="bg-background/90 border border-border px-5 py-2 font-mono text-xs text-muted-foreground uppercase tracking-wider">
+                Drag to pan · Scroll or pinch to zoom
+              </span>
+            </div>
           </section>
 
           {/* documentation link */}
-          <section className="w-full max-w-4xl flex flex-row justify-center items-center p-4"> 
-              <a className="w-full h-fit flex flex-row justify-center items-center text-center py-3 px-12 sm:text-xl text-lg font-mono text-white hover:text-slate-300 border border-slate-600 hover:border-white text-center uppercase tracking-wider transition-colors"
+          <section className="w-full max-w-4xl flex flex-row justify-center items-center py-2">
+              <a className="w-full h-fit flex flex-row justify-center items-center text-center py-3 px-12 sm:text-xl text-lg font-mono bg-muted border border-border uppercase tracking-wider transition-colors"
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = '#CD5E20')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = '')}
                     href={`https://powers-docs.vercel.app/welcome`} target="_blank" rel="noopener noreferrer">
-                        Read the documentation 
+                        Read the documentation
               </a>
           </section>
 
       {/* arrow down */}
-      <div className="flex flex-col align-center justify-end pb-8"> 
+      <div className="flex flex-col align-center justify-end">
         <ChevronDownIcon
-            className="w-16 h-16 text-slate-400" 
+            className="w-16 h-16 text-muted-foreground"
         /> 
       </div>
 

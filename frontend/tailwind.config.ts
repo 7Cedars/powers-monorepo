@@ -11,8 +11,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        'display': ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        'display': ['"Commit Mono"', '"Courier New"', 'monospace'],
         'mono': ['"Commit Mono"', '"Courier New"', 'monospace'],
+        'sans': ['"Commit Mono"', '"Courier New"', 'monospace'],
+        'serif': ['"Commit Mono"', '"Courier New"', 'monospace'],
       },
       fontSize: {
         'display': ['6rem', { lineHeight: '1.2', fontWeight: '400' }],      // 96px

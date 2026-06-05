@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "../context/Providers"
 import "./globals.css";
+import "reactflow/dist/style.css";
 import { ThemeProvider } from "next-themes";
 import { ThemeColorMeta } from "../components/ThemeColorMeta";
 
