@@ -118,5 +118,5 @@ description: "Governance design specification for [Organisation Name]"
 - **Actions script:** `solidity/governance/examples/actions/[OrgName]Actions.s.sol`
 - **Runners script:** `solidity/governance/examples/actions/[OrgName]Runners.s.sol`
 - **Test file:** `solidity/test/governance/[OrgName].t.sol`
-- **Mandate version:** MAJOR=0, MINOR=1, PATCH=7
+- **Mandate version:** MAJOR=0, MINOR=1, PATCH=8
 - **Mandate nameDescription strings must match exactly across all four files.**

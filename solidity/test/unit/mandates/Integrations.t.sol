@@ -249,28 +249,35 @@ contract SafeAllowanceTest is TestSetupIntegrations {
         IPowers(address(daoMock)).setTreasury(payable(treasury));
 
         // Enable the allowance module on the Safe
-        bytes memory signature = abi.encodePacked(
-            uint256(uint160(address(daoMock))), // r = address of the signer (powers contract)
-            uint256(0), // s = 0
-            uint8(1) // v = 1 This is a type 1 call. See Safe.sol for details.
+        bytes memory enableModuleCalldata = abi.encodeWithSelector(
+            ModuleManager.enableModule.selector, helperConfig.getSafeAllowanceModule(block.chainid)
         );
 
+        // Compute the tx hash and pre-approve it as daoMock (the Safe owner).
+        // Using approveHash is version-agnostic: the Sepolia fork runs Safe 1.4.0 bytecode whose
+        // v=1 check passes executor through a different code path than the local library expects.
+        bytes32 enableModuleTxHash = Safe(treasury).getTransactionHash(
+            treasury, 0, enableModuleCalldata,
+            Enum.Operation.Call,
+            0, 0, 0, address(0), address(0),
+            Safe(treasury).nonce()
+        );
         vm.prank(address(daoMock));
-        Safe(treasury)
-            .execTransaction(
-                treasury, // The internal transaction's destination
-                0, // The internal transaction's value
-                abi.encodeWithSelector(
-                    ModuleManager.enableModule.selector, helperConfig.getSafeAllowanceModule(block.chainid)
-                ),
-                Enum.Operation.Call, // operation = Call
-                0, // safeTxGas
-                0, // baseGas
-                0, // gasPrice
-                address(0), // gasToken
-                payable(address(0)), // refundReceiver
-                signature // the signature constructed above
-            );
+        Safe(treasury).approveHash(enableModuleTxHash);
+
+        // v=1 approved-hash signature; no prank needed since hash is pre-approved.
+        bytes memory signature = abi.encodePacked(
+            uint256(uint160(address(daoMock))),
+            uint256(0),
+            uint8(1)
+        );
+        Safe(treasury).execTransaction(
+            treasury, 0, enableModuleCalldata,
+            Enum.Operation.Call,
+            0, 0, 0,
+            address(0), payable(address(0)),
+            signature
+        );
 
         // Now that the treasury is set, we can constitute the child DAO.
         // This ensures the child DAO is configured with the correct treasury address.
@@ -536,8 +543,8 @@ contract ElectionRegistryIntegrationTest is TestSetupIntegrations {
             "Clean up election: After an election has finished, clean up related mandates.", daoMock
         );
 
-        startBlock = uint48(block.number + 10);
-        endBlock = uint48(block.number + 100);
+        startBlock = uint48(block.number + 300); // matches ElectionRegistry nominationDuration
+        endBlock = uint48(block.number + 600);   // matches nominationDuration + voteDuration
         electionParams = abi.encode(title, startBlock, endBlock);
 
         // Retrieve electionList address from mandate 9 config

@@ -53,7 +53,7 @@ contract Deploy is DeployHelpers {
 
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 7;
+    uint16 constant PATCH = 8;
 
     function run() external returns (address powersAddress, address factoryAddress, address leaderElectionRegistryAddress) {
         helperConfig = new Configurations();

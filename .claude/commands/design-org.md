@@ -77,7 +77,7 @@ Generate the following four files in order. After each file, briefly describe wh
 **Save to:** `solidity/governance/examples/<OrgName>/<OrgName>.s.sol`
 
 Follow the pattern in `ai/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Key rules:
-- Use `MAJOR=0, MINOR=1, PATCH=7` for registry lookups
+- Use `MAJOR=0, MINOR=1, PATCH=8` for registry lookups
 - Every mandate needs a unique, descriptive `nameDescription` string — these strings are used for lookup in action scripts, so they must be exact and consistent across all files
 - Add a comment above each mandate explaining what it does in plain English
 - Include an initial setup mandate (`PresetActions`) that labels all roles and revokes itself after use

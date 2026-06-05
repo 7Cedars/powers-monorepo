@@ -130,7 +130,7 @@ contract AccountAbstractionTest is Test {
         callValidatePaymasterUserOp(userOp);
     }
 
-    function test_Paymaster_AcceptsPowersTargetBatch() public {
+    function test_Paymaster_RevertsBatchExecute() public {
         address[] memory targets = new address[](2);
         targets[0] = powersAddress;
         targets[1] = powersAddress;
@@ -139,7 +139,7 @@ contract AccountAbstractionTest is Test {
         bytes[] memory callDatas = new bytes[](2);
 
         bytes memory callData = abi.encodeWithSelector(
-            0x47e1da2a, // EXECUTE_BATCH_SELECTOR
+            0x47e1da2a, // executeBatch(address[],uint256[],bytes[]) — not supported
             targets,
             values,
             callDatas
@@ -157,7 +157,7 @@ contract AccountAbstractionTest is Test {
             signature: ""
         });
 
-        (bytes memory context, uint256 validationData) = callValidatePaymasterUserOp(userOp);
-        assertEq(validationData, 0);
+        vm.expectRevert(PowersPaymaster.PowersPaymaster__UnsupportedSelector.selector);
+        callValidatePaymasterUserOp(userOp);
     }
 }

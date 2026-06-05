@@ -47,7 +47,7 @@ contract Deploy is DeployHelpers {
     // Always use these constants — they select the correct version from the registry.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 7;
+    uint16 constant PATCH = 8;
 
     // ── run() ────────────────────────────────────────────────────────────────
     function run() external returns (Powers) {

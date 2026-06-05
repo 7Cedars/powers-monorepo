@@ -49,7 +49,7 @@ contract TestConstitutions is Test {
     // minimum mandate version to be used in testing. 
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 7;
+    uint16 constant PATCH = 8;
 
     // function setUp() public {
         // Set up any common state or variables needed for the tests
@@ -633,7 +633,7 @@ contract TestConstitutions is Test {
                     ReturnDataMock.consume.selector,
                     abi.encode(), // no data after
                     params,
-                    9, // mandateId of BespokeActionReturner (the one just added)
+                    uint16(constitution.length), // mandateId of BespokeActionReturner (the one just added)
                     abi.encode() // no data before
                 ),
                 conditions: conditions
