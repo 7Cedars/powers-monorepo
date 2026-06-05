@@ -91,7 +91,7 @@ export const useMandate = () => {
     }
     console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
 
-    const { createKernelAccountClient } = await import('@zerodev/sdk');
+    const { createSmartAccountClient } = await import('permissionless');
     const { http } = await import('viem');
 
     const zeroDevUrl = process.env.NEXT_PUBLIC_ZERODEV_BUNDLER_URL || "";
@@ -106,18 +106,18 @@ export const useMandate = () => {
 
     console.log("@sendSmartWalletTx, waypoint 3", {chain})
 
-    const customClient = createKernelAccountClient({
+    const customClient = createSmartAccountClient({
       account: currentClient.account as any,
       chain,
       bundlerTransport: http(bundlerUrl),
       paymaster: {
         getPaymasterData: async () => ({
           paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x"
+          paymasterData: "0x" as `0x${string}`
         }),
         getPaymasterStubData: async () => ({
           paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x",
+          paymasterData: "0x" as `0x${string}`,
           paymasterVerificationGasLimit: 100000n,
           paymasterPostOpGasLimit: 100000n
         })
@@ -125,7 +125,7 @@ export const useMandate = () => {
     });
 
     const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
-    return await customClient.sendTransaction({ account: customClient.account, to, data, value: 0n, ...feeOverride });
+    return await customClient.sendTransaction({ account: customClient.account as any, to, data, value: 0n, ...feeOverride });
   };
   
   // Actions //  

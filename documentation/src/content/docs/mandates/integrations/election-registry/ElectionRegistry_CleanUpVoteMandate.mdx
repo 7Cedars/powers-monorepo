@@ -1,21 +1,21 @@
 ---
-title: "ElectionList_CleanUpVoteMandate"
-description: "Documentation for the ElectionList_CleanUpVoteMandate integration mandate, which cleans up temporary vote mandates after an election concludes."
+title: "ElectionRegistry_CleanUpVoteMandate"
+description: "Documentation for the ElectionRegistry_CleanUpVoteMandate integration mandate, which cleans up temporary vote mandates after an election concludes."
 ---
 
-ElectionList_CleanUpVoteMandate is an integration mandate that cleans up the temporary voting mandate created for an election after the election has concluded.
+ElectionRegistry_CleanUpVoteMandate is an integration mandate that cleans up the temporary voting mandate created for an election after the election has concluded.
 
 ## Overview
 
-In the PowerLabs election system, each election can spawn a dedicated "Vote Mandate" (a clone of `ElectionList_Vote`) to handle voting for that specific event. This keeps permissions clean. Once the election is over and tallied, this mandate is used to revoke (remove) that temporary vote mandate from the Powers contract, keeping the system tidy.
+In the PowerLabs election system, each election can spawn a dedicated "Vote Mandate" (a clone of `ElectionRegistry_Vote`) to handle voting for that specific event. This keeps permissions clean. Once the election is over and tallied, this mandate is used to revoke (remove) that temporary vote mandate from the Powers contract, keeping the system tidy.
 
 It retrieves the address of the vote mandate to revoke by re-computing the action ID of the creation event and looking up the return data.
 
 ## Configuration
 
-When adopting an ElectionList_CleanUpVoteMandate instance, the following parameter is required:
+When adopting an ElectionRegistry_CleanUpVoteMandate instance, the following parameter is required:
 
-1.  `CreateVoteMandate_Id` (uint16): The ID of the `ElectionList_CreateVoteMandate` that was used to create the election. This is needed to trace the creation action.
+1.  `CreateVoteMandate_Id` (uint16): The ID of the `ElectionRegistry_CreateVoteMandate` that was used to create the election. This is needed to trace the creation action.
 
 ## Usage
 

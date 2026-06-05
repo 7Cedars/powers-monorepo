@@ -12,7 +12,6 @@ import { parseChainId } from "@/utils/parsers";
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
 interface OverviewLayoutProps {
   children: React.ReactNode;
@@ -98,7 +97,7 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
         <div className="max-w-md text-center space-y-6">
           <div className="space-y-2">
             <h1 className="font-mono text-2xl text-foreground tracking-wider">
-              EDITOR
+              OVERVIEW
             </h1>
             <p className="text-sm text-muted-foreground">
               Not optimized for small screens
@@ -107,28 +106,20 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
           
           <div className="space-y-4">
             <p className="text-foreground">
-              The Overview is designed for larger screens to provide the best experience when building and managing governance protocols.
+              The overview is designed for larger screens to provide the best experience when managing governance systems.
             </p>
             <p className="text-muted-foreground text-sm">
               Please visit the Forum to view and interact with existing protocols on mobile devices.
             </p>
           </div>
 
-          <button
-            onClick={() => router.push('/forum')}
+          <a
+            href={chainId && powersAddress ? `/forum/${chainId}/${powersAddress}` : '/forum'}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors rounded"
           >
-            <span>GO TO FORUM</span>
-            <ChevronRightIcon className="h-4 w-4" />
-          </button>
-
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mx-auto"
-          >
-            <ArrowLeftIcon className="h-3 w-3" />
-            <span>BACK TO HOME</span>
-          </button>
+            <ArrowLeftIcon className="h-4 w-4" />
+            <span>BACK TO FORUM</span>
+          </a>
         </div>
       </div>
 
@@ -138,7 +129,7 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-background">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a href="/overview" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
-              {powers.name ? powers.name : "EDITOR"} 
+              {powers.name ? powers.name : "OVERVIEW"}
             </a>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">

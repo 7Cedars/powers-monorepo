@@ -3,18 +3,16 @@
 import React from "react";
 import { ActionsList } from "./ActionsList";
 import { usePowersStore } from "@/context/store";
-import { TitleText } from "@/components/StandardFonts";
+import { OrgBanner } from "@/components/OrgBanner";
 
 export default function Page() {
   const powers = usePowersStore();
   return (
-    <main className="w-full h-full flex flex-col bg-background pt-20 px-4">
-      <TitleText
-        title="Actions"
-        subtitle="View the actions of the organization."
-        size={2}
-      />
-      <ActionsList powers={powers} />
+    <main className="w-full h-full flex flex-col bg-background">
+      <OrgBanner title="Actions" subtitle="View the actions of the organization." />
+      <div className="px-4 pt-4">
+        <ActionsList powers={powers} />
+      </div>
     </main>
   )
 }

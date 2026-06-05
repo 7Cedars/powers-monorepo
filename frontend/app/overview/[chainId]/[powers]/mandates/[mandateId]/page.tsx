@@ -6,7 +6,7 @@ import { usePowersStore, useUIStateStore } from "@/context/store";
 import { shorterDescription } from "@/utils/parsers";
 import { bigintToRole } from "@/utils/bigintTo";
 import { MandateActions } from "./MandateActions";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { OrgBanner } from "@/components/OrgBanner";
 
 const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="flex flex-row items-start justify-between gap-4 py-2 border-b border-border last:border-0 font-mono text-xs">
@@ -49,24 +49,9 @@ export default function MandateDetailPage() {
   }
 
   return (
-    <main className="w-full h-full flex flex-col bg-background pt-20 px-4 pb-16 gap-6">
-      {/* Back button */}
-      <button
-        onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates`)}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-      >
-        <ArrowLeftIcon className="w-3 h-3" />
-        <span>ALL MANDATES</span>
-      </button>
-
-      {/* Name + description */}
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-muted-foreground">#{mandate.index.toString()}</span>
-          <h2 className="font-mono text-sm font-semibold text-foreground">{name}</h2>
-        </div>
-        {description && <p className="text-xs text-muted-foreground font-mono">{description}</p>}
-      </div>
+    <main className="w-full h-full flex flex-col bg-background pb-16">
+      <OrgBanner title={`#${mandate.index} ${name}`} subtitle={description} backButton={{ label: "ALL MANDATES", href: `/overview/${chainId}/${powers?.contractAddress}/mandates` }} />
+      <div className="px-4 flex flex-col gap-6 mt-6">
 
       {/* Conditions */}
       {cond && (
@@ -137,6 +122,7 @@ export default function MandateDetailPage() {
 
       {/* Latest actions */}
       {mandate && <MandateActions mandateId={mandate.index} powers={powers} />}
+      </div>
     </main>
   )
 }

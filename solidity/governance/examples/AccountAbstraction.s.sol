@@ -69,6 +69,7 @@ contract Deploy is DeployHelpers {
             IEntryPoint(ENTRY_POINT),
             address(powers)
         );
+        powersPaymaster.deposit{value: 0.05 ether}();
         vm.stopBroadcast();
         
         console2.log("Powers deployed at:", address(powers));
@@ -95,19 +96,21 @@ contract Deploy is DeployHelpers {
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
-        targets = new address[](7);
-        values = new uint256[](7);
-        calldatas = new bytes[](7);
+        targets = new address[](8);
+        values = new uint256[](8);
+        calldatas = new bytes[](8);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", ""); 
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "");
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", "");
         calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[4] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
         calldatas[5] = abi.encodeWithSelector(IPowers.setPaymaster.selector, address(powersPaymaster));
-        calldatas[6] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
+        targets[6] = address(powersPaymaster);
+        calldatas[6] = abi.encodeWithSelector(PowersPaymaster.addSponsoredTarget.selector, address(powers));
+        calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public role

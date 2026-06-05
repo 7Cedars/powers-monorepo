@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { useChains } from 'wagmi'
 import { readContracts } from 'wagmi/actions'
 import { wagmiConfig } from '@/context/wagmiConfig'
 import { powersAbi } from '@/context/abi'
@@ -10,6 +9,7 @@ import { Powers, Role, Status } from '@/context/types'
 import { parseChainId } from '@/utils/parsers'
 import { bigintToRole } from '@/utils/bigintTo'
 import { LoadingBox } from '@/components/LoadingBox'
+import { AddressLink } from '@/components/AddressLink'
 
 const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
@@ -19,8 +19,6 @@ interface OrgRolesProps {
 
 export function OrgRoles({ powers }: OrgRolesProps) {
   const { chainId } = useParams<{ chainId: string }>()
-  const chains = useChains()
-  const blockExplorerUrl = chains.find(c => c.id === parseInt(chainId))?.blockExplorers?.default.url
 
   const selectableRoles = (powers.roles ?? []).filter(r => r.roleId !== PUBLIC_ROLE)
   const defaultRole = selectableRoles.find(r => r.roleId === 1n) ?? selectableRoles[0]
@@ -109,18 +107,12 @@ export function OrgRoles({ powers }: OrgRolesProps) {
                   <tr key={i} className="hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
                     <td className="px-4 py-3">
-                      {blockExplorerUrl ? (
-                        <a
-                          href={`${blockExplorerUrl}/address/${member}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-foreground hover:text-primary hover:underline"
-                        >
-                          {member}
-                        </a>
-                      ) : (
-                        <span className="text-foreground">{member}</span>
-                      )}
+                      <AddressLink
+                        address={member}
+                        chainId={chainId}
+                        showFull
+                        className="text-foreground hover:text-primary"
+                      />
                     </td>
                   </tr>
                 ))}

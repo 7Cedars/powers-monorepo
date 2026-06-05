@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { usePowersStore, useUIStateStore } from "@/context/store";
 import { shorterDescription } from "@/utils/parsers";
 import { bigintToRole } from "@/utils/bigintTo";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { OrgBanner } from "@/components/OrgBanner";
 
 export default function FlowDetailPage() {
   const { flowIndex, chainId } = useParams<{ flowIndex: string; chainId: string }>()
@@ -43,21 +43,9 @@ export default function FlowDetailPage() {
     .filter((m): m is NonNullable<typeof m> => m != null)
 
   return (
-    <main className="w-full h-full flex flex-col bg-background pt-20 px-4 pb-16 gap-6">
-      {/* Back button */}
-      <button
-        onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/flows`)}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-      >
-        <ArrowLeftIcon className="w-3 h-3" />
-        <span>ALL FLOWS</span>
-      </button>
-
-      {/* Name + description */}
-      <div className="flex flex-col gap-1">
-        <h2 className="font-mono text-sm font-semibold text-foreground">{name}</h2>
-        {description && <p className="text-xs text-muted-foreground font-mono">{description}</p>}
-      </div>
+    <main className="w-full h-full flex flex-col bg-background pb-16">
+      <OrgBanner title={name} subtitle={description} backButton={{ label: "ALL FLOWS", href: `/overview/${chainId}/${powers?.contractAddress}/flows` }} />
+      <div className="px-4 flex flex-col gap-6 mt-6">
 
       {/* Mandates in this flow */}
       <div className="flex flex-col gap-2">
@@ -93,6 +81,7 @@ export default function FlowDetailPage() {
             })}
           </div>
         )}
+      </div>
       </div>
     </main>
   )

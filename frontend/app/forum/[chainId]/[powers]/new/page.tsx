@@ -241,7 +241,7 @@ export default function NewActionPage() {
           {/* Description */}
           <div className="px-6 py-3 bg-muted/50">
             <h3 className="text-foreground text-sm truncate">New Action — #{mandate.index.toString()} {mandateName}</h3>
-            {mandateDesc && <p className="text-muted-foreground text-xs truncate">{mandateDesc}</p>}
+            {mandateDesc && <p className="text-muted-foreground text-xs line-clamp-5">{mandateDesc}</p>}
           </div>
 
           {/* Info tab nav */}

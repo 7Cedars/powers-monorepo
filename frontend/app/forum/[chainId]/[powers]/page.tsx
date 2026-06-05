@@ -103,7 +103,7 @@ export default function OverviewPage() {
 
         {/* Description */}
         <div className="px-6 py-3 bg-muted/50">
-          <p className="font-mono text-xs text-foreground leading-relaxed line-clamp-3">
+          <p className="font-mono text-xs text-foreground leading-relaxed line-clamp-5">
             {powers?.metadatas?.description || 'No description available.'}
           </p>
         </div>
@@ -125,10 +125,10 @@ export default function OverviewPage() {
             </button>
           ))}
 
-          {/* Overview — external link */}
+          {/* Overview — external link (hidden on small screens; overview is disabled there) */}
           <a
             href={`/overview/${chainId}/${powersAddress}/organisation`}
-            className="ml-auto flex items-center gap-1.5 px-5 py-2.5 text-xs font-mono uppercase tracking-wider whitespace-nowrap text-muted-foreground hover:text-primary transition-colors border-b-2 border-transparent -mb-px"
+            className="ml-auto hidden sm:flex items-center gap-1.5 px-5 py-2.5 text-xs font-mono uppercase tracking-wider whitespace-nowrap text-muted-foreground hover:text-primary transition-colors border-b-2 border-transparent -mb-px"
             title="Go to overview page"
           >
             <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 shrink-0" />

@@ -12,6 +12,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   CpuChipIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline'
 import {
   DiscordIcon,
@@ -150,6 +151,12 @@ export function OrgMetadata({
 
   return (
     <div className="space-y-0 divide-y divide-border">
+      {contractAddress && (
+        <MetaRow icon={BuildingOfficeIcon} label="Contract Address">
+          <p className="text-xs font-mono text-foreground break-all">{contractAddress}</p>
+        </MetaRow>
+      )}
+
       {description && (
         <MetaRow icon={DocumentTextIcon} label="About">
           <p className="text-xs font-mono text-foreground leading-relaxed">{description}</p>
