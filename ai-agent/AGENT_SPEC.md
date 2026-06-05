@@ -252,6 +252,7 @@ interface ActionWithState {
 ai-agent/
 ├── package.json
 ├── tsconfig.json
+├── railway.toml
 ├── .env.example
 ├── AGENT_SPEC.md                       ← this file
 ├── config-ui/
@@ -298,6 +299,12 @@ ai-agent/
 **Dependencies (new package.json):**
 ```json
 {
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0",
     "@xmtp/agent-sdk": "^2.3.0",
@@ -306,6 +313,13 @@ ai-agent/
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/node": "^20.19.39",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }
 ```
@@ -1359,6 +1373,16 @@ The UI uses this response to display the agent address and current balance, then
 
 ---
 
+### `GET /health`
+Returns service health. Used by Railway's health check.
+
+**Response 200:**
+```json
+{ "status": "ok", "sessions": 3, "uptime": 3600 }
+```
+
+---
+
 ## 13. Standalone Config UI (`config-ui/`)
 
 A minimal static single-page application (plain HTML + vanilla JS, no framework). Served from the agent process at `GET /`.
@@ -1456,6 +1480,9 @@ Adversarial group members cannot override the agent's strategy via chat messages
 - `AGENT_API_SECRET` env var: if set, `Authorization: Bearer` required on all `/api/*` endpoints
 - CORS: restricted to `CONFIG_UI_ORIGIN` (not `*`) when `NODE_ENV=production`
 
+### Session Volatility on Container Restart
+All sessions are in-memory only. A Railway container restart (deploy, crash, scaling event) destroys all active sessions and their in-memory wallet keys. This is intentional — session volatility is a security property, not a bug. The config UI handles this gracefully: on page load it calls `GET /api/sessions` and removes any orphaned session IDs from `localStorage`. Users must re-start their agents after a restart.
+
 ---
 
 ## 16. Rate Limiting
@@ -1507,8 +1534,8 @@ RPC_ARBITRUM_SEPOLIA=https://...
 
 # API
 AGENT_API_SECRET=          # Optional; if set, required on all /api/* endpoints
-CONFIG_UI_ORIGIN=http://localhost:4000  # CORS origin for config UI
-PORT=3002                  # Agent API port (different from xmtp-agent's 3001)
+CONFIG_UI_ORIGIN=http://localhost:4000  # Local dev default. In Railway production, set to the Railway-assigned HTTPS domain.
+PORT=3002                  # Local dev default. Railway injects PORT at runtime and overrides this value.
 
 # Session defaults
 SESSION_TTL_DEFAULT_MS=28800000        # 8h default if user omits
@@ -1565,3 +1592,45 @@ CHAT_RATE_LIMIT_MS=3000               # Minimum ms between chat replies per conv
 4. **Autonomous execution trigger:** WebSocket-based, not polling. `ActionProposed` event → agent evaluates whether to vote. `ActionStateChanged(Succeeded)` → agent evaluates whether to execute.
 
 5. **ERC-8004:** Deferred to Phase 6 pending standard ratification.
+
+---
+
+## 21. Railway Deployment
+
+### `railway.toml`
+
+```toml
+[build]
+builder = "railpack"
+
+[deploy]
+startCommand = "pnpm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+
+[env]
+NODE_ENV = "production"
+XMTP_ENV = "production"
+XMTP_DB_DIRECTORY = "/data"
+
+[[deploy.volumes]]
+mountPath = "/data"
+name = "ai-agent-xmtp-db"
+```
+
+**Notes:**
+- `builder = "railpack"` — Railpack is Railway's current default builder (nixpacks is deprecated as of 2026). Produces ~38% smaller Node images and faster deploys.
+- The persistent volume (`ai-agent-xmtp-db`) is required for the XMTP identity database. Without it, each deploy creates a new XMTP installation and eventually hits XMTP's installation limit.
+- `XMTP_DB_DIRECTORY` must **not** be set in the Railway environment variables dashboard — the value in `railway.toml` takes precedence for production deployments.
+- `PORT` is injected by Railway at runtime. The `PORT=3002` value in `.env` is a local development fallback only; `server.ts` must read `process.env.PORT ?? 3002`.
+- `CONFIG_UI_ORIGIN` must be set in Railway's environment variables dashboard to the service's Railway-assigned HTTPS domain (e.g. `https://ai-agent.up.railway.app`).
+- All other secrets (`XMTP_WALLET_KEY`, `XMTP_DB_ENCRYPTION_KEY`, `AGENT_API_SECRET`, RPC URLs) must be set in Railway's environment variables dashboard — never committed to the repository.
+
+### Volume Setup
+
+Create the volume in Railway before the first deploy:
+1. Railway Dashboard → Service → Volumes tab → "Add Volume"
+2. Name: `ai-agent-xmtp-db`, Mount Path: `/data`
+3. Deploy the service
+
+On subsequent deploys the same XMTP installation ID is reused from the persisted database.
