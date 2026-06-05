@@ -91,21 +91,47 @@ export const useMandate = () => {
     }
     console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
 
-    // Stay on Privy's client (preserving its signing infrastructure) but inject the
-    // custom paymaster directly into the UserOperation. Wrapping currentClient.account
-    // in a new permissionless client causes AA24 because the two SDKs call
-    // signUserOperation with different argument shapes.
-    const userOpHash = await currentClient.sendUserOperation({
-      calls: [{ to, data, value: 0n }],
-      paymaster: powers.paymaster as `0x${string}`,
-      paymasterData: "0x" as `0x${string}`,
-      paymasterVerificationGasLimit: 100000n,
-      paymasterPostOpGasLimit: 100000n,
-    } as any);
-    console.log("@sendSmartWalletTx, waypoint 2", {userOpHash})
+    // Use viem's createBundlerClient (same library Privy uses internally) so that
+    // currentClient.account is fully type-compatible — no `as any` required and
+    // signUserOperation receives the correct arguments (fixes AA24).
+    // The ZeroDev bundler URL is adjusted to the target chainId so the UserOp is
+    // submitted to the right chain's EntryPoint (fixes AA30).
+    const { createBundlerClient } = await import('viem/account-abstraction');
+    const { http } = await import('viem');
 
-    const receipt = await currentClient.waitForUserOperationReceipt({ hash: userOpHash });
-    console.log("@sendSmartWalletTx, waypoint 3", {receipt})
+    const zeroDevUrl = process.env.NEXT_PUBLIC_ZERODEV_BUNDLER_URL || "";
+    const targetChainId = parseChainId(chainId).toString();
+    const bundlerUrl = zeroDevUrl.replace(/\b11155111\b/, targetChainId);
+    console.log("@sendSmartWalletTx, waypoint 2", {bundlerUrl})
+
+    const chain = wagmiConfig.chains.find(c => c.id === parseChainId(chainId));
+    console.log("@sendSmartWalletTx, waypoint 3", {chain})
+
+    const bundlerClient = createBundlerClient({
+      account: currentClient.account,
+      chain,
+      transport: http(bundlerUrl),
+      paymaster: {
+        getPaymasterData: async () => ({
+          paymaster: powers.paymaster as `0x${string}`,
+          paymasterData: "0x" as `0x${string}`,
+        }),
+        getPaymasterStubData: async () => ({
+          paymaster: powers.paymaster as `0x${string}`,
+          paymasterData: "0x" as `0x${string}`,
+          paymasterVerificationGasLimit: 100000n,
+          paymasterPostOpGasLimit: 100000n,
+        }),
+      },
+    });
+
+    const userOpHash = await bundlerClient.sendUserOperation({
+      calls: [{ to, data, value: 0n }],
+    });
+    console.log("@sendSmartWalletTx, waypoint 4", {userOpHash})
+
+    const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
+    console.log("@sendSmartWalletTx, waypoint 5", {receipt})
     return receipt.receipt.transactionHash;
   };
   
