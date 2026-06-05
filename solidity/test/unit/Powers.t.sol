@@ -744,7 +744,7 @@ contract ProposeAdvancedTest is TestSetupPowers {
 //////////////////////////////////////////////////////////////
 contract MandateAdoptionTest is TestSetupPowers {
     function testAdoptMandateRevertsWithBlacklistedTarget() public {
-        mandateAddress = mandateAddresses[2];
+        (mandateAddress,  ,  ) = daoMock.getAdoptedMandate(3); 
 
         // Blacklist the target mandate
         vm.prank(address(daoMock));

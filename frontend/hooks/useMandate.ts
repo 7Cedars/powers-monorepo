@@ -99,16 +99,27 @@ export const useMandate = () => {
     const { createBundlerClient } = await import('viem/account-abstraction');
     const { http } = await import('viem');
 
+    const targetChainIdNum = parseChainId(chainId);
     const zeroDevUrl = process.env.NEXT_PUBLIC_ZERODEV_BUNDLER_URL || "";
-    const targetChainId = parseChainId(chainId).toString();
-    const bundlerUrl = zeroDevUrl.replace(/\b11155111\b/, targetChainId);
+    const bundlerUrl = zeroDevUrl.replace(/\b11155111\b/, targetChainIdNum.toString());
     console.log("@sendSmartWalletTx, waypoint 2", {bundlerUrl})
 
-    const chain = wagmiConfig.chains.find(c => c.id === parseChainId(chainId));
+    const chain = wagmiConfig.chains.find(c => c.id === targetChainIdNum);
     console.log("@sendSmartWalletTx, waypoint 3", {chain})
 
+    // toKernelSmartAccount.signUserOperation falls back to getMemoizedChainId() (the
+    // publicClient's chain — the user's EOA chain) when chainId is not in the parameters.
+    // viem's prepareUserOperation strips chainId from the request it passes to
+    // signUserOperation, so that fallback fires. We wrap the account to always inject
+    // the DAO's chainId, preventing the hash mismatch that causes AA24.
+    const accountForDaoChain = {
+      ...currentClient.account,
+      signUserOperation: (params: any) =>
+        (currentClient.account as any).signUserOperation({ ...params, chainId: targetChainIdNum }),
+    };
+
     const bundlerClient = createBundlerClient({
-      account: currentClient.account,
+      account: accountForDaoChain as any,
       chain,
       transport: http(bundlerUrl),
       paymaster: {

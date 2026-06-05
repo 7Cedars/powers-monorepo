@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Powers AI Agent</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+  <!-- HTTP warning (shown if not HTTPS) -->
+  <div id="http-warning" style="display:none">
+    ⚠️ You are connected over HTTP. Your private key will be transmitted unencrypted.
+    Use HTTPS in production.
+  </div>
+
+  <header>
+    <h1>Powers AI Agent</h1>
+    <p>Autonomous governance delegates for the Powers Protocol</p>
+  </header>
+
+  <!-- ── Screen: Agent List ──────────────────────────────────────────── -->
+  <div id="screen-list" class="screen active">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div class="section-title">Active Agents</div>
+      <button class="btn btn-primary" onclick="showScreen('start')">+ New Agent</button>
+    </div>
+    <div id="session-list"></div>
+  </div>
+
+  <!-- ── Screen: Start Session ──────────────────────────────────────── -->
+  <div id="screen-start" class="screen">
+    <button class="back-link" onclick="showScreen('list')">← Back to agents</button>
+    <div class="card">
+      <div class="card-header"><h3>Start New Agent</h3></div>
+
+      <div class="form-group">
+        <label>Wallet Private Key</label>
+        <input id="f-walletKey" type="password" autocomplete="off" placeholder="0x..." />
+      </div>
+      <div class="form-group">
+        <label>Claude API Key</label>
+        <input id="f-claudeKey" type="password" autocomplete="off" placeholder="sk-ant-..." />
+      </div>
+      <div class="form-group">
+        <label>Session Duration</label>
+        <select id="f-ttl">
+          <option value="1800000">30 minutes</option>
+          <option value="7200000">2 hours</option>
+          <option value="28800000" selected>8 hours</option>
+          <option value="86400000">24 hours</option>
+          <option value="604800000">7 days</option>
+        </select>
+      </div>
+
+      <hr class="divider" />
+      <div class="section-title">Organisations</div>
+      <div id="org-list"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addOrgRow()">+ Add Organisation</button>
+
+      <hr class="divider" />
+      <div class="section-title">Agent Persona</div>
+      <div class="form-group">
+        <label>Agent Name</label>
+        <input id="f-name" placeholder="e.g. Prudent Delegate" />
+      </div>
+      <div class="form-group">
+        <label>Role Description</label>
+        <textarea id="f-roleDesc" placeholder="Brief description of what this agent represents..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Governance Strategy</label>
+        <textarea id="f-strategy" style="min-height:120px"
+          placeholder="e.g. Vote FOR proposals that reduce risk. Propose treasury transfers only to known contributors. Execute passed proposals as soon as timelock clears."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Constraints (optional)</label>
+        <textarea id="f-constraints" placeholder="e.g. Never vote on proposals over 1 ETH without consulting the group."></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="startSession()">Start Agent</button>
+        <button class="btn btn-secondary" onclick="showScreen('list')">Cancel</button>
+      </div>
+      <div id="start-status" class="status"></div>
+
+      <!-- Success box shown after session starts -->
+      <div id="start-success" class="success-box" style="display:none">
+        <h3>✓ Agent is running</h3>
+        <p>Your agent will keep running after you close this tab. Copy your Session ID — you need it to manage or stop your agent.</p>
+        <div id="start-session-id" class="session-id-display"></div>
+        <button class="btn btn-secondary btn-sm" onclick="copySessionId()">Copy Session ID</button>
+        <div class="btn-group" style="margin-top:12px">
+          <button class="btn btn-primary btn-sm" onclick="openManage(currentSessionId)">Manage Agent</button>
+          <button class="btn btn-secondary btn-sm" onclick="showScreen('list')">Back to List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Screen: Manage Session ─────────────────────────────────────── -->
+  <div id="screen-manage" class="screen">
+    <button class="back-link" onclick="showScreen('list')">← Back to agents</button>
+    <div id="manage-content"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
