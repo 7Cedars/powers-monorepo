@@ -7,7 +7,7 @@ import { Action } from "@/context/types";
 import { parseProposalStatus, shorterDescription } from "@/utils/parsers";
 import { toFullDateFormat, toEurTimeFormat } from "@/utils/toDates";
 import { useBlocks } from "@/hooks/useBlocks";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { OrgBanner } from "@/components/OrgBanner";
 
 const STATE_STYLES: Record<number, string> = {
   0: 'text-muted-foreground bg-muted',
@@ -86,21 +86,9 @@ export default function ActionDetailPage() {
   if (!actionId) return null
 
   return (
-    <main className="w-full h-full flex flex-col bg-background pt-20 px-4 pb-16 gap-6">
-      {/* Back button */}
-      <button
-        onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/actions`)}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-      >
-        <ArrowLeftIcon className="w-3 h-3" />
-        <span>ALL ACTIONS</span>
-      </button>
-
-      {/* Action ID header */}
-      <div className="flex flex-col gap-1">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Action ID</span>
-        <span className="font-mono text-xs text-foreground break-all">{actionId}</span>
-      </div>
+    <main className="w-full h-full flex flex-col bg-background pb-16">
+      <OrgBanner title="Action" subtitle={actionId ?? ''} backButton={{ label: "ALL ACTIONS", href: `/overview/${chainId}/${powers?.contractAddress}/actions` }} />
+      <div className="px-4 flex flex-col gap-6 mt-6">
 
       {/* Input parameters */}
       {primaryMandate && primaryOccurrence && (primaryMandate.params?.length ?? 0) > 0 && (
@@ -162,6 +150,7 @@ export default function ActionDetailPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </main>
   )

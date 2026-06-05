@@ -42,7 +42,7 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
     // Determine navigation path based on current pathname
     const getNavigationPath = () => {
         if (pathname?.startsWith('/overview')) {
-            return `/overview/${powers.chainId}/${powers.contractAddress}/home`;
+            return `/overview/${powers.chainId}/${powers.contractAddress}/organisation`;
         }
         return `/forum/${powers.chainId}/${powers.contractAddress}`;
     };

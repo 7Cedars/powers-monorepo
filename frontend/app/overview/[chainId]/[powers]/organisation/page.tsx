@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { usePowersStore } from '@/context/store'
 import { CommunicationChannels } from '@/context/types'
 import { OrgMetadata } from '@/components/OrgMetadata'
+import { OrgBanner } from '@/components/OrgBanner'
 import { Button } from '@/components/Button'
 
 export default function OrganisationPage() {
@@ -12,27 +13,8 @@ export default function OrganisationPage() {
   const router = useRouter()
 
   return (
-    <div className="flex flex-col pt-16">
-      {/* Banner */}
-      <div
-        className="h-32 relative overflow-hidden flex-shrink-0"
-        style={{
-          backgroundImage: powers?.metadatas?.banner ? `url(${powers.metadatas.banner})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundColor: powers?.metadatas?.banner ? undefined : 'hsl(var(--muted))',
-        }}
-      >
-        <div className="absolute inset-0 bg-background/20" />
-      </div>
-
-      {/* Org name */}
-      {powers?.name && (
-        <div className="px-4 py-2 border-b border-border bg-muted/50">
-          <p className="font-mono text-xs uppercase tracking-wider text-foreground truncate">{powers.name}</p>
-          <p className="font-mono text-[10px] text-muted-foreground truncate">{powers.contractAddress}</p>
-        </div>
-      )}
+    <div className="flex flex-col">
+      <OrgBanner title={powers?.name ?? ''} subtitle={powers?.contractAddress ?? ''} />
 
       {/* Metadata */}
       <div className="px-4 py-2">

@@ -479,6 +479,8 @@ const FlowContent: React.FC = () => {
         panOnDrag
         zoomOnScroll
         panOnScroll={false}
+        selectionOnDrag={false}
+        multiSelectionKeyCode={null}
         preventScrolling={true}
         onMoveStart={onMoveStart}
         onMoveEnd={onMoveEnd}

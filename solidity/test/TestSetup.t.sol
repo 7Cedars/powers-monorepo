@@ -364,12 +364,7 @@ abstract contract TestHelperFunctions is Test, TestVariables {
     }
 
     function findMandateAddress(string memory name) internal view returns (address) {
-        for (uint256 i = 0; i < mandateNames.length; i++) {
-            if (Strings.equal(mandateNames[i], name)) {
-                return mandateAddresses[i];
-            }
-        }
-        return address(0);
+        return registry.getMandateAddress(MAJOR, MINOR, PATCH, name);
     }
 
     function findMandateIdInOrg(string memory description, Powers org) public view returns (uint16) {
@@ -496,9 +491,10 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         daoMockChild1 = new PowersMock();
         daoMockChild2 = new PowersMock();
 
-        // deploy external contracts  
+        // deploy external contracts
         helperConfig = new Configurations();
         testConstitutions = new TestConstitutions();
+        registry = MandateRegistry(address(testConstitutions.registry()));
     }
 }
 
@@ -665,7 +661,12 @@ abstract contract TestSetupIntegrations is BaseSetup {
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();
 
-        zkPassportRegistry = ZKPassport_PowersRegistry(findMandateAddress("ZKPassport_PowersRegistry"));
+        zkPassportRegistry = new ZKPassport_PowersRegistry(
+            helperConfig.getZkPassportVerifier(block.chainid),
+            helperConfig.getZkPassportHelper(block.chainid),
+            "powers.xyz",
+            "powers"
+        );
         vm.stopPrank();
 
         // initiate multi constitution

@@ -156,7 +156,7 @@ export default function ActionPage() {
             <h3 className="font-mono text-foreground text-sm truncate">
               #{mandate?.index?.toString()} {mandate?.nameDescription ? mandate.nameDescription.split(':')[0] : ''}
             </h3>
-            <p className="font-mono text-muted-foreground text-xs truncate">
+            <p className="font-mono text-muted-foreground text-xs line-clamp-5">
               {mandate?.nameDescription ? mandate.nameDescription.split(':')[1]?.trim() || '' : ''}
             </p>
           </div>

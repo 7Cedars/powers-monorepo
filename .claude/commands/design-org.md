@@ -74,7 +74,7 @@ Only begin this phase after the user has approved the spec in Phase 3.
 Generate the following four files in order. After each file, briefly describe what it does in one sentence before moving to the next.
 
 ### 4a. Deploy Script
-**Save to:** `solidity/governance/examples/<OrgName>.s.sol`
+**Save to:** `solidity/governance/examples/<OrgName>/<OrgName>.s.sol`
 
 Follow the pattern in `ai/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Key rules:
 - Use `MAJOR=0, MINOR=1, PATCH=7` for registry lookups
@@ -84,7 +84,7 @@ Follow the pattern in `ai/templates/deployScript.md` and `solidity/governance/ex
 - Group mandates into `Flow` structs that reflect the governance flows in the spec
 
 ### 4b. Actions Script
-**Save to:** `solidity/governance/examples/actions/<OrgName>Actions.s.sol`
+**Save to:** `solidity/governance/examples/<OrgName>/actions/<OrgName>Actions.s.sol`
 
 Follow the pattern in `solidity/governance/examples/actions/Governed721Actions.s.sol`. Key rules:
 - One propose/execute function pair per governance flow from the spec
@@ -92,7 +92,7 @@ Follow the pattern in `solidity/governance/examples/actions/Governed721Actions.s
 - Add clear comments explaining what each function does for a non-technical reader
 
 ### 4c. Runners Script
-**Save to:** `solidity/governance/examples/actions/<OrgName>Runners.s.sol`
+**Save to:** `solidity/governance/examples/<OrgName>/actions/<OrgName>Runners.s.sol`
 
 Follow the pattern in `solidity/governance/examples/actions/Governed721Runners.s.sol`. Key rules:
 - One `run*()` function per governance flow
@@ -109,6 +109,62 @@ Follow the pattern in `solidity/test/governance/Governed721.t.sol`. Key rules:
 - Include at least one negative test (e.g., action blocked by veto, quorum not reached)
 - Add a comment at the top: "Run with: `forge test --match-contract <OrgName>_test -vvv`"
 
+### 4e. README
+**Save to:** `solidity/governance/examples/<OrgName>/README.md`
+
+Write in plain English for a non-technical operator. Include:
+- **Overview** — one paragraph summarising what the organisation does and what decisions it governs (drawn from the spec)
+- **Prerequisites** — environment variables required: `SEPOLIA_RPC_URL`, `PRIVATE_KEY`, `ETHERSCAN_API_KEY`
+- **Deployment** — numbered steps: set env vars → run `make deploy-sepolia` (or `deploy-arb-sepolia` / `deploy-anvil`)
+- **Actions script** — what it is (one propose/execute function pair per governance flow), when to use it (manually triggering individual steps), and an example invocation:
+  ```bash
+  forge script actions/<OrgName>Actions.s.sol:<OrgName>Actions --sig "propose<FlowName>()" \
+    --rpc-url $SEPOLIA_RPC_URL --broadcast
+  ```
+- **Runners script** — what it is (stateless, advances a flow as far as on-chain state allows), when to use it (automated/bot execution), and an example invocation:
+  ```bash
+  forge script actions/<OrgName>Runners.s.sol:<OrgName>Runners --sig "run<FlowName>()" \
+    --rpc-url $SEPOLIA_RPC_URL --broadcast
+  ```
+- **Testing** — `make test` runs the fork-based test suite; requires `SEPOLIA_RPC_URL`
+
+### 4f. Makefile
+**Save to:** `solidity/governance/examples/<OrgName>/Makefile`
+
+All targets navigate up to `solidity/` before invoking forge, so Foundry's path config is respected. Use the network arg variables already defined in `solidity/Makefile` (`SEPOLIA_DEPLOY_ARGS`, `ARB_SEPOLIA_DEPLOY_ARGS`, `OPT_SEPOLIA_DEPLOY_ARGS`, `ANVIL_DEPLOY_ARGS`). Template:
+
+```makefile
+SCRIPT = governance/examples/<OrgName>/<OrgName>.s.sol:<OrgName>
+TEST   = <OrgName>_test
+
+.PHONY: help deploy-anvil deploy-sepolia deploy-arb-sepolia deploy-opt-sepolia test
+
+help:
+	@echo "Available targets:"
+	@echo "  deploy-anvil        Deploy to local Anvil"
+	@echo "  deploy-sepolia      Deploy to Ethereum Sepolia"
+	@echo "  deploy-arb-sepolia  Deploy to Arbitrum Sepolia"
+	@echo "  deploy-opt-sepolia  Deploy to Optimism Sepolia"
+	@echo "  test                Run fork-based tests (requires SEPOLIA_RPC_URL)"
+
+deploy-anvil:
+	cd ../../.. && forge script $(SCRIPT) $(ANVIL_DEPLOY_ARGS)
+
+deploy-sepolia:
+	cd ../../.. && forge script $(SCRIPT) $(SEPOLIA_DEPLOY_ARGS)
+
+deploy-arb-sepolia:
+	cd ../../.. && forge script $(SCRIPT) $(ARB_SEPOLIA_DEPLOY_ARGS)
+
+deploy-opt-sepolia:
+	cd ../../.. && forge script $(SCRIPT) $(OPT_SEPOLIA_DEPLOY_ARGS)
+
+test:
+	cd ../../.. && forge test --match-contract $(TEST) -vvv
+```
+
+Substitute `<OrgName>` with the actual contract/file name throughout.
+
 ---
 
 ## Phase 5 — Verification
@@ -122,4 +178,11 @@ After all four files are generated:
    - Update `frontend/context/constants.ts` if deploying to a live network
    - The reference papers you should add to `ai/references/` for future sessions
 
-Close by summarising what was built and where each file lives.
+Close by summarising what was built and where each file lives. The seven generated files are:
+- `documentation/src/content/docs/organisations/<orgname>.mdx` — governance spec
+- `solidity/governance/examples/<OrgName>/<OrgName>.s.sol` — deploy script
+- `solidity/governance/examples/<OrgName>/actions/<OrgName>Actions.s.sol` — actions script
+- `solidity/governance/examples/<OrgName>/actions/<OrgName>Runners.s.sol` — runners script
+- `solidity/test/governance/<OrgName>.t.sol` — test suite
+- `solidity/governance/examples/<OrgName>/README.md` — operator guide
+- `solidity/governance/examples/<OrgName>/Makefile` — deploy/test shortcuts

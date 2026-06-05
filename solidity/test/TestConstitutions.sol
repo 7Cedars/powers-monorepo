@@ -55,7 +55,7 @@ contract TestConstitutions is Test {
         // Set up any common state or variables needed for the tests
     Configurations helperConfig = new Configurations();
     DeployMandates deployMandates = new DeployMandates();
-    IMandateRegistry registry = IMandateRegistry(deployMandates.run());
+    IMandateRegistry public registry = IMandateRegistry(deployMandates.run());
 
     // }
 

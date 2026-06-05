@@ -3,7 +3,7 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { usePowersStore } from "@/context/store";
-import { TitleText } from "@/components/StandardFonts";
+import { OrgBanner } from "@/components/OrgBanner";
 
 export default function FlowsPage() {
   const powers = usePowersStore()
@@ -13,12 +13,9 @@ export default function FlowsPage() {
   const flows = powers?.flows ?? []
 
   return (
-    <main className="w-full h-full flex flex-col bg-background pt-20 px-4">
-      <TitleText
-        title="Flows"
-        subtitle="View the flows of the organization."
-        size={2}
-      />
+    <main className="w-full h-full flex flex-col bg-background">
+      <OrgBanner title="Flows" subtitle="View the flows of the organization." />
+      <div className="px-4 pt-4">
       {flows.length > 0 ? (
         <div className="w-full border border-border overflow-hidden">
           <table className="w-full table-auto text-sm">
@@ -58,6 +55,7 @@ export default function FlowsPage() {
           No flows defined
         </div>
       )}
+      </div>
     </main>
   )
 }

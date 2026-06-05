@@ -3,31 +3,25 @@
 import React from "react";
 import { AssetList } from "./AssetList";
 import { AddAsset } from "./AddAsset";
-import { TitleText } from "@/components/StandardFonts";
 import { usePowersStore } from "@/context/store";
 import { useChains } from "wagmi";
 import { parseChainId } from "@/utils/parsers";
 import { useParams } from "next/navigation";
 import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import { OrgBanner } from "@/components/OrgBanner";
 
 export default function Page() {
-  const { chainId, powers: addressPowers } = useParams<{ chainId: string, powers: string }>()  
-  const powers = usePowersStore(); 
+  const { chainId, powers: addressPowers } = useParams<{ chainId: string, powers: string }>()
+  const powers = usePowersStore();
   const chains = useChains()
   const supportedChain = chains.find(chain => chain.id == parseChainId(chainId))
 
   console.log("@treasury page rendered:", {chains, supportedChain, powers})
-   
+
   return (
-    <main className="w-full min-h-screen flex flex-col bg-background scanlines pt-12">
+    <main className="w-full min-h-screen flex flex-col bg-background scanlines">
+      <OrgBanner title="Treasury" subtitle="View and manage the assets held by your Powers." />
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
-        <div className="mb-6">
-          <TitleText
-            title="Treasury"
-            subtitle="View and manage the assets held by your Powers."
-            size={2}
-          />
-        </div>
         
         {powers.treasury && powers.treasury !== "0x0000000000000000000000000000000000000000" ? (
           <>
