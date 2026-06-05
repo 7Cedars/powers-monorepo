@@ -85,13 +85,13 @@ contract GovernedToken_CollectSplitPayment is Mandate {
             revert("Transfer data mismatch or not found");
         }
 
-        // 5. Check Caller Role Authorization
-        if (mem.role == IGoverned721.Role.Artist) {
-            if (caller != mem.transferData.artist) revert("Caller is not the Artist");
-        } else if (mem.role == IGoverned721.Role.Intermediary) {
-            if (caller != mem.transferData.intermediary) revert("Caller is not the Intermediary");
-        } else if (mem.role == IGoverned721.Role.OldOwner) {
-            if (caller != mem.transferData.oldOwner) revert("Caller is not the Old Owner");
+        // 5. Derive Caller Role from Transfer Data
+        if (caller == mem.transferData.artist) {
+            mem.role = IGoverned721.Role.Artist;
+        } else if (caller == mem.transferData.intermediary) {
+            mem.role = IGoverned721.Role.Intermediary;
+        } else if (caller == mem.transferData.oldOwner) {
+            mem.role = IGoverned721.Role.OldOwner;
         } else {
             revert("Invalid Role ID requested");
         }
