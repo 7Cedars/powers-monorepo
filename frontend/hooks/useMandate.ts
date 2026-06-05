@@ -91,41 +91,22 @@ export const useMandate = () => {
     }
     console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
 
-    const { createSmartAccountClient } = await import('permissionless');
-    const { http } = await import('viem');
+    // Stay on Privy's client (preserving its signing infrastructure) but inject the
+    // custom paymaster directly into the UserOperation. Wrapping currentClient.account
+    // in a new permissionless client causes AA24 because the two SDKs call
+    // signUserOperation with different argument shapes.
+    const userOpHash = await currentClient.sendUserOperation({
+      calls: [{ to, data, value: 0n }],
+      paymaster: powers.paymaster as `0x${string}`,
+      paymasterData: "0x" as `0x${string}`,
+      paymasterVerificationGasLimit: 100000n,
+      paymasterPostOpGasLimit: 100000n,
+    } as any);
+    console.log("@sendSmartWalletTx, waypoint 2", {userOpHash})
 
-    const zeroDevUrl = process.env.NEXT_PUBLIC_ZERODEV_BUNDLER_URL || "";
-    let bundlerUrl = zeroDevUrl;
-    if (bundlerUrl.includes('11155111') && chainId.toString() !== '11155111') {
-      bundlerUrl = bundlerUrl.replace('11155111', chainId.toString());
-    }
-
-    console.log("@sendSmartWalletTx, waypoint 2", {bundlerUrl})
-
-    const chain = wagmiConfig.chains.find(c => c.id === parseChainId(chainId));
-
-    console.log("@sendSmartWalletTx, waypoint 3", {chain})
-
-    const customClient = createSmartAccountClient({
-      account: currentClient.account as any,
-      chain,
-      bundlerTransport: http(bundlerUrl),
-      paymaster: {
-        getPaymasterData: async () => ({
-          paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x" as `0x${string}`
-        }),
-        getPaymasterStubData: async () => ({
-          paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x" as `0x${string}`,
-          paymasterVerificationGasLimit: 100000n,
-          paymasterPostOpGasLimit: 100000n
-        })
-      }
-    });
-
-    const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
-    return await customClient.sendTransaction({ account: customClient.account as any, to, data, value: 0n, ...feeOverride });
+    const receipt = await currentClient.waitForUserOperationReceipt({ hash: userOpHash });
+    console.log("@sendSmartWalletTx, waypoint 3", {receipt})
+    return receipt.receipt.transactionHash;
   };
   
   // Actions //  
