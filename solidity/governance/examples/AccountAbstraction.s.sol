@@ -59,7 +59,7 @@ contract Deploy is DeployHelpers {
 
         powers = new Powers(
             "Account Abstracted Powers", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/bicameralism.json",  // Using the bicameralism example as dummy for now. 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibt7jfbckh7pudo32u5n3fje2defkafopiw2np55zij7u3vrtyxqy",  
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid) // max executions length

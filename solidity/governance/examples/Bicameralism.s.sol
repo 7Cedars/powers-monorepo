@@ -84,7 +84,7 @@ contract Deploy is DeployHelpers {
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
-        conditions.allowedRole = 0; // = admin.
+        conditions.allowedRole = type(uint256).max; // = public.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",

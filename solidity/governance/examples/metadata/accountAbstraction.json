@@ -1,0 +1,29 @@
+{
+  "icon": "",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaz453grtbgqt2nzwrxhekekt5jl7tep2zulki6eantweadzsvtsq",
+  "description":
+    "Account Abstracted Powers demonstrates ERC-4337 account abstraction integration with the Powers governance protocol. A PowersPaymaster sponsors gas fees for governance transactions, removing the need for users to hold ETH. The organisation has three roles — Admin, Delegate, and Public — and governs four flows: funding and withdrawing from the paymaster, minting ERC20 tokens, and managing role assignments. Delegates can propose and execute paymaster operations and token mints; Admins hold veto power over mints and can assign roles; any delegate can revoke a previously assigned role.",
+  "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",
+  "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md",
+  "disputeResolution": "",
+  "xmtpAgentAddress": "0xe65d5d40c878339596423b929058a13147f925e1",
+  "communicationChannels": {
+      "discord": "https://discordapp.com/users/1006928106487021638",
+      "telegram": "https://t.me/thd83",
+      "x": "https://x.com/7__Cedars",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo",
+      "forum": "",
+      "documentation": "https://powers-docs.vercel.app/"
+  },
+  "parentContracts": [ ],
+  "childContracts": [ ],
+  "attributes": [
+    { "trait_type": "Governance Model", "value": "Account Abstraction" },
+    { "trait_type": "Roles", "value": "Admin, Delegate, Public" },
+    { "trait_type": "Paymaster", "value": "ERC-4337 PowersPaymaster" },
+    { "trait_type": "Flows", "value": "Fund Paymaster, Withdraw from Paymaster, Mint Tokens, Assign Roles" }
+  ]
+}
