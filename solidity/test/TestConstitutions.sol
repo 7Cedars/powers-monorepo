@@ -1429,6 +1429,84 @@ contract TestConstitutions is Test {
     }
 
     //////////////////////////////////////////////////////////////
+    //                  REFORM CONSTITUTION                     //
+    //////////////////////////////////////////////////////////////
+    function pauseMandatesTestConstitution()
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData, PowersTypes.Flow[] memory flows_)
+    {
+        delete constitution;
+
+        // Mandate 1: SelfSelect — target mandate to be paused and restarted
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign as a member.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(1), // roleId to assign
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 2: PauseMandates — valid config, targets flow[0][0]
+        uint8[] memory indexFlow1 = new uint8[](1);
+        uint8[] memory indexMandate1 = new uint8[](1);
+        indexFlow1[0] = 0;
+        indexMandate1[0] = 0;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PauseMandates: pause or restart mandates in flow.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                config: abi.encode(indexFlow1, indexMandate1),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 3: PauseMandates — invalid flow index (99), should skip silently
+        uint8[] memory indexFlow2 = new uint8[](1);
+        uint8[] memory indexMandate2 = new uint8[](1);
+        indexFlow2[0] = 99;
+        indexMandate2[0] = 0;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PauseMandates: invalid flow index.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                config: abi.encode(indexFlow2, indexMandate2),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 4: PauseMandates — valid flow[0], out-of-bounds mandate index (99)
+        uint8[] memory indexFlow3 = new uint8[](1);
+        uint8[] memory indexMandate3 = new uint8[](1);
+        indexFlow3[0] = 0;
+        indexMandate3[0] = 99;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PauseMandates: out-of-bounds mandate index.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                config: abi.encode(indexFlow3, indexMandate3),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Flow 0: contains SelfSelect (mandateId=1) at position 0
+        flows_ = new PowersTypes.Flow[](1);
+        uint16[] memory flowMandates_ = new uint16[](1);
+        flowMandates_[0] = 1;
+        flows_[0] = PowersTypes.Flow({mandateIds: flowMandates_, nameDescription: "Test Flow: governance mandates"});
+
+        return (constitution, flows_);
+    }
+
+    //////////////////////////////////////////////////////////////
     //                 HELPERS CONSTITUTION                     //
     //////////////////////////////////////////////////////////////
     function helpersTestConstitution() external returns (PowersTypes.MandateInitData[] memory mandateInitData) {

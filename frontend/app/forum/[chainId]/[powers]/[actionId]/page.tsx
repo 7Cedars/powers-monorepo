@@ -124,6 +124,9 @@ export default function ActionPage() {
             </div>
             <div className="p-6 flex flex-col items-center justify-center min-h-[300px] gap-4">
               <p className="text-muted-foreground">The requested action could not be found.</p>
+              <p className="text-muted-foreground text-xs text-center max-w-sm">
+                If the action removed the mandate it belonged to, it will no longer appear here — the action succeeded, but the mandate (and its history) is gone.
+              </p>
               <button
                 onClick={() => router.push(`/forum/${chainId}/${powersAddress}`)}
                 className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-80 transition-opacity"

@@ -19,8 +19,7 @@ Read the following files to ground your design work. Do not show this loading wo
 5. `solidity/governance/examples/OptimisticExecution.s.sol` — a simple, readable deploy script example
 6. `solidity/governance/examples/Powers101.s.sol` — another concise deploy example
 7. `AGENTS.md` — project workflow and principles
-
-Also list the PDFs in `ai/references/` and read each one (they are governance theory papers — use them to inform your design recommendations and cite them when relevant).
+8. `ai/references/reading_guide.md` — source index mapping design questions to specific papers; read this now but do **not** load the individual paper guides yet
 
 Once loading is complete, greet the user briefly and move to Phase 2.
 
@@ -34,6 +33,8 @@ Ask the following questions. Ask them in two rounds: Round A first, wait for the
 1. In two or three sentences: what does this organisation do, and what resources or decisions does it manage?
 2. Who are the people involved? Describe each group by role (e.g., "artists who create work", "patrons who fund it", "stewards who maintain the commons"). How many people do you expect in each group?
 3. What decisions need collective governance? Give concrete examples (e.g., "who gets a grant", "whether to change fees", "who joins the council").
+
+**Paper retrieval (do this silently between Round A and Round B):** Using the Round A answers and the source routing table in `ai/references/reading_guide.md`, identify the 1–2 most relevant reference papers for this design problem. Read only those specific guide files from `ai/references/` before asking Round B. Do not load papers that are not relevant.
 
 **Round B — Trust, Power and Constraints**
 4. Who do you trust most to act in the organisation's interest? Is there a founding group or administrator who should have extra authority at the start?

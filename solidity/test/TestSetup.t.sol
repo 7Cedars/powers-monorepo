@@ -579,6 +579,27 @@ abstract contract TestSetupAsync is BaseSetup {
     }
 }
 
+abstract contract TestSetupReform is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        // initiate reform constitution (4 mandates + 1 flow)
+        (PowersTypes.MandateInitData[] memory mandateInitData_, PowersTypes.Flow[] memory flows_) =
+            testConstitutions.pauseMandatesTestConstitution();
+
+        // constitute daoMock and close with initial flows in one step
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute(address(this), flows_);
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_ONE, alice);
+        daoMock.assignRole(ROLE_ONE, bob);
+        daoMock.assignRole(ROLE_TWO, charlotte);
+        daoMock.assignRole(ROLE_TWO, david);
+        vm.stopPrank();
+    }
+}
+
 abstract contract TestSetupElectoral is BaseSetup {
     function setUpVariables() public override {
         super.setUpVariables();

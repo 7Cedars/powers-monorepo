@@ -26,7 +26,7 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background scanlines">
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
         <div className="space-y-8">
 
           {/* Profile Header */}
@@ -137,11 +137,11 @@ export default function UserProfile() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
               <div className="lg:col-span-1">
-                <Roles userAddress={userAddress} />
+                <Roles key={userAddress ?? 'no-wallet'} userAddress={userAddress} />
               </div>
 
               <div className="lg:col-span-2">
-                <Inbox userAddress={userAddress} />
+                <Inbox key={userAddress ?? 'no-wallet'} userAddress={userAddress} />
               </div>
 
             </div>
