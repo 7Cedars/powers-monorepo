@@ -24,6 +24,7 @@ export function startGroupStream(
   (async () => {
     while (true) {
       try {
+        await client.conversations.sync();
         const stream = await client.conversations.streamAllMessages();
 
         for await (const message of stream) {

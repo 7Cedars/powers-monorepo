@@ -4,6 +4,7 @@ import { createServer } from './api/server.js';
 import { sessionManager } from './agent/SessionManager.js';
 import { createXmtpClient } from './xmtp/client.js';
 import { startGroupStream } from './xmtp/groupStream.js';
+import { requestOrgGroupAccess } from './xmtp/groupAccess.js';
 import { startWatchers } from './events/onChainWatcher.js';
 import { startHeartbeat, stopHeartbeat } from './events/heartbeat.js';
 import { reason } from './ai/reason.js';
@@ -55,7 +56,14 @@ async function onSessionStart(sessionId: string): Promise<void> {
     }
   );
 
-  // 3. Start on-chain watchers + heartbeat for each initial organisation
+  // 3. Request access to XMTP groups for all eligible mandates/flows (fire-and-forget)
+  for (const org of session.organisations) {
+    requestOrgGroupAccess(session, org).catch((err) =>
+      console.error(`[index] requestOrgGroupAccess error for ${org.powersAddress}:`, err)
+    );
+  }
+
+  // 5. Start on-chain watchers + heartbeat for each initial organisation
   for (const org of session.organisations) {
     startOrgListeners(session, org);
   }
@@ -86,6 +94,9 @@ function onOrgAdded(sessionId: string, org: OrganisationConfig): void {
   const session = sessionManager.getSession(sessionId);
   if (!session) return;
   startOrgListeners(session, org);
+  requestOrgGroupAccess(session, org).catch((err) =>
+    console.error(`[index] requestOrgGroupAccess error for new org ${org.powersAddress}:`, err)
+  );
   console.log(`[index] added org ${org.powersAddress} to session ${sessionId}`);
 }
 

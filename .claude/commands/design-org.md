@@ -50,8 +50,8 @@ After Round B, summarise your understanding back to the user in plain language a
 
 Using the answers from Phase 2 and the patterns in `ai/prompts/institutionalDesign.md`, design a governance structure. Then write the specification to disk using the template from `ai/templates/orgSpec.md`.
 
-**Save the spec to:** `documentation/src/content/docs/organisations/<orgname>.mdx`
-(Use a short kebab-case name derived from the organisation name, e.g., `cultural-stewardship.mdx`)
+**Save the spec to:** `solidity/governance/claude/<org-name>/Spec.md`
+(Use a short kebab-case name derived from the organisation name, e.g., `secured-slate`)
 
 The spec must cover:
 - **Roles** — who they are, how they join, what they can do
@@ -60,11 +60,11 @@ The spec must cover:
 - **Design rationale** — why you made these choices, citing reference papers where relevant
 - **Limitations** — what the current design cannot do (if any existing mandate cannot satisfy a need, note this clearly and explain the alternative approach you have taken)
 
-After saving the file, present the spec to the user in readable plain language (not raw MDX). Ask explicitly:
+After saving the file, present the spec to the user in readable plain language (not raw Markdown). Ask explicitly:
 
 > "Does this governance structure reflect what you had in mind? Which parts would you like to change?"
 
-**Iterate** until the user confirms the spec with a phrase like "looks good", "proceed", or "ok". Each iteration: update the MDX file and present the changes clearly.
+**Iterate** until the user confirms the spec with a phrase like "looks good", "proceed", or "ok". Each iteration: update the Spec.md file and present the changes clearly.
 
 ---
 
@@ -72,70 +72,79 @@ After saving the file, present the spec to the user in readable plain language (
 
 Only begin this phase after the user has approved the spec in Phase 3.
 
-Generate the following four files in order. After each file, briefly describe what it does in one sentence before moving to the next.
+All generated files go into a single self-contained folder: **`solidity/governance/claude/<org-name>/`**
+
+Generate the following files in order. After each file, briefly describe what it does in one sentence before moving to the next.
 
 ### 4a. Deploy Script
-**Save to:** `solidity/governance/examples/<OrgName>/<OrgName>.s.sol`
+**Save to:** `solidity/governance/claude/<org-name>/Deploy.s.sol`
 
-Follow the pattern in `ai/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Key rules:
+Follow the pattern in `ai/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
+- Contract name: `Deploy`
 - Use `MAJOR=0, MINOR=1, PATCH=8` for registry lookups
 - Every mandate needs a unique, descriptive `nameDescription` string — these strings are used for lookup in action scripts, so they must be exact and consistent across all files
 - Add a comment above each mandate explaining what it does in plain English
 - Include an initial setup mandate (`PresetActions`) that labels all roles and revokes itself after use
 - Group mandates into `Flow` structs that reflect the governance flows in the spec
+- Import `DeployHelpers` with the relative path `../../DeployHelpers.s.sol` (resolves to `governance/DeployHelpers.s.sol`)
 
 ### 4b. Actions Script
-**Save to:** `solidity/governance/examples/<OrgName>/actions/<OrgName>Actions.s.sol`
+**Save to:** `solidity/governance/claude/<org-name>/Actions.s.sol`
 
-Follow the pattern in `solidity/governance/examples/actions/Governed721Actions.s.sol`. Key rules:
+Follow the pattern in `solidity/governance/examples/actions/Governed721Actions.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Actions.s.sol` as a concrete same-folder example. Key rules:
+- Contract name: `<OrgName>Actions` (e.g. `SecuredSlateActions`)
 - One propose/execute function pair per governance flow from the spec
 - Use `findMandateIdInOrg()` with the exact `nameDescription` strings from the deploy script (character-perfect match)
 - Add clear comments explaining what each function does for a non-technical reader
+- Import `ActionHelpers` using the remapped path: `@governance/examples/actions/ActionHelpers.s.sol`
 
 ### 4c. Runners Script
-**Save to:** `solidity/governance/examples/<OrgName>/actions/<OrgName>Runners.s.sol`
+**Save to:** `solidity/governance/claude/<org-name>/Runners.s.sol`
 
-Follow the pattern in `solidity/governance/examples/actions/Governed721Runners.s.sol`. Key rules:
+Follow the pattern in `solidity/governance/examples/actions/Governed721Runners.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Runners.s.sol` as a concrete same-folder example. Key rules:
+- Contract name: `<OrgName>Runners` (e.g. `SecuredSlateRunners`)
 - One `run*()` function per governance flow
 - Each runner is stateless: it checks on-chain state each time it is called and advances as far as current conditions allow
 - Log clearly what phase was executed and what the runner is waiting for (voting period end, timelock, etc.)
+- Import the Actions contract as a peer file: `import { <OrgName>Actions } from "./Actions.s.sol";`
 
 ### 4d. Test File
-**Save to:** `solidity/test/governance/<OrgName>.t.sol`
+**Save to:** `solidity/governance/claude/<org-name>/Test.t.sol`
 
-Follow the pattern in `solidity/test/governance/Governed721.t.sol`. Key rules:
-- Fork-based tests (use `vm.createFork` with Sepolia RPC)
+Follow the pattern in `solidity/governance/claude/global-environmental-movement/Test.t.sol`. Key rules:
+- Contract name: `<OrgName>_test` (e.g. `SecuredSlate_test`) — used by `--match-contract`
+- Import `Deploy` as a peer file: `import { Deploy } from "./Deploy.s.sol";`
 - Cover the happy path for each governance flow end-to-end
 - Use `vm.roll()` to advance blocks past voting periods and timelocks
 - Include at least one negative test (e.g., action blocked by veto, quorum not reached)
 - Add a comment at the top: "Run with: `forge test --match-contract <OrgName>_test -vvv`"
 
 ### 4e. README
-**Save to:** `solidity/governance/examples/<OrgName>/README.md`
+**Save to:** `solidity/governance/claude/<org-name>/README.md`
 
 Write in plain English for a non-technical operator. Include:
 - **Overview** — one paragraph summarising what the organisation does and what decisions it governs (drawn from the spec)
 - **Prerequisites** — environment variables required: `SEPOLIA_RPC_URL`, `PRIVATE_KEY`, `ETHERSCAN_API_KEY`
 - **Deployment** — numbered steps: set env vars → run `make deploy-sepolia` (or `deploy-arb-sepolia` / `deploy-anvil`)
-- **Actions script** — what it is (one propose/execute function pair per governance flow), when to use it (manually triggering individual steps), and an example invocation:
+- **Actions script** — what it is, when to use it, and an example invocation:
   ```bash
-  forge script actions/<OrgName>Actions.s.sol:<OrgName>Actions --sig "propose<FlowName>()" \
-    --rpc-url $SEPOLIA_RPC_URL --broadcast
+  forge script governance/claude/<org-name>/Actions.s.sol:<OrgName>Actions \
+    --sig "propose<FlowName>()" --rpc-url $SEPOLIA_RPC_URL --broadcast
   ```
 - **Runners script** — what it is (stateless, advances a flow as far as on-chain state allows), when to use it (automated/bot execution), and an example invocation:
   ```bash
-  forge script actions/<OrgName>Runners.s.sol:<OrgName>Runners --sig "run<FlowName>()" \
-    --rpc-url $SEPOLIA_RPC_URL --broadcast
+  forge script governance/claude/<org-name>/Runners.s.sol:<OrgName>Runners \
+    --sig "run<FlowName>()" --rpc-url $SEPOLIA_RPC_URL --broadcast
   ```
 - **Testing** — `make test` runs the fork-based test suite; requires `SEPOLIA_RPC_URL`
 
 ### 4f. Makefile
-**Save to:** `solidity/governance/examples/<OrgName>/Makefile`
+**Save to:** `solidity/governance/claude/<org-name>/Makefile`
 
-All targets navigate up to `solidity/` before invoking forge, so Foundry's path config is respected. Use the network arg variables already defined in `solidity/Makefile` (`SEPOLIA_DEPLOY_ARGS`, `ARB_SEPOLIA_DEPLOY_ARGS`, `OPT_SEPOLIA_DEPLOY_ARGS`, `ANVIL_DEPLOY_ARGS`). Template:
+All targets navigate up three levels to `solidity/` before invoking forge, so Foundry's path config is respected. Use the network arg variables already defined in `solidity/Makefile`. Template:
 
 ```makefile
-SCRIPT = governance/examples/<OrgName>/<OrgName>.s.sol:<OrgName>
+SCRIPT = governance/claude/<org-name>/Deploy.s.sol:Deploy
 TEST   = <OrgName>_test
 
 .PHONY: help deploy-anvil deploy-sepolia deploy-arb-sepolia deploy-opt-sepolia test
@@ -164,13 +173,13 @@ test:
 	cd ../../.. && forge test --match-contract $(TEST) -vvv
 ```
 
-Substitute `<OrgName>` with the actual contract/file name throughout.
+Substitute `<org-name>` and `<OrgName>` with the actual names throughout.
 
 ---
 
 ## Phase 5 — Verification
 
-After all four files are generated:
+After all files are generated:
 
 1. Run `cd solidity && forge build` and report the result. If there are compilation errors, fix them before continuing.
 2. Inform the user: "To run the tests, set a Sepolia RPC URL in your environment: `export SEPOLIA_RPC_URL=<your-url>`, then run `forge test --match-contract <OrgName>_test -vvv`"
@@ -179,11 +188,11 @@ After all four files are generated:
    - Update `frontend/context/constants.ts` if deploying to a live network
    - The reference papers you should add to `ai/references/` for future sessions
 
-Close by summarising what was built and where each file lives. The seven generated files are:
-- `documentation/src/content/docs/organisations/<orgname>.mdx` — governance spec
-- `solidity/governance/examples/<OrgName>/<OrgName>.s.sol` — deploy script
-- `solidity/governance/examples/<OrgName>/actions/<OrgName>Actions.s.sol` — actions script
-- `solidity/governance/examples/<OrgName>/actions/<OrgName>Runners.s.sol` — runners script
-- `solidity/test/governance/<OrgName>.t.sol` — test suite
-- `solidity/governance/examples/<OrgName>/README.md` — operator guide
-- `solidity/governance/examples/<OrgName>/Makefile` — deploy/test shortcuts
+Close by summarising what was built. All seven generated files live in one folder:
+- `solidity/governance/claude/<org-name>/Spec.md` — governance specification
+- `solidity/governance/claude/<org-name>/Deploy.s.sol` — deploy script
+- `solidity/governance/claude/<org-name>/Actions.s.sol` — actions script
+- `solidity/governance/claude/<org-name>/Runners.s.sol` — runners script
+- `solidity/governance/claude/<org-name>/Test.t.sol` — test suite
+- `solidity/governance/claude/<org-name>/README.md` — operator guide
+- `solidity/governance/claude/<org-name>/Makefile` — deploy/test shortcuts

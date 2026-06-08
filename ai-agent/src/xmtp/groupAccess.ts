@@ -1,7 +1,7 @@
 import { Client, IdentifierKind } from '@xmtp/agent-sdk';
 import type { Address } from 'viem';
-import type { AgentSession } from '../agent/AgentSession.js';
-import { canCallMandate } from '../powers/contract.js';
+import type { AgentSession, OrganisationConfig } from '../agent/AgentSession.js';
+import { canCallMandate, getAllMandates, getFlows } from '../powers/contract.js';
 
 export function getGroupName(
   type: 'Mandate' | 'Flow' | 'Action',
@@ -88,6 +88,98 @@ export async function findGroup(
         g.description === groupName
     ) ?? null
   );
+}
+
+export async function requestOrgGroupAccess(
+  session: AgentSession,
+  org: OrganisationConfig
+): Promise<void> {
+  if (!session.xmtpClient) return;
+  if (!org.xmtpAgentAddress) return;
+
+  let mandates: Awaited<ReturnType<typeof getAllMandates>>;
+  try {
+    mandates = await getAllMandates(org.chainId, org.powersAddress);
+  } catch (err) {
+    console.error(
+      `[xmtp] failed to fetch mandates for ${org.powersAddress} (session ${session.sessionId}):`,
+      err
+    );
+    return;
+  }
+
+  for (const mandate of mandates.filter((m) => m.active)) {
+    try {
+      const eligible = await canCallMandate(
+        org.chainId,
+        org.powersAddress,
+        session.userAddress,
+        mandate.mandateId
+      );
+      if (!eligible) continue;
+
+      const groupName = getGroupName(
+        'Mandate',
+        org.chainId,
+        org.powersAddress,
+        BigInt(mandate.mandateId)
+      );
+
+      const existing = await findGroup(session, groupName);
+      if (existing) continue;
+
+      const dm = await session.xmtpClient!.createDmWithAddress(org.xmtpAgentAddress as `0x${string}`);
+      await dm.sendText(groupName);
+      console.log(
+        `[xmtp] requested access to group ${groupName} via DM to ${org.xmtpAgentAddress} (session ${session.sessionId})`
+      );
+    } catch (err) {
+      console.error(
+        `[xmtp] failed to request access for mandate ${mandate.mandateId} (session ${session.sessionId}):`,
+        err
+      );
+    }
+  }
+
+  // Flow groups
+  let flows: Awaited<ReturnType<typeof getFlows>> = [];
+  try {
+    flows = await getFlows(org.chainId, org.powersAddress);
+  } catch (err) {
+    console.error(
+      `[xmtp] failed to fetch flows for ${org.powersAddress} (session ${session.sessionId}):`,
+      err
+    );
+  }
+
+  for (const flow of flows) {
+    if (flow.mandateIds.length === 0) continue;
+    try {
+      let eligibleForFlow = false;
+      for (const mandateId of flow.mandateIds) {
+        if (await canCallMandate(org.chainId, org.powersAddress, session.userAddress, Number(mandateId))) {
+          eligibleForFlow = true;
+          break;
+        }
+      }
+      if (!eligibleForFlow) continue;
+
+      const groupName = getGroupName('Flow', org.chainId, org.powersAddress, flow.mandateIds[0]);
+      const existing = await findGroup(session, groupName);
+      if (existing) continue;
+
+      const dm = await session.xmtpClient!.createDmWithAddress(org.xmtpAgentAddress as `0x${string}`);
+      await dm.sendText(groupName);
+      console.log(
+        `[xmtp] requested access to flow group ${groupName} via DM to ${org.xmtpAgentAddress} (session ${session.sessionId})`
+      );
+    } catch (err) {
+      console.error(
+        `[xmtp] failed to request access for flow group ${flow.index} (session ${session.sessionId}):`,
+        err
+      );
+    }
+  }
 }
 
 export async function canAddressReceiveXmtp(address: Address): Promise<boolean> {

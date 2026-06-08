@@ -3,7 +3,7 @@ import { getWatchClient } from '../powers/contract.js';
 import { powersAbi } from '../powers/abi.js';
 import type { AgentSession, OrganisationConfig } from '../agent/AgentSession.js';
 import { reason } from '../ai/reason.js';
-import { findGroup, getGroupName } from '../xmtp/groupAccess.js';
+import { findGroup, getGroupName, requestOrgGroupAccess } from '../xmtp/groupAccess.js';
 import { getAllMandates } from '../powers/contract.js';
 
 // Returns unwatch functions for all watchers started for this (session, org) pair
@@ -148,6 +148,9 @@ async function handleRoleGained(
   if (!session.xmtpClient) return;
 
   try {
+    // Create any mandate or flow groups the agent is now eligible for
+    await requestOrgGroupAccess(session, org);
+
     const mandates = await getAllMandates(org.chainId, org.powersAddress);
     const mandatesForRole = mandates.filter(
       (m) => m.active && m.conditions.allowedRole === roleId

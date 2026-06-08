@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { TestSetupReform } from "../../TestSetup.t.sol";
+import { TestSetupReform, TestSetupExecutive } from "../../TestSetup.t.sol";
 
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -169,5 +169,149 @@ contract PauseMandatesAccessTest is TestSetupReform {
         vm.prank(eve);
         vm.expectRevert(Powers__CannotCallMandate.selector);
         daoMock.request(mandateId, mandateCalldata, nonce, "Eve attempts pause");
+    }
+}
+
+/////////////////////////////////////////////////////////////////////
+//                        ADOPT_MANDATES                           //
+/////////////////////////////////////////////////////////////////////
+
+// ─────────────────────────────────────────────
+//               BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract AdoptMandatesBasicTest is TestSetupExecutive {
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg("Adopt_Mandates: A mandate to adopt new mandates into the DAO.", daoMock);
+    }
+
+    function testAdoptMandatesAdoptsSingleMandate() public {
+        address[] memory mandatesArr = new address[](1);
+        mandatesArr[0] = findMandateAddress("SelfSelect");
+        uint256[] memory roleIdsArr = new uint256[](1);
+        roleIdsArr[0] = ROLE_ONE;
+
+        mandateCalldata = abi.encode(mandatesArr, roleIdsArr);
+        uint16 counterBefore = daoMock.mandateCounter();
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Adopt SelfSelect");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(daoMock.mandateCounter(), counterBefore + 1);
+
+        (address adoptedAddr,, bool active) = daoMock.getAdoptedMandate(counterBefore);
+        assertEq(adoptedAddr, mandatesArr[0]);
+        assertTrue(active);
+    }
+
+    function testAdoptMandatesAdoptsMultipleMandates() public {
+        address[] memory mandatesArr = new address[](2);
+        mandatesArr[0] = findMandateAddress("SelfSelect");
+        mandatesArr[1] = findMandateAddress("RenounceRole");
+        uint256[] memory roleIdsArr = new uint256[](2);
+        roleIdsArr[0] = ROLE_ONE;
+        roleIdsArr[1] = ROLE_TWO;
+
+        mandateCalldata = abi.encode(mandatesArr, roleIdsArr);
+        uint16 counterBefore = daoMock.mandateCounter();
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Adopt two mandates");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(daoMock.mandateCounter(), counterBefore + 2);
+
+        (address addr0,, bool active0) = daoMock.getAdoptedMandate(counterBefore);
+        (address addr1,, bool active1) = daoMock.getAdoptedMandate(uint16(counterBefore + 1));
+        assertEq(addr0, mandatesArr[0]);
+        assertTrue(active0);
+        assertEq(addr1, mandatesArr[1]);
+        assertTrue(active1);
+    }
+}
+
+// ─────────────────────────────────────────────
+//               EDGE CASES
+// ─────────────────────────────────────────────
+contract AdoptMandatesEdgeCaseTest is TestSetupExecutive {
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg("Adopt_Mandates: A mandate to adopt new mandates into the DAO.", daoMock);
+    }
+
+    function testAdoptMandatesWithEmptyArraysFulfills() public {
+        address[] memory mandatesArr = new address[](0);
+        uint256[] memory roleIdsArr = new uint256[](0);
+
+        mandateCalldata = abi.encode(mandatesArr, roleIdsArr);
+        uint16 counterBefore = daoMock.mandateCounter();
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Adopt zero mandates");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(daoMock.mandateCounter(), counterBefore);
+    }
+}
+
+// ─────────────────────────────────────────────
+//               ACCESS CONTROL
+// ─────────────────────────────────────────────
+contract AdoptMandatesAccessTest is TestSetupExecutive {
+    function testAdoptMandatesRevertsIfCallerLacksRole() public {
+        // Deploy a fresh DAO with Adopt_Mandates restricted to ROLE_ONE
+        PowersMock freshDao = new PowersMock();
+
+        PowersTypes.Conditions memory cond;
+        cond.allowedRole = ROLE_ONE;
+
+        PowersTypes.MandateInitData[] memory initData = new PowersTypes.MandateInitData[](1);
+        initData[0] = PowersTypes.MandateInitData({
+            nameDescription: "Adopt_Mandates: restricted to role 1.",
+            targetMandate: findMandateAddress("Adopt_Mandates"),
+            config: abi.encode(),
+            conditions: cond
+        });
+
+        freshDao.constitute(initData);
+        freshDao.closeConstitute();
+
+        vm.prank(address(freshDao));
+        freshDao.assignRole(ROLE_ONE, alice);
+
+        address[] memory mandatesArr = new address[](1);
+        mandatesArr[0] = findMandateAddress("SelfSelect");
+        uint256[] memory roleIdsArr = new uint256[](1);
+        roleIdsArr[0] = type(uint256).max;
+        mandateCalldata = abi.encode(mandatesArr, roleIdsArr);
+
+        uint16 restrictedId = findMandateIdInOrg("Adopt_Mandates: restricted to role 1.", Powers(payable(address(freshDao))));
+
+        // charlotte has no roles in freshDao — must be rejected
+        vm.prank(charlotte);
+        vm.expectRevert(Powers__CannotCallMandate.selector);
+        freshDao.request(restrictedId, mandateCalldata, nonce, "Charlotte attempts adoption");
+    }
+
+    function testAdoptMandatesSucceedsForCallerWithPublicRole() public {
+        // In the executive constitution, Adopt_Mandates has allowedRole = type(uint256).max — any caller passes
+        mandateId = findMandateIdInOrg("Adopt_Mandates: A mandate to adopt new mandates into the DAO.", daoMock);
+
+        address[] memory mandatesArr = new address[](1);
+        mandatesArr[0] = findMandateAddress("SelfSelect");
+        uint256[] memory roleIdsArr = new uint256[](1);
+        roleIdsArr[0] = type(uint256).max;
+        mandateCalldata = abi.encode(mandatesArr, roleIdsArr);
+
+        // eve has no assigned roles — public mandate must still let her through
+        vm.prank(eve);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Eve adopts a mandate");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
     }
 }

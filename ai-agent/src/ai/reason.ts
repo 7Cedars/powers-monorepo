@@ -170,15 +170,26 @@ export async function reason(
     console.log(`[heartbeat] ${session.sessionId} ${org.powersAddress} — no action`);
   }
 
-  // Update conversation history (trimmed to max turns)
-  const updatedHistory: MessageParam[] = [
-    ...history,
-    { role: 'user', content: userContent },
-    ...assistantParts,
-  ];
-
+  // Update conversation history (trimmed to max turns).
+  // Use `messages` directly — it already contains the full exchange including
+  // tool_result user messages that must follow every tool_use assistant block.
   const maxTurns = config.ai.maxHistoryTurns * 2; // each turn = user + assistant
-  const trimmed = updatedHistory.slice(-maxTurns);
+  let trimmed = messages.slice(-maxTurns);
+
+  // Drop any leading orphaned tool_result or assistant blocks that the slice
+  // may have cut off from their preceding context.
+  while (trimmed.length > 0) {
+    const first = trimmed[0];
+    const isToolResult =
+      Array.isArray(first.content) &&
+      (first.content as any[])[0]?.type === 'tool_result';
+    if (first.role === 'assistant' || isToolResult) {
+      trimmed = trimmed.slice(1);
+    } else {
+      break;
+    }
+  }
+
   session.histories.set(conversationId, trimmed);
 
   sessionManager.touchSession(session.sessionId);

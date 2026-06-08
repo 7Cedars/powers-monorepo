@@ -8,6 +8,7 @@ export interface OrganisationConfig {
   powersAddress: Address;
   chainId: number;
   label?: string;
+  xmtpAgentAddress?: string;
 }
 
 export interface AgentPersona {

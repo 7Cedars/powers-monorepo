@@ -129,6 +129,10 @@ function addOrgRow(values = {}) {
       <label>Label (optional)</label>
       <input class="org-label" placeholder="e.g. 7Cedars DAO" value="${values.label || ''}" />
     </div>
+    <div class="form-group" style="margin:0">
+      <label>XMTP Agent Address (optional)</label>
+      <input class="org-xmtp" placeholder="0x…" value="${values.xmtpAgentAddress || ''}" />
+    </div>
     <button class="btn remove-org" onclick="removeOrgRow(${i})" title="Remove">×</button>`;
 
   document.getElementById('org-list').appendChild(row);
@@ -145,6 +149,7 @@ function collectOrgs() {
     powersAddress: row.querySelector('.org-addr').value.trim(),
     chainId: Number(row.querySelector('.org-chain').value),
     label: row.querySelector('.org-label').value.trim() || undefined,
+    xmtpAgentAddress: row.querySelector('.org-xmtp').value.trim() || undefined,
   })).filter(o => o.powersAddress);
 }
 
@@ -285,6 +290,7 @@ function manageHTML(s) {
         <select id="m-org-chain">${CHAINS.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select>
       </div>
       <div class="form-group" style="margin:0"><label>Label</label><input id="m-org-label" placeholder="optional" /></div>
+      <div class="form-group" style="margin:0"><label>XMTP Agent Address (optional)</label><input id="m-org-xmtp" placeholder="0x…" /></div>
       <div></div>
     </div>
     <button class="btn btn-primary btn-sm" onclick="addOrg('${s.sessionId}')">Add</button>
@@ -416,6 +422,7 @@ async function addOrg(sessionId) {
     powersAddress: document.getElementById('m-org-addr').value.trim(),
     chainId: Number(document.getElementById('m-org-chain').value),
     label: document.getElementById('m-org-label').value.trim() || undefined,
+    xmtpAgentAddress: document.getElementById('m-org-xmtp').value.trim() || undefined,
   };
 
   if (!org.powersAddress) { status.className = 'status error'; status.textContent = 'Address required.'; return; }
