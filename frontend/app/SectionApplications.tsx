@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
 import {
   ChevronLeftIcon, ChevronRightIcon,
   QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
@@ -37,7 +37,7 @@ export function SectionApplications() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  const cardWidth = containerWidth * 0.55;
+  const cardWidth = containerWidth < 500 ? containerWidth * 0.78 : containerWidth * 0.55;
 
   // Recompute track offset whenever current or container size changes
   useEffect(() => {
@@ -47,6 +47,15 @@ export function SectionApplications() {
 
   const next = useCallback(() => setCurrent(i => (i + 1) % total), [total]);
   const prev = useCallback(() => setCurrent(i => (i - 1 + total) % total), [total]);
+
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? next() : prev();
+    touchStartX.current = null;
+  };
 
   // Auto-advance
   useEffect(() => {
@@ -64,13 +73,12 @@ export function SectionApplications() {
 
         {/* Title & subtitle */}
         <div className="w-full flex flex-col justify-center items-center pt-10">
-          <div className="w-full flex flex-col gap-1 justify-center items-center md:text-4xl text-2xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
+          <div className="w-full flex flex-col gap-1 justify-center items-center md:text-4xl text-xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
             Governance, solved structurally
           </div>
           <div className="w-full flex flex-col gap-4 justify-center items-center text-muted-foreground max-w-3xl text-center text-pretty font-mono">
-            <span className="md:text-xl text-lg">Move beyond simple token voting and design bespoke governance systems that fit your specific needs.</span>
-            <span className="text-sm leading-relaxed">On-chain governance is broken. Across 52 structured interviews with DAO participants, researchers identified token voting failure as the single most urgent problem in crypto governance — followed by governance theater, informal power capture, and voting fatigue.</span>
-            <span className="text-sm leading-relaxed">The root cause is structural: most DAOs have no actual separation of powers. A single token vote collapses proposal, deliberation, and execution into one blunt instrument. Powers Protocol is built to fix that.</span>
+            <span className="md:text-lg text-sm">Move beyond token voting. Design governance systems with real separation of powers.</span>
+            <span className="text-sm leading-relaxed">On-chain governance is broken — researchers rank token voting failure as the single most urgent problem in crypto, followed by governance theater and informal power capture. The root cause is structural: most DAOs collapse proposal, deliberation, and execution into one blunt instrument. Powers Protocol fixes that.</span>
           </div>
         </div>
 
@@ -80,6 +88,8 @@ export function SectionApplications() {
           className="w-full max-w-4xl overflow-hidden"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
         >
           <div
             className="flex"
@@ -97,21 +107,21 @@ export function SectionApplications() {
                 onClick={() => setCurrent(i)}
               >
                 <div
-                  className="flex flex-col bg-background min-h-[260px] transition-all duration-500"
+                  className="flex flex-col bg-background dark:bg-white transition-all duration-500"
                   style={{
-                    border: '1px solid #CD5E20',
+                    border: '2px solid #CD5E20',
                     opacity: i === current ? 1 : 0.3,
                     transform: i === current ? "scale(1)" : "scale(0.96)",
                     cursor: i !== current ? "pointer" : "default",
                   }}
                 >
-                  <div className="w-full flex flex-col items-center gap-2 p-5 border-b border-border bg-muted/50">
-                    {(() => { const Icon = ICON_MAP[card.icon]; return Icon ? <Icon className="w-6 h-6 text-foreground" /> : null; })()}
-                    <span className="font-mono font-bold text-foreground uppercase tracking-wider text-sm text-center">{card.title}</span>
+                  <div className="w-full flex flex-col items-center gap-1 p-3 border-b border-border bg-muted/50">
+                    {(() => { const Icon = ICON_MAP[card.icon]; return Icon ? <Icon className="w-5 h-5 text-foreground dark:text-gray-900" /> : null; })()}
+                    <span className="font-mono font-bold text-foreground dark:text-gray-900 uppercase tracking-wider text-xs sm:text-sm text-center">{card.title}</span>
                   </div>
-                  <div className="w-full flex flex-col justify-start items-center px-6 py-5 gap-4">
+                  <div className="w-full flex flex-col justify-start items-center px-3 sm:px-6 py-3 gap-2 sm:gap-4">
                     {card.details.map((detail, j) => (
-                      <div key={j} className="text-muted-foreground leading-relaxed text-sm font-mono text-center">
+                      <div key={j} className="text-muted-foreground dark:text-gray-600 leading-relaxed text-xs sm:text-sm font-mono text-center">
                         {detail}
                       </div>
                     ))}
@@ -126,37 +136,38 @@ export function SectionApplications() {
         <div className="w-full max-w-4xl flex items-center justify-between px-2">
           <button
             onClick={prev}
-            className="p-2 border border-border hover:bg-muted transition-colors cursor-pointer"
+            className="hidden sm:block p-2 border border-border hover:bg-muted transition-colors cursor-pointer"
             aria-label="Previous"
           >
             <ChevronLeftIcon className="w-5 h-5 text-foreground" />
           </button>
 
-          <div className="flex gap-2 items-center">
-            {powersApplications.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`w-2 h-2 transition-colors cursor-pointer ${
-                  i === current ? "bg-foreground" : "bg-muted-foreground/30 hover:bg-muted-foreground/60"
-                }`}
-                aria-label={`Go to card ${i + 1}`}
-              />
-            ))}
+          <div className="flex flex-col items-center gap-2 mx-auto sm:mx-0">
+            <div className="flex gap-2 items-center">
+              {powersApplications.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`w-2 h-2 transition-colors cursor-pointer ${
+                    i === current ? "bg-foreground" : "bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                  }`}
+                  aria-label={`Go to card ${i + 1}`}
+                />
+              ))}
+            </div>
+            <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
+              {current + 1} / {total}
+            </span>
           </div>
 
           <button
             onClick={next}
-            className="p-2 border border-border hover:bg-muted transition-colors cursor-pointer"
+            className="hidden sm:block p-2 border border-border hover:bg-muted transition-colors cursor-pointer"
             aria-label="Next"
           >
             <ChevronRightIcon className="w-5 h-5 text-foreground" />
           </button>
         </div>
-
-        <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider pb-8">
-          {current + 1} / {total}
-        </span>
 
       </div>
     </main>
