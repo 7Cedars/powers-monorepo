@@ -49,6 +49,11 @@ export async function reason(
   let rounds = 0;
   const maxRounds = config.ai.maxToolRounds;
 
+  const thinkingBudget = config.ai.thinkingBudget;
+  const apiParams = thinkingBudget > 0
+    ? { thinking: { type: 'enabled' as const, budget_tokens: thinkingBudget }, max_tokens: Math.max(4096, thinkingBudget + 2000) }
+    : { max_tokens: 4096 };
+
   const assistantParts: MessageParam[] = [];
 
   while (rounds < maxRounds) {
@@ -58,11 +63,11 @@ export async function reason(
     try {
       response = await session.claudeClient.messages.create({
         model: session.persona.model ?? 'claude-sonnet-4-6',
-        max_tokens: 4096,
         system: systemPrompt,
         messages,
         tools: allTools as any,
         tool_choice: { type: 'auto' },
+        ...apiParams,
       });
     } catch (err: any) {
       console.error(`[reason] Claude API error (session ${session.sessionId}):`, err);
@@ -79,6 +84,13 @@ export async function reason(
         await groupReply('I encountered an error accessing my AI capabilities. Please try again.');
       }
       return;
+    }
+
+    // Log thinking blocks when extended thinking is enabled
+    for (const block of response.content) {
+      if (block.type === 'thinking') {
+        console.log(`[thinking] session ${session.sessionId}:\n${(block as any).thinking}`);
+      }
     }
 
     // Collect assistant content for history

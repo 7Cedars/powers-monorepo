@@ -1,4 +1,10 @@
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import type { AgentSession } from '../agent/AgentSession.js';
+
+const _dir = dirname(fileURLToPath(import.meta.url));
+const protocolRef = readFileSync(join(_dir, 'POWERS_PROTOCOL.md'), 'utf-8');
 
 export function buildSystemPrompt(session: AgentSession): string {
   const { persona, organisations, userAddress } = session;
@@ -33,5 +39,8 @@ ORGANISATIONS YOU SERVE:
 ${orgList}
 
 Your on-chain address: ${userAddress}
-Current time (UTC): ${now}`.trim();
+Current time (UTC): ${now}
+
+POWERS PROTOCOL REFERENCE:
+${protocolRef}`.trim();
 }

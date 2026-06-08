@@ -285,6 +285,7 @@ export default function ActionPage() {
           <div className="mt-6 border-t border-border">
             {chatroomMode === 'mandate' || !mandateFlow ? (
               <Chatroom
+                key={`mandate-${mandate.index}`}
                 chatroomType="Mandate"
                 isPublicRole={isPublicRole}
                 chainId={chainId}
@@ -298,6 +299,7 @@ export default function ActionPage() {
               />
             ) : (
               <Chatroom
+                key={`flow-${flowContextId}`}
                 chatroomType="Flow"
                 isPublicRole={isPublicRole}
                 chainId={chainId}

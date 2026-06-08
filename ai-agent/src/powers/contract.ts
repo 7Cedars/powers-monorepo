@@ -190,17 +190,6 @@ export async function getAllMandates(
   return mandates;
 }
 
-export async function getActionCounter(
-  chainId: number,
-  address: Address
-): Promise<bigint> {
-  const client = getPublicClient(chainId);
-  return (await client.readContract({
-    address,
-    abi: powersAbi,
-    functionName: 'getActionCounter',
-  })) as bigint;
-}
 
 export async function getActionData(
   chainId: number,
@@ -408,36 +397,65 @@ export async function getOpenActions(
       }
   >
 > {
-  const counter = await getActionCounter(chainId, address);
+  const client = getPublicClient(chainId);
+  const mandateCount = await getMandateCounter(chainId, address);
   const results = [];
 
-  for (let i = 0n; i < counter; i++) {
+  for (let mandateId = 1; mandateId <= mandateCount; mandateId++) {
+    let actionCount: bigint;
+    let timelock: bigint;
+
     try {
-      const data = (await getActionData(chainId, address, i)) as ActionData & {
-        calldata: `0x${string}`;
-      };
-      // Only include active or succeeded (ready to execute) actions
-      if (
-        data.state !== ActionState.Active &&
-        data.state !== ActionState.Succeeded
-      )
-        continue;
+      actionCount = (await client.readContract({
+        address,
+        abi: powersAbi,
+        functionName: 'getQuantityMandateActions',
+        args: [mandateId],
+      })) as bigint;
 
-      const voteData = await getActionVoteData(chainId, address, i);
-      const voted = await hasVoted(chainId, address, i, agentAddress);
-
-      results.push({
-        ...data,
-        ...voteData,
-        readyToExecuteAt: voteData.voteEnd + BigInt(
-          (await getAllMandates(chainId, address)).find(
-            (m) => m.mandateId === data.mandateId
-          )?.conditions.timelock ?? 0n
-        ),
-        hasAgentVoted: voted,
-      });
+      const raw = (await client.readContract({
+        address,
+        abi: powersAbi,
+        functionName: 'getConditions',
+        args: [mandateId],
+      })) as { timelock: number };
+      timelock = BigInt(raw.timelock);
     } catch (err) {
-      console.error(`[contract] failed to fetch action ${i}:`, err);
+      console.error(`[contract] failed to fetch mandate ${mandateId} metadata:`, err);
+      continue;
+    }
+
+    for (let idx = 0n; idx < actionCount; idx++) {
+      try {
+        const actionId = (await client.readContract({
+          address,
+          abi: powersAbi,
+          functionName: 'getMandateActionAtIndex',
+          args: [mandateId, idx],
+        })) as bigint;
+
+        const data = (await getActionData(chainId, address, actionId)) as ActionData & {
+          calldata: `0x${string}`;
+        };
+
+        if (
+          data.state !== ActionState.Active &&
+          data.state !== ActionState.Succeeded
+        )
+          continue;
+
+        const voteData = await getActionVoteData(chainId, address, actionId);
+        const voted = await hasVoted(chainId, address, actionId, agentAddress);
+
+        results.push({
+          ...data,
+          ...voteData,
+          readyToExecuteAt: voteData.voteEnd + timelock,
+          hasAgentVoted: voted,
+        });
+      } catch (err) {
+        console.error(`[contract] failed to fetch action at mandate ${mandateId} index ${idx}:`, err);
+      }
     }
   }
 

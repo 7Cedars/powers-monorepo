@@ -74,6 +74,7 @@ export interface SessionSummary {
   agentAddress: Address;
   organisations: OrganisationConfig[];
   personaName: string;
+  persona: AgentPersona;
   createdAt: string;
   lastActiveAt: string;
   expiresAt: string;
@@ -125,6 +126,7 @@ export function sessionToSummary(session: AgentSession): SessionSummary {
     agentAddress: session.userAddress,
     organisations: session.organisations,
     personaName: session.persona.name,
+    persona: session.persona,
     createdAt: new Date(session.createdAt).toISOString(),
     lastActiveAt: new Date(session.lastActiveAt).toISOString(),
     expiresAt,

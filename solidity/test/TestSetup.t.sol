@@ -726,6 +726,23 @@ abstract contract TestSetupIntegrations is BaseSetup {
     }
 }
 
+abstract contract TestSetupRevokeInactiveAccounts is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        (PowersTypes.MandateInitData[] memory mandateInitData_) =
+            testConstitutions.revokeInactiveAccountsTestConstitution(address(daoMock));
+
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute();
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_THREE, alice);
+        daoMock.assignRole(ROLE_THREE, bob);
+        vm.stopPrank();
+    }
+}
+
 /////////////////////////////////////////////////////////////////////
 //                INTEGRATION FLOWS TEST SETUPS                    //
 /////////////////////////////////////////////////////////////////////

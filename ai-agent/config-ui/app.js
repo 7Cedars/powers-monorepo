@@ -4,10 +4,10 @@
 const API = '';  // same origin
 const STORAGE_KEY = 'powers-agent-sessions';
 const CHAINS = [
+  { id: 421614,   name: 'Arbitrum Sepolia' },
   { id: 11155111, name: 'Sepolia' },
   { id: 84532,    name: 'Base Sepolia' },
   { id: 11155420, name: 'Optimism Sepolia' },
-  { id: 421614,   name: 'Arbitrum Sepolia' },
   { id: 31337,    name: 'Anvil (local)' },
 ];
 
@@ -75,6 +75,7 @@ async function loadSessionList() {
   }
 
   container.innerHTML = sorted.map(s => sessionCard(s)).join('');
+  sorted.forEach(s => loadCardFunds(s.sessionId));
 }
 
 function sessionCard(s) {
@@ -82,20 +83,24 @@ function sessionCard(s) {
   const remaining = Math.max(0, expires - Date.now());
   const mins = Math.floor(remaining / 60000);
   const timeLabel = mins > 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
-  const orgs = (s.organisations || []).map(o => o.label || shortAddr(o.powersAddress)).join(', ');
+  const chainName = id => CHAINS.find(c => c.id === id)?.name || `Chain ${id}`;
+  const orgLines = (s.organisations || []).map(o =>
+    `<div>${esc(chainName(o.chainId))} — <code>${shortAddr(o.powersAddress)}</code>${o.label ? ` (${esc(o.label)})` : ''}</div>`
+  ).join('') || '—';
 
   return `
-  <div class="card">
+  <div class="card card-clickable" onclick="openManage('${s.sessionId}')">
     <div class="card-header">
       <h3>${esc(s.personaName || 'Agent')}</h3>
       <span class="tag">expires in ${timeLabel}</span>
     </div>
     <div class="meta-row">
-      <div class="meta-item"><label>Address</label><span>${shortAddr(s.agentAddress)}</span></div>
-      <div class="meta-item"><label>Organisations</label><span>${esc(orgs || '—')}</span></div>
+      <div class="meta-item"><label>Agent wallet</label><span>${shortAddr(s.agentAddress)}</span></div>
+      <div class="meta-item"><label>Balance</label><span id="card-funds-${s.sessionId}">…</span></div>
     </div>
-    <div class="btn-group">
-      <button class="btn btn-secondary btn-sm" onclick="openManage('${s.sessionId}')">Manage</button>
+    <div class="meta-item" style="margin-top:8px">
+      <label>Organisations</label>
+      <div style="font-size:12px;margin-top:4px;font-family:inherit">${orgLines}</div>
     </div>
   </div>`;
 }
@@ -240,6 +245,12 @@ function manageHTML(s) {
     `<div><code>${esc(o.powersAddress)}</code> on chain ${o.chainId}${o.label ? ` — ${esc(o.label)}` : ''}</div>`
   ).join('');
 
+  const uniqueChainIds = [...new Set((s.organisations || []).map(o => o.chainId))];
+  const fundChainOptions = uniqueChainIds.map(id => {
+    const name = CHAINS.find(c => c.id === id)?.name || `Chain ${id}`;
+    return `<option value="${id}">${esc(name)}</option>`;
+  }).join('');
+
   return `
   <!-- Summary -->
   <div class="card">
@@ -254,6 +265,10 @@ function manageHTML(s) {
     <div class="card-header"><h3>Fund Agent Wallet</h3></div>
     <div id="fund-info" class="status info">Fetching balance…</div>
     <div class="form-group" style="margin-top:12px">
+      <label>Chain</label>
+      <select id="fund-chain">${fundChainOptions}</select>
+    </div>
+    <div class="form-group">
       <label>Amount (ETH)</label>
       <input id="fund-amount" type="number" step="0.001" placeholder="0.01" style="width:180px" />
     </div>
@@ -301,8 +316,8 @@ function manageHTML(s) {
   <div class="card">
     <div class="card-header"><h3>Update Strategy</h3></div>
     <div class="form-group"><label>Agent Name</label><input id="m-persona-name" value="${esc(s.personaName)}" /></div>
-    <div class="form-group"><label>Strategy</label><textarea id="m-persona-strategy" style="min-height:100px"></textarea></div>
-    <div class="form-group"><label>Constraints</label><textarea id="m-persona-constraints"></textarea></div>
+    <div class="form-group"><label>Strategy</label><textarea id="m-persona-strategy" style="min-height:100px">${esc(s.persona?.strategy || '')}</textarea></div>
+    <div class="form-group"><label>Constraints</label><textarea id="m-persona-constraints">${esc(s.persona?.constraints || '')}</textarea></div>
     <button class="btn btn-primary btn-sm" onclick="updatePersona('${s.sessionId}')">Save</button>
     <div id="persona-status" class="status"></div>
   </div>
@@ -317,13 +332,32 @@ function manageHTML(s) {
 }
 
 // ── Fund Agent ─────────────────────────────────────────────────────────────
+async function loadCardFunds(sessionId) {
+  const el = document.getElementById(`card-funds-${sessionId}`);
+  if (!el) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/fund`);
+    const data = await res.json();
+    const chainMap = Object.fromEntries(CHAINS.map(c => [c.id, c.name]));
+    el.textContent = data.balances
+      .map(b => `${chainMap[b.chainId] || `Chain ${b.chainId}`}: ${b.balance}`)
+      .join(' · ') || '—';
+  } catch {
+    el.textContent = 'unavailable';
+  }
+}
+
 async function loadFundInfo(sessionId) {
   const el = document.getElementById('fund-info');
   if (!el) return;
   try {
     const res = await fetch(`${API}/api/session/${sessionId}/fund`);
     const data = await res.json();
-    el.textContent = `Agent address: ${data.agentAddress} | Balance: ${data.currentBalance}`;
+    const chainMap = Object.fromEntries(CHAINS.map(c => [c.id, c.name]));
+    const balanceLines = data.balances.map(b =>
+      `<span>${chainMap[b.chainId] || `Chain ${b.chainId}`}: <strong>${b.balance}</strong></span>`
+    ).join('<br>');
+    el.innerHTML = `Agent: <code>${data.agentAddress}</code><br>${balanceLines}`;
     el.className = 'status info';
   } catch {
     el.textContent = 'Could not fetch balance.';
@@ -338,10 +372,11 @@ async function fundAgent(sessionId) {
     status.className = 'status error'; status.textContent = 'Enter a valid ETH amount.'; return;
   }
 
+  const chainId = Number(document.getElementById('fund-chain').value);
+
   const res = await fetch(`${API}/api/session/${sessionId}/fund`);
   const data = await res.json();
   const agentAddress = data.agentAddress;
-  const chainId = data.chainId;
 
   if (!window.ethereum) {
     status.className = 'status error'; status.textContent = 'No browser wallet detected.'; return;

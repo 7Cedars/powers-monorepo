@@ -455,6 +455,62 @@ contract TestConstitutions is Test {
     }
 
     //////////////////////////////////////////////////////////////
+    //       REVOKE INACTIVE ACCOUNTS CONSTITUTION              //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. SelfSelect role 5, restricted to role 3  → caller-tracked actions
+    // 2. StatementOfIntent, voteable by role 3    → voter-tracked actions
+    // 3. RevokeInactiveAccounts monitoring role 3
+    function revokeInactiveAccountsTestConstitution(address /*daoMock*/)
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        conditions.allowedRole = 3;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign role 5 (role 3 required).",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(5)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = 3;
+        conditions.votingPeriod = 100;
+        conditions.succeedAt = 51;
+        conditions.quorum = 20;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "StatementOfIntent: proposal voteable by role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "RevokeInactiveAccounts: monitor role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RevokeInactiveAccounts"),
+                config: abi.encode(
+                    uint256(3), // roleId to monitor
+                    uint256(1), // minimumActionsNeeded
+                    uint256(5)  // numberActionsToCheck
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
     //                  EXECUTIVE CONSTITUTION                  //
     //////////////////////////////////////////////////////////////
     function executiveTestConstitution(address daoMock, address simpleErc1155, address returnDataMock)

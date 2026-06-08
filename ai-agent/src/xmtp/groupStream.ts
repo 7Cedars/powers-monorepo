@@ -78,6 +78,11 @@ export function startGroupStream(
               session.lastReplyAt.set(message.conversationId, Date.now());
             };
 
+            if (text.length > 300) {
+              await groupReply('Message too long. Please keep messages under 300 characters.');
+              continue;
+            }
+
             await reason(session, matchedOrg, message.conversationId, text, groupReply);
             sessionManager.touchSession(session.sessionId);
           } catch (err) {

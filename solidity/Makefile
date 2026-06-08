@@ -317,18 +317,18 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 registry-deploy : 
 	@echo "Deploying mandate registry..."
-	forge script script/DeployMandates.s.sol:DeployMandates $(ARB_SEPOLIA_DEPLOY_ARGS)
+	forge script script/DeployMandates.s.sol:DeployMandates $(ANVIL_DEPLOY_ARGS)
 
 mandates-deploy : 
 	@echo "Deploying mandates..."
-	forge script script/DeployMandates.s.sol:DeployMandates $(ARB_SEPOLIA_DEPLOY_ARGS)
+	forge script script/DeployMandates.s.sol:DeployMandates $(ANVIL_DEPLOY_ARGS)
 
 examples-deploy : 
 	@echo "Deploying example contracts..."
 # 	@echo "Account Abstraction:"
 # 	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
 	@echo "Bicameralism:"
-	forge script governance/examples/Bicameralism.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/examples/Bicameralism.s.sol:Deploy $(ANVIL_DEPLOY_ARGS) 
 # 	@echo "Election List:"
 # 	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
 # 	@echo "Governed 721:"
