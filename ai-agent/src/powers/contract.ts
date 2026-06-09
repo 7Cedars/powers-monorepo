@@ -618,6 +618,35 @@ export async function getActionHistory(
   );
 }
 
+export async function getAmountRoleHolders(
+  chainId: number,
+  address: Address,
+  roleId: bigint
+): Promise<bigint> {
+  const client = getPublicClient(chainId);
+  return (await client.readContract({
+    address,
+    abi: powersAbi,
+    functionName: 'getAmountRoleHolders',
+    args: [roleId],
+  })) as bigint;
+}
+
+export async function getRoleHolderAtIndex(
+  chainId: number,
+  address: Address,
+  roleId: bigint,
+  index: bigint
+): Promise<Address> {
+  const client = getPublicClient(chainId);
+  return (await client.readContract({
+    address,
+    abi: powersAbi,
+    functionName: 'getRoleHolderAtIndex',
+    args: [roleId, index],
+  })) as Address;
+}
+
 export async function getAllRoleInfo(
   chainId: number,
   address: Address,

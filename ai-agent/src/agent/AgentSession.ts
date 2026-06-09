@@ -4,6 +4,7 @@ import type { PrivateKeyAccount, Address } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Agent } from '@xmtp/agent-sdk';
 import type { HistoricalAction } from '../powers/contract.js';
+import type { LinkedInstance } from '../powers/linkedInstances.js';
 
 export interface OrganisationConfig {
   powersAddress: Address;
@@ -54,6 +55,7 @@ export interface AgentSession {
   histories: Map<string, MessageParam[]>;
   lastReplyAt: Map<string, number>;
   orgActionHistory: Map<string, HistoricalAction[]>;
+  linkedInstancesCache: Map<string, LinkedInstance[]>;
 
   ttlMs: number;
   createdAt: number;
@@ -114,6 +116,7 @@ export function createSession(
     histories: new Map(),
     lastReplyAt: new Map(),
     orgActionHistory: new Map(),
+    linkedInstancesCache: new Map(),
     ttlMs: input.ttlMs,
     createdAt: Date.now(),
     lastActiveAt: Date.now(),

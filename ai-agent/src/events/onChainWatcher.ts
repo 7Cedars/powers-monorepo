@@ -1,10 +1,10 @@
 import { type Address, type WatchContractEventReturnType } from 'viem';
-import { getWatchClient } from '../powers/contract.js';
+import { getWatchClient, isPowersContract, getAllMandates } from '../powers/contract.js';
 import { powersAbi } from '../powers/abi.js';
 import type { AgentSession, OrganisationConfig } from '../agent/AgentSession.js';
 import { reason } from '../ai/reason.js';
 import { findGroup, getGroupName, requestOrgGroupAccess } from '../xmtp/groupAccess.js';
-import { getAllMandates } from '../powers/contract.js';
+import { discoverLinkedInstances } from '../powers/linkedInstances.js';
 
 // Returns unwatch functions for all watchers started for this (session, org) pair
 export function startWatchers(
@@ -27,19 +27,20 @@ export function startWatchers(
           access: boolean;
         };
 
-        if (account.toLowerCase() !== session.userAddress.toLowerCase()) continue;
-
-        if (access) {
-          // Agent just gained a role — find the mandate group for this role and introduce
-          console.log(
-            `[watcher] ${session.sessionId} gained role ${roleId} on ${org.powersAddress}`
-          );
-          await handleRoleGained(session, org, roleId);
-        } else {
-          // Agent lost a role — log it; group leave handled by xmtp-agent
-          console.log(
-            `[watcher] ${session.sessionId} lost role ${roleId} on ${org.powersAddress}`
-          );
+        if (account.toLowerCase() === session.userAddress.toLowerCase()) {
+          if (access) {
+            console.log(
+              `[watcher] ${session.sessionId} gained role ${roleId} on ${org.powersAddress}`
+            );
+            await handleRoleGained(session, org, roleId);
+          } else {
+            console.log(
+              `[watcher] ${session.sessionId} lost role ${roleId} on ${org.powersAddress}`
+            );
+          }
+        } else if (access) {
+          // Another account gained a role — check if it's a Powers instance and refresh cache
+          await handleMemberAdded(session, org, account);
         }
       }
     },
@@ -184,6 +185,26 @@ async function handleRoleGained(
     }
   } catch (err) {
     console.error(`[watcher] handleRoleGained error:`, err);
+  }
+}
+
+async function handleMemberAdded(
+  session: AgentSession,
+  org: OrganisationConfig,
+  newMember: Address
+): Promise<void> {
+  const memberIsPowers = await isPowersContract(org.chainId, newMember);
+  if (!memberIsPowers) return;
+
+  console.log(
+    `[watcher] new member ${newMember} is a Powers instance — refreshing linked cache for ${org.powersAddress}`
+  );
+  try {
+    const mandates = await getAllMandates(org.chainId, org.powersAddress);
+    const linked = await discoverLinkedInstances(org.chainId, org.powersAddress, mandates);
+    session.linkedInstancesCache.set(`${org.chainId}:${org.powersAddress}`, linked);
+  } catch (err) {
+    console.error(`[watcher] linked instance refresh failed for ${org.powersAddress}:`, err);
   }
 }
 

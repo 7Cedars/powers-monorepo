@@ -791,6 +791,26 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
+        // ExternalAction_OnReturnValue — forward parent return value to an external Powers instance
+        params = new string[](1);
+        params[0] = "uint256 Value";
+
+        conditions.allowedRole = 1; // ROLE_ONE
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_OnReturnValue"),
+                config: abi.encode(
+                    bytes(""),   // paramsBefore: empty
+                    params,      // params_: ["uint256 Value"]
+                    uint16(8),   // parentMandateId = BespokeActionReturner (mandateId 8)
+                    bytes("")    // paramsAfter: empty
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         return constitution;
     }
 

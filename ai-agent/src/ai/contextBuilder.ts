@@ -13,6 +13,7 @@ import {
   type RoleInfo,
   type HistoricalAction,
 } from '../powers/contract.js';
+import { formatLinkedInstancesSummary } from '../powers/linkedInstances.js';
 
 export interface GovernanceContext {
   triggeredBy: 'xmtp_message' | 'on_chain_event' | 'heartbeat';
@@ -31,6 +32,7 @@ export interface GovernanceContext {
   recentActionHistory: HistoricalAction[];
   mandates: Awaited<ReturnType<typeof getAllMandates>>;
   openActions: Awaited<ReturnType<typeof getOpenActions>>;
+  linkedInstancesSummary: string;
 }
 
 export async function buildContext(
@@ -53,8 +55,10 @@ export async function buildContext(
     ]);
 
   const roleInfo = await getAllRoleInfo(org.chainId, org.powersAddress, mandates);
-  const recentActionHistory =
-    session.orgActionHistory.get(`${org.chainId}:${org.powersAddress}`) ?? [];
+  const orgKey = `${org.chainId}:${org.powersAddress}`;
+  const recentActionHistory = session.orgActionHistory.get(orgKey) ?? [];
+  const linkedInstances = session.linkedInstancesCache.get(orgKey) ?? [];
+  const linkedInstancesSummary = formatLinkedInstancesSummary(linkedInstances);
 
   return {
     triggeredBy,
@@ -73,6 +77,7 @@ export async function buildContext(
     recentActionHistory,
     mandates,
     openActions,
+    linkedInstancesSummary,
   };
 }
 
@@ -141,6 +146,7 @@ export function formatContextMessage(ctx: GovernanceContext): string {
     '',
     'RECENT ACTION HISTORY (LAST 30 DAYS):',
     historyLines || '  (none)',
+    ...(ctx.linkedInstancesSummary ? ['', ctx.linkedInstancesSummary] : []),
     '=== END STATE ===',
   ].join('\n');
 }

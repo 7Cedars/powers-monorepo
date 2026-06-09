@@ -526,3 +526,119 @@ contract PresetActionsOnOwnPowersAccessTest is TestSetupExecutive {
         daoMock.request(mandateId, mandateCalldata, nonce, "Frank attempts DAO call");
     }
 }
+
+/////////////////////////////////////////////////////////////////////
+//                EXTERNAL ACTION ON RETURN VALUE                  //
+/////////////////////////////////////////////////////////////////////
+
+// ─────────────────────────────────────────────
+//               BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract ExternalAction_OnReturnValueBasicTest is TestSetupExecutive {
+    uint16 parentMandateId;
+    uint16 targetMandateId;
+
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
+            daoMock
+        );
+        parentMandateId = findMandateIdInOrg("BespokeActionReturner: Returns a value for testing.", daoMock);
+        targetMandateId = findMandateIdInOrg(
+            "StatementOfIntent: A mandate to propose actions without execution.", daoMock
+        );
+    }
+
+    function testInitializeMandatePrependsSystemParams() public view {
+        (address mandateAddress,,) = daoMock.getAdoptedMandate(mandateId);
+        bytes memory rawParams = Mandate(mandateAddress).getInputParams(address(daoMock), mandateId);
+        string[] memory storedParams = abi.decode(rawParams, (string[]));
+        assertEq(storedParams.length, 3, "Should have 2 system params + 1 user param");
+        assertEq(storedParams[0], "address PowersTarget");
+        assertEq(storedParams[1], "uint16 MandateIdTarget");
+        assertEq(storedParams[2], "uint256 Value");
+    }
+
+    function testHandleRequestForwardsReturnValueToExternalPowers() public {
+        // mandateCalldata encodes (PowersTarget, MandateIdTarget) — shared by the parent call and
+        // the ExternalAction_OnReturnValue call so that parentActionId resolves correctly
+        mandateCalldata = abi.encode(address(daoMock), targetMandateId);
+        uint256 testNonce = 55_555;
+
+        // 1. Execute parent to store return data (getValue() returns 42)
+        vm.prank(alice);
+        daoMock.request(parentMandateId, mandateCalldata, testNonce, "Parent: get return value");
+
+        uint256 parentActionId = MandateUtilities.computeActionId(parentMandateId, mandateCalldata, testNonce);
+        assertEq(uint8(daoMock.getActionState(parentActionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        // 2. Execute ExternalAction_OnReturnValue — reads parent return data, calls daoMock.request(StatementOfIntent, ...)
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, testNonce, "Forward return value");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, testNonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        // 3. Verify the forwarded inner request fulfilled StatementOfIntent on daoMock
+        bytes memory returnData = daoMock.getActionReturnData(parentActionId, 0);
+        uint256 innerActionId = MandateUtilities.computeActionId(targetMandateId, returnData, testNonce);
+        assertEq(uint8(daoMock.getActionState(innerActionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+}
+
+// ─────────────────────────────────────────────
+//               EDGE CASES
+// ─────────────────────────────────────────────
+contract ExternalAction_OnReturnValueEdgeCaseTest is TestSetupExecutive {
+    uint16 targetMandateId;
+
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
+            daoMock
+        );
+        targetMandateId = findMandateIdInOrg(
+            "StatementOfIntent: A mandate to propose actions without execution.", daoMock
+        );
+    }
+
+    function testHandleRequestRevertsIfCalldataMalformed() public {
+        mandateCalldata = abi.encode("not a valid payload");
+
+        vm.prank(alice);
+        vm.expectRevert();
+        daoMock.request(mandateId, mandateCalldata, nonce, "Malformed calldata");
+    }
+
+    function testHandleRequestRevertsIfParentNotExecuted() public {
+        // Parent action has no return data — getActionReturnData panics with array OOB
+        mandateCalldata = abi.encode(address(daoMock), targetMandateId);
+
+        vm.prank(alice);
+        vm.expectRevert();
+        daoMock.request(mandateId, mandateCalldata, nonce, "Parent not executed");
+    }
+}
+
+// ─────────────────────────────────────────────
+//               ACCESS CONTROL
+// ─────────────────────────────────────────────
+contract ExternalAction_OnReturnValueAccessTest is TestSetupExecutive {
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
+            daoMock
+        );
+    }
+
+    function testHandleRequestRevertsIfCallerLacksRole() public {
+        mandateCalldata = abi.encode(address(daoMock), uint16(1));
+
+        vm.prank(frank); // frank holds no role — mandate requires ROLE_ONE
+        vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Unauthorized");
+    }
+}

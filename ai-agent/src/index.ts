@@ -9,7 +9,8 @@ import { backfillGroupChatHistory } from './xmtp/chatHistory.js';
 import { startWatchers } from './events/onChainWatcher.js';
 import { startHeartbeat, stopHeartbeat } from './events/heartbeat.js';
 import { reason } from './ai/reason.js';
-import { getActionHistory } from './powers/contract.js';
+import { getActionHistory, getAllMandates } from './powers/contract.js';
+import { discoverLinkedInstances } from './powers/linkedInstances.js';
 import { config } from './config/env.js';
 import type { AgentSession, OrganisationConfig } from './agent/AgentSession.js';
 
@@ -88,6 +89,11 @@ async function onSessionStart(sessionId: string): Promise<void> {
       );
   }
 
+  // 7. Discover linked Powers instances for each org (fire-and-forget)
+  for (const org of session.organisations) {
+    discoverLinkedInstancesForOrg(session, org);
+  }
+
   console.log(
     `[index] session ${sessionId} started — addr=${session.userAddress} ` +
     `orgs=${session.organisations.length}`
@@ -109,6 +115,21 @@ function onSessionDestroy(sessionId: string): void {
   console.log(`[index] session ${sessionId} torn down`);
 }
 
+function discoverLinkedInstancesForOrg(session: AgentSession, org: OrganisationConfig): void {
+  const orgKey = `${org.chainId}:${org.powersAddress}`;
+  getAllMandates(org.chainId, org.powersAddress)
+    .then((mandates) => discoverLinkedInstances(org.chainId, org.powersAddress, mandates))
+    .then((linked) => {
+      session.linkedInstancesCache.set(orgKey, linked);
+      if (linked.length > 0) {
+        console.log(`[index] found ${linked.length} linked Powers instance(s) for ${orgKey}`);
+      }
+    })
+    .catch((err) =>
+      console.error(`[index] linked instance discovery failed for ${org.powersAddress}:`, err)
+    );
+}
+
 // Called by the API server when a new org is added to a running session
 function onOrgAdded(sessionId: string, org: OrganisationConfig): void {
   const session = sessionManager.getSession(sessionId);
@@ -117,6 +138,7 @@ function onOrgAdded(sessionId: string, org: OrganisationConfig): void {
   requestOrgGroupAccess(session, org).catch((err) =>
     console.error(`[index] requestOrgGroupAccess error for new org ${org.powersAddress}:`, err)
   );
+  discoverLinkedInstancesForOrg(session, org);
   console.log(`[index] added org ${org.powersAddress} to session ${sessionId}`);
 }
 
