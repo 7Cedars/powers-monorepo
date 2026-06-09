@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
 import {
-  ChevronLeftIcon, ChevronRightIcon,
+  ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon,
   QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
   PuzzlePieceIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
@@ -66,13 +66,13 @@ export function SectionApplications() {
 
   return (
     <main
-      className="w-full flex flex-col justify-start items-center bg-background border-t border-border py-16 px-4"
+      className="w-full flex flex-col justify-start items-center bg-background border-t border-border pt-8 pb-16 md:py-16 px-4"
       id="powersApplications"
     >
       <div className="w-full flex flex-col gap-12 items-center">
 
         {/* Title & subtitle */}
-        <div className="w-full flex flex-col justify-center items-center pt-10">
+        <div className="w-full flex flex-col justify-center items-center">
           <div className="w-full flex flex-col gap-1 justify-center items-center md:text-4xl text-xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
             Governance, solved structurally
           </div>
@@ -169,6 +169,17 @@ export function SectionApplications() {
           </button>
         </div>
 
+      </div>
+
+      {/* arrow down */}
+      <div className="flex flex-col items-center justify-end pt-10">
+        <button
+          onClick={() => document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="scroll-arrow"
+          aria-label="Scroll to next section"
+        >
+          <ChevronDownIcon className="w-16 h-16" />
+        </button>
       </div>
     </main>
   );

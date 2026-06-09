@@ -8,14 +8,24 @@ export function SectionIntro() {
   return (
     <section id="intro" className="w-full flex flex-col items-center gap-4 bg-muted/25 border-t border-border px-4 py-8">
         {/* title  */}
-          <section className="w-full flex flex-col justify-center items-center pt-4">
+          <section className="w-full flex flex-col justify-center items-center">
               <div className="w-full flex flex-col justify-center items-center md:text-4xl text-xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
                 Composable Governance
               </div>
-              <div className="w-full flex justify-center items-center md:text-lg text-sm font-mono text-muted-foreground max-w-3xl text-center pt-1">
-                Most on-chain organisations run on a single multisig or a monolithic Governor contract. One group holds the keys. Proposals pass or fail in a single vote. There are no checks, no balances, no separation between who proposes, who deliberates, and who executes.
-                <br /><br />
-                Powers Protocol changes that. Governance is assembled from modular, role-restricted components — mandates — that can be combined into any structure an organisation requires.
+              <div className="w-full flex flex-col justify-center items-center md:text-lg text-sm font-mono text-muted-foreground max-w-3xl text-center pt-1 gap-4">
+                <span>Most on-chain organisations run on a single multisig or a monolithic Governor contract:</span>
+                <div className="flex flex-col gap-2 w-full text-center">
+                  {[
+                    "One group holds the keys.",
+                    "Proposals pass or fail in a single vote.",
+                    "There are no checks, no balances, no separation between who proposes, who deliberates, and who executes.",
+                  ].map((point, i) => (
+                    <div key={i}>
+                      <span style={{ color: '#CD5E20' }}>— </span>{point}
+                    </div>
+                  ))}
+                </div>
+                <span className="font-bold text-foreground">Powers Protocol changes that. Governance is assembled from modular, role-restricted components — mandates — that can be combined into any structure an organisation requires.</span>
               </div>
           </section>
 
@@ -43,9 +53,13 @@ export function SectionIntro() {
 
       {/* arrow down */}
       <div className="flex flex-col align-center justify-end">
-        <ChevronDownIcon
-            className="w-16 h-16 text-muted-foreground"
-        /> 
+        <button
+          onClick={() => document.getElementById('powersApplications')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="scroll-arrow"
+          aria-label="Scroll to next section"
+        >
+          <ChevronDownIcon className="w-16 h-16" />
+        </button>
       </div>
 
     </section>
