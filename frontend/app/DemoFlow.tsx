@@ -224,6 +224,7 @@ const DemoFlowContent: React.FC = () => {
       minZoom={0.1}
       panOnDrag
       zoomOnScroll
+      zoomOnPinch
       panOnScroll={false}
       preventScrolling={true}
       selectionOnDrag={false}
@@ -243,7 +244,7 @@ const DemoFlowContent: React.FC = () => {
 
 export function DemoFlow() {
   return (
-    <div className="w-full h-full bg-background">
+    <div className="w-full h-full" style={{ background: 'hsl(var(--background))' }}>
       <ReactFlowProvider>
         <DemoFlowContent />
       </ReactFlowProvider>

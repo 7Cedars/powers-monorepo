@@ -31,30 +31,30 @@ export default function Page() {
                         className="mb-6 animate-in fade-in duration-700"
                         style={{ animationFillMode: 'both' }}
                     />
-                    <div className="w-full flex flex-col gap-2 justify-center items-center text-3xl sm:text-6xl font-mono text-foreground max-w-4xl text-center text-pretty">
+                    <div className="w-full flex flex-col gap-2 justify-center items-center text-2xl sm:text-4xl font-mono text-foreground max-w-4xl text-center text-pretty">
                         <span
                             className="animate-in fade-in slide-in-from-bottom-4 duration-700"
                             style={{ animationDelay: '200ms', animationFillMode: 'both' }}
                         >
-                            Communities thrive with
+                            Governance systems with role-based
                         </span>
                         <b
-                            className="uppercase tracking-wider animate-in fade-in slide-in-from-bottom-6 duration-1000"
+                            className="animate-in fade-in slide-in-from-bottom-6 duration-1000"
                             style={{ animationDelay: '500ms', animationFillMode: 'both' }}
                         >
-                            Powers
+                            checks and balances
                         </b>
                     </div>
                     <div
                         className="w-full flex justify-center items-center text-pretty text-xl sm:text-2xl py-4 font-mono text-muted-foreground max-w-4xl text-center p-4 animate-in fade-in duration-700"
                         style={{ animationDelay: '800ms', animationFillMode: 'both' }}
                     >
-                        Open source, trustless, modular governance infrastructure for transparent separation of powers.
+                        Encoded on-chain and set in cryptographic stone.
                     </div>
-                    <div className="w-full flex justify-center items-center text-pretty text-lg sm:text-xl py-2 font-mono text-muted-foreground max-w-4xl text-center p-4">
+                    <div className="w-full flex justify-center items-center text-pretty text-sm sm:text-base py-2 font-mono text-muted-foreground max-w-4xl text-center p-4">
                         <TypewriterText
-                            text="Because on-chain organisations deserve more than a multisig."
-                            startDelay={1000}
+                            text="Giving organisations real accountability — not just the appearance of it."
+                            startDelay={600}
                         />
                     </div>
                 </section>
