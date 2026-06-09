@@ -35,6 +35,7 @@ export const config = {
     maxToolRounds: parseInt(process.env.MAX_TOOL_ROUNDS || '8', 10),
     maxHistoryTurns: parseInt(process.env.MAX_HISTORY_TURNS || '20', 10),
     chatRateLimitMs: parseInt(process.env.CHAT_RATE_LIMIT_MS || '3000', 10),
+    thinkingBudget: parseInt(process.env.THINKING_BUDGET_TOKENS || '5000', 10),
   },
 };
 

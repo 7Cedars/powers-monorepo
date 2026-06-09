@@ -28,15 +28,48 @@ ai/
 ├── prompts/
 │   └── institutionalDesign.md   # Mandate catalogue, design heuristics, condition encoding
 ├── references/
-│   ├── reading_guide.md         # Annotated guide to the PDFs below
-│   ├── reading_guide_template.md
-│   └── *.pdf                    # Governance theory papers (Ostrom, Carlisle, OECD/IIASA…)
-└── templates/
-    ├── orgSpec.md               # MDX template for the governance specification
-    └── deployScript.md          # Annotated Solidity deploy script template
+│   ├── reading_guide.md         # Annotated guide to the reference papers
+│   └── *.md                     # Per-paper summaries used as fallback and for ingest
+├── sources/
+│   └── *.pdf                    # Governance theory papers (Ostrom, Carlisle, OECD…)
+├── templates/
+│   ├── orgSpec.md               # MDX template for the governance specification
+│   └── deployScript.md          # Annotated Solidity deploy script template
+├── embeddings/                  # Generated vector index (gitignored — run pnpm ingest)
+└── src/
+    ├── types.ts                 # Shared types for the RAG package
+    ├── ingest.ts                # Parses sources/ and references/, builds embeddings/index.json
+    └── server.ts                # MCP stdio server exposing search_governance_sources tool
 ```
 
-The skill reads all of these files during its loading phase before it speaks to the user.
+The skill uses the `search_governance_sources` MCP tool (served from `src/server.ts`) to retrieve relevant excerpts during the design dialogue, rather than loading files directly.
+
+---
+
+## RAG setup (required once before using `/design-org`)
+
+The MCP server needs a pre-built embedding index. No API key required — embeddings are computed locally using `nomic-ai/nomic-embed-text-v1.5` via `@huggingface/transformers`.
+
+**1. Install dependencies**
+
+```bash
+cd ai/
+pnpm install
+```
+
+**2. Build the index**
+
+```bash
+pnpm ingest
+```
+
+On first run this downloads the `nomic-embed-text-v1.5` model (~275 MB) from Hugging Face into your system cache (`~/.cache/huggingface/hub/`). Subsequent runs load from cache and are fast. The script parses all PDFs in `sources/` and markdown files in `references/`, embeds each chunk, and writes `embeddings/index.json`.
+
+**3. Restart Claude Code**
+
+The MCP server (`pnpm serve`) is registered in `.claude/settings.json` and starts automatically when you open a Claude Code session. On startup it loads the model from cache (~2–5 s) and then stays ready. No network access is required after the initial download.
+
+**Re-run ingestion** any time you add new PDFs to `sources/` or update summaries in `references/`.
 
 ---
 

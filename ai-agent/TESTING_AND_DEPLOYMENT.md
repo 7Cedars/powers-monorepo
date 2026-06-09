@@ -58,7 +58,7 @@ anvil
 
 # Terminal 2
 cd solidity
-make initialise-anvil
+make fork-anvil
 ```
 
 Take note of the deployed `Powers` contract address printed by `make initialise-anvil`.

@@ -3,7 +3,7 @@ import { reason } from '../ai/reason.js';
 import { findGroup, getGroupName } from '../xmtp/groupAccess.js';
 import { getAllMandates, getAgentRoles } from '../powers/contract.js';
 
-const HEARTBEAT_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+const HEARTBEAT_INTERVAL_MS = 1 * 60 * 1000; // 15 minutes
 const SKIP_IF_EVENT_WITHIN_MS = 5 * 60 * 1000; // 5 minutes
 
 const HEARTBEAT_TRIGGER = `[HEARTBEAT — scheduled 15-minute review]

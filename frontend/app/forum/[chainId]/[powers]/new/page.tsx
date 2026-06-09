@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { SparklesIcon, ClipboardDocumentListIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
+import { SparklesIcon, ClipboardDocumentListIcon, ArrowsRightLeftIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 import { SingleFlow } from '@/components/SingleFlow'
+import { Chatroom } from '../[actionId]/Chatroom'
 import { usePowersStore, useActionStore, useErrorStore, useStatusStore, setAction, setError, setStatus } from '@/context/store'
 import { DynamicInput } from './DynamicInput'
 import { SimulationBox } from '@/components/SimulationBox'
@@ -20,6 +21,8 @@ import { useChecks } from '@/hooks/useChecks'
 import { useEffectiveAddress } from '@/hooks/useEffectiveAddress'
 import { bigintToRole } from '@/utils/bigintTo'
 import { cn } from '@/utils/utils'
+
+const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 export default function NewActionPage() {
   const router = useRouter()
@@ -38,7 +41,8 @@ export default function NewActionPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSelectInput, setShowSelectInput] = useState(false)
-  const [activeInfoTab, setActiveInfoTab] = useState<'conditions' | 'flow'>('conditions')
+  const [activeInfoTab, setActiveInfoTab] = useState<'conditions' | 'flow' | 'chat'>('conditions')
+  const [chatroomMode, setChatroomMode] = useState<'mandate' | 'flow'>('mandate')
   // Redirect to org home if powers not loaded
   useEffect(() => {
     if (!powers?.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
@@ -60,6 +64,18 @@ export default function NewActionPage() {
 
   const params = mandate?.params || []
   const dataTypes = params.map(p => p.dataType)
+
+  const mandateFlow = useMemo(() => {
+    if (!mandate || !powers.flows) return undefined
+    return powers.flows.find(flow =>
+      flow.mandateIds.some(id => id.toString() === mandate.index.toString())
+    )
+  }, [mandate, powers.flows])
+
+  const flowContextId = useMemo(() => {
+    if (!mandateFlow) return undefined
+    return mandateFlow.mandateIds[0]?.toString()
+  }, [mandateFlow])
 
   // Flow actions for "Select Input" feature
   const flowActions = useMemo(() => {
@@ -223,6 +239,8 @@ export default function NewActionPage() {
   const mandateName = mandate.nameDescription?.split(':')[0] ?? `Mandate #${mandate.index}`
   const mandateDesc = mandate.nameDescription?.split(':').slice(1).join(':').trim()
   const roleName = bigintToRole(mandate.conditions?.allowedRole ?? 0n, powers)
+  const allowedRole = mandate.conditions?.allowedRole !== undefined ? BigInt(mandate.conditions.allowedRole) : 0n
+  const isPublicRole = allowedRole === PUBLIC_ROLE
 
   return (
     <div className="flex-1 flex flex-col bg-background scanlines font-mono">
@@ -249,6 +267,7 @@ export default function NewActionPage() {
             {([
               { id: 'conditions', label: 'Conditions', icon: ClipboardDocumentListIcon },
               { id: 'flow',       label: 'Flow',       icon: ArrowsRightLeftIcon },
+              { id: 'chat',       label: 'Chat',       icon: ChatBubbleLeftRightIcon },
             ] as const).map(tab => (
               <button
                 key={tab.id}
@@ -268,7 +287,7 @@ export default function NewActionPage() {
           {/* Active tab title — small screens only */}
           <div className="sm:hidden flex items-center px-6 py-2 border-b border-border">
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              {activeInfoTab === 'conditions' ? 'Conditions' : 'Flow'}
+              {{ conditions: 'Conditions', flow: 'Flow', chat: 'Chat' }[activeInfoTab]}
             </span>
           </div>
 
@@ -309,6 +328,40 @@ export default function NewActionPage() {
           {activeInfoTab === 'flow' && (
             <div className="h-[280px] border-b border-border">
               <SingleFlow mandateId={mandate.index} />
+            </div>
+          )}
+
+          {activeInfoTab === 'chat' && (
+            <div className="border-b border-border">
+              {chatroomMode === 'mandate' || !mandateFlow ? (
+                <Chatroom
+                  key={`mandate-${mandate.index}`}
+                  chatroomType="Mandate"
+                  isPublicRole={isPublicRole}
+                  chainId={chainId}
+                  powersAddress={powersAddress}
+                  contextId={mandate.index.toString()}
+                  xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
+                  tabs={mandateFlow ? [
+                    { label: 'Mandate', active: true,  onClick: () => setChatroomMode('mandate') },
+                    { label: 'Flow',    active: false, onClick: () => setChatroomMode('flow') },
+                  ] : undefined}
+                />
+              ) : (
+                <Chatroom
+                  key={`flow-${flowContextId}`}
+                  chatroomType="Flow"
+                  isPublicRole={isPublicRole}
+                  chainId={chainId}
+                  powersAddress={powersAddress}
+                  contextId={flowContextId}
+                  xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
+                  tabs={[
+                    { label: 'Mandate', active: false, onClick: () => setChatroomMode('mandate') },
+                    { label: 'Flow',    active: true,  onClick: () => setChatroomMode('flow') },
+                  ]}
+                />
+              )}
             </div>
           )}
 

@@ -3,11 +3,33 @@
 // ── Constants ──────────────────────────────────────────────────────────────
 const API = '';  // same origin
 const STORAGE_KEY = 'powers-agent-sessions';
+const THEME_KEY = 'powers-agent-theme';
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(THEME_KEY, next);
+  updateThemeIcon(next);
+}
+
+function updateThemeIcon(theme) {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+}
 const CHAINS = [
+  { id: 421614,   name: 'Arbitrum Sepolia' },
   { id: 11155111, name: 'Sepolia' },
   { id: 84532,    name: 'Base Sepolia' },
   { id: 11155420, name: 'Optimism Sepolia' },
-  { id: 421614,   name: 'Arbitrum Sepolia' },
   { id: 31337,    name: 'Anvil (local)' },
 ];
 
@@ -19,6 +41,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
     document.getElementById('http-warning').style.display = 'block';
   }
+
+  initTheme();
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
   addOrgRow();
   await loadSessionList();
@@ -75,6 +100,7 @@ async function loadSessionList() {
   }
 
   container.innerHTML = sorted.map(s => sessionCard(s)).join('');
+  sorted.forEach(s => loadCardFunds(s.sessionId));
 }
 
 function sessionCard(s) {
@@ -82,20 +108,24 @@ function sessionCard(s) {
   const remaining = Math.max(0, expires - Date.now());
   const mins = Math.floor(remaining / 60000);
   const timeLabel = mins > 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
-  const orgs = (s.organisations || []).map(o => o.label || shortAddr(o.powersAddress)).join(', ');
+  const chainName = id => CHAINS.find(c => c.id === id)?.name || `Chain ${id}`;
+  const orgLines = (s.organisations || []).map(o =>
+    `<div>${esc(chainName(o.chainId))} — <code>${shortAddr(o.powersAddress)}</code>${o.label ? ` (${esc(o.label)})` : ''}</div>`
+  ).join('') || '—';
 
   return `
-  <div class="card">
+  <div class="card card-clickable" onclick="openManage('${s.sessionId}')">
     <div class="card-header">
       <h3>${esc(s.personaName || 'Agent')}</h3>
       <span class="tag">expires in ${timeLabel}</span>
     </div>
     <div class="meta-row">
-      <div class="meta-item"><label>Address</label><span>${shortAddr(s.agentAddress)}</span></div>
-      <div class="meta-item"><label>Organisations</label><span>${esc(orgs || '—')}</span></div>
+      <div class="meta-item"><label>Agent wallet</label><span>${shortAddr(s.agentAddress)}</span></div>
+      <div class="meta-item"><label>Balance</label><span id="card-funds-${s.sessionId}">…</span></div>
     </div>
-    <div class="btn-group">
-      <button class="btn btn-secondary btn-sm" onclick="openManage('${s.sessionId}')">Manage</button>
+    <div class="meta-item" style="margin-top:8px">
+      <label>Organisations</label>
+      <div style="font-size:12px;margin-top:4px;font-family:inherit">${orgLines}</div>
     </div>
   </div>`;
 }
@@ -124,6 +154,10 @@ function addOrgRow(values = {}) {
       <label>Label (optional)</label>
       <input class="org-label" placeholder="e.g. 7Cedars DAO" value="${values.label || ''}" />
     </div>
+    <div class="form-group" style="margin:0">
+      <label>XMTP Agent Address (optional)</label>
+      <input class="org-xmtp" placeholder="0x…" value="${values.xmtpAgentAddress || ''}" />
+    </div>
     <button class="btn remove-org" onclick="removeOrgRow(${i})" title="Remove">×</button>`;
 
   document.getElementById('org-list').appendChild(row);
@@ -140,6 +174,7 @@ function collectOrgs() {
     powersAddress: row.querySelector('.org-addr').value.trim(),
     chainId: Number(row.querySelector('.org-chain').value),
     label: row.querySelector('.org-label').value.trim() || undefined,
+    xmtpAgentAddress: row.querySelector('.org-xmtp').value.trim() || undefined,
   })).filter(o => o.powersAddress);
 }
 
@@ -208,6 +243,44 @@ function copySessionId() {
   navigator.clipboard?.writeText(currentSessionId);
 }
 
+// ── Load Session by ID ─────────────────────────────────────────────────────
+async function loadSessionById() {
+  const status = document.getElementById('load-status');
+  const id = document.getElementById('f-load-id').value.trim();
+
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRe.test(id)) {
+    status.className = 'status error';
+    status.textContent = 'Not a valid session ID (expected UUID format).';
+    return;
+  }
+
+  status.className = 'status info';
+  status.textContent = 'Looking up session…';
+
+  let sessions;
+  try {
+    const res = await fetch(`${API}/api/sessions`);
+    sessions = await res.json();
+  } catch {
+    status.className = 'status error';
+    status.textContent = 'Could not reach the agent server.';
+    return;
+  }
+
+  const found = sessions.find(s => s.sessionId === id);
+  if (!found) {
+    status.className = 'status error';
+    status.textContent = 'Session not found. It may have expired or the ID is incorrect.';
+    return;
+  }
+
+  addStoredId(id);
+  document.getElementById('f-load-id').value = '';
+  status.textContent = '';
+  openManage(id);
+}
+
 // ── Manage Session ─────────────────────────────────────────────────────────
 async function openManage(sessionId) {
   currentSessionId = sessionId;
@@ -240,6 +313,12 @@ function manageHTML(s) {
     `<div><code>${esc(o.powersAddress)}</code> on chain ${o.chainId}${o.label ? ` — ${esc(o.label)}` : ''}</div>`
   ).join('');
 
+  const uniqueChainIds = [...new Set((s.organisations || []).map(o => o.chainId))];
+  const fundChainOptions = uniqueChainIds.map(id => {
+    const name = CHAINS.find(c => c.id === id)?.name || `Chain ${id}`;
+    return `<option value="${id}">${esc(name)}</option>`;
+  }).join('');
+
   return `
   <!-- Summary -->
   <div class="card">
@@ -254,6 +333,10 @@ function manageHTML(s) {
     <div class="card-header"><h3>Fund Agent Wallet</h3></div>
     <div id="fund-info" class="status info">Fetching balance…</div>
     <div class="form-group" style="margin-top:12px">
+      <label>Chain</label>
+      <select id="fund-chain">${fundChainOptions}</select>
+    </div>
+    <div class="form-group">
       <label>Amount (ETH)</label>
       <input id="fund-amount" type="number" step="0.001" placeholder="0.01" style="width:180px" />
     </div>
@@ -270,6 +353,7 @@ function manageHTML(s) {
         <select id="m-org-chain">${CHAINS.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select>
       </div>
       <div class="form-group" style="margin:0"><label>Label</label><input id="m-org-label" placeholder="optional" /></div>
+      <div class="form-group" style="margin:0"><label>XMTP Agent Address (optional)</label><input id="m-org-xmtp" placeholder="0x…" /></div>
       <div></div>
     </div>
     <button class="btn btn-primary btn-sm" onclick="addOrg('${s.sessionId}')">Add</button>
@@ -301,8 +385,8 @@ function manageHTML(s) {
   <div class="card">
     <div class="card-header"><h3>Update Strategy</h3></div>
     <div class="form-group"><label>Agent Name</label><input id="m-persona-name" value="${esc(s.personaName)}" /></div>
-    <div class="form-group"><label>Strategy</label><textarea id="m-persona-strategy" style="min-height:100px"></textarea></div>
-    <div class="form-group"><label>Constraints</label><textarea id="m-persona-constraints"></textarea></div>
+    <div class="form-group"><label>Strategy</label><textarea id="m-persona-strategy" style="min-height:100px">${esc(s.persona?.strategy || '')}</textarea></div>
+    <div class="form-group"><label>Constraints</label><textarea id="m-persona-constraints">${esc(s.persona?.constraints || '')}</textarea></div>
     <button class="btn btn-primary btn-sm" onclick="updatePersona('${s.sessionId}')">Save</button>
     <div id="persona-status" class="status"></div>
   </div>
@@ -317,13 +401,32 @@ function manageHTML(s) {
 }
 
 // ── Fund Agent ─────────────────────────────────────────────────────────────
+async function loadCardFunds(sessionId) {
+  const el = document.getElementById(`card-funds-${sessionId}`);
+  if (!el) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/fund`);
+    const data = await res.json();
+    const chainMap = Object.fromEntries(CHAINS.map(c => [c.id, c.name]));
+    el.textContent = data.balances
+      .map(b => `${chainMap[b.chainId] || `Chain ${b.chainId}`}: ${b.balance}`)
+      .join(' · ') || '—';
+  } catch {
+    el.textContent = 'unavailable';
+  }
+}
+
 async function loadFundInfo(sessionId) {
   const el = document.getElementById('fund-info');
   if (!el) return;
   try {
     const res = await fetch(`${API}/api/session/${sessionId}/fund`);
     const data = await res.json();
-    el.textContent = `Agent address: ${data.agentAddress} | Balance: ${data.currentBalance}`;
+    const chainMap = Object.fromEntries(CHAINS.map(c => [c.id, c.name]));
+    const balanceLines = data.balances.map(b =>
+      `<span>${chainMap[b.chainId] || `Chain ${b.chainId}`}: <strong>${b.balance}</strong></span>`
+    ).join('<br>');
+    el.innerHTML = `Agent: <code>${data.agentAddress}</code><br>${balanceLines}`;
     el.className = 'status info';
   } catch {
     el.textContent = 'Could not fetch balance.';
@@ -338,10 +441,11 @@ async function fundAgent(sessionId) {
     status.className = 'status error'; status.textContent = 'Enter a valid ETH amount.'; return;
   }
 
+  const chainId = Number(document.getElementById('fund-chain').value);
+
   const res = await fetch(`${API}/api/session/${sessionId}/fund`);
   const data = await res.json();
   const agentAddress = data.agentAddress;
-  const chainId = data.chainId;
 
   if (!window.ethereum) {
     status.className = 'status error'; status.textContent = 'No browser wallet detected.'; return;
@@ -381,6 +485,7 @@ async function addOrg(sessionId) {
     powersAddress: document.getElementById('m-org-addr').value.trim(),
     chainId: Number(document.getElementById('m-org-chain').value),
     label: document.getElementById('m-org-label').value.trim() || undefined,
+    xmtpAgentAddress: document.getElementById('m-org-xmtp').value.trim() || undefined,
   };
 
   if (!org.powersAddress) { status.className = 'status error'; status.textContent = 'Address required.'; return; }

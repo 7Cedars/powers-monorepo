@@ -61,7 +61,6 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                 }}>
-                <div className="absolute inset-0 bg-background/20" />
             </div>
 
             {/* Top row - only visible when showHeader is true */}

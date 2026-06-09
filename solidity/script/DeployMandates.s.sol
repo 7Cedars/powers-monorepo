@@ -8,6 +8,7 @@ import { Configurations } from "./Configurations.s.sol";
 
 // --- Interfaces ---
 import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandate } from "@src/interfaces/IMandate.sol";
 
 // ELECTORAL MANDATES
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
@@ -137,6 +138,13 @@ contract DeployMandates is Script {
             address mandateAddr = deploy(creationCodes[i], constructorArgs[i]);
             addresses.push(mandateAddr);
 
+            // Skip if name+version already registered (bytecode may differ without version bump)
+            (uint16 maj, uint16 min, uint16 pat) = IMandate(mandateAddr).version();
+            if (registry.isVersionActive(maj, min, pat, names[i])) {
+                console2.log("Mandate name+version already active, skipping:", names[i]);
+                continue;
+            }
+
             regNames[regCount] = names[i];
             regAddresses[regCount] = mandateAddr;
             regCreationCodeHashes[regCount] = bytes32(keccak256(creationCodes[i]));
@@ -165,7 +173,7 @@ contract DeployMandates is Script {
                 console2.log(" - ", finalNames[i], " at ", finalAddresses[i]);
             }
 
-            vm.startBroadcast(msg.sender); 
+            vm.startBroadcast(registry.owner());
             registry.batchRegisterMandates(finalNames, finalAddresses, finalCreationCodeHashes);
             vm.stopBroadcast();
 

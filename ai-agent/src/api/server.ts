@@ -221,14 +221,18 @@ export function createServer(
     if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
 
     const { getEthBalance } = await import('../powers/contract.js');
-    const org = session.organisations[0];
-    let balance = '0 ETH';
-    try {
-      const wei = await getEthBalance(org.chainId, session.userAddress);
-      balance = `${(Number(wei) / 1e18).toFixed(6)} ETH`;
-    } catch {}
+    const uniqueChainIds = [...new Set(session.organisations.map(o => o.chainId))];
 
-    res.json({ agentAddress: session.userAddress, chainId: org.chainId, currentBalance: balance });
+    const balances = await Promise.all(uniqueChainIds.map(async (chainId) => {
+      let balance = '0 ETH';
+      try {
+        const wei = await getEthBalance(chainId, session.userAddress);
+        balance = `${(Number(wei) / 1e18).toFixed(6)} ETH`;
+      } catch {}
+      return { chainId, balance };
+    }));
+
+    res.json({ agentAddress: session.userAddress, balances });
   });
 
   return app;

@@ -14,11 +14,11 @@ import { TimelockExecute } from './TimelockExecute'
 import { SingleFlow } from '@/components/SingleFlow'
 import { ExecutionTab } from './ExecutionTab'
 import { bigintToRole } from '@/utils/bigintTo'
-import { DocumentTextIcon, ClipboardDocumentListIcon, ClockIcon, HandRaisedIcon, LockClosedIcon, PlayIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
+import { DocumentTextIcon, ClipboardDocumentListIcon, ClockIcon, HandRaisedIcon, LockClosedIcon, PlayIcon, ArrowsRightLeftIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 
 const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
-type Tab = 'action' | 'timeline' | 'conditions' | 'votes' | 'timelock' | 'execution' | 'flow'
+type Tab = 'action' | 'timeline' | 'conditions' | 'votes' | 'timelock' | 'execution' | 'flow' | 'chat'
 type ChatroomMode = 'mandate' | 'flow'
 
 export default function ActionPage() {
@@ -93,6 +93,7 @@ export default function ActionPage() {
     if (hasTimelockOnly) tabs.push({ id: 'timelock',  label: 'Timelock',  icon: LockClosedIcon })
     tabs.push({ id: 'execution', label: 'Execution', icon: PlayIcon })
     tabs.push({ id: 'flow',      label: 'Flow',      icon: ArrowsRightLeftIcon })
+    tabs.push({ id: 'chat',      label: 'Chat',      icon: ChatBubbleLeftRightIcon })
     return tabs
   }
 
@@ -124,6 +125,9 @@ export default function ActionPage() {
             </div>
             <div className="p-6 flex flex-col items-center justify-center min-h-[300px] gap-4">
               <p className="text-muted-foreground">The requested action could not be found.</p>
+              <p className="text-muted-foreground text-xs text-center max-w-sm">
+                If the action removed the mandate it belonged to, it will no longer appear here — the action succeeded, but the mandate (and its history) is gone.
+              </p>
               <button
                 onClick={() => router.push(`/forum/${chainId}/${powersAddress}`)}
                 className="px-4 py-2 bg-primary text-primary-foreground hover:opacity-80 transition-opacity"
@@ -276,36 +280,39 @@ export default function ActionPage() {
                 <SingleFlow mandateId={mandate.index} actionId={BigInt(action.actionId)} />
               </div>
             )}
-          </div>
 
-          {/* Chatroom */}
-          <div className="mt-6 border-t border-border">
-            {chatroomMode === 'mandate' || !mandateFlow ? (
-              <Chatroom
-                chatroomType="Mandate"
-                isPublicRole={isPublicRole}
-                chainId={chainId}
-                powersAddress={powersAddress}
-                contextId={mandate.index.toString()}
-                xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
-                tabs={mandateFlow ? [
-                  { label: 'Mandate', active: true,  onClick: () => setChatroomMode('mandate') },
-                  { label: 'Flow',     active: false, onClick: () => setChatroomMode('flow') },
-                ] : undefined}
-              />
-            ) : (
-              <Chatroom
-                chatroomType="Flow"
-                isPublicRole={isPublicRole}
-                chainId={chainId}
-                powersAddress={powersAddress}
-                contextId={flowContextId}
-                xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
-                tabs={[
-                  { label: 'Mandate', active: false, onClick: () => setChatroomMode('mandate') },
-                  { label: 'Flow',     active: true,  onClick: () => setChatroomMode('flow') },
-                ]}
-              />
+            {activeTab === 'chat' && (
+              <>
+                {chatroomMode === 'mandate' || !mandateFlow ? (
+                  <Chatroom
+                    key={`mandate-${mandate.index}`}
+                    chatroomType="Mandate"
+                    isPublicRole={isPublicRole}
+                    chainId={chainId}
+                    powersAddress={powersAddress}
+                    contextId={mandate.index.toString()}
+                    xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
+                    tabs={mandateFlow ? [
+                      { label: 'Mandate', active: true,  onClick: () => setChatroomMode('mandate') },
+                      { label: 'Flow',    active: false, onClick: () => setChatroomMode('flow') },
+                    ] : undefined}
+                  />
+                ) : (
+                  <Chatroom
+                    key={`flow-${flowContextId}`}
+                    chatroomType="Flow"
+                    isPublicRole={isPublicRole}
+                    chainId={chainId}
+                    powersAddress={powersAddress}
+                    contextId={flowContextId}
+                    xmtpAgentAddress={powers.metadatas?.xmtpAgentAddress}
+                    tabs={[
+                      { label: 'Mandate', active: false, onClick: () => setChatroomMode('mandate') },
+                      { label: 'Flow',    active: true,  onClick: () => setChatroomMode('flow') },
+                    ]}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
