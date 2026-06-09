@@ -5,9 +5,11 @@ import { sessionManager } from './agent/SessionManager.js';
 import { createXmtpClient } from './xmtp/client.js';
 import { startGroupStream } from './xmtp/groupStream.js';
 import { requestOrgGroupAccess } from './xmtp/groupAccess.js';
+import { backfillGroupChatHistory } from './xmtp/chatHistory.js';
 import { startWatchers } from './events/onChainWatcher.js';
 import { startHeartbeat, stopHeartbeat } from './events/heartbeat.js';
 import { reason } from './ai/reason.js';
+import { getActionHistory } from './powers/contract.js';
 import { config } from './config/env.js';
 import type { AgentSession, OrganisationConfig } from './agent/AgentSession.js';
 
@@ -48,6 +50,11 @@ async function onSessionStart(sessionId: string): Promise<void> {
     return;
   }
 
+  // 1.5 Backfill XMTP chat history for groups the agent is already in (fire-and-forget)
+  backfillGroupChatHistory(session).catch((err) =>
+    console.error(`[index] chat history backfill failed for ${sessionId}:`, err)
+  );
+
   // 2. Start group message stream — org is resolved from the group name inside the stream
   startGroupStream(
     session,
@@ -66,6 +73,19 @@ async function onSessionStart(sessionId: string): Promise<void> {
   // 5. Start on-chain watchers + heartbeat for each initial organisation
   for (const org of session.organisations) {
     startOrgListeners(session, org);
+  }
+
+  // 6. Load on-chain action history for each org (fire-and-forget)
+  for (const org of session.organisations) {
+    const key = `${org.chainId}:${org.powersAddress}`;
+    getActionHistory(org.chainId, org.powersAddress, 30)
+      .then((history) => {
+        session.orgActionHistory.set(key, history);
+        console.log(`[index] loaded ${history.length} historical actions for ${org.powersAddress}`);
+      })
+      .catch((err) =>
+        console.error(`[index] action history load failed for ${org.powersAddress}:`, err)
+      );
   }
 
   console.log(

@@ -12,6 +12,7 @@ import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
 import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { ReformMandate_Static } from "@src/mandates/reform/MandatePackage_Static.sol";
 
 contract TestConstitutions is Test {
     uint256[] milestoneDisbursements;
@@ -511,6 +512,57 @@ contract TestConstitutions is Test {
     }
 
     //////////////////////////////////////////////////////////////
+    //        REVOKE ACCOUNTS ROLE ID CONSTITUTION              //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. SelfSelect — public, assigns role 3 (lets tests populate holders)
+    // 2. RevokeAccountsRoleId — public, targets role 3
+    // 3. RevokeAccountsRoleId — restricted to role 1, targets role 3 (access control test)
+    function revokeAccountsRoleIdTestConstitution(address /*daoMock*/)
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        string[] memory emptyInputParams = new string[](0);
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(3)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "RevokeAccountsRoleId: revoke all holders of role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RevokeAccountsRoleId"),
+                config: abi.encode(uint256(3), emptyInputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "RevokeAccountsRoleId: restricted to role 1.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RevokeAccountsRoleId"),
+                config: abi.encode(uint256(3), emptyInputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
     //                  EXECUTIVE CONSTITUTION                  //
     //////////////////////////////////////////////////////////////
     function executiveTestConstitution(address daoMock, address simpleErc1155, address returnDataMock)
@@ -692,6 +744,48 @@ contract TestConstitutions is Test {
                     uint16(constitution.length), // mandateId of BespokeActionReturner (the one just added)
                     abi.encode() // no data before
                 ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ExternalAction_Flexible - flexible execution at another Powers instance
+        params = new string[](0); // mandate auto-prepends PowersTarget and MandateIdTarget
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ExternalAction_Flexible: A mandate to flexibly execute actions on another Powers instance.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Flexible"),
+                config: abi.encode(params),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // PresetActions_OnOwnPowers — one call baked in: labelRole(3, "Council", "")
+        bytes[] memory ownPowersCalls = new bytes[](1);
+        ownPowersCalls[0] = abi.encodeWithSelector(IPowers.labelRole.selector, uint256(3), "Council", "");
+
+        conditions.allowedRole = 1; // ROLE_ONE
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PresetActions_OnOwnPowers: A mandate to execute preset calls on the DAO itself.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                config: abi.encode(ownPowersCalls),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // PresetActions_OnOwnPowers — empty callDatas (public access, for edge case tests)
+        bytes[] memory ownPowersCallsEmpty = new bytes[](0);
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PresetActions_OnOwnPowers: empty callDatas.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                config: abi.encode(ownPowersCallsEmpty),
                 conditions: conditions
             })
         );
@@ -1563,6 +1657,55 @@ contract TestConstitutions is Test {
     }
 
     //////////////////////////////////////////////////////////////
+    //               REVOKE MANDATES CONSTITUTION               //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. SelfSelect — public, assigns role 1 (target to revoke)
+    // 2. SelfSelect — public, assigns role 2 (second target to revoke)
+    // 3. Revoke_Mandates — restricted to role 1
+    function revokeMandatesTestConstitution(address /*daoMock*/)
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign as member.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(1)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign as delegate.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(2)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Revoke_Mandates: revoke a list of mandates.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Revoke_Mandates"),
+                config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
     //                 HELPERS CONSTITUTION                     //
     //////////////////////////////////////////////////////////////
     function helpersTestConstitution() external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
@@ -1584,6 +1727,97 @@ contract TestConstitutions is Test {
             PowersTypes.MandateInitData({
                 nameDescription: "Open Action: Execute any action.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "OpenAction"), // openAction
+                config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
+    //            MANDATE PACKAGE STATIC CONSTITUTION           //
+    //////////////////////////////////////////////////////////////
+    // Three package instances:
+    //   1. pkg1 — contains one SelfSelect mandate (public access)
+    //   2. pkg2 — empty package (public access, only self-revokes)
+    //   3. pkg3 — contains one SelfSelect mandate (restricted to role 1)
+    function mandatePackageStaticTestConstitution(address /*daoMock*/)
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData)
+    {
+        delete constitution;
+
+        // Package 1: one SelfSelect mandate baked in, public access
+        PowersTypes.MandateInitData[] memory pkg1Contents = new PowersTypes.MandateInitData[](1);
+        pkg1Contents[0] = PowersTypes.MandateInitData({
+            nameDescription: "SelfSelect: self-assign as a member (via package).",
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+            config: abi.encode(uint256(1)),
+            conditions: PowersTypes.Conditions({
+                allowedRole: type(uint256).max,
+                quorum: 0,
+                succeedAt: 0,
+                votingPeriod: 0,
+                timelock: 0,
+                throttleExecution: 0,
+                needFulfilled: 0,
+                needNotFulfilled: 0
+            })
+        });
+        ReformMandate_Static pkg1 = new ReformMandate_Static(pkg1Contents);
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "MandatePackage_Static: Adopt SelfSelect package.",
+                targetMandate: address(pkg1),
+                config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Package 2: empty (0 baked mandates) — only self-revokes on execution
+        PowersTypes.MandateInitData[] memory pkg2Contents = new PowersTypes.MandateInitData[](0);
+        ReformMandate_Static pkg2 = new ReformMandate_Static(pkg2Contents);
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "MandatePackage_Static: empty package.",
+                targetMandate: address(pkg2),
+                config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Package 3: one SelfSelect mandate baked in, restricted to role 1
+        PowersTypes.MandateInitData[] memory pkg3Contents = new PowersTypes.MandateInitData[](1);
+        pkg3Contents[0] = PowersTypes.MandateInitData({
+            nameDescription: "SelfSelect: self-assign as a member (via restricted package).",
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+            config: abi.encode(uint256(1)),
+            conditions: PowersTypes.Conditions({
+                allowedRole: type(uint256).max,
+                quorum: 0,
+                succeedAt: 0,
+                votingPeriod: 0,
+                timelock: 0,
+                throttleExecution: 0,
+                needFulfilled: 0,
+                needNotFulfilled: 0
+            })
+        });
+        ReformMandate_Static pkg3 = new ReformMandate_Static(pkg3Contents);
+
+        conditions.allowedRole = 1; // ROLE_ONE
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "MandatePackage_Static: restricted to role 1.",
+                targetMandate: address(pkg3),
                 config: abi.encode(),
                 conditions: conditions
             })

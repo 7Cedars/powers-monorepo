@@ -103,16 +103,17 @@ export interface FlowData {
   nameDescription: string;
 }
 
-// ActionState enum values
+// ActionState enum values — must match PowersTypes.sol ActionState enum order exactly
 export const ActionState = {
   NonExistent: 0,
-  Active: 1,
-  Succeeded: 2,
-  Defeated: 3,
-  Failed: 4,
-  Fulfilled: 5,
-  Cancelled: 6,
-  Requested: 7,
+  Proposed: 1,
+  Cancelled: 2,
+  Active: 3,
+  Defeated: 4,
+  Succeeded: 5,
+  Requested: 6,
+  Fulfilled: 7,
+  Failed: 8,
 } as const;
 
 export function actionStateLabel(state: number): string {
@@ -474,4 +475,187 @@ export async function getActionUri(
     functionName: 'getActionUri',
     args: [actionId],
   })) as string;
+}
+
+export async function getOrgName(chainId: number, address: Address): Promise<string> {
+  const client = getPublicClient(chainId);
+  return (await client.readContract({
+    address,
+    abi: powersAbi,
+    functionName: 'name',
+  })) as string;
+}
+
+export async function getOrgUri(chainId: number, address: Address): Promise<string> {
+  const client = getPublicClient(chainId);
+  return (await client.readContract({
+    address,
+    abi: powersAbi,
+    functionName: 'uri',
+  })) as string;
+}
+
+export interface RoleInfo {
+  roleId: bigint;
+  label: string;
+  metadata: string;
+}
+
+// PUBLIC_ROLE is type(uint256).max — skip it, everyone has it and it has no meaningful label.
+const PUBLIC_ROLE = (2n ** 256n) - 1n;
+
+export interface HistoricalAction {
+  actionId: bigint;
+  mandateId: number;
+  caller: Address;
+  proposedAt: bigint;
+  description: string;
+  state: 'Active' | 'Succeeded' | 'Defeated' | 'Fulfilled' | 'Cancelled';
+}
+
+// Approximate block time per chain in seconds, used to estimate a block range for getLogs.
+// Arbitrum produces ~4 blocks/s; capping at 200 000 blocks avoids RPC range rejections.
+const BLOCKS_PER_DAY: Record<number, bigint> = {
+  11155111: 7200n,   // Sepolia: ~12s/block
+  11155420: 43200n,  // Optimism Sepolia: ~2s/block
+  421614:   6667n,   // Arbitrum Sepolia: capped (~14h worth)
+  31337:    0n,      // Anvil: start from block 0
+};
+
+function estimateBlockDaysAgo(chainId: number, daysBack: number, currentBlock: bigint): bigint {
+  const blocksPerDay = BLOCKS_PER_DAY[chainId] ?? 7200n;
+  const blocksBack = blocksPerDay * BigInt(daysBack);
+  return blocksBack >= currentBlock ? 0n : currentBlock - blocksBack;
+}
+
+export async function getActionHistory(
+  chainId: number,
+  address: Address,
+  daysBack = 30
+): Promise<HistoricalAction[]> {
+  const client = getPublicClient(chainId);
+  const currentBlock = await client.getBlockNumber();
+  const fromBlock = estimateBlockDaysAgo(chainId, daysBack, currentBlock);
+
+  const [createdEvents, fulfilledEvents, cancelledEvents] = await Promise.all([
+    client.getContractEvents({
+      address,
+      abi: powersAbi,
+      eventName: 'ProposedActionCreated',
+      fromBlock,
+      toBlock: currentBlock,
+    }),
+    client.getContractEvents({
+      address,
+      abi: powersAbi,
+      eventName: 'ActionFulfilled',
+      fromBlock,
+      toBlock: currentBlock,
+    }),
+    client.getContractEvents({
+      address,
+      abi: powersAbi,
+      eventName: 'ProposedActionCancelled',
+      fromBlock,
+      toBlock: currentBlock,
+    }),
+  ]);
+
+  const historyMap = new Map<string, HistoricalAction>();
+
+  for (const ev of createdEvents) {
+    const args = ev.args as {
+      actionId: bigint;
+      caller: Address;
+      mandateId: number;
+      description: string;
+    };
+    historyMap.set(args.actionId.toString(), {
+      actionId: args.actionId,
+      mandateId: args.mandateId,
+      caller: args.caller,
+      proposedAt: ev.blockNumber ?? 0n,
+      description: args.description ?? '',
+      state: 'Active',
+    });
+  }
+
+  for (const ev of fulfilledEvents) {
+    const args = ev.args as { actionId: bigint };
+    const entry = historyMap.get(args.actionId.toString());
+    if (entry) entry.state = 'Fulfilled';
+  }
+
+  for (const ev of cancelledEvents) {
+    const args = ev.args as { actionId: bigint };
+    const entry = historyMap.get(args.actionId.toString());
+    if (entry) entry.state = 'Cancelled';
+  }
+
+  // Resolve true state for any action still marked Active (could be Succeeded or Defeated).
+  const stillActive = Array.from(historyMap.values()).filter((a) => a.state === 'Active');
+  await Promise.all(
+    stillActive.map(async (action) => {
+      try {
+        const state = (await client.readContract({
+          address,
+          abi: powersAbi,
+          functionName: 'getActionState',
+          args: [action.actionId],
+        })) as number;
+        if (state === ActionState.Succeeded) action.state = 'Succeeded';
+        else if (state === ActionState.Defeated) action.state = 'Defeated';
+        else if (state === ActionState.Fulfilled) action.state = 'Fulfilled';
+        else if (state === ActionState.Cancelled) action.state = 'Cancelled';
+      } catch (err) {
+        console.error(`[contract] failed to resolve state for action ${action.actionId}:`, err);
+      }
+    })
+  );
+
+  return Array.from(historyMap.values()).sort((a, b) =>
+    b.proposedAt > a.proposedAt ? 1 : b.proposedAt < a.proposedAt ? -1 : 0
+  );
+}
+
+export async function getAllRoleInfo(
+  chainId: number,
+  address: Address,
+  mandates: MandateData[]
+): Promise<Map<string, RoleInfo>> {
+  const client = getPublicClient(chainId);
+  const uniqueRoleIds = new Set<bigint>();
+
+  for (const mandate of mandates) {
+    const roleId = mandate.conditions.allowedRole;
+    if (roleId !== PUBLIC_ROLE) uniqueRoleIds.add(roleId);
+  }
+
+  const roleInfoMap = new Map<string, RoleInfo>();
+
+  await Promise.all(
+    Array.from(uniqueRoleIds).map(async (roleId) => {
+      try {
+        const [label, metadata] = await Promise.all([
+          client.readContract({
+            address,
+            abi: powersAbi,
+            functionName: 'getRoleLabel',
+            args: [roleId],
+          }) as Promise<string>,
+          client.readContract({
+            address,
+            abi: powersAbi,
+            functionName: 'getRoleMetadata',
+            args: [roleId],
+          }) as Promise<string>,
+        ]);
+        roleInfoMap.set(roleId.toString(), { roleId, label, metadata });
+      } catch (err) {
+        console.error(`[contract] failed to fetch role info for ${roleId}:`, err);
+      }
+    })
+  );
+
+  return roleInfoMap;
 }

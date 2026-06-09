@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { PrivateKeyAccount, Address } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Agent } from '@xmtp/agent-sdk';
+import type { HistoricalAction } from '../powers/contract.js';
 
 export interface OrganisationConfig {
   powersAddress: Address;
@@ -52,6 +53,7 @@ export interface AgentSession {
 
   histories: Map<string, MessageParam[]>;
   lastReplyAt: Map<string, number>;
+  orgActionHistory: Map<string, HistoricalAction[]>;
 
   ttlMs: number;
   createdAt: number;
@@ -111,6 +113,7 @@ export function createSession(
     xmtpClient: null,
     histories: new Map(),
     lastReplyAt: new Map(),
+    orgActionHistory: new Map(),
     ttlMs: input.ttlMs,
     createdAt: Date.now(),
     lastActiveAt: Date.now(),

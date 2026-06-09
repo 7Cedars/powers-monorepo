@@ -3,6 +3,28 @@
 // ── Constants ──────────────────────────────────────────────────────────────
 const API = '';  // same origin
 const STORAGE_KEY = 'powers-agent-sessions';
+const THEME_KEY = 'powers-agent-theme';
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(THEME_KEY, next);
+  updateThemeIcon(next);
+}
+
+function updateThemeIcon(theme) {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+}
 const CHAINS = [
   { id: 421614,   name: 'Arbitrum Sepolia' },
   { id: 11155111, name: 'Sepolia' },
@@ -19,6 +41,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
     document.getElementById('http-warning').style.display = 'block';
   }
+
+  initTheme();
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
   addOrgRow();
   await loadSessionList();
@@ -216,6 +241,44 @@ async function startSession() {
 
 function copySessionId() {
   navigator.clipboard?.writeText(currentSessionId);
+}
+
+// ── Load Session by ID ─────────────────────────────────────────────────────
+async function loadSessionById() {
+  const status = document.getElementById('load-status');
+  const id = document.getElementById('f-load-id').value.trim();
+
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRe.test(id)) {
+    status.className = 'status error';
+    status.textContent = 'Not a valid session ID (expected UUID format).';
+    return;
+  }
+
+  status.className = 'status info';
+  status.textContent = 'Looking up session…';
+
+  let sessions;
+  try {
+    const res = await fetch(`${API}/api/sessions`);
+    sessions = await res.json();
+  } catch {
+    status.className = 'status error';
+    status.textContent = 'Could not reach the agent server.';
+    return;
+  }
+
+  const found = sessions.find(s => s.sessionId === id);
+  if (!found) {
+    status.className = 'status error';
+    status.textContent = 'Session not found. It may have expired or the ID is incorrect.';
+    return;
+  }
+
+  addStoredId(id);
+  document.getElementById('f-load-id').value = '';
+  status.textContent = '';
+  openManage(id);
 }
 
 // ── Manage Session ─────────────────────────────────────────────────────────

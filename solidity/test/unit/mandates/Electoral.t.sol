@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { TestSetupElectoral, TestSetupDelegateTokenFlow, TestSetupAssignExternalRoleParentFlow, TestSetupRevokeInactiveAccounts } from "../../TestSetup.t.sol";
+import { TestSetupElectoral, TestSetupDelegateTokenFlow, TestSetupAssignExternalRoleParentFlow, TestSetupRevokeInactiveAccounts, TestSetupRevokeAccountsRoleId } from "../../TestSetup.t.sol";
 import { Checks } from "@src/libraries/Checks.sol";
 
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
@@ -13,6 +13,7 @@ import { Nominees } from "@src/helpers/Nominees.sol";
 import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol";
+import { RevokeAccountsRoleId } from "@src/mandates/electoral/RevokeAccountsRoleId.sol";
 
 /// @notice Comprehensive unit tests for all electoral mandates
 /// @dev Tests all functionality of electoral mandates including initialization, execution, and edge cases
@@ -808,5 +809,108 @@ contract DelegateTokenSelectAccessTest is TestSetupDelegateTokenFlow {
         vm.prank(alice);
         vm.expectRevert(Checks.Checks__ExecutionGapTooSmall.selector);
         daoMock.request(mandateId, abi.encode(), nonce + 1, "second execution throttled");
+    }
+}
+
+// ─────────────────────────────────────────────
+//          REVOKE ACCOUNTS ROLE ID
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+//               BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract RevokeAccountsRoleIdBasicTest is TestSetupRevokeAccountsRoleId {
+    RevokeAccountsRoleId revokeAccountsRoleId;
+    uint16 selfSelectId;
+    uint16 rariId;
+
+    function setUp() public override {
+        super.setUp();
+        revokeAccountsRoleId = RevokeAccountsRoleId(findMandateAddress("RevokeAccountsRoleId"));
+        selfSelectId = findMandateIdInOrg("SelfSelect: self-assign role 3.", daoMock);
+        rariId = findMandateIdInOrg("RevokeAccountsRoleId: revoke all holders of role 3.", daoMock);
+    }
+
+    function testInitializationStoresRoleId() public {
+        (uint256 roleId,) = abi.decode(revokeAccountsRoleId.getConfig(address(daoMock), rariId), (uint256, string[]));
+        assertEq(roleId, 3);
+    }
+
+    function testRevokeAccountsRoleIdRevokesAllHolders() public {
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_THREE, alice);
+        daoMock.assignRole(ROLE_THREE, bob);
+        vm.stopPrank();
+
+        assertGt(daoMock.hasRoleSince(alice, ROLE_THREE), 0);
+        assertGt(daoMock.hasRoleSince(bob, ROLE_THREE), 0);
+
+        mandateCalldata = abi.encode();
+        vm.prank(alice);
+        daoMock.request(rariId, mandateCalldata, nonce, "revoke all role 3 holders");
+
+        actionId = uint256(keccak256(abi.encode(rariId, mandateCalldata, nonce)));
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(daoMock.hasRoleSince(alice, ROLE_THREE), 0);
+        assertEq(daoMock.hasRoleSince(bob, ROLE_THREE), 0);
+    }
+
+    function testRevokeAccountsRoleIdRevokesSingleHolder() public {
+        vm.prank(address(daoMock));
+        daoMock.assignRole(ROLE_THREE, alice);
+
+        assertGt(daoMock.hasRoleSince(alice, ROLE_THREE), 0);
+        assertEq(daoMock.hasRoleSince(bob, ROLE_THREE), 0);
+
+        mandateCalldata = abi.encode();
+        vm.prank(alice);
+        daoMock.request(rariId, mandateCalldata, nonce, "revoke single role 3 holder");
+
+        actionId = uint256(keccak256(abi.encode(rariId, mandateCalldata, nonce)));
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(daoMock.hasRoleSince(alice, ROLE_THREE), 0);
+    }
+}
+
+// ─────────────────────────────────────────────
+//               EDGE CASES
+// ─────────────────────────────────────────────
+contract RevokeAccountsRoleIdEdgeCaseTest is TestSetupRevokeAccountsRoleId {
+    uint16 rariId;
+
+    function setUp() public override {
+        super.setUp();
+        rariId = findMandateIdInOrg("RevokeAccountsRoleId: revoke all holders of role 3.", daoMock);
+    }
+
+    function testRevokeAccountsRoleIdEarlyReturnWhenNoHolders() public {
+        assertEq(daoMock.getAmountRoleHolders(ROLE_THREE), 0);
+
+        mandateCalldata = abi.encode();
+        vm.prank(alice);
+        daoMock.request(rariId, mandateCalldata, nonce, "no holders early return");
+
+        actionId = uint256(keccak256(abi.encode(rariId, mandateCalldata, nonce)));
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+}
+
+// ─────────────────────────────────────────────
+//               ACCESS CONTROL
+// ─────────────────────────────────────────────
+contract RevokeAccountsRoleIdAccessTest is TestSetupRevokeAccountsRoleId {
+    uint16 restrictedRariId;
+
+    function setUp() public override {
+        super.setUp();
+        restrictedRariId = findMandateIdInOrg("RevokeAccountsRoleId: restricted to role 1.", daoMock);
+    }
+
+    function testRevokeAccountsRoleIdRevertsCallerLacksRole() public {
+        // charlotte has role 2, not role 1 — must revert
+        mandateCalldata = abi.encode();
+        vm.prank(charlotte);
+        vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
+        daoMock.request(restrictedRariId, mandateCalldata, nonce, "caller lacks required role");
     }
 }

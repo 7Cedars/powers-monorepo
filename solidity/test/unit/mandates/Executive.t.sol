@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import { TestSetupExecutive } from "../../TestSetup.t.sol";
 
+import { Mandate } from "@src/Mandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
@@ -270,5 +271,258 @@ contract BespokeAction_OnReturnValueTest is TestSetupExecutive {
         // Verify child action fulfilled
         actionId = MandateUtilities.computeActionId(mandateId, emptyCalldata, testNonce);
         assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+}
+
+// ─────────────────────────────────────────────
+//           EXTERNAL ACTION FLEXIBLE
+// ─────────────────────────────────────────────
+contract ExternalAction_FlexibleTest is TestSetupExecutive {
+    uint16 targetMandateId;
+
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "ExternalAction_Flexible: A mandate to flexibly execute actions on another Powers instance.",
+            daoMock
+        );
+        targetMandateId = findMandateIdInOrg(
+            "StatementOfIntent: A mandate to propose actions without execution.",
+            daoMock
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    //               BASIC BEHAVIOUR
+    // ─────────────────────────────────────────────
+
+    function testFlexibleActionExecutesOnTargetPowers() public {
+        // ExternalAction_Flexible calls StatementOfIntent back on daoMock itself.
+        // StatementOfIntent has PUBLIC_ROLE so daoMock (the caller) is allowed.
+        bytes memory innerCalldata = abi.encode(true);
+        mandateCalldata = abi.encode(address(daoMock), targetMandateId, innerCalldata);
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Flexible to StatementOfIntent");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        uint256 innerActionId = MandateUtilities.computeActionId(targetMandateId, innerCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(innerActionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+
+    // ─────────────────────────────────────────────
+    //               EDGE CASES
+    // ─────────────────────────────────────────────
+
+    function testInitializeMandatePrependsSystemParams() public view {
+        (address mandateAddress,,) = daoMock.getAdoptedMandate(mandateId);
+        bytes memory rawParams = Mandate(mandateAddress).getInputParams(address(daoMock), mandateId);
+        string[] memory storedParams = abi.decode(rawParams, (string[]));
+        assertEq(storedParams[0], "address PowersTarget");
+        assertEq(storedParams[1], "uint16 MandateIdTarget");
+        assertEq(storedParams.length, 2, "No extra params: config was empty string[]");
+    }
+
+    function testFlexibleActionRevertsIfCalldataMalformed() public {
+        // Bytes that cannot be decoded as (address, uint16, bytes) cause a revert in handleRequest.
+        mandateCalldata = abi.encode("not a valid payload");
+
+        vm.prank(alice);
+        vm.expectRevert();
+        daoMock.request(mandateId, mandateCalldata, nonce, "Malformed calldata");
+    }
+
+    // ─────────────────────────────────────────────
+    //               ACCESS CONTROL
+    // ─────────────────────────────────────────────
+
+    function testFlexibleActionRevertsIfCallerLacksRole() public {
+        mandateCalldata = abi.encode(address(daoMock), targetMandateId, abi.encode(true));
+
+        vm.prank(frank); // frank holds no role — allowedRole is 1
+        vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Unauthorized");
+    }
+}
+
+// ─────────────────────────────────────────────
+//         CHECK EXTERNAL ACTION STATE
+// ─────────────────────────────────────────────
+contract CheckExternalActionStateBasicTest is TestSetupExecutive {
+    uint16 parentMandateId;
+
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "CheckExternalActionState: Checks if an action is fulfilled on a parent contract.",
+            daoMock
+        );
+        parentMandateId = findMandateIdInOrg(
+            "StatementOfIntent: A mandate to propose actions without execution.",
+            daoMock
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    //               BASIC BEHAVIOUR
+    // ─────────────────────────────────────────────
+
+    function testCheckExternalActionStateWorks() public {
+        mandateCalldata = abi.encode(true);
+
+        // Fulfill the parent StatementOfIntent with the same calldata+nonce the gate will check
+        vm.prank(alice);
+        daoMock.request(parentMandateId, mandateCalldata, nonce, "Parent: StatementOfIntent");
+
+        uint256 parentActionId = MandateUtilities.computeActionId(parentMandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(parentActionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        // Gate should now pass: the remote action is Fulfilled
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Gate: CheckExternalActionState");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+
+    function testCheckExternalActionStateNoSideEffects() public {
+        // Gate returns empty arrays — no external state should change
+        mandateCalldata = abi.encode(true);
+        nonce = 777;
+
+        vm.prank(alice);
+        daoMock.request(parentMandateId, mandateCalldata, nonce, "Parent");
+
+        balanceBefore = simpleErc1155.balanceOf(alice, 0);
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Gate");
+
+        balanceAfter = simpleErc1155.balanceOf(alice, 0);
+        assertEq(balanceAfter, balanceBefore, "Gate mandate must not execute any external calls");
+    }
+}
+
+// ─────────────────────────────────────────────
+//   CHECK EXTERNAL ACTION STATE — REVERTS
+// ─────────────────────────────────────────────
+contract CheckExternalActionStateRevertTest is TestSetupExecutive {
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "CheckExternalActionState: Checks if an action is fulfilled on a parent contract.",
+            daoMock
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    //              REVERT CONDITIONS
+    // ─────────────────────────────────────────────
+
+    function testCheckExternalActionStateRevertsIfParentNotFulfilled() public {
+        // Parent action never executed — gate must block with "Action not fulfilled"
+        mandateCalldata = abi.encode(true);
+
+        vm.prank(alice);
+        vm.expectRevert();
+        daoMock.request(mandateId, mandateCalldata, nonce, "Gate without fulfilled parent");
+    }
+}
+
+/////////////////////////////////////////////////////////////////////
+//                  PRESET ACTIONS ON OWN POWERS                   //
+/////////////////////////////////////////////////////////////////////
+
+// ─────────────────────────────────────────────
+//               BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract PresetActionsOnOwnPowersBasicTest is TestSetupExecutive {
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "PresetActions_OnOwnPowers: A mandate to execute preset calls on the DAO itself.", daoMock
+        );
+    }
+
+    function testPresetActionsOnOwnPowersExecutesCallOnDao() public {
+        // Config bakes in labelRole(3, "Council", "") — verify the label changes on daoMock
+        assertEq(daoMock.getRoleLabel(3), "");
+
+        mandateCalldata = abi.encode(true); // calldata unused by handleRequest
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Label role 3 as Council");
+
+        assertEq(daoMock.getRoleLabel(3), "Council");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+
+    function testPresetActionsOnOwnPowersTargetIsAlwaysPowers() public {
+        // handleRequest must set targets[i] = powers for every call — never an external address
+        (address mandateAddress,,) = daoMock.getAdoptedMandate(mandateId);
+        bytes memory rawConfig = Mandate(mandateAddress).getConfig(address(daoMock), mandateId);
+        bytes[] memory callDatas = abi.decode(rawConfig, (bytes[]));
+
+        // Executing the mandate proves the target resolves to daoMock (Powers contract itself).
+        // If targets[i] were anything else, the labelRole call would not affect daoMock state.
+        mandateCalldata = abi.encode(true);
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Target is DAO");
+
+        assertEq(daoMock.getRoleLabel(3), "Council", "Call was not routed to daoMock");
+        assertEq(callDatas.length, 1);
+    }
+}
+
+// ─────────────────────────────────────────────
+//               EDGE CASES
+// ─────────────────────────────────────────────
+contract PresetActionsOnOwnPowersEdgeCaseTest is TestSetupExecutive {
+    function testPresetActionsOnOwnPowersEmptyCallDatasSucceeds() public {
+        mandateId = findMandateIdInOrg("PresetActions_OnOwnPowers: empty callDatas.", daoMock);
+        mandateCalldata = abi.encode(true);
+
+        uint16 counterBefore = daoMock.mandateCounter();
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Empty callDatas");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        // No calls were made — DAO state must be unchanged
+        assertEq(daoMock.mandateCounter(), counterBefore);
+        assertEq(daoMock.getRoleLabel(3), "");
+    }
+}
+
+// ─────────────────────────────────────────────
+//               ACCESS CONTROL
+// ─────────────────────────────────────────────
+contract PresetActionsOnOwnPowersAccessTest is TestSetupExecutive {
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "PresetActions_OnOwnPowers: A mandate to execute preset calls on the DAO itself.", daoMock
+        );
+        mandateCalldata = abi.encode(true);
+    }
+
+    function testPresetActionsOnOwnPowersRevertsIfCallerLacksRole() public {
+        // charlotte holds ROLE_TWO; mandate requires ROLE_ONE
+        vm.prank(charlotte);
+        vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Charlotte attempts DAO call");
+    }
+
+    function testPresetActionsOnOwnPowersRevertsForUnassignedCaller() public {
+        // frank has no roles at all
+        vm.prank(frank);
+        vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Frank attempts DAO call");
     }
 }

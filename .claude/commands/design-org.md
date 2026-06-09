@@ -19,7 +19,8 @@ Read the following files to ground your design work. Do not show this loading wo
 5. `solidity/governance/examples/OptimisticExecution.s.sol` — a simple, readable deploy script example
 6. `solidity/governance/examples/Powers101.s.sol` — another concise deploy example
 7. `AGENTS.md` — project workflow and principles
-8. `ai/references/reading_guide.md` — source index mapping design questions to specific papers; read this now but do **not** load the individual paper guides yet
+
+**Note:** The `search_governance_sources` MCP tool is available to retrieve relevant excerpts from the governance theory library (`ai/sources/`). Use it during Phase 2 (between Round A and B) and Phase 3 instead of reading individual reference files. Do not pre-load the reference files.
 
 Once loading is complete, greet the user briefly and move to Phase 2.
 
@@ -34,7 +35,7 @@ Ask the following questions. Ask them in two rounds: Round A first, wait for the
 2. Who are the people involved? Describe each group by role (e.g., "artists who create work", "patrons who fund it", "stewards who maintain the commons"). How many people do you expect in each group?
 3. What decisions need collective governance? Give concrete examples (e.g., "who gets a grant", "whether to change fees", "who joins the council").
 
-**Paper retrieval (do this silently between Round A and Round B):** Using the Round A answers and the source routing table in `ai/references/reading_guide.md`, identify the 1–2 most relevant reference papers for this design problem. Read only those specific guide files from `ai/references/` before asking Round B. Do not load papers that are not relevant.
+**Paper retrieval (do this silently between Round A and Round B):** Call `search_governance_sources` with a query derived from the Round A answers — e.g. the governance challenge, resource type, and stakeholder structure (example: `"polycentric commons electoral design legitimacy"`). Use the top 3–5 results to inform Round B questions and note which sources you will cite in the spec rationale. If the MCP tool is unavailable, fall back to reading `ai/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
 
 **Round B — Trust, Power and Constraints**
 4. Who do you trust most to act in the organisation's interest? Is there a founding group or administrator who should have extra authority at the start?

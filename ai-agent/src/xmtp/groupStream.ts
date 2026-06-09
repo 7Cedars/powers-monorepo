@@ -1,3 +1,4 @@
+import { Group } from '@xmtp/agent-sdk';
 import type { AgentSession, OrganisationConfig } from '../agent/AgentSession.js';
 import { sessionManager } from '../agent/SessionManager.js';
 import { parseGroupName } from './groupAccess.js';
@@ -29,11 +30,16 @@ export function startGroupStream(
 
         for await (const message of stream) {
           try {
+            console.log(
+              `[groupStream] message received — sender=${message.senderInboxId} conv=${message.conversationId} session=${session.sessionId}`
+            );
+
             // Skip messages sent by this agent itself
             if (
               message.senderInboxId.toLowerCase() ===
               client.inboxId?.toLowerCase()
             ) {
+              console.log(`[groupStream] skipping own message`);
               continue;
             }
 
@@ -43,8 +49,10 @@ export function startGroupStream(
             if (!conversation) continue;
 
             // Only handle group messages
-            const convType = (conversation as any).conversationType;
-            if (convType !== 'group') continue;
+            if (!(conversation instanceof Group)) {
+              console.log(`[groupStream] skipping non-group message`);
+              continue;
+            }
 
             const groupName: string =
               (conversation as any).name ??
@@ -53,7 +61,10 @@ export function startGroupStream(
 
             // Only handle groups that belong to a whitelisted organisation
             const parsed = parseGroupName(groupName);
-            if (!parsed) continue;
+            if (!parsed) {
+              console.log(`[groupStream] skipping unrecognised group name: "${groupName}"`);
+              continue;
+            }
 
             const matchedOrg = session.organisations.find(
               (org) =>
@@ -61,11 +72,20 @@ export function startGroupStream(
                 org.powersAddress.toLowerCase() ===
                   parsed.powersAddress.toLowerCase()
             );
-            if (!matchedOrg) continue;
+            if (!matchedOrg) {
+              console.log(
+                `[groupStream] no matching org for chain=${parsed.chainId} powers=${parsed.powersAddress}`
+              );
+              continue;
+            }
 
             const text =
               typeof message.content === 'string' ? message.content : '';
             if (!text.trim()) continue;
+
+            console.log(
+              `[groupStream] triggering reason — org=${matchedOrg.powersAddress} text="${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"`
+            );
 
             const groupReply = async (replyText: string): Promise<void> => {
               const now = Date.now();
@@ -85,6 +105,7 @@ export function startGroupStream(
             }
 
             await reason(session, matchedOrg, message.conversationId, text, groupReply);
+            console.log(`[groupStream] reason complete — conv=${message.conversationId}`);
             sessionManager.touchSession(session.sessionId);
           } catch (err) {
             console.error(

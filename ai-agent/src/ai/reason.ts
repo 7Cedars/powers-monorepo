@@ -195,16 +195,21 @@ export async function reason(
   sessionManager.touchSession(session.sessionId);
 }
 
+const MAX_REPLY_CHARS = 300;
+
 async function sendRateLimited(
   session: AgentSession,
   conversationId: string,
   text: string,
   groupReply: (text: string) => Promise<void>
 ): Promise<void> {
+  const truncated = text.length > MAX_REPLY_CHARS
+    ? text.slice(0, MAX_REPLY_CHARS - 1) + '…'
+    : text;
   const now = Date.now();
   const last = session.lastReplyAt.get(conversationId) ?? 0;
   const wait = Math.max(0, config.ai.chatRateLimitMs - (now - last));
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-  await groupReply(text);
+  await groupReply(truncated);
   session.lastReplyAt.set(conversationId, Date.now());
 }

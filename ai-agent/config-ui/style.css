@@ -1,6 +1,11 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  --font-mono: 'Commit Mono', 'JetBrains Mono', 'Courier New', monospace;
+  --radius: 2px;
+}
+
+[data-theme="dark"] {
   --background: hsl(240 10% 3.9%);
   --foreground: hsl(0 0% 98%);
   --muted: hsl(240 8% 23%);
@@ -13,8 +18,21 @@
   --success: hsl(142 40% 22%);
   --success-foreground: hsl(142 40% 65%);
   --ring: hsl(240 4.9% 83.9%);
-  --font-mono: 'Commit Mono', 'JetBrains Mono', 'Courier New', monospace;
-  --radius: 2px;
+}
+
+[data-theme="light"] {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  --muted: hsl(240 4.8% 90%);
+  --muted-foreground: hsl(240 5% 40%);
+  --border: hsl(240 5.9% 80%);
+  --accent: hsl(210 40% 45%);
+  --accent-foreground: hsl(210 40% 25%);
+  --destructive: hsl(0 62.8% 48%);
+  --destructive-foreground: hsl(0 72% 30%);
+  --success: hsl(142 40% 38%);
+  --success-foreground: hsl(142 40% 20%);
+  --ring: hsl(240 5% 55%);
 }
 
 body {
@@ -41,9 +59,29 @@ body {
 }
 
 /* ── Page header ── */
-header { margin-bottom: 28px; }
+header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
 header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 header p { color: var(--muted-foreground); font-size: 12px; margin-top: 4px; letter-spacing: 0.05em; }
+
+/* ── Theme toggle ── */
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 6px 8px;
+  line-height: 0;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.theme-toggle:hover { background: var(--muted); }
+.theme-toggle svg { width: 16px; height: 16px; }
+html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
 
 /* ── Screen switching ── */
 .screen { display: none; }

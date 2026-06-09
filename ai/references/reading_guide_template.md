@@ -183,6 +183,12 @@ existing sources, add it to the **Cross-cutting design rules** section at the bo
 
 ---
 
+## Step 6 — Rebuild the embedding index
+
+Run `pnpm ingest` from the `ai/` directory to re-embed all sources and update `ai/embeddings/index.json`. The new source file will not appear in RAG search results until this step is complete.
+
+---
+
 ## Checklist before finalising
 
 - [ ] Source file named `author_year.md` following the convention
@@ -194,3 +200,4 @@ existing sources, add it to the **Cross-cutting design rules** section at the bo
 - [ ] Source table row added to `reading_guide.md`
 - [ ] Routing entries added under the relevant Q headings in `reading_guide.md`
 - [ ] Any cross-cutting rules added to the bottom section of `reading_guide.md`
+- [ ] `pnpm ingest` run and `ai/embeddings/index.json` updated
