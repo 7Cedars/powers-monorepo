@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { DeployedExamples } from "@/public/organisations/DeployedExamples";
 
 export function SectionExamples() {
@@ -19,15 +19,15 @@ export function SectionExamples() {
   const next = () => setSelected(i => (i + 1) % total);
 
   return (
-    <section id="examples" className="w-full flex flex-col items-center px-4 bg-muted/25 border-t border-border py-16">
+    <section id="examples" className="w-full flex flex-col items-center px-4 bg-muted/25 border-t border-border pt-8 pb-16 md:py-16">
 
       {/* Title & subtitle */}
-      <div className="w-full flex flex-col justify-center items-center pb-10">
+      <div className="w-full flex flex-col justify-center items-center pb-8">
         <div className="w-full flex flex-col gap-1 justify-center items-center md:text-4xl text-xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
           Explore: Example Organisations
         </div>
         <div className="w-full flex flex-col gap-4 justify-center items-center text-muted-foreground max-w-3xl text-center text-pretty font-mono">
-          <span className="md:text-lg text-sm">Each organisation built on Powers Protocol comes with two interface components out of the box: a <span className="font-semibold text-foreground">forum</span>, where members chat, propose, and vote; and an <span className="font-semibold text-foreground">overview</span>, which displays the full history of every decision and transaction the organisation has made on-chain. These aren't locked-in products — they're functional starting points that any organisation can build on and customise to their own needs.</span>
+          <span className="md:text-lg text-sm">Each organisation built on Powers Protocol comes with two components out of the box: a <span className="font-semibold text-foreground">forum</span> for chat, proposals, and voting; and an <span className="font-semibold text-foreground">overview</span> of every on-chain decision and transaction. Functional starting points — not locked-in products.</span>
           <span className="text-sm leading-relaxed">Below are some live implementations:</span>
         </div>
       </div>
@@ -112,6 +112,16 @@ export function SectionExamples() {
         </button>
       </div>
 
+      {/* arrow down */}
+      <div className="flex flex-col items-center justify-end pt-10">
+        <button
+          onClick={() => document.getElementById('forum')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="scroll-arrow"
+          aria-label="Scroll to next section"
+        >
+          <ChevronDownIcon className="w-16 h-16" />
+        </button>
+      </div>
     </section>
   );
 }

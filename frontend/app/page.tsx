@@ -64,9 +64,13 @@ export default function Page() {
                     className="flex flex-col align-center justify-end pb-8 pt-12 animate-in fade-in duration-700"
                     style={{ animationDelay: '1200ms', animationFillMode: 'both' }}
                 >
-                <ChevronDownIcon
-                    className="w-16 h-16 text-muted-foreground"
-                />
+                <button
+                    onClick={() => document.getElementById('intro')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    className="scroll-arrow"
+                    aria-label="Scroll to next section"
+                >
+                    <ChevronDownIcon className="w-16 h-16" />
+                </button>
                 </div>
             </section>
 
