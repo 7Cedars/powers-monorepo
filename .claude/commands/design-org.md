@@ -43,6 +43,10 @@ Ask the following questions. Ask them in two rounds: Round A first, wait for the
 6. How urgent are decisions typically? Days, weeks, or months?
 7. Are there any external systems this organisation needs to connect to — a shared treasury (Safe multisig), an NFT collection, a token, another organisation?
 
+8. **(Optional) Do you have a metadata URI for this organisation?** This is a link to a JSON file (hosted on IPFS or similar) that stores a human-readable name, description, and logo for your organisation — shown in frontends and block explorers. If you already have one, paste it here. If not, leave it blank: a placeholder will be used in the deploy script and you can fill it in before deploying.
+
+   > No URI yet? You can create one by uploading a JSON file to [Pinata](https://pinata.cloud) (free tier available) and copying the resulting gateway URL. The JSON should contain at minimum `name`, `description`, and optionally `image` fields — the same shape used by ERC-721 token metadata.
+
 After Round B, summarise your understanding back to the user in plain language and ask them to confirm or correct before proceeding to the spec.
 
 ---
@@ -60,6 +64,7 @@ The spec must cover:
 - **Checks and balances** — veto mechanisms, timelocks, quorum requirements, and the reasoning behind each
 - **Design rationale** — why you made these choices, citing reference papers where relevant
 - **Limitations** — what the current design cannot do (if any existing mandate cannot satisfy a need, note this clearly and explain the alternative approach you have taken)
+- **Metadata URI** — the URI provided by the user, or `TBD` if none was given (with a note to set it before deploying)
 
 After saving the file, present the spec to the user in readable plain language (not raw Markdown). Ask explicitly:
 
@@ -83,6 +88,16 @@ Generate the following files in order. After each file, briefly describe what it
 Follow the pattern in `ai/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
 - Contract name: `Deploy`
 - Use `MAJOR=0, MINOR=1, PATCH=8` for registry lookups
+- **Metadata URI**: use the URI supplied by the user as the second argument to the `Powers` constructor. If no URI was provided, use an empty string with a TODO comment:
+  ```solidity
+  new Powers(
+      "Org Name",
+      "",  // TODO: set metadata URI before deploying — upload a JSON file to Pinata (https://pinata.cloud) and paste the resulting URL here
+      helperConfig.getMaxCallDataLength(block.chainid),
+      helperConfig.getMaxReturnDataLength(block.chainid),
+      helperConfig.getMaxExecutionsLength(block.chainid)
+  );
+  ```
 - Every mandate needs a unique, descriptive `nameDescription` string — these strings are used for lookup in action scripts, so they must be exact and consistent across all files
 - Add a comment above each mandate explaining what it does in plain English
 - Include an initial setup mandate (`PresetActions`) that labels all roles and revokes itself after use
@@ -137,6 +152,7 @@ Write in plain English for a non-technical operator. Include:
   forge script governance/claude/<org-name>/Runners.s.sol:<OrgName>Runners \
     --sig "run<FlowName>()" --rpc-url $SEPOLIA_RPC_URL --broadcast
   ```
+- **Metadata URI** — if the deploy script contains a `// TODO: set metadata URI` comment, replace the empty string with your IPFS or gateway URL before deploying. Upload your organisation's JSON metadata to [Pinata](https://pinata.cloud) (free tier available) and paste the resulting URL into the constructor call.
 - **Testing** — `make test` runs the fork-based test suite; requires `SEPOLIA_RPC_URL`
 
 ### 4f. Makefile
