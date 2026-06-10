@@ -11,7 +11,7 @@ export function Footer() {
   const pathname = usePathname();
 
   return (
-    <section className="w-full bg-background border-t border-border py-8 font-mono">
+    <section id="page-footer" className="w-full bg-background border-t border-border py-8 font-mono">
       <div className="max-w-4xl mx-auto px-4 flex flex-col gap-8 items-center text-center">
 
         {/* Brand */}

@@ -21,7 +21,6 @@ export default defineConfig({
 				ThemeSelect: './src/components/ThemeSelect.astro',
 			},
 			head: [
-				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/CormorantGaramond-400-latin.woff2', crossorigin: true } },
 				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-400-Regular.otf', crossorigin: true } },
 				{ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/CommitMono-700-Regular.otf', crossorigin: true } },
 				{
