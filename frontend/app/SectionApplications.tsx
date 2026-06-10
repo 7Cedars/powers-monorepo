@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
 import {
-  ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon,
+  ChevronLeftIcon, ChevronRightIcon,
   QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
   PuzzlePieceIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
@@ -168,10 +168,6 @@ export function SectionApplications() {
           </button>
         </div>
 
-        {/* arrow down */}
-        <div className="flex flex-col items-center justify-end pt-4">
-          <ChevronDownIcon className="w-16 h-16 text-muted-foreground" />
-        </div>
 
       </div>
     </main>
