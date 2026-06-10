@@ -24,7 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html suppressHydrationWarning lang="en">
       <head />
      
-      <body className="h-dvh w-screen relative bg-background overflow-hidden">
+      <body className="h-screen w-screen relative bg-background overflow-hidden">
         <ThemeProvider attribute="class">
           <ThemeColorMeta />
           <Providers>
