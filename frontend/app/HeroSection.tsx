@@ -58,20 +58,20 @@ export function HeroSection() {
       <section className="relative sticky top-0 w-full h-screen flex flex-col items-center bg-background">
 
         {/* Upper: logo + title + typewriter */}
-        <div className="flex flex-col items-center pt-[18vh]">
+        <div className="flex flex-col items-center pt-[10vh] sm:pt-[18vh]">
           <Image
             src="/logo1_notext.png" width={160} height={160} alt="Powers Protocol"
-            className="mb-8 animate-in fade-in duration-700"
+            className="mb-4 sm:mb-8 animate-in fade-in duration-700"
             style={{ animationFillMode: "both" }}
           />
           <h1
-            className="text-5xl sm:text-7xl font-mono font-bold text-foreground text-center animate-in fade-in slide-in-from-bottom-4 duration-700"
+            className="text-3xl sm:text-7xl font-mono font-bold text-foreground text-center animate-in fade-in slide-in-from-bottom-4 duration-700"
             style={{ animationDelay: "300ms", animationFillMode: "both" }}
           >
             Trust governance
           </h1>
           <div
-            className="mt-6 text-xl sm:text-2xl font-mono text-muted-foreground text-center min-h-[2rem] animate-in fade-in duration-700"
+            className="mt-3 sm:mt-6 text-base sm:text-2xl font-mono text-muted-foreground text-center min-h-[2rem] animate-in fade-in duration-700"
             style={{ animationDelay: "800ms", animationFillMode: "both" }}
           >
             <CyclingTypewriter />
@@ -92,7 +92,7 @@ export function HeroSection() {
             className="text-xl sm:text-2xl font-mono text-foreground text-center text-pretty"
             style={{ opacity: 0 }}
           >
-            Create rules that govern communities, organisations, movements — enforced by cryptography, not legacy institutions or peer pressure.
+            Create rules that govern communities, organisations, movements — enforced by cryptography.
           </p>
           <p
             ref={text3Ref}

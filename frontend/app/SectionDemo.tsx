@@ -10,12 +10,6 @@ export function SectionDemo() {
 
       <section className="relative w-full flex-1 min-h-0 border border-border overflow-hidden group">
         <DemoFlow />
-        <div className="absolute inset-0 flex items-end justify-center pb-5 pointer-events-none opacity-100 group-hover:opacity-0 transition-opacity duration-500">
-          <span className="bg-background/90 border border-border px-5 py-2 font-mono text-xs text-muted-foreground uppercase tracking-wider">
-            <span className="hidden sm:inline">Drag to pan · Scroll or pinch to zoom</span>
-            <span className="sm:hidden">Touch to pan · Pinch to zoom</span>
-          </span>
-        </div>
       </section>
 
       {/* arrow down */}
