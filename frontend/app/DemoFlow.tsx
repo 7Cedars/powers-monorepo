@@ -7,7 +7,6 @@ import ReactFlow, {
   Background,
   BackgroundVariant,
   Controls,
-  Panel,
   useNodesState,
   useEdgesState,
   ConnectionMode,
@@ -286,11 +285,6 @@ const DemoFlowContent: React.FC = () => {
         color="hsl(var(--border))"
       />
       <Controls showZoom={false} showInteractive={false} position="bottom-left" />
-      <Panel position="bottom-right">
-        <div className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded border border-border">
-          Drag mandates and flows. Reset zoom using the [] icon
-        </div>
-      </Panel>
     </ReactFlow>
   )
 }

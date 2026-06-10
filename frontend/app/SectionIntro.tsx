@@ -63,16 +63,16 @@ export function SectionIntro() {
       <section id="intro" className="sticky top-0 w-full h-screen flex flex-col items-center bg-muted/25 border-t border-border px-6 py-16">
 
         <div className="flex flex-col justify-between flex-1 w-full max-w-4xl">
-          <p ref={para1Ref} className="text-xl sm:text-2xl font-mono text-foreground text-left text-pretty max-w-xl mr-auto" style={{ opacity: 0 }}>
+          <p ref={para1Ref} className="text-base sm:text-2xl font-mono text-foreground text-left text-pretty max-w-xl mr-auto" style={{ opacity: 0 }}>
             Without rules, human coordination becomes centralised, fragile, and unpredictable.
           </p>
-          <p ref={para2Ref} className="text-xl sm:text-2xl font-mono text-foreground text-right text-pretty max-w-xl ml-auto" style={{ opacity: 0 }}>
+          <p ref={para2Ref} className="text-base sm:text-2xl font-mono text-foreground text-right text-pretty max-w-xl ml-auto" style={{ opacity: 0 }}>
             Governance is in crisis. Rules exist, but there is little trust they are actually followed — centralised power, no accountability, inaccessible processes, no historical record.
           </p>
-          <p ref={para3Ref} className="text-xl sm:text-2xl font-mono text-foreground text-left text-pretty max-w-xl mr-auto" style={{ opacity: 0 }}>
+          <p ref={para3Ref} className="text-base sm:text-2xl font-mono text-foreground text-left text-pretty max-w-xl mr-auto" style={{ opacity: 0 }}>
             Powers uses mandates — modular, role-restricted contracts — to define who can take what action, and under which conditions. Chain them together for built-in checks and balances between roles.
           </p>
-          <p ref={para4Ref} className="text-xl sm:text-2xl font-mono text-foreground text-right text-pretty max-w-xl ml-auto" style={{ opacity: 0 }}>
+          <p ref={para4Ref} className="text-base sm:text-2xl font-mono text-foreground text-right text-pretty max-w-xl ml-auto" style={{ opacity: 0 }}>
             Communities can design their own governance systems: assign roles to accounts, grant powers to roles, build in checks and balances, and govern their own reforms.
           </p>
         </div>
