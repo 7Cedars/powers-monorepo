@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
 import {
-  ChevronLeftIcon, ChevronRightIcon,
+  ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon,
   QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
   PuzzlePieceIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
