@@ -12,15 +12,15 @@ Work through the five phases below in order. Never skip a phase. Speak in plain 
 
 Read the following files to ground your design work. Do not show this loading work to the user; just note internally that you have done it.
 
-1. `ai/prompts/institutionalDesign.md` — mandate catalogue, encoding templates, design heuristics
-2. `ai/templates/orgSpec.md` — spec sheet template you will fill in Phase 3
-3. `ai/templates/deployScript.md` — annotated deploy script template for Phase 4
+1. `ai-skill/prompts/institutionalDesign.md` — mandate catalogue, encoding templates, design heuristics
+2. `ai-skill/templates/orgSpec.md` — spec sheet template you will fill in Phase 3
+3. `ai-skill/templates/deployScript.md` — annotated deploy script template for Phase 4
 4. `solidity/test/TestConstitutions.sol` — seven concrete governance examples you can draw patterns from
 5. `solidity/governance/examples/OptimisticExecution.s.sol` — a simple, readable deploy script example
 6. `solidity/governance/examples/Powers101.s.sol` — another concise deploy example
 7. `AGENTS.md` — project workflow and principles
 
-**Note:** The `search_governance_sources` MCP tool is available to retrieve relevant excerpts from the governance theory library (`ai/sources/`). Use it during Phase 2 (between Round A and B) and Phase 3 instead of reading individual reference files. Do not pre-load the reference files.
+**Note:** The `search_governance_sources` MCP tool is available to retrieve relevant excerpts from the governance theory library (`ai-skill/sources/`). Use it during Phase 2 (between Round A and B) and Phase 3 instead of reading individual reference files. Do not pre-load the reference files.
 
 Once loading is complete, greet the user briefly and move to Phase 2.
 
@@ -35,7 +35,7 @@ Ask the following questions. Ask them in two rounds: Round A first, wait for the
 2. Who are the people involved? Describe each group by role (e.g., "artists who create work", "patrons who fund it", "stewards who maintain the commons"). How many people do you expect in each group?
 3. What decisions need collective governance? Give concrete examples (e.g., "who gets a grant", "whether to change fees", "who joins the council").
 
-**Paper retrieval (do this silently between Round A and Round B):** Call `search_governance_sources` with a query derived from the Round A answers — e.g. the governance challenge, resource type, and stakeholder structure (example: `"polycentric commons electoral design legitimacy"`). Use the top 3–5 results to inform Round B questions and note which sources you will cite in the spec rationale. If the MCP tool is unavailable, fall back to reading `ai/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
+**Paper retrieval (do this silently between Round A and Round B):** Call `search_governance_sources` with a query derived from the Round A answers — e.g. the governance challenge, resource type, and stakeholder structure (example: `"polycentric commons electoral design legitimacy"`). Use the top 3–5 results to inform Round B questions and note which sources you will cite in the spec rationale. If the MCP tool is unavailable, fall back to reading `ai-skill/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
 
 **Round B — Trust, Power and Constraints**
 4. Who do you trust most to act in the organisation's interest? Is there a founding group or administrator who should have extra authority at the start?
@@ -53,7 +53,7 @@ After Round B, summarise your understanding back to the user in plain language a
 
 ## Phase 3 — Governance Specification
 
-Using the answers from Phase 2 and the patterns in `ai/prompts/institutionalDesign.md`, design a governance structure. Then write the specification to disk using the template from `ai/templates/orgSpec.md`.
+Using the answers from Phase 2 and the patterns in `ai-skill/prompts/institutionalDesign.md`, design a governance structure. Then write the specification to disk using the template from `ai-skill/templates/orgSpec.md`.
 
 **Save the spec to:** `solidity/governance/claude/<org-name>/Spec.md`
 (Use a short kebab-case name derived from the organisation name, e.g., `secured-slate`)
@@ -85,7 +85,7 @@ Generate the following files in order. After each file, briefly describe what it
 ### 4a. Deploy Script
 **Save to:** `solidity/governance/claude/<org-name>/Deploy.s.sol`
 
-Follow the pattern in `ai/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
+Follow the pattern in `ai-skill/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
 - Contract name: `Deploy`
 - Use `MAJOR=0, MINOR=1, PATCH=8` for registry lookups
 - **Metadata URI**: use the URI supplied by the user as the second argument to the `Powers` constructor. If no URI was provided, use an empty string with a TODO comment:
@@ -203,7 +203,7 @@ After all files are generated:
 3. List any remaining manual steps:
    - Run `make update-builds` from `solidity/` if the frontend needs to pick up new contract ABIs
    - Update `frontend/context/constants.ts` if deploying to a live network
-   - The reference papers you should add to `ai/references/` for future sessions
+   - The reference papers you should add to `ai-skill/references/` for future sessions
 
 Close by summarising what was built. All seven generated files live in one folder:
 - `solidity/governance/claude/<org-name>/Spec.md` — governance specification
