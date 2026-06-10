@@ -3,7 +3,7 @@
     "governance-rag": {
       "command": "pnpm",
       "args": ["serve"],
-      "cwd": "/home/teijehidde/Documents/7CedarsGit/projects/powers-monorepo/ai"
+      "cwd": "/home/teijehidde/Documents/7CedarsGit/projects/powers-monorepo/ai-skill"
     }
   }
 }

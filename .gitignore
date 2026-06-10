@@ -80,11 +80,11 @@ typings/
 .vscode/
 
 # AI reference PDFs — distilled into ai/references/reading_guide.md
-ai/references/*.pdf
-ai/sources/*.pdf
+ai-skill/references/*.pdf
+ai-skill/sources/*.pdf
 
 # RAG package artifacts
-ai/node_modules/
-ai/dist/
-ai/embeddings/
-ai/.env
+ai-skill/node_modules/
+ai-skill/dist/
+ai-skill/embeddings/
+ai-skill/.env
