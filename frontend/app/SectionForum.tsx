@@ -2,7 +2,7 @@
 
 export function SectionForum() {
   return (
-    <section id="forum" className="w-full flex flex-col items-center px-4 bg-background border-t border-border py-16">
+    <section id="forum" className="w-full min-h-screen flex flex-col items-center px-4 bg-background border-t border-border py-16">
       <div className="w-full max-w-3xl flex flex-col gap-6 items-center text-center">
 
         <div className="font-mono font-bold text-foreground md:text-4xl text-xl uppercase tracking-wider">

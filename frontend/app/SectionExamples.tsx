@@ -19,7 +19,7 @@ export function SectionExamples() {
   const next = () => setSelected(i => (i + 1) % total);
 
   return (
-    <section id="examples" className="w-full flex flex-col items-center px-4 bg-muted/25 border-t border-border py-16">
+    <section id="examples" className="w-full min-h-screen flex flex-col items-center px-4 bg-muted/25 border-t border-border py-16">
 
       {/* Title & subtitle */}
       <div className="w-full flex flex-col justify-center items-center pb-10">
