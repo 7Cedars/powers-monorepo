@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
 import {
-  ChevronLeftIcon, ChevronRightIcon,
+  ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon,
   QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
   PuzzlePieceIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
@@ -74,11 +74,10 @@ export function SectionApplications() {
         {/* Title & subtitle */}
         <div className="w-full flex flex-col justify-center items-center pt-10">
           <div className="w-full flex flex-col gap-1 justify-center items-center md:text-4xl text-xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
-            Governance, solved structurally
+            Governance, solved.
           </div>
           <div className="w-full flex flex-col gap-4 justify-center items-center text-muted-foreground max-w-3xl text-center text-pretty font-mono">
-            <span className="md:text-lg text-sm">Move beyond token voting. Design governance systems with real separation of powers.</span>
-            <span className="text-sm leading-relaxed">On-chain governance is broken — researchers rank token voting failure as the single most urgent problem in crypto, followed by governance theater and informal power capture. The root cause is structural: most DAOs collapse proposal, deliberation, and execution into one blunt instrument. Powers Protocol fixes that.</span>
+            <span className="md:text-lg text-sm">Powers Protocol solves governance in a wide range of use cases.</span>
           </div>
         </div>
 
@@ -107,7 +106,7 @@ export function SectionApplications() {
                 onClick={() => setCurrent(i)}
               >
                 <div
-                  className="flex flex-col bg-background dark:bg-white transition-all duration-500"
+                  className="flex flex-col bg-background transition-all duration-500"
                   style={{
                     border: '2px solid #CD5E20',
                     opacity: i === current ? 1 : 0.3,
@@ -116,12 +115,12 @@ export function SectionApplications() {
                   }}
                 >
                   <div className="w-full flex flex-col items-center gap-1 p-3 border-b border-border bg-muted/50">
-                    {(() => { const Icon = ICON_MAP[card.icon]; return Icon ? <Icon className="w-5 h-5 text-foreground dark:text-gray-900" /> : null; })()}
-                    <span className="font-mono font-bold text-foreground dark:text-gray-900 uppercase tracking-wider text-xs sm:text-sm text-center">{card.title}</span>
+                    {(() => { const Icon = ICON_MAP[card.icon]; return Icon ? <Icon className="w-5 h-5 text-foreground" /> : null; })()}
+                    <span className="font-mono font-bold text-foreground uppercase tracking-wider text-xs sm:text-sm text-center">{card.title}</span>
                   </div>
                   <div className="w-full flex flex-col justify-start items-center px-3 sm:px-6 py-3 gap-2 sm:gap-4">
                     {card.details.map((detail, j) => (
-                      <div key={j} className="text-muted-foreground dark:text-gray-600 leading-relaxed text-xs sm:text-sm font-mono text-center">
+                      <div key={j} className="text-muted-foreground leading-relaxed text-xs sm:text-sm font-mono text-center">
                         {detail}
                       </div>
                     ))}
@@ -167,6 +166,11 @@ export function SectionApplications() {
           >
             <ChevronRightIcon className="w-5 h-5 text-foreground" />
           </button>
+        </div>
+
+        {/* arrow down */}
+        <div className="flex flex-col items-center justify-end pt-4">
+          <ChevronDownIcon className="w-16 h-16 text-muted-foreground" />
         </div>
 
       </div>

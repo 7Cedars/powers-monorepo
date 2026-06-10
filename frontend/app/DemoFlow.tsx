@@ -7,6 +7,7 @@ import ReactFlow, {
   Background,
   BackgroundVariant,
   Controls,
+  Panel,
   useNodesState,
   useEdgesState,
   ConnectionMode,
@@ -26,85 +27,89 @@ import {
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000' as `0x${string}`
 const EDGE_COLOR = 'hsl(var(--muted-foreground))'
+const PUBLIC_ROLE = 2n ** 256n - 1n
 
 const cond = (partial: {
   allowedRole: bigint
   needFulfilled?: bigint
   needNotFulfilled?: bigint
+  votingPeriod?: bigint
+  succeedAt?: bigint
+  quorum?: bigint
 }) => ({
   allowedRole: partial.allowedRole,
   timelock: 0n,
   needFulfilled: partial.needFulfilled ?? 0n,
   needNotFulfilled: partial.needNotFulfilled ?? 0n,
-  quorum: 0n,
-  succeedAt: 0n,
+  quorum: partial.quorum ?? 0n,
+  succeedAt: partial.succeedAt ?? 0n,
   throttleExecution: 0n,
-  votingPeriod: 0n,
+  votingPeriod: partial.votingPeriod ?? 0n,
 })
 
 const DEMO_MANDATES: Mandate[] = [
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
+    mandateHash: `0x${'01'.padStart(64, '0')}` as `0x${string}`,
+    index: 1n,
+    nameDescription: 'Initial Setup: Assign role labels (Admin, Public, Delegate). Self-revokes after first execution.',
+    conditions: cond({ allowedRole: PUBLIC_ROLE }),
+    active: true,
+  },
+  {
+    powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'02'.padStart(64, '0')}` as `0x${string}`,
     index: 2n,
-    nameDescription: 'Propose Split Payment: Executive proposes new split. Role 1 = Artist, Role 2 = Intermediary, Role 3 = Platform.',
-    conditions: cond({ allowedRole: 5n }),
+    nameDescription: 'Propose to Mint: Anyone can propose to mint tokens to an address.',
+    conditions: cond({ allowedRole: PUBLIC_ROLE }),
     active: true,
   },
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'03'.padStart(64, '0')}` as `0x${string}`,
     index: 3n,
-    nameDescription: 'Veto Split (Minter): Minter can veto split change.',
-    conditions: cond({ allowedRole: 1n, needFulfilled: 2n }),
+    nameDescription: 'Veto a Mint: Admin can veto a proposed token mint.',
+    conditions: cond({ allowedRole: 0n, needFulfilled: 2n }),
     active: true,
   },
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'04'.padStart(64, '0')}` as `0x${string}`,
     index: 4n,
-    nameDescription: 'Veto Split (Owner): Owner can veto split change.',
-    conditions: cond({ allowedRole: 2n, needFulfilled: 2n }),
+    nameDescription: 'Execute a Mint: Delegates vote (66% threshold, 20% quorum) to execute a mint. Requires a proposal and no admin veto.',
+    conditions: cond({ allowedRole: 1n, needFulfilled: 2n, needNotFulfilled: 3n, votingPeriod: 25n, succeedAt: 66n, quorum: 20n }),
     active: true,
   },
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'05'.padStart(64, '0')}` as `0x${string}`,
     index: 5n,
-    nameDescription: 'Veto Split (Intermediary): Intermediary can veto split change.',
-    conditions: cond({ allowedRole: 3n, needFulfilled: 2n }),
+    nameDescription: 'Nominate Me: Anyone can nominate themselves for a delegate election. Set nominateMe to false to revoke.',
+    conditions: cond({ allowedRole: PUBLIC_ROLE }),
     active: true,
   },
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'06'.padStart(64, '0')}` as `0x${string}`,
     index: 6n,
-    nameDescription: 'Split Checkpoint 1: Confirm no Minter veto.',
-    conditions: cond({ allowedRole: 5n, needFulfilled: 2n, needNotFulfilled: 3n }),
-    active: true,
-  },
-  {
-    powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
-    mandateHash: `0x${'07'.padStart(64, '0')}` as `0x${string}`,
-    index: 7n,
-    nameDescription: 'Split Checkpoint 2: Confirm no Owner veto.',
-    conditions: cond({ allowedRole: 5n, needFulfilled: 6n, needNotFulfilled: 4n }),
-    active: true,
-  },
-  {
-    powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
-    mandateHash: `0x${'08'.padStart(64, '0')}` as `0x${string}`,
-    index: 8n,
-    nameDescription: 'Execute Split Payment: Set new split payment.',
-    conditions: cond({ allowedRole: 5n, needFulfilled: 7n, needNotFulfilled: 5n }),
+    nameDescription: 'Call a Delegate Election: Anyone can call at any time. Top nominees by delegated token weight are elected (max 3 delegates).',
+    conditions: cond({ allowedRole: PUBLIC_ROLE }),
     active: true,
   },
 ]
 
 const DEMO_FLOWS: Flow[] = [
   {
-    nameDescription: 'Set a Split Payment: Executives can propose a new split, minter, owner and intermediary can veto, and if no vetoes, executives can execute the new split after a time lock.',
-    mandateIds: [2n, 3n, 4n, 5n, 6n, 7n, 8n],
+    nameDescription: 'Setup: Assign role labels. Self-revokes after first execution.',
+    mandateIds: [1n],
+  },
+  {
+    nameDescription: 'Minting Flow: Anyone proposes, admin can veto, delegates vote to execute.',
+    mandateIds: [2n, 3n, 4n],
+  },
+  {
+    nameDescription: 'Elect Delegates: Nominate yourself and call a token-weighted delegate election.',
+    mandateIds: [5n, 6n],
   },
 ]
 
@@ -112,10 +117,9 @@ const DEMO_POWERS: Powers = {
   contractAddress: ZERO_ADDR,
   chainId: 11155111n,
   roles: [
-    { roleId: 1n, label: 'Minter' },
-    { roleId: 2n, label: 'Owner' },
-    { roleId: 3n, label: 'Intermediary' },
-    { roleId: 5n, label: 'Executive' },
+    { roleId: 0n, label: 'Admin' },
+    { roleId: 1n, label: 'Delegate' },
+    { roleId: PUBLIC_ROLE, label: 'Public' },
   ],
 }
 
@@ -282,6 +286,11 @@ const DemoFlowContent: React.FC = () => {
         color="hsl(var(--border))"
       />
       <Controls showZoom={false} showInteractive={false} position="bottom-left" />
+      <Panel position="bottom-right">
+        <div className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded border border-border">
+          Drag mandates and flows. Reset zoom using the [] icon
+        </div>
+      </Panel>
     </ReactFlow>
   )
 }

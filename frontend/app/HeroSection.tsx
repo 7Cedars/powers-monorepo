@@ -92,7 +92,7 @@ export function HeroSection() {
             className="text-xl sm:text-2xl font-mono text-foreground text-center text-pretty"
             style={{ opacity: 0 }}
           >
-            Create rules that govern communities, organisations, movements — enforced by cryptography, not legacy institutions or personal trust.
+            Create rules that govern communities, organisations, movements — enforced by cryptography, not legacy institutions or peer pressure.
           </p>
           <p
             ref={text3Ref}
