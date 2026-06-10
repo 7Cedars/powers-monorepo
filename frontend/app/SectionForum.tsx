@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
+
 export function SectionForum() {
   return (
     <section id="forum" className="w-full min-h-screen flex flex-col items-center px-4 bg-background border-t border-border py-16">
@@ -21,6 +23,17 @@ export function SectionForum() {
           <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Video coming soon</span>
         </div>
 
+      </div>
+
+      {/* arrow down */}
+      <div className="flex flex-col items-center justify-end pt-10">
+        <button
+          onClick={() => document.getElementById('page-footer')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="scroll-arrow"
+          aria-label="Scroll to footer"
+        >
+          <ChevronDownIcon className="w-16 h-16" />
+        </button>
       </div>
     </section>
   );
