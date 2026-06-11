@@ -276,13 +276,14 @@ export const useMandate = () => {
       }
   }, [chainId])
 
-  const castVoteWithReason = useCallback( 
+  const castVoteWithReason = useCallback(
     async (
       actionId: bigint,
       support: bigint,
       reason: string,
       powers: Powers
     ): Promise<boolean> => {
+        console.log("@castVoteWithReason: waypoint 1", {actionId, support, reason, isSmartWallet: isSmartWalletRef.current, client: clientRef.current})
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
@@ -310,7 +311,8 @@ export const useMandate = () => {
           setTransactionHash(result)
           return true
       } catch (error) {
-          setStatus({status: "error"}) 
+          console.log("@castVoteWithReason: ERROR", {error})
+          setStatus({status: "error"})
           setError({error: error as Error})
           return false
       }
