@@ -150,10 +150,29 @@ export const useMandate = () => {
       method: 'pimlico_getUserOperationGasPrice' as any,
     }) as { fast: { maxFeePerGas: `0x${string}`; maxPriorityFeePerGas: `0x${string}` } };
 
+    // Fetch the nonce from the TARGET chain's EntryPoint.
+    // Privy's Kernel account calls its own getNonce() against defaultChain (Sepolia),
+    // returning a stale sequence after the first transaction on the target chain (AA25).
+    let nonceKey = 0n;
+    try {
+      const defaultNonce = await (currentClient.account as any).getNonce?.() as bigint | undefined;
+      if (defaultNonce !== undefined) nonceKey = BigInt(defaultNonce) >> 64n;
+    } catch { /* fallback: key 0 */ }
+
+    const targetChainNonce = await publicClient!.readContract({
+      address: (currentClient.account as any).entryPoint.address as `0x${string}`,
+      abi: [{ name: 'getNonce', type: 'function' as const, stateMutability: 'view' as const,
+              inputs: [{ name: 'sender', type: 'address' }, { name: 'key', type: 'uint192' }],
+              outputs: [{ type: 'uint256' }] }],
+      functionName: 'getNonce',
+      args: [currentClient.account.address, nonceKey],
+    }) as bigint;
+
     const userOpHash = await bundlerClient.sendUserOperation({
       calls: [{ to, data, value: 0n }],
       maxFeePerGas: BigInt(gasPriceRaw.fast.maxFeePerGas),
       maxPriorityFeePerGas: BigInt(gasPriceRaw.fast.maxPriorityFeePerGas),
+      nonce: targetChainNonce,
     });
     console.log("@sendSmartWalletTx, waypoint 3", {userOpHash})
 
