@@ -98,12 +98,14 @@ export const useMandate = () => {
     const chain = wagmiConfig.chains.find(c => c.id === targetChainIdNum);
     console.log("@sendSmartWalletTx, waypoint 2", {chain})
 
-    // publicClient for the target chain is passed to createBundlerClient so that
-    // prepareUserOperation calls getCode on the correct chain. Without this, it uses
-    // the account's internal client (Privy's defaultChain = Sepolia/11155111), where
-    // the account may not be deployed, causing factory/factoryData to be included in
-    // the UserOp — leading to AA10 if the account is already deployed on the target chain.
     const publicClient = getPublicClient(wagmiConfig, { chainId: targetChainIdNum as any });
+
+    // Detect deployment on the TARGET chain (not Privy's defaultChain = Sepolia).
+    // getFactory/getFactoryData on the Kernel account use its own internal client
+    // (defaultChain = Sepolia) and return factory args when the account isn't on Sepolia,
+    // even if it IS deployed on the target chain — causing AA10 at the bundler.
+    const code = await publicClient?.getCode({ address: currentClient.account.address });
+    const isDeployedOnTargetChain = code !== undefined && code !== '0x';
 
     // toKernelSmartAccount.signUserOperation falls back to getMemoizedChainId() (the
     // publicClient's chain — the user's EOA chain) when chainId is not in the parameters.
@@ -114,6 +116,11 @@ export const useMandate = () => {
       ...currentClient.account,
       signUserOperation: (params: any) =>
         (currentClient.account as any).signUserOperation({ ...params, chainId: targetChainIdNum }),
+      ...(isDeployedOnTargetChain && {
+        getFactory:     async () => undefined as any,
+        getFactoryData: async () => undefined as any,
+        getFactoryArgs: async () => ({} as any),
+      }),
     };
 
     const hasPaymaster = powers.paymaster && powers.paymaster !== '0x0000000000000000000000000000000000000000';
