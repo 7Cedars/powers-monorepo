@@ -12,6 +12,9 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
+import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol";
+import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+
 import { SlateRegistry } from "@src/helpers/SlateRegistry.sol";
 import { SlateRegistry_AddSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
 import { SlateRegistry_RemoveSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
@@ -43,6 +46,7 @@ contract Deploy is DeployHelpers {
     PowersTypes.Conditions conditions;
     PowersTypes.Flow[] flows;
     Powers powers;
+    PowersPaymaster powersPaymaster;
 
     SlateRegistry slateRegistry;
     SlateRegistry_AddSlate addSlate;
@@ -66,11 +70,14 @@ contract Deploy is DeployHelpers {
     address constant FOUNDER_2 = 0xc9ce1DC547C42F66464f5a7f0E3cd60EBf1C5Bd2; // Hannah 
     address constant FOUNDER_3 = 0x3F46F636F78929a4336de0a435E3930092900f06; // agent 1 
     address constant FOUNDER_4 = 0xa221eB405d87B624be08fAbf949F05D19C765f68; // agent 2
-    address constant FOUNDER_5 = 0x7507F9F06103D7D462DaE11C0A6f4A415c69DcF9; // teijehidde@gmail.com
+    address constant FOUNDER_5 = 0x3cc18745C907979BdF19e6F2B5f243416eeaBba1; // cedars7+powers@proton.me
 
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
     uint16 constant PATCH = 8;
+
+    // Canonical ERC-4337 v0.7 EntryPoint — same address on all supported networks.
+    address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
     function run() external returns (Powers, SlateRegistry) {
         deployer = msg.sender;
@@ -96,9 +103,12 @@ contract Deploy is DeployHelpers {
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid)
         );
+        powersPaymaster = new PowersPaymaster(IEntryPoint(ENTRY_POINT), address(powers));
+        powersPaymaster.deposit{value: 0.05 ether}();
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
         console2.log("SlateRegistry deployed at:", address(slateRegistry));
+        console2.log("PowersPaymaster deployed at:", address(powersPaymaster));
 
         uint256 len = createConstitution();
         console2.log("Constitution length:", len);
@@ -123,10 +133,11 @@ contract Deploy is DeployHelpers {
         // mandate so it can never be called again.                            //
         ////////////////////////////////////////////////////////////////////////
 
-        targets   = new address[](13);
-        values    = new uint256[](13);
-        calldatas = new bytes[](13);
+        targets   = new address[](15);
+        values    = new uint256[](15);
+        calldatas = new bytes[](15);
         for (uint256 i; i < targets.length; i++) targets[i] = address(powers);
+        targets[13] = address(powersPaymaster); // addSponsoredTarget is called on the paymaster, not on powers
 
         calldatas[0]  = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");
         calldatas[1]  = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "");
@@ -140,10 +151,12 @@ contract Deploy is DeployHelpers {
         calldatas[9]  = abi.encodeWithSelector(IPowers.assignRole.selector, 1, FOUNDER_4);
         calldatas[10] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, FOUNDER_5);
         calldatas[11] = abi.encodeWithSelector(IPowers.assignRole.selector, SLATE_REGISTRY_ROLE_ID, address(slateRegistry));
-        calldatas[12] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+        calldatas[12] = abi.encodeWithSelector(IPowers.setPaymaster.selector, address(powersPaymaster));
+        calldatas[13] = abi.encodeWithSelector(PowersPaymaster.addSponsoredTarget.selector, address(powers));
+        calldatas[14] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;
-        conditions.allowedRole = 0; // Admin (deployer) runs setup once
+        conditions.allowedRole = type(uint256).max; //public; runs setup once
         constitution.push(PowersTypes.MandateInitData({
             nameDescription: "Initial Setup: Assign role labels, set treasury, assign founding members and SlateRegistry roles, then self-revoke.",
             targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
@@ -527,6 +540,103 @@ contract Deploy is DeployHelpers {
             nameDescription: "Pause or Restart Critical Mandates: A founding member pauses or restarts election and voting mandates in an emergency.",
             targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
             config: abi.encode(indexFlow, indexMandate),
+            conditions: conditions
+        }));
+        delete conditions;
+
+        ////////////////////////////////////////////////////////////////////////
+        //                    FLOW G: FUND PAYMASTER                          //
+        // A Founding Member proposes topping up the paymaster; Founding       //
+        // Members vote and execute the ETH transfer to cover gas for members. //
+        // Test timing: 5-min vote. Production: minutesToBlocks(3 * 24 * 60, ...)
+        ////////////////////////////////////////////////////////////////////////
+
+        uint16[] memory flowG = new uint16[](2);
+        flowG[0] = mandateCount + 1;
+        flowG[1] = mandateCount + 2;
+        flows.push(PowersTypes.Flow({
+            mandateIds: flowG,
+            nameDescription: "Fund Paymaster: A founding member proposes topping up the gasless paymaster; founding members vote to execute."
+        }));
+
+        // Mandate: A Founding Member proposes funding the paymaster.
+        mandateCount++;
+        conditions.allowedRole = 1; // Founding Members
+        constitution.push(PowersTypes.MandateInitData({
+            nameDescription: "Propose to Fund Paymaster: A founding member proposes an ETH top-up for the gasless transaction paymaster.",
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+            config: abi.encode(),
+            conditions: conditions
+        }));
+        delete conditions;
+
+        // Mandate: Founding Members vote and execute a 0.05 ETH transfer to the paymaster.
+        targets    = new address[](1);
+        values     = new uint256[](1);
+        calldatas  = new bytes[](1);
+        targets[0]   = address(powersPaymaster);
+        values[0]    = 0.05 ether;
+        calldatas[0] = abi.encodeWithSignature("deposit()");
+
+        mandateCount++;
+        conditions.allowedRole  = 1; // Founding Members
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.quorum       = 60; // 3 of 5 founders must participate
+        conditions.succeedAt    = 51;
+        conditions.needFulfilled = mandateCount - 1;
+        constitution.push(PowersTypes.MandateInitData({
+            nameDescription: "Execute Fund Paymaster: Transfer 0.05 ETH to the paymaster after a successful founding member vote.",
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions"),
+            config: abi.encode(targets, values, calldatas),
+            conditions: conditions
+        }));
+        delete conditions;
+
+        ////////////////////////////////////////////////////////////////////////
+        //                  FLOW H: WITHDRAW FROM PAYMASTER                   //
+        // A Founding Member proposes withdrawing ETH from the paymaster;      //
+        // Founding Members vote and execute the withdrawal to the treasury.   //
+        // Test timing: 5-min vote. Production: minutesToBlocks(3 * 24 * 60, ...)
+        ////////////////////////////////////////////////////////////////////////
+
+        uint16[] memory flowH = new uint16[](2);
+        flowH[0] = mandateCount + 1;
+        flowH[1] = mandateCount + 2;
+        flows.push(PowersTypes.Flow({
+            mandateIds: flowH,
+            nameDescription: "Withdraw from Paymaster: A founding member proposes withdrawing ETH from the paymaster; founding members vote to execute."
+        }));
+
+        string[] memory withdrawParams = new string[](2);
+        withdrawParams[0] = "address withdrawAddress";
+        withdrawParams[1] = "uint256 amount";
+
+        // Mandate: A Founding Member proposes withdrawing ETH from the paymaster.
+        mandateCount++;
+        conditions.allowedRole = 1; // Founding Members
+        constitution.push(PowersTypes.MandateInitData({
+            nameDescription: "Propose to Withdraw from Paymaster: A founding member proposes withdrawing ETH from the gasless paymaster.",
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+            config: abi.encode(withdrawParams),
+            conditions: conditions
+        }));
+        delete conditions;
+
+        // Mandate: Founding Members vote and execute the proposed ETH withdrawal.
+        mandateCount++;
+        conditions.allowedRole  = 1; // Founding Members
+        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.quorum       = 60; // 3 of 5 founders must participate
+        conditions.succeedAt    = 51;
+        conditions.needFulfilled = mandateCount - 1;
+        constitution.push(PowersTypes.MandateInitData({
+            nameDescription: "Execute Withdraw from Paymaster: Execute the approved ETH withdrawal from the paymaster.",
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
+            config: abi.encode(
+                address(powersPaymaster),
+                bytes4(keccak256("withdrawTo(address,uint256)")),
+                withdrawParams
+            ),
             conditions: conditions
         }));
         delete conditions;
