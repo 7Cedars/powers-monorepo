@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePowersStore, useActionStore, useStatusStore, setError, setAction } from "@/context/store";
+import { usePowersStore, useActionStore, useStatusStore, useErrorStore, setError, setAction } from "@/context/store";
 import { useMandate } from "@/hooks/useMandate";
 import { useBlocks, L2_TO_L1_CHAIN_MAP } from "@/hooks/useBlocks";
 import { useBlockNumber } from "wagmi";
@@ -25,6 +25,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const powers = usePowersStore();
   const action = useActionStore();
   const status = useStatusStore();
+  const error = useErrorStore();
   const { chainId } = useParams<{ chainId: string }>();
   const parsedChainId = parseChainId(chainId) as number;
   const blockChainId = (L2_TO_L1_CHAIN_MAP[parsedChainId] ?? parsedChainId) as number;
@@ -347,6 +348,11 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
                 {status.status === "pending" && logSupport === 2n ? "VOTING..." : "ABSTAIN"}
               </button>
             </div>
+            {status.status === "error" && error.error && (
+              <div className="text-xs text-red-500 border border-red-500/30 p-2 font-mono break-all">
+                {error.error.message ?? String(error.error)}
+              </div>
+            )}
           </div>
         </>
       ) : checks?.hasVoted ? (

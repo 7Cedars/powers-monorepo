@@ -4,6 +4,24 @@
 const API = '';  // same origin
 const STORAGE_KEY = 'powers-agent-sessions';
 const THEME_KEY = 'powers-agent-theme';
+const SECRET_KEY = 'powers-agent-secret';
+
+// ── API Secret ─────────────────────────────────────────────────────────────
+function getSecret() { return sessionStorage.getItem(SECRET_KEY) || ''; }
+
+function saveSecret() {
+  const val = document.getElementById('api-secret-input').value;
+  if (val) sessionStorage.setItem(SECRET_KEY, val);
+  else sessionStorage.removeItem(SECRET_KEY);
+}
+
+function apiFetch(url, opts = {}) {
+  const secret = getSecret();
+  if (secret) {
+    opts = { ...opts, headers: { ...(opts.headers || {}), 'Authorization': `Bearer ${secret}` } };
+  }
+  return fetch(url, opts);
+}
 
 const HELP = {
   walletKey: 'Private key for the Ethereum wallet this agent uses to sign transactions. Use a dedicated agent wallet — not a personal one. Generate one with <code>cast wallet new</code> (Foundry) or MetaMask, then fund it with a small amount of ETH for gas.',
@@ -71,6 +89,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.help-popover.open').forEach(p => p.classList.remove('open'));
   });
 
+  const stored = getSecret();
+  if (stored) document.getElementById('api-secret-input').value = stored;
+
   addOrgRow();
   await loadSessionList();
 });
@@ -103,7 +124,7 @@ async function loadSessionList() {
 
   let active = [];
   try {
-    const res = await fetch(`${API}/api/sessions`);
+    const res = await apiFetch(`${API}/api/sessions`);
     active = await res.json();
   } catch {
     container.innerHTML = '<div class="status error">Could not reach the agent server.</div>';
@@ -235,7 +256,7 @@ async function startSession() {
   };
 
   try {
-    const res = await fetch(`${API}/api/session/start`, {
+    const res = await apiFetch(`${API}/api/session/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -286,7 +307,7 @@ async function loadSessionById() {
 
   let sessions;
   try {
-    const res = await fetch(`${API}/api/sessions`);
+    const res = await apiFetch(`${API}/api/sessions`);
     sessions = await res.json();
   } catch {
     status.className = 'status error';
@@ -317,7 +338,7 @@ async function openManage(sessionId) {
 
   let sessions;
   try {
-    const res = await fetch(`${API}/api/sessions`);
+    const res = await apiFetch(`${API}/api/sessions`);
     sessions = await res.json();
   } catch {
     container.innerHTML = '<div class="status error">Could not load session.</div>';
@@ -445,7 +466,7 @@ async function loadCardFunds(sessionId) {
   const el = document.getElementById(`card-funds-${sessionId}`);
   if (!el) return;
   try {
-    const res = await fetch(`${API}/api/session/${sessionId}/fund`);
+    const res = await apiFetch(`${API}/api/session/${sessionId}/fund`);
     const data = await res.json();
     const chainMap = Object.fromEntries(CHAINS.map(c => [c.id, c.name]));
     el.textContent = data.balances
@@ -460,7 +481,7 @@ async function loadFundInfo(sessionId) {
   const el = document.getElementById('fund-info');
   if (!el) return;
   try {
-    const res = await fetch(`${API}/api/session/${sessionId}/fund`);
+    const res = await apiFetch(`${API}/api/session/${sessionId}/fund`);
     const data = await res.json();
     const chainMap = Object.fromEntries(CHAINS.map(c => [c.id, c.name]));
     const balanceLines = data.balances.map(b =>
@@ -483,7 +504,7 @@ async function fundAgent(sessionId) {
 
   const chainId = Number(document.getElementById('fund-chain').value);
 
-  const res = await fetch(`${API}/api/session/${sessionId}/fund`);
+  const res = await apiFetch(`${API}/api/session/${sessionId}/fund`);
   const data = await res.json();
   const agentAddress = data.agentAddress;
 
@@ -532,7 +553,7 @@ async function addOrg(sessionId) {
 
   status.className = 'status info'; status.textContent = 'Validating…';
   try {
-    const res = await fetch(`${API}/api/session/${sessionId}/organisations`, {
+    const res = await apiFetch(`${API}/api/session/${sessionId}/organisations`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(org),
     });
     const data = await res.json();
@@ -548,7 +569,7 @@ async function loadSkills(sessionId) {
   const el = document.getElementById('skill-list');
   if (!el) return;
   try {
-    const res = await fetch(`${API}/api/session/${sessionId}/skills`);
+    const res = await apiFetch(`${API}/api/session/${sessionId}/skills`);
     const skills = await res.json();
     if (!Array.isArray(skills) || skills.length === 0) {
       el.innerHTML = '<div style="color:var(--muted);font-size:13px">No skills added yet.</div>';
@@ -569,7 +590,7 @@ async function loadSkills(sessionId) {
 
 async function removeSkill(sessionId, skillName) {
   try {
-    const res = await fetch(`${API}/api/session/${sessionId}/skills/${encodeURIComponent(skillName)}`, { method: 'DELETE' });
+    const res = await apiFetch(`${API}/api/session/${sessionId}/skills/${encodeURIComponent(skillName)}`, { method: 'DELETE' });
     if (!res.ok) {
       const data = await res.json();
       alert(data.error || 'Failed to remove skill.');
@@ -603,7 +624,7 @@ async function addSkill(sessionId) {
 
   status.className = 'status info'; status.textContent = 'Adding…';
   try {
-    const res = await fetch(`${API}/api/session/${sessionId}/skills`, {
+    const res = await apiFetch(`${API}/api/session/${sessionId}/skills`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -627,7 +648,7 @@ async function updatePersona(sessionId) {
 
   status.className = 'status info'; status.textContent = 'Saving…';
   try {
-    const res = await fetch(`${API}/api/session/${sessionId}/persona`, {
+    const res = await apiFetch(`${API}/api/session/${sessionId}/persona`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
     });
     const data = await res.json();
@@ -645,7 +666,7 @@ async function endSession(sessionId) {
 
   status.className = 'status info'; status.textContent = 'Ending session…';
   try {
-    await fetch(`${API}/api/session/${sessionId}`, { method: 'DELETE' });
+    await apiFetch(`${API}/api/session/${sessionId}`, { method: 'DELETE' });
     removeStoredId(sessionId);
     showScreen('list');
   } catch (err) {

@@ -63,6 +63,11 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 header p { color: var(--muted-foreground); font-size: 12px; margin-top: 4px; letter-spacing: 0.05em; }
 
+/* ── API secret bar ── */
+.secret-bar { display: flex; align-items: center; gap: 8px; }
+.secret-bar label { font-size: 11px; color: var(--muted-foreground); white-space: nowrap; }
+.secret-bar input { width: 160px; font-size: 12px; padding: 4px 8px; }
+
 /* ── Theme toggle ── */
 .theme-toggle {
   background: transparent;
