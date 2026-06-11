@@ -113,7 +113,7 @@ export function startWatchers(
 
           const mandate = mandates.find((m: any) => m.mandateId === actionData.mandateId);
           const timelock = mandate?.conditions.timelock ?? 0n;
-          if (currentBlock < voteData.voteEnd + timelock) continue;
+          if (currentBlock < BigInt(voteData.voteEnd) + BigInt(timelock)) continue;
 
           console.log(
             `[watcher] action ${actionId} is Succeeded + timelock cleared (${orgKey})`

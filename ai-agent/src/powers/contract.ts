@@ -89,7 +89,7 @@ export interface ActionData {
 }
 
 export interface ActionVoteData {
-  voteStart: bigint;
+  voteStart: number;
   voteDuration: number;
   voteEnd: bigint;
   againstVotes: number;
@@ -254,7 +254,7 @@ export async function getActionVoteData(
     functionName: 'getActionVoteData',
     args: [actionId],
   })) as {
-    voteStart: bigint;
+    voteStart: number;
     voteDuration: number;
     voteEnd: bigint;
     againstVotes: number;
@@ -451,7 +451,7 @@ export async function getOpenActions(
         results.push({
           ...data,
           ...voteData,
-          readyToExecuteAt: voteData.voteEnd + timelock,
+          readyToExecuteAt: BigInt(voteData.voteEnd) + BigInt(timelock),
           hasAgentVoted: voted,
         });
       } catch (err) {

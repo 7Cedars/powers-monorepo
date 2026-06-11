@@ -299,7 +299,7 @@ export async function handleToolCall(
 
       const mandate = mandates.find((m) => m.mandateId === actionData.mandateId);
       const timelock = mandate?.conditions.timelock ?? 0n;
-      const readyAt = voteData.voteEnd + timelock;
+      const readyAt = BigInt(voteData.voteEnd) + BigInt(timelock);
 
       if (currentBlock < readyAt) {
         return `Timelock not cleared. Ready at block ${readyAt}, current block ${currentBlock}.`;

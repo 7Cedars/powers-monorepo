@@ -350,7 +350,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
             </div>
             {status.status === "error" && error.error && (
               <div className="text-xs text-red-500 border border-red-500/30 p-2 font-mono break-all">
-                {error.error.message ?? String(error.error)}
+                {error.error instanceof Error ? error.error.message : String(error.error)}
               </div>
             )}
           </div>
