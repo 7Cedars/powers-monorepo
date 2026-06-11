@@ -351,7 +351,7 @@ function manageHTML(s) {
     <div class="card-header"><h3>${esc(s.personaName)}</h3><span class="tag">${shortAddr(s.agentAddress)}</span></div>
     <div class="section-title">Organisations</div>
     <div style="margin-bottom:12px; font-size:13px; color:var(--muted-foreground)">${orgs}</div>
-    <div style="font-size:12px; color:var(--muted)">Expires: ${new Date(s.expiresAt).toLocaleString()}</div>
+    <div style="font-size:12px; color:var(--muted-foreground)">Expires: ${new Date(s.expiresAt).toLocaleString()}</div>
   </div>
 
   <!-- Fund -->
@@ -388,6 +388,12 @@ function manageHTML(s) {
     </div>
     <button class="btn btn-primary btn-sm" onclick="addOrg('${s.sessionId}')">Add</button>
     <div id="add-org-status" class="status"></div>
+  </div>
+
+  <!-- Current Skills -->
+  <div class="card">
+    <div class="card-header"><h3>Current Skills</h3></div>
+    <div id="skill-list"><div class="status info">Loading…</div></div>
   </div>
 
   <!-- Add Skill -->
@@ -537,6 +543,44 @@ async function addOrg(sessionId) {
   }
 }
 
+// ── Skills List ────────────────────────────────────────────────────────────
+async function loadSkills(sessionId) {
+  const el = document.getElementById('skill-list');
+  if (!el) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/skills`);
+    const skills = await res.json();
+    if (!Array.isArray(skills) || skills.length === 0) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px">No skills added yet.</div>';
+      return;
+    }
+    el.innerHTML = skills.map(sk => `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;font-family:monospace">${esc(sk.name)}</div>
+          <div style="font-size:11px;color:var(--muted-foreground)">${esc(sk.handler)} — ${esc(sk.description)}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeSkill('${sessionId}','${esc(sk.name)}')">Remove</button>
+      </div>`).join('');
+  } catch {
+    el.innerHTML = '<div class="status error">Could not load skills.</div>';
+  }
+}
+
+async function removeSkill(sessionId, skillName) {
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/skills/${encodeURIComponent(skillName)}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.error || 'Failed to remove skill.');
+      return;
+    }
+    await loadSkills(sessionId);
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
+}
+
 // ── Add Skill ──────────────────────────────────────────────────────────────
 async function addSkill(sessionId) {
   const status = document.getElementById('add-skill-status');
@@ -565,6 +609,7 @@ async function addSkill(sessionId) {
     const data = await res.json();
     if (!res.ok) { status.className = 'status error'; status.textContent = data.error; return; }
     status.className = 'status ok'; status.textContent = `Added. ${data.skillsCount} skill(s) total.`;
+    await loadSkills(sessionId);
   } catch (err) {
     status.className = 'status error'; status.textContent = err.message;
   }
@@ -622,5 +667,5 @@ const _origOpenManage = openManage;
 // eslint-disable-next-line no-global-assign
 window.openManage = async function(sessionId) {
   await _origOpenManage(sessionId);
-  setTimeout(() => loadFundInfo(sessionId), 200);
+  setTimeout(() => { loadFundInfo(sessionId); loadSkills(sessionId); }, 200);
 };

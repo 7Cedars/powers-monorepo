@@ -216,6 +216,25 @@ export function createServer(
     res.json({ skillsCount: session.skills.length });
   });
 
+  // ── GET /api/session/:sessionId/skills ─────────────────────────────────────
+  app.get('/api/session/:sessionId/skills', (req: Request, res: Response): void => {
+    const session = sessionManager.getSession(req.params.sessionId);
+    if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
+    res.json(session.skills.map(s => s.definition));
+  });
+
+  // ── DELETE /api/session/:sessionId/skills/:skillName ────────────────────────
+  app.delete('/api/session/:sessionId/skills/:skillName', (req: Request, res: Response): void => {
+    const session = sessionManager.getSession(req.params.sessionId);
+    if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
+
+    const idx = session.skills.findIndex(s => s.definition.name === req.params.skillName);
+    if (idx === -1) { res.status(404).json({ error: 'Skill not found' }); return; }
+
+    session.skills.splice(idx, 1);
+    res.json({ skillsCount: session.skills.length });
+  });
+
   // ── GET /api/session/:sessionId/fund ────────────────────────────────────────
   app.get('/api/session/:sessionId/fund', async (req: Request, res: Response): Promise<void> => {
     const session = sessionManager.getSession(req.params.sessionId);
