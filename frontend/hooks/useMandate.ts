@@ -139,8 +139,14 @@ export const useMandate = () => {
       }),
     });
 
+    const gasPrice = await bundlerClient.request({
+      method: 'pimlico_getUserOperationGasPrice' as any,
+    }) as { fast: { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint } };
+
     const userOpHash = await bundlerClient.sendUserOperation({
       calls: [{ to, data, value: 0n }],
+      maxFeePerGas: gasPrice.fast.maxFeePerGas,
+      maxPriorityFeePerGas: gasPrice.fast.maxPriorityFeePerGas,
     });
     console.log("@sendSmartWalletTx, waypoint 3", {userOpHash})
 

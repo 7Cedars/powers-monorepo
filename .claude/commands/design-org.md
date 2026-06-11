@@ -53,6 +53,10 @@ Then ask the following questions. Ask them in two rounds: Round A first, wait fo
 
    > No URI yet? You can create one by uploading a JSON file to [Pinata](https://pinata.cloud) (free tier available) and copying the resulting gateway URL. The JSON should contain at minimum `name`, `description`, and optionally `image` fields — the same shape used by ERC-721 token metadata.
 
+9. **(Optional) Do you want gasless transactions (account abstraction)?** With this enabled, members can interact with the organisation without paying gas fees from their own wallets — useful for onboarding non-crypto-native participants, mobile users, or anyone unfamiliar with funding a wallet. Under the hood a `PowersPaymaster` contract (ERC-4337) is deployed alongside your organisation and pre-funded by the deployer. Two governance flows are automatically added so authorised roles can top the paymaster up or withdraw from it later.
+
+   Answer **yes** or **no**. If yes, also answer: how much ETH should the paymaster be seeded with at deployment? (A typical starting value is `0.05 ETH`; the deployer wallet must hold at least this amount plus gas at deploy time.)
+
 After Round B, summarise your understanding back to the user in plain language and ask them to confirm or correct before proceeding to the spec.
 
 ---
@@ -71,6 +75,7 @@ The spec must cover:
 - **Design rationale** — why you made these choices, citing reference papers where relevant
 - **Limitations** — what the current design cannot do (if any existing mandate cannot satisfy a need, note this clearly and explain the alternative approach you have taken)
 - **Metadata URI** — the URI provided by the user, or `TBD` if none was given (with a note to set it before deploying)
+- **Account Abstraction** — if the user opted in: state that a `PowersPaymaster` will be deployed, the seed amount, which roles govern the Fund and Withdraw flows, and a note that the deployer wallet must hold the seed amount plus gas at deploy time. If not opted in, omit this section.
 
 After saving the file, present the spec to the user in readable plain language (not raw Markdown). Ask explicitly:
 
@@ -109,6 +114,29 @@ Follow the pattern in `ai-skill/templates/deployScript.md` and `solidity/governa
 - Include an initial setup mandate (`PresetActions`) that labels all roles and revokes itself after use
 - Group mandates into `Flow` structs that reflect the governance flows in the spec
 - Import `DeployHelpers` with the relative path `../../DeployHelpers.s.sol` (resolves to `governance/DeployHelpers.s.sol`)
+
+**Account Abstraction (include only if the user opted in during Phase 2):** Use `solidity/governance/examples/AccountAbstraction.s.sol` as the exact reference. Key rules:
+- Add these imports:
+  ```solidity
+  import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol";
+  import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+  ```
+- Declare `PowersPaymaster powersPaymaster;` and `address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;` at contract level (this is the canonical ERC-4337 v0.7 EntryPoint, same on all supported networks)
+- In `run()`, inside `vm.startBroadcast()`, after deploying `Powers`, deploy and fund the paymaster:
+  ```solidity
+  powersPaymaster = new PowersPaymaster(IEntryPoint(ENTRY_POINT), address(powers));
+  powersPaymaster.deposit{value: <seed_amount>}();
+  ```
+  where `<seed_amount>` is the value the user specified (e.g. `0.05 ether`)
+- In the initial setup `PresetActions` calldatas array, add three extra entries (size the array accordingly):
+  - `powers.setTreasury(address(powers))` — designates the Powers contract itself as treasury
+  - `powers.setPaymaster(address(powersPaymaster))` — registers the paymaster with Powers
+  - `powersPaymaster.addSponsoredTarget(address(powers))` — allows the paymaster to sponsor calls to Powers (note: target for this call is `address(powersPaymaster)`, not `address(powers)`)
+- Add two standard AA governance flows **after** the organisation's own flows, using the exact mandate structure from `AccountAbstraction.s.sol`:
+  - **Fund Paymaster Flow** — a `StatementOfIntent` propose step followed by a `PresetActions` execute step that sends `<seed_amount>` ETH to `powersPaymaster.deposit()`
+  - **Withdraw from Paymaster Flow** — a `StatementOfIntent` propose step (with `address withdrawAddress` and `uint256 amount` params) followed by a `BespokeAction_Simple` execute step calling `powersPaymaster.withdrawTo(address,uint256)`
+- The role allowed to propose/execute both AA flows should match the most trusted role in the organisation (or the role the user specified)
+- Add a console log line: `console2.log("PowersPaymaster deployed at:", address(powersPaymaster));`
 
 ### 4b. Actions Script
 **Save to:** `solidity/governance/claude/<org-name>/Actions.s.sol`
@@ -159,6 +187,7 @@ Write in plain English for a non-technical operator. Include:
     --sig "run<FlowName>()" --rpc-url $SEPOLIA_RPC_URL --broadcast
   ```
 - **Metadata URI** — if the deploy script contains a `// TODO: set metadata URI` comment, replace the empty string with your IPFS or gateway URL before deploying. Upload your organisation's JSON metadata to [Pinata](https://pinata.cloud) (free tier available) and paste the resulting URL into the constructor call.
+- **Account Abstraction / Paymaster** *(include only if AA was opted in)* — explain that a `PowersPaymaster` was deployed alongside the organisation and pre-funded with `<seed_amount>` ETH. Members can now interact with the organisation without paying gas themselves. When the paymaster balance runs low, authorised members can top it up using the "Fund Paymaster" governance flow. To check the current paymaster balance: `cast call <PAYMASTER_ADDRESS> "getDeposit()(uint256)" --rpc-url $SEPOLIA_RPC_URL`. To trigger the Fund flow: `forge script governance/claude/<org-name>/Actions.s.sol:<OrgName>Actions --sig "proposeFundPaymaster()" --rpc-url $SEPOLIA_RPC_URL --broadcast`. The deployer wallet must hold at least `<seed_amount>` ETH plus gas at deploy time.
 - **Testing** — `make test` runs the fork-based test suite; requires `SEPOLIA_RPC_URL`
 
 ### 4f. Makefile
