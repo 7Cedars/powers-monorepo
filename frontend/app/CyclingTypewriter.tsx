@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react";
 
 const SENTENCES = [
-  "to hold leaders to account.",
   "to ensure privacy for netizens.",
   "to be accessible to all.",
-  "to force transparency on leaders.",
+  "to coordinate across borders.",
+  "to separate powers by design.",
+  "to make governance verifiable.",
+  "to enable anonymous participation.",
+  "to govern without intermediaries.",
 ];
 
 type Phase = "typing" | "holding" | "erasing" | "pausing";

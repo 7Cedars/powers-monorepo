@@ -49,16 +49,8 @@ const cond = (partial: {
 const DEMO_MANDATES: Mandate[] = [
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
-    mandateHash: `0x${'01'.padStart(64, '0')}` as `0x${string}`,
-    index: 1n,
-    nameDescription: 'Initial Setup: Assign role labels (Admin, Public, Delegate). Self-revokes after first execution.',
-    conditions: cond({ allowedRole: PUBLIC_ROLE }),
-    active: true,
-  },
-  {
-    powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'02'.padStart(64, '0')}` as `0x${string}`,
-    index: 2n,
+    index: 1n,
     nameDescription: 'Propose to Mint: Anyone can propose to mint tokens to an address.',
     conditions: cond({ allowedRole: PUBLIC_ROLE }),
     active: true,
@@ -66,50 +58,26 @@ const DEMO_MANDATES: Mandate[] = [
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'03'.padStart(64, '0')}` as `0x${string}`,
-    index: 3n,
+    index: 2n,
     nameDescription: 'Veto a Mint: Admin can veto a proposed token mint.',
-    conditions: cond({ allowedRole: 0n, needFulfilled: 2n }),
+    conditions: cond({ allowedRole: 0n, needFulfilled: 1n }),
     active: true,
   },
   {
     powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
     mandateHash: `0x${'04'.padStart(64, '0')}` as `0x${string}`,
-    index: 4n,
+    index: 3n,
     nameDescription: 'Execute a Mint: Delegates vote (66% threshold, 20% quorum) to execute a mint. Requires a proposal and no admin veto.',
-    conditions: cond({ allowedRole: 1n, needFulfilled: 2n, needNotFulfilled: 3n, votingPeriod: 25n, succeedAt: 66n, quorum: 20n }),
+    conditions: cond({ allowedRole: 1n, needFulfilled: 1n, needNotFulfilled: 2n, votingPeriod: 25n, succeedAt: 66n, quorum: 20n }),
     active: true,
-  },
-  {
-    powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
-    mandateHash: `0x${'05'.padStart(64, '0')}` as `0x${string}`,
-    index: 5n,
-    nameDescription: 'Nominate Me: Anyone can nominate themselves for a delegate election. Set nominateMe to false to revoke.',
-    conditions: cond({ allowedRole: PUBLIC_ROLE }),
-    active: true,
-  },
-  {
-    powers: ZERO_ADDR, mandateAddress: ZERO_ADDR,
-    mandateHash: `0x${'06'.padStart(64, '0')}` as `0x${string}`,
-    index: 6n,
-    nameDescription: 'Call a Delegate Election: Anyone can call at any time. Top nominees by delegated token weight are elected (max 3 delegates).',
-    conditions: cond({ allowedRole: PUBLIC_ROLE }),
-    active: true,
-  },
+  }
 ]
 
 const DEMO_FLOWS: Flow[] = [
   {
-    nameDescription: 'Setup: Assign role labels. Self-revokes after first execution.',
-    mandateIds: [1n],
-  },
-  {
     nameDescription: 'Minting Flow: Anyone proposes, admin can veto, delegates vote to execute.',
-    mandateIds: [2n, 3n, 4n],
-  },
-  {
-    nameDescription: 'Elect Delegates: Nominate yourself and call a token-weighted delegate election.',
-    mandateIds: [5n, 6n],
-  },
+    mandateIds: [1n, 2n, 3n],
+  }
 ]
 
 const DEMO_POWERS: Powers = {
