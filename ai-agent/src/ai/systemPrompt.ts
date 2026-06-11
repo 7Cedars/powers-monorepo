@@ -8,7 +8,6 @@ const protocolRef = readFileSync(join(_dir, 'POWERS_PROTOCOL.md'), 'utf-8');
 
 export function buildSystemPrompt(session: AgentSession): string {
   const { persona, organisations, userAddress } = session;
-  const now = new Date().toISOString();
 
   const orgList = organisations
     .map((o) => `· ${o.label || o.powersAddress} (chain ${o.chainId})`)
@@ -39,7 +38,6 @@ ORGANISATIONS YOU SERVE:
 ${orgList}
 
 Your on-chain address: ${userAddress}
-Current time (UTC): ${now}
 
 POWERS PROTOCOL REFERENCE:
 ${protocolRef}`.trim();

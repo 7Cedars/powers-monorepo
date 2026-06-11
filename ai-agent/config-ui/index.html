@@ -55,15 +55,27 @@
       <div class="card-header"><h3>Start New Agent</h3></div>
 
       <div class="form-group">
-        <label>Wallet Private Key</label>
+        <div class="label-wrap">
+          <label>Wallet Private Key</label>
+          <button class="help-btn" onclick="toggleHelp(event,this)" aria-label="Help">?</button>
+          <div class="help-popover">Private key for the Ethereum wallet this agent uses to sign transactions. Use a dedicated agent wallet — not a personal one. Generate one with <code>cast wallet new</code> (Foundry) or MetaMask, then fund it with a small amount of ETH for gas.</div>
+        </div>
         <input id="f-walletKey" type="password" autocomplete="off" placeholder="0x..." />
       </div>
       <div class="form-group">
-        <label>Claude API Key</label>
+        <div class="label-wrap">
+          <label>Claude API Key</label>
+          <button class="help-btn" onclick="toggleHelp(event,this)" aria-label="Help">?</button>
+          <div class="help-popover">Anthropic API key that powers this agent's reasoning. Get yours at console.anthropic.com under API Keys. Keys start with <code>sk-ant-api03-</code>.</div>
+        </div>
         <input id="f-claudeKey" type="password" autocomplete="off" placeholder="sk-ant-..." />
       </div>
       <div class="form-group">
-        <label>Session Duration</label>
+        <div class="label-wrap">
+          <label>Session Duration</label>
+          <button class="help-btn" onclick="toggleHelp(event,this)" aria-label="Help">?</button>
+          <div class="help-popover">How long the agent runs before automatically shutting down. The agent keeps running server-side after you close this tab — reconnect anytime using the Session ID.</div>
+        </div>
         <select id="f-ttl">
           <option value="1800000">30 minutes</option>
           <option value="7200000">2 hours</option>

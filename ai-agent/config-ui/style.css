@@ -259,3 +259,55 @@ input[type="password"] { letter-spacing: 0.12em; }
 
 /* ── Inline code ── */
 code { font-family: var(--font-mono); font-size: 12px; }
+
+/* ── Help tooltips ── */
+.label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  position: relative;
+}
+.label-wrap label { margin-bottom: 0; }
+button.help-btn {
+  align-items: center;
+  background: none;
+  border: 1px solid var(--muted-foreground);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 8px;
+  font-weight: 700;
+  height: 14px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  width: 14px;
+}
+button.help-btn:hover {
+  background: var(--muted);
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+.help-popover {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  color: var(--muted-foreground);
+  display: none;
+  font-size: 11px;
+  left: 0;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  max-width: 300px;
+  padding: 10px 12px;
+  position: absolute;
+  top: calc(100% + 4px);
+  width: max-content;
+  z-index: 100;
+}
+.help-popover.open { display: block; }

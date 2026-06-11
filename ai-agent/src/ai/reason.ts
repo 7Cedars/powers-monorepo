@@ -9,6 +9,7 @@ import {
 } from './tools/governanceTools.js';
 import { config } from '../config/env.js';
 import { sessionManager } from '../agent/SessionManager.js';
+import { claudeLimiter } from './rateLimiter.js';
 
 export async function reason(
   session: AgentSession,
@@ -46,6 +47,18 @@ export async function reason(
     ...session.skills.map((s) => s.tool),
   ];
 
+  // Cache system prompt and tool list — both are stable per session.
+  // cache_control marks a breakpoint: everything up to and including it is cached.
+  const systemParam = [
+    { type: 'text' as const, text: systemPrompt, cache_control: { type: 'ephemeral' as const } },
+  ];
+  const cachedTools = allTools.length > 0
+    ? [
+        ...allTools.slice(0, -1),
+        { ...allTools[allTools.length - 1], cache_control: { type: 'ephemeral' } },
+      ]
+    : allTools;
+
   let rounds = 0;
   const maxRounds = config.ai.maxToolRounds;
 
@@ -61,14 +74,16 @@ export async function reason(
 
     let response;
     try {
-      response = await session.claudeClient.messages.create({
-        model: session.persona.model ?? 'claude-sonnet-4-6',
-        system: systemPrompt,
-        messages,
-        tools: allTools as any,
-        tool_choice: { type: 'auto' },
-        ...apiParams,
-      });
+      response = await claudeLimiter.schedule(() =>
+        session.claudeClient.messages.create({
+          model: session.persona.model ?? 'claude-sonnet-4-6',
+          system: systemParam as any,
+          messages,
+          tools: cachedTools as any,
+          tool_choice: { type: 'auto' },
+          ...apiParams,
+        })
+      );
     } catch (err: any) {
       console.error(`[reason] Claude API error (session ${session.sessionId}):`, err);
 

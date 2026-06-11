@@ -74,7 +74,10 @@ export const useMandate = () => {
     }
   }
 
-  // Helper to send smart wallet transaction with custom per-Powers paymaster
+  // Helper to send smart wallet transaction, always targeting the DAO's chain via a
+  // chain-specific bundler client. This fixes a mismatch where Privy's default client
+  // (initialized with defaultChain: sepolia) would send UserOps to chain/11155111
+  // even when the DAO lives on a different chain (e.g. Arbitrum Sepolia 421614).
   const sendSmartWalletTx = async (
     to: `0x${string}`,
     data: `0x${string}`,
@@ -84,28 +87,16 @@ export const useMandate = () => {
     console.log("@sendSmartWalletTx, waypoint 0", {to, data, powers})
     if (!currentClient) throw new Error("Smart wallet client not found");
 
-    // If no specific paymaster is set, use the default Privy client behavior
-    if (!powers.paymaster || powers.paymaster === '0x0000000000000000000000000000000000000000') {
-      const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
-      return await currentClient.sendTransaction({ to, data, value: 0n, ...feeOverride });
-    }
-    console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
-
-    // Use viem's createBundlerClient (same library Privy uses internally) so that
-    // currentClient.account is fully type-compatible — no `as any` required and
-    // signUserOperation receives the correct arguments (fixes AA24).
-    // The ZeroDev bundler URL is adjusted to the target chainId so the UserOp is
-    // submitted to the right chain's EntryPoint (fixes AA30).
     const { createBundlerClient } = await import('viem/account-abstraction');
     const { http } = await import('viem');
 
     const targetChainIdNum = parseChainId(chainId);
     const zeroDevUrl = process.env.NEXT_PUBLIC_ZERODEV_BUNDLER_URL || "";
     const bundlerUrl = zeroDevUrl.replace(/\b11155111\b/, targetChainIdNum.toString());
-    console.log("@sendSmartWalletTx, waypoint 2", {bundlerUrl})
+    console.log("@sendSmartWalletTx, waypoint 1", {bundlerUrl})
 
     const chain = wagmiConfig.chains.find(c => c.id === targetChainIdNum);
-    console.log("@sendSmartWalletTx, waypoint 3", {chain})
+    console.log("@sendSmartWalletTx, waypoint 2", {chain})
 
     // toKernelSmartAccount.signUserOperation falls back to getMemoizedChainId() (the
     // publicClient's chain — the user's EOA chain) when chainId is not in the parameters.
@@ -118,31 +109,35 @@ export const useMandate = () => {
         (currentClient.account as any).signUserOperation({ ...params, chainId: targetChainIdNum }),
     };
 
+    const hasPaymaster = powers.paymaster && powers.paymaster !== '0x0000000000000000000000000000000000000000';
+
     const bundlerClient = createBundlerClient({
       account: accountForDaoChain as any,
       chain,
       transport: http(bundlerUrl),
-      paymaster: {
-        getPaymasterData: async () => ({
-          paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x" as `0x${string}`,
-        }),
-        getPaymasterStubData: async () => ({
-          paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x" as `0x${string}`,
-          paymasterVerificationGasLimit: 100000n,
-          paymasterPostOpGasLimit: 100000n,
-        }),
-      },
+      ...(hasPaymaster && {
+        paymaster: {
+          getPaymasterData: async () => ({
+            paymaster: powers.paymaster as `0x${string}`,
+            paymasterData: "0x" as `0x${string}`,
+          }),
+          getPaymasterStubData: async () => ({
+            paymaster: powers.paymaster as `0x${string}`,
+            paymasterData: "0x" as `0x${string}`,
+            paymasterVerificationGasLimit: 100000n,
+            paymasterPostOpGasLimit: 100000n,
+          }),
+        },
+      }),
     });
 
     const userOpHash = await bundlerClient.sendUserOperation({
       calls: [{ to, data, value: 0n }],
     });
-    console.log("@sendSmartWalletTx, waypoint 4", {userOpHash})
+    console.log("@sendSmartWalletTx, waypoint 3", {userOpHash})
 
     const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
-    console.log("@sendSmartWalletTx, waypoint 5", {receipt})
+    console.log("@sendSmartWalletTx, waypoint 4", {receipt})
     return receipt.receipt.transactionHash;
   };
   

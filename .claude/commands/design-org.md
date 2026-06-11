@@ -146,8 +146,8 @@ Follow the pattern in `solidity/governance/claude/global-environmental-movement/
 
 Write in plain English for a non-technical operator. Include:
 - **Overview** — one paragraph summarising what the organisation does and what decisions it governs (drawn from the spec)
-- **Prerequisites** — environment variables required: `SEPOLIA_RPC_URL`, `PRIVATE_KEY`, `ETHERSCAN_API_KEY`
-- **Deployment** — numbered steps: set env vars → run `make deploy-sepolia` (or `deploy-arb-sepolia` / `deploy-anvil`)
+- **Prerequisites** — environment variables required: `SEPOLIA_RPC_URL`, `ARB_SEPOLIA_RPC_URL`, `OPT_SEPOLIA_RPC_URL`, `ETHERSCAN_API_KEY`, plus a Foundry encrypted keystore (`DEPLOYER_ACCOUNT` / `DEPLOYER_ADDRESS`). Direct the reader to `make setup-wallet` for wallet creation steps.
+- **Deployment** — numbered steps: copy `.env.example` to `.env.local` and fill in values → run `make setup-wallet` to create a keystore → run `make deploy-arb-sepolia` (or `deploy-sepolia` / `deploy-anvil`)
 - **Actions script** — what it is, when to use it, and an example invocation:
   ```bash
   forge script governance/claude/<org-name>/Actions.s.sol:<OrgName>Actions \
@@ -164,32 +164,80 @@ Write in plain English for a non-technical operator. Include:
 ### 4f. Makefile
 **Save to:** `solidity/governance/claude/<org-name>/Makefile`
 
-All targets navigate up three levels to `solidity/` before invoking forge, so Foundry's path config is respected. Use the network arg variables already defined in `solidity/Makefile`. Template:
+All targets navigate up three levels to `solidity/` before invoking forge, so Foundry's path config is respected. The Makefile is self-contained: it loads `.env` and `.env.local` directly and defines all deploy-arg variables inline, so it works when run from the org folder without any knowledge of the parent `solidity/Makefile`. Anvil uses the hardcoded default test key; live-network targets depend on `check-wallet` and fail with a friendly error if the wallet is not configured. Template:
 
 ```makefile
+-include ../../../.env
+-include .env.local
+
 SCRIPT = governance/claude/<org-name>/Deploy.s.sol:Deploy
 TEST   = <OrgName>_test
 
-.PHONY: help deploy-anvil deploy-sepolia deploy-arb-sepolia deploy-opt-sepolia test
+# Wallet — set DEPLOYER_ACCOUNT and DEPLOYER_ADDRESS in .env.local
+# (copy .env.example to .env.local and follow the instructions inside)
+
+ANVIL_DEPLOY_ARGS       := --rpc-url http://localhost:8545 \
+                            --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+                            --broadcast --ffi -vv
+
+SEPOLIA_DEPLOY_ARGS     := --rpc-url $(SEPOLIA_RPC_URL) \
+                            --account $(DEPLOYER_ACCOUNT) --sender $(DEPLOYER_ADDRESS) \
+                            --broadcast -vv
+
+ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) \
+                            --account $(DEPLOYER_ACCOUNT) --sender $(DEPLOYER_ADDRESS) \
+                            --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) \
+                            --verifier etherscan --chain 421614 --verify --ffi -vv
+
+OPT_SEPOLIA_DEPLOY_ARGS := --rpc-url $(OPT_SEPOLIA_RPC_URL) \
+                            --account $(DEPLOYER_ACCOUNT) --sender $(DEPLOYER_ADDRESS) \
+                            --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) \
+                            --chain 11155420 --ffi -vv
+
+.PHONY: help deploy-anvil deploy-sepolia deploy-arb-sepolia deploy-opt-sepolia test setup-wallet check-wallet
 
 help:
 	@echo "Available targets:"
-	@echo "  deploy-anvil        Deploy to local Anvil"
+	@echo "  deploy-anvil        Deploy to local Anvil (no wallet setup needed)"
 	@echo "  deploy-sepolia      Deploy to Ethereum Sepolia"
 	@echo "  deploy-arb-sepolia  Deploy to Arbitrum Sepolia"
 	@echo "  deploy-opt-sepolia  Deploy to Optimism Sepolia"
-	@echo "  test                Run fork-based tests (requires SEPOLIA_RPC_URL)"
+	@echo "  test                Run tests (no fork required)"
+	@echo "  setup-wallet        Print wallet setup instructions"
+	@echo "  check-wallet        Verify wallet variables are configured"
+
+setup-wallet:
+	@echo ""
+	@echo "=== Wallet setup for live network deployments ==="
+	@echo ""
+	@echo "1. Create an encrypted keystore (you will be prompted for a password):"
+	@echo "      cast wallet import my-wallet --interactive"
+	@echo ""
+	@echo "2. Get the Ethereum address of that keystore:"
+	@echo "      cast wallet address --account my-wallet"
+	@echo ""
+	@echo "3. Copy .env.example to .env.local and fill in the values:"
+	@echo "      cp .env.example .env.local"
+	@echo "      # then edit .env.local"
+	@echo ""
+	@echo "4. Fund the deployer address on the target network with ETH for gas."
+	@echo ""
+
+check-wallet:
+	@test -n "$(DEPLOYER_ACCOUNT)" || (echo "ERROR: DEPLOYER_ACCOUNT is not set. Run 'make setup-wallet' for instructions."; exit 1)
+	@test -n "$(DEPLOYER_ADDRESS)" || (echo "ERROR: DEPLOYER_ADDRESS is not set. Run 'make setup-wallet' for instructions."; exit 1)
+	@echo "Wallet OK: $(DEPLOYER_ADDRESS)  (keystore: $(DEPLOYER_ACCOUNT))"
 
 deploy-anvil:
 	cd ../../.. && forge script $(SCRIPT) $(ANVIL_DEPLOY_ARGS)
 
-deploy-sepolia:
+deploy-sepolia: check-wallet
 	cd ../../.. && forge script $(SCRIPT) $(SEPOLIA_DEPLOY_ARGS)
 
-deploy-arb-sepolia:
+deploy-arb-sepolia: check-wallet
 	cd ../../.. && forge script $(SCRIPT) $(ARB_SEPOLIA_DEPLOY_ARGS)
 
-deploy-opt-sepolia:
+deploy-opt-sepolia: check-wallet
 	cd ../../.. && forge script $(SCRIPT) $(OPT_SEPOLIA_DEPLOY_ARGS)
 
 test:
@@ -197,6 +245,44 @@ test:
 ```
 
 Substitute `<org-name>` and `<OrgName>` with the actual names throughout.
+
+### 4g. Environment example
+**Save to:** `solidity/governance/claude/<org-name>/.env.example`
+
+This file documents every variable a deployer needs. Users copy it to `.env.local` (already gitignored at repo root) and fill in their values. Template:
+
+```bash
+# Copy this file to .env.local and fill in your values.
+# .env.local is gitignored — never commit real keys or secrets.
+#
+# Usage:
+#   cp .env.example .env.local
+#   # edit .env.local, then run: make deploy-arb-sepolia
+
+# ── RPC endpoints ────────────────────────────────────────────────────────────
+# Get free endpoints from Alchemy (https://alchemy.com) or Infura (https://infura.io)
+SEPOLIA_RPC_URL=
+ARB_SEPOLIA_RPC_URL=
+OPT_SEPOLIA_RPC_URL=
+
+# ── Etherscan API key (for contract verification) ────────────────────────────
+# Get one at https://etherscan.io/myapikey
+# The same key works for Arbitrum Sepolia (arbiscan.io) and Optimism Sepolia (optimistic.etherscan.io)
+ETHERSCAN_API_KEY=
+
+# ── Deployer wallet ──────────────────────────────────────────────────────────
+# Foundry encrypted keystores keep your private key safe (no raw key in this file).
+#
+# Step 1 — create a keystore (you will be prompted for a password):
+#   cast wallet import my-wallet --interactive
+#
+# Step 2 — find the address of that keystore:
+#   cast wallet address --account my-wallet
+#
+# Step 3 — paste the keystore name and address below:
+DEPLOYER_ACCOUNT=my-wallet
+DEPLOYER_ADDRESS=0x
+```
 
 ---
 
@@ -211,7 +297,7 @@ After all files are generated:
    - Update `frontend/context/constants.ts` if deploying to a live network
    - The reference papers you should add to `ai-skill/references/` for future sessions
 
-Close by summarising what was built. All seven generated files live in one folder:
+Close by summarising what was built. All eight generated files live in one folder:
 - `solidity/governance/claude/<org-name>/Spec.md` — governance specification
 - `solidity/governance/claude/<org-name>/Deploy.s.sol` — deploy script
 - `solidity/governance/claude/<org-name>/Actions.s.sol` — actions script
@@ -219,3 +305,4 @@ Close by summarising what was built. All seven generated files live in one folde
 - `solidity/governance/claude/<org-name>/Test.t.sol` — test suite
 - `solidity/governance/claude/<org-name>/README.md` — operator guide
 - `solidity/governance/claude/<org-name>/Makefile` — deploy/test shortcuts
+- `solidity/governance/claude/<org-name>/.env.example` — environment variable template for deployers
