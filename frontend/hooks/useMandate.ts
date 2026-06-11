@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { mandateAbi, powersAbi } from "../context/abi";
 import { MandateSimulation, Mandate, Powers, Action, ActionVote, Status } from "../context/types"
-import { readContract, readContracts, simulateContract, writeContract, estimateFeesPerGas } from "@wagmi/core";
+import { readContract, readContracts, simulateContract, writeContract, estimateFeesPerGas, getPublicClient } from "@wagmi/core";
 import { encodeFunctionData } from "viem";
 import { wagmiConfig } from "@/context/wagmiConfig";
 import { useConnection, useTransactionConfirmations } from "wagmi";
@@ -98,6 +98,13 @@ export const useMandate = () => {
     const chain = wagmiConfig.chains.find(c => c.id === targetChainIdNum);
     console.log("@sendSmartWalletTx, waypoint 2", {chain})
 
+    // publicClient for the target chain is passed to createBundlerClient so that
+    // prepareUserOperation calls getCode on the correct chain. Without this, it uses
+    // the account's internal client (Privy's defaultChain = Sepolia/11155111), where
+    // the account may not be deployed, causing factory/factoryData to be included in
+    // the UserOp — leading to AA10 if the account is already deployed on the target chain.
+    const publicClient = getPublicClient(wagmiConfig, { chainId: targetChainIdNum as any });
+
     // toKernelSmartAccount.signUserOperation falls back to getMemoizedChainId() (the
     // publicClient's chain — the user's EOA chain) when chainId is not in the parameters.
     // viem's prepareUserOperation strips chainId from the request it passes to
@@ -112,6 +119,7 @@ export const useMandate = () => {
     const hasPaymaster = powers.paymaster && powers.paymaster !== '0x0000000000000000000000000000000000000000';
 
     const bundlerClient = createBundlerClient({
+      client: publicClient,
       account: accountForDaoChain as any,
       chain,
       transport: http(bundlerUrl),
