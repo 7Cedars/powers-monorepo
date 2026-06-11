@@ -251,7 +251,7 @@ Evaluate whether a proposal will have meaningful real-world impact.
       "proposal_url": { "type": "string", "description": "Publicly accessible URL of the proposal Markdown file." }
     },
     "required": ["proposal_url"]
-  }
+  } 
 }
 ```
 
