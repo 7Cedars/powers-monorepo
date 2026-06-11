@@ -187,6 +187,7 @@ export function createServer(
 
     const ALLOWED_HANDLERS = [
       'fetch_url', 'coingecko_price', 'snapshot_proposal', 'github_file', 'chainlink_price',
+      'assess_proposal',
     ];
     if (!ALLOWED_HANDLERS.includes(def.handler)) {
       res.status(400).json({ error: `Unknown handler: ${def.handler}. Allowed: ${ALLOWED_HANDLERS.join(', ')}` });

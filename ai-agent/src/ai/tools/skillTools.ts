@@ -4,6 +4,7 @@ import { coingeckoPrice } from './handlers/coingeckoPrice.js';
 import { snapshotProposal } from './handlers/snapshotProposal.js';
 import { githubFile } from './handlers/githubFile.js';
 import { chainlinkPrice } from './handlers/chainlinkPrice.js';
+import { assessProposal } from './handlers/assessProposal.js';
 
 export async function dispatchSkill(
   skill: ResolvedSkill,
@@ -41,6 +42,12 @@ export async function dispatchSkill(
       const feedAddress = String(input.feedAddress ?? handlerConfig.feedAddress ?? '') as `0x${string}`;
       const chainId = Number(input.chainId ?? handlerConfig.chainId ?? 11155111);
       return chainlinkPrice(feedAddress, chainId);
+    }
+
+    case 'assess_proposal': {
+      const proposalUrl = String(input.proposal_url ?? '');
+      const criteria = String(handlerConfig.criteria ?? '');
+      return assessProposal(proposalUrl, criteria, allowedDomains);
     }
 
     default:
