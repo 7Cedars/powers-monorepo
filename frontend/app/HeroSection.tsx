@@ -82,21 +82,21 @@ export function HeroSection() {
         <div className="flex-1 flex flex-col justify-center items-center gap-8 px-6 max-w-3xl w-full pb-20">
           <p
             ref={text1Ref}
-            className="text-xl sm:text-2xl font-mono text-foreground text-center text-pretty"
+            className="text-base sm:text-2xl font-mono text-foreground text-center text-pretty"
             style={{ opacity: 0 }}
           >
             <b>Powers Protocol</b> uses blockchain technology to add trust to governance.
           </p>
           <p
             ref={text2Ref}
-            className="text-xl sm:text-2xl font-mono text-foreground text-center text-pretty"
+            className="text-base sm:text-2xl font-mono text-foreground text-center text-pretty"
             style={{ opacity: 0 }}
           >
             Create rules that govern communities, organisations, movements — enforced by cryptography.
           </p>
           <p
             ref={text3Ref}
-            className="text-xl sm:text-2xl font-mono text-foreground text-center text-pretty"
+            className="text-base sm:text-2xl font-mono text-foreground text-center text-pretty"
             style={{ opacity: 0 }}
           >
             No tokens, no airdrops, no wallet needed. Just governance you can trust.

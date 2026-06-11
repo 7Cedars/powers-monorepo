@@ -21,7 +21,6 @@ const GAP = 20;
 
 export function SectionApplications() {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [trackOffset, setTrackOffset] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(700);
@@ -57,19 +56,12 @@ export function SectionApplications() {
     touchStartX.current = null;
   };
 
-  // Auto-advance
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(next, 7000);
-    return () => clearInterval(id);
-  }, [paused, next]);
-
   return (
     <main
-      className="w-full flex flex-col justify-start items-center bg-background border-t border-border pt-8 pb-16 md:py-16 px-4"
+      className="w-full min-h-screen flex flex-col justify-between items-center bg-background border-t border-border pt-8 pb-16 md:py-16 px-4"
       id="powersApplications"
     >
-      <div className="w-full flex flex-col gap-12 items-center">
+      <div className="w-full flex-1 flex flex-col gap-12 items-center justify-center">
 
         {/* Title & subtitle */}
         <div className="w-full flex flex-col justify-center items-center">
@@ -85,8 +77,6 @@ export function SectionApplications() {
         <div
           ref={containerRef}
           className="w-full max-w-4xl overflow-hidden"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -102,11 +92,11 @@ export function SectionApplications() {
               <div
                 key={i}
                 style={{ width: `${cardWidth}px`, flexShrink: 0 }}
-                className="transition-all duration-500"
+                className="transition-all duration-500 h-full"
                 onClick={() => setCurrent(i)}
               >
                 <div
-                  className="flex flex-col bg-background transition-all duration-500"
+                  className="flex flex-col bg-background transition-all duration-500 h-full"
                   style={{
                     border: '2px solid #CD5E20',
                     opacity: i === current ? 1 : 0.3,

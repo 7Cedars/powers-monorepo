@@ -28,7 +28,13 @@ Once loading is complete, greet the user briefly and move to Phase 2.
 
 ## Phase 2 — Elicit (structured dialogue)
 
-Ask the following questions. Ask them in two rounds: Round A first, wait for the user's answers, then ask Round B. Probe for specifics if answers are vague. Take notes internally — you will need these answers for the spec.
+Before asking the first question, give the user a brief orientation. Explain in your own words:
+
+- The process has five stages: a conversation to understand their organisation (two rounds of questions), a written governance specification they can review and revise, code generation (deploy script, actions, runners, tests, and a README), and a final build check.
+- The technical work — filling in the questions and generating the files — can be done in 10–15 minutes. But the questions themselves deserve careful thought. A governance structure shapes who has power, how decisions get made, and what can go wrong. Rushing through the answers produces a technically valid but poorly considered organisation. Encourage them to take their time, revisit their assumptions, and treat this as a design conversation rather than a form to complete.
+- They can pause and return at any point; the spec is saved to disk and can be revised before code is generated.
+
+Then ask the following questions. Ask them in two rounds: Round A first, wait for the user's answers, then ask Round B. Probe for specifics if answers are vague. Take notes internally — you will need these answers for the spec.
 
 **Round A — Purpose and Stakeholders**
 1. In two or three sentences: what does this organisation do, and what resources or decisions does it manage?

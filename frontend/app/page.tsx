@@ -27,7 +27,7 @@ export default function Page() {
             <div className="min-h-screen"><SectionDemo /></div>
             <div className="min-h-screen"><SectionApplications /></div>
             <div className="min-h-screen"><SectionExamples /></div>
-            <div className="min-h-screen"><SectionForum /></div>
+            {/* <div className="min-h-screen"><SectionForum /></div> */}
             <Footer />
            
         </main>
