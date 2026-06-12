@@ -11,12 +11,19 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 
-contract ActionHelpers is Script { 
+contract ActionHelpers is Script {
     Configurations helperConfig = new Configurations();
+
+    uint16[] mandateSlots;
+    uint256[] actionIds;
+    uint256 roleCount;
+    uint256 againstVote;
+    uint256 forVote;
+    uint256 abstainVote;
 
     //////////////////////////////////////////////////////////////////////////////////
     //                             Helper Functions                                 //
-    //////////////////////////////////////////////////////////////////////////////////  
+    //////////////////////////////////////////////////////////////////////////////////
     // NB: the name + description needs to exactly match the name + description of the mandate in order to find the correct mandate ID.  
     function findMandateIdInOrg(string memory description, Powers org) public view returns (uint16) {
         uint16 counter = org.mandateCounter();
@@ -213,6 +220,39 @@ contract ActionHelpers is Script {
         }
         
         return voteMandateId;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //                         Setup / Reform Functions                             //
+    //////////////////////////////////////////////////////////////////////////////////
+
+    function runSetupMandate(address powers, uint256 nonce, uint256[] memory privateKeys) public {
+        delete mandateSlots;
+        delete actionIds;
+
+        mandateSlots.push(findMandateIdInOrg("Initial Setup: Assign role labels and revokes itself after execution", Powers(payable(powers))));
+        Powers(payable(powers)).canCallMandate(vm.addr(privateKeys[0]), mandateSlots[0]);
+
+        vm.startBroadcast(privateKeys[0]);
+        IPowers(powers).request(mandateSlots[0], abi.encode(), nonce, "Executing initial setup mandate");
+        vm.stopBroadcast();
+    }
+
+    function unpackReformPackages(address powers, uint256 nonce, uint256[] memory privateKeys) public {
+        delete mandateSlots;
+        delete actionIds;
+
+        for (uint16 i = 1; i < Powers(payable(powers)).mandateCounter(); i++) {
+            mandateSlots.push(findMandateIdInOrg(string(abi.encodePacked("Reform Package ", vm.toString(i + 1))), Powers(payable(powers))));
+        }
+        for (uint i = 0; i < mandateSlots.length; i++) {
+            Powers(payable(powers)).canCallMandate(vm.addr(privateKeys[0]), mandateSlots[i]);
+        }
+        for (uint i = 0; i < mandateSlots.length; i++) {
+            vm.startBroadcast(privateKeys[0]);
+            Powers(payable(powers)).request(mandateSlots[i], abi.encode(), nonce + i, "Unpacking reform package for Ideas Layer");
+            vm.stopBroadcast();
+        }
     }
 
     /// @notice Phase 4a: Tally election results and assign roles

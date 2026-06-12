@@ -1,6 +1,54 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+/* Override Tailwind v4 font CSS variables */
+@theme {
+  --font-mono: 'Commit Mono', 'Courier New', monospace;
+  --font-sans: 'Commit Mono', 'Courier New', monospace;
+  --font-display: 'Commit Mono', 'Courier New', monospace;
+}
+
+/* Brand fonts */
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-400-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-400-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-700-Regular.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-700-Italic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/CormorantGaramond-400-latin.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-latin-ext.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-cyrillic.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-cyrillic-ext.woff2') format('woff2'),
+       url('/fonts/CormorantGaramond-400-vietnamese.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Theme Color Variables */
 /*
 *linear-gradient(to bottom right, #111827, #1f2937);
@@ -18,13 +66,52 @@ html, body {
   padding: 0;
 }
 
+@keyframes border-pulse {
+  0%, 100% { box-shadow: 0 0 0px 0px rgba(205, 94, 32, 0); }
+  50%       { box-shadow: 0 0 8px 2px rgba(205, 94, 32, 0.5); }
+}
+
+.scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.015) 2px,
+    rgba(0, 0, 0, 0.015) 4px
+  );
+}
+
+.dark .scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.02) 2px,
+    rgba(255, 255, 255, 0.02) 4px
+  );
+}
+
+.border-pulse {
+  border-color: #CD5E20;
+  animation: border-pulse 2.5s ease-in-out infinite;
+}
+
+.scroll-arrow {
+  color: hsl(var(--muted-foreground));
+  transition: color 0.15s ease;
+  cursor: pointer;
+}
+.scroll-arrow:hover {
+  color: #CD5E20;
+}
+
 body {
   padding-top: constant(safe-area-inset-top); /* iOS < 11.2 */
   padding-top: env(safe-area-inset-top);      /* Standard */
   padding-bottom: constant(safe-area-inset-bottom); /* iOS < 11.2 */
   padding-bottom: env(safe-area-inset-bottom);      /* Standard */
   background: #f1f5f9; /* slate-100 */
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Commit Mono', 'Courier New', monospace;
   color: var(--text-color);
   display: flex;
   height: 100vh;

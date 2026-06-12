@@ -3,12 +3,13 @@
 import { usePrivy, useCreateWallet } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth";
 import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
-import { 
+import {
   FingerPrintIcon,
   PlusCircleIcon,
   WalletIcon
-} from '@heroicons/react/24/outline'; 
+} from '@heroicons/react/24/outline';
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export const ConnectButton = () => {
   const {ready: walletsReady, wallets} = useWallets();
@@ -16,6 +17,9 @@ export const ConnectButton = () => {
   const {createWallet} = useCreateWallet();
   const [isCreating, setIsCreating] = useState(false);
   const effectiveAddress = useEffectiveAddress();
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/overview')) return null;
 
   const handleCreateEmbeddedWallet = async () => {
     setIsCreating(true);

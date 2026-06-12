@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
+import { Test } from "forge-std/Test.sol";
 import { console2 } from "forge-std/console2.sol";
 import { TestSetupIntegrations } from "../../TestSetup.t.sol";
 import { Governor_CreateProposal } from "@src/mandates/integrations/Governor/Governor_CreateProposal.sol";
@@ -17,6 +18,10 @@ import { Enum } from "@lib/safe-smart-account/contracts/common/Enum.sol";
 
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+
+import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol"; 
+import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "@lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 /// @notice Comprehensive unit tests for all executive mandates
 /// @dev Tests all functionality of executive mandates including initialization, execution, and edge cases
@@ -249,28 +254,35 @@ contract SafeAllowanceTest is TestSetupIntegrations {
         IPowers(address(daoMock)).setTreasury(payable(treasury));
 
         // Enable the allowance module on the Safe
-        bytes memory signature = abi.encodePacked(
-            uint256(uint160(address(daoMock))), // r = address of the signer (powers contract)
-            uint256(0), // s = 0
-            uint8(1) // v = 1 This is a type 1 call. See Safe.sol for details.
+        bytes memory enableModuleCalldata = abi.encodeWithSelector(
+            ModuleManager.enableModule.selector, helperConfig.getSafeAllowanceModule(block.chainid)
         );
 
+        // Compute the tx hash and pre-approve it as daoMock (the Safe owner).
+        // Using approveHash is version-agnostic: the Sepolia fork runs Safe 1.4.0 bytecode whose
+        // v=1 check passes executor through a different code path than the local library expects.
+        bytes32 enableModuleTxHash = Safe(treasury).getTransactionHash(
+            treasury, 0, enableModuleCalldata,
+            Enum.Operation.Call,
+            0, 0, 0, address(0), address(0),
+            Safe(treasury).nonce()
+        );
         vm.prank(address(daoMock));
-        Safe(treasury)
-            .execTransaction(
-                treasury, // The internal transaction's destination
-                0, // The internal transaction's value
-                abi.encodeWithSelector(
-                    ModuleManager.enableModule.selector, helperConfig.getSafeAllowanceModule(block.chainid)
-                ),
-                Enum.Operation.Call, // operation = Call
-                0, // safeTxGas
-                0, // baseGas
-                0, // gasPrice
-                address(0), // gasToken
-                payable(address(0)), // refundReceiver
-                signature // the signature constructed above
-            );
+        Safe(treasury).approveHash(enableModuleTxHash);
+
+        // v=1 approved-hash signature; no prank needed since hash is pre-approved.
+        bytes memory signature = abi.encodePacked(
+            uint256(uint160(address(daoMock))),
+            uint256(0),
+            uint8(1)
+        );
+        Safe(treasury).execTransaction(
+            treasury, 0, enableModuleCalldata,
+            Enum.Operation.Call,
+            0, 0, 0,
+            address(0), payable(address(0)),
+            signature
+        );
 
         // Now that the treasury is set, we can constitute the child DAO.
         // This ensures the child DAO is configured with the correct treasury address.
@@ -536,8 +548,8 @@ contract ElectionRegistryIntegrationTest is TestSetupIntegrations {
             "Clean up election: After an election has finished, clean up related mandates.", daoMock
         );
 
-        startBlock = uint48(block.number + 10);
-        endBlock = uint48(block.number + 100);
+        startBlock = uint48(block.number + 300); // matches ElectionRegistry nominationDuration
+        endBlock = uint48(block.number + 600);   // matches nominationDuration + voteDuration
         electionParams = abi.encode(title, startBlock, endBlock);
 
         // Retrieve electionList address from mandate 9 config
@@ -665,5 +677,162 @@ contract ZKPassport_CheckTest is TestSetupIntegrations {
         vm.prank(alice);
         vm.expectRevert("No registration found");
         daoMock.request(checkMandateAboveId, abi.encode(alice), nonce, "Check alice");
+    }
+}
+
+
+contract MockEntryPoint is IEntryPoint {
+    function depositTo(
+        address /*account*/
+    )
+        external
+        payable { }
+    function withdrawTo(
+        address payable,
+        /*withdrawAddress*/
+        uint256 /*withdrawAmount*/
+    )
+        external { }
+    // Stub other functions
+    function handleOps(PackedUserOperation[] calldata, address payable) external { }
+    function handleAggregatedOps(UserOpsPerAggregator[] calldata, address payable) external { }
+    function getSenderAddress(bytes memory) external { }
+    function simulateValidation(PackedUserOperation calldata) external { }
+    function simulateHandleOp(PackedUserOperation calldata, address, bytes calldata) external { }
+
+    function balanceOf(address) external view returns (uint256) {
+        return 0;
+    }
+
+    function deposit() external view returns (uint256) {
+        return 0;
+    }
+
+    function getDepositInfo(address) external view returns (DepositInfo memory) {
+        return DepositInfo({ deposit: 100, staked: true, stake: 100, unstakeDelaySec: 100, withdrawTime: 0 });
+    }
+
+    function getNonce(address, uint192) external view returns (uint256) {
+        return 0;
+    }
+    function incrementNonce(uint192) external { }
+    function addStake(uint32) external payable { }
+    function unlockStake() external { }
+    function withdrawStake(address payable) external { }
+    function delegateAndRevert(address, bytes calldata) external { }
+
+    function getCurrentUserOpHash() external view returns (bytes32) {
+        return bytes32(0);
+    }
+
+    function getUserOpHash(PackedUserOperation calldata) external view returns (bytes32) {
+        return bytes32(0);
+    }
+
+    function supportsInterface(bytes4 interfaceId) external view returns (bool) {
+        return interfaceId == type(IEntryPoint).interfaceId || interfaceId == 0x01ffc9a7; // ERC165
+    }
+}
+
+contract AccountAbstractionTest is Test {
+    PowersPaymaster public paymaster; 
+
+    address public powersAddress = address(0x1234);
+    MockEntryPoint public entryPoint;
+    address public owner = address(this);
+
+    function setUp() public {
+        entryPoint = new MockEntryPoint();
+        paymaster = new PowersPaymaster(entryPoint, powersAddress); 
+    }
+
+    // Helper to simulate calling _validatePaymasterUserOp since it's internal and we can only call external validatePaymasterUserOp as entryPoint
+    function callValidatePaymasterUserOp(PackedUserOperation memory userOp)
+        public
+        returns (bytes memory context, uint256 validationData)
+    {
+        vm.prank(address(entryPoint));
+        return paymaster.validatePaymasterUserOp(userOp, bytes32(0), 1000);
+    }
+
+    function test_Paymaster_AcceptsPowersTarget() public {
+        // Construct standard execute(address,uint256,bytes) callData targeting powersAddress
+        bytes memory callData = abi.encodeWithSelector(
+            0xb61d27f6, // EXECUTE_SELECTOR
+            powersAddress,
+            0,
+            ""
+        );
+
+        PackedUserOperation memory userOp = PackedUserOperation({
+            sender: address(0),
+            nonce: 0,
+            initCode: "",
+            callData: callData,
+            accountGasLimits: bytes32(0),
+            preVerificationGas: 0,
+            gasFees: bytes32(0),
+            paymasterAndData: "",
+            signature: ""
+        });
+
+        (bytes memory context, uint256 validationData) = callValidatePaymasterUserOp(userOp);
+        assertEq(validationData, 0, "Validation should pass with 0");
+    }
+
+    function test_Paymaster_RevertsNonPowersTarget() public {
+        address maliciousTarget = address(0x9999);
+        bytes memory callData = abi.encodeWithSelector(
+            0xb61d27f6, // EXECUTE_SELECTOR
+            maliciousTarget,
+            0,
+            ""
+        );
+
+        PackedUserOperation memory userOp = PackedUserOperation({
+            sender: address(0),
+            nonce: 0,
+            initCode: "",
+            callData: callData,
+            accountGasLimits: bytes32(0),
+            preVerificationGas: 0,
+            gasFees: bytes32(0),
+            paymasterAndData: "",
+            signature: ""
+        });
+
+        vm.expectRevert();
+        callValidatePaymasterUserOp(userOp);
+    }
+
+    function test_Paymaster_RevertsBatchExecute() public {
+        address[] memory targets = new address[](2);
+        targets[0] = powersAddress;
+        targets[1] = powersAddress;
+
+        uint256[] memory values = new uint256[](2);
+        bytes[] memory callDatas = new bytes[](2);
+
+        bytes memory callData = abi.encodeWithSelector(
+            0x47e1da2a, // executeBatch(address[],uint256[],bytes[]) — not supported
+            targets,
+            values,
+            callDatas
+        );
+
+        PackedUserOperation memory userOp = PackedUserOperation({
+            sender: address(0),
+            nonce: 0,
+            initCode: "",
+            callData: callData,
+            accountGasLimits: bytes32(0),
+            preVerificationGas: 0,
+            gasFees: bytes32(0),
+            paymasterAndData: "",
+            signature: ""
+        });
+
+        vm.expectRevert(PowersPaymaster.PowersPaymaster__UnsupportedSelector.selector);
+        callValidatePaymasterUserOp(userOp);
     }
 }

@@ -49,12 +49,14 @@ export const Bicameralism: Organization = {
     address: `0x30f6d89bfaa26ddc9da641162fcbeda3da65ffeb`
   },
   allowedChains: [
-    sepolia.id, 
-    optimismSepolia.id, 
+    sepolia.id,
+    optimismSepolia.id,
+    arbitrumSepolia.id,
   ],
   allowedChainsLocally: [
-    sepolia.id,  
-    optimismSepolia.id, 
+    sepolia.id,
+    optimismSepolia.id,
+    arbitrumSepolia.id,
     foundry.id
   ],
  

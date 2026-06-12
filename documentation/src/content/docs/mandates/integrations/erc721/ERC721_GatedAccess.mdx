@@ -1,0 +1,54 @@
+---
+title: "ERC721_GatedAccess"
+description: "ERC721_GatedAccess is an integration mandate that assigns a role to a caller if they hold a minimum balance of a specified ERC721 token."
+---
+
+ERC721_GatedAccess is an integration mandate that gates access to a role based on ERC721 token ownership. If the caller holds at least the configured minimum number of tokens, the role is assigned to them.
+
+## Overview
+
+This mandate provides a simple token-gated onboarding mechanism. It checks the caller's ERC721 balance and, if they meet the minimum threshold, assigns a configured role to them on the Powers contract.
+
+## Configuration
+
+When adopting an ERC721_GatedAccess instance, the following parameters are required:
+
+1.  `erc721Address` (address): The address of the ERC721 token contract.
+2.  `assignRoleId` (uint256): The role ID to assign if the check passes.
+3.  `minBalance` (uint256): The minimum number of ERC721 tokens the caller must hold.
+
+## Usage
+
+### Proposing an Action
+
+This mandate does not require any input parameters. The caller simply submits the action and the mandate checks their token balance.
+
+### Execution Flow
+
+1.  **Balance Check**
+    *   Calls `balanceOf(caller)` on the ERC721 contract.
+    *   Reverts with `"Insufficient ERC721 balance"` if the caller holds fewer tokens than `minBalance`.
+
+2.  **Role Assignment**
+    *   If the check passes, generates an `assignRole` call for `assignRoleId` targeting the caller.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Checks the caller's ERC721 balance.
+-   Returns the role assignment call if the check passes.
+
+### Error Conditions
+
+*   `"Insufficient ERC721 balance"` — The caller does not hold the minimum required number of ERC721 tokens.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

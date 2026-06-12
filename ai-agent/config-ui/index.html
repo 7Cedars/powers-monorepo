@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Powers AI Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+  <!-- HTTP warning (shown if not HTTPS) -->
+  <div id="http-warning" style="display:none">
+    ⚠️ You are connected over HTTP. Your private key will be transmitted unencrypted.
+    Use HTTPS in production.
+  </div>
+
+  <header>
+    <div>
+      <h1>Powers AI Agent</h1>
+      <p>Autonomous governance delegates for the Powers Protocol</p>
+    </div>
+    <div class="secret-bar">
+      <label for="api-secret-input">API Secret</label>
+      <input id="api-secret-input" type="password" autocomplete="off" placeholder="leave blank if not required" />
+      <button class="btn btn-secondary btn-sm" onclick="saveSecret()">Save</button>
+    </div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Switch to light mode">
+      <!-- sun: shown in dark mode -->
+      <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <!-- moon: shown in light mode -->
+      <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ── Screen: Agent List ──────────────────────────────────────────── -->
+  <div id="screen-list" class="screen active">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div class="section-title">Active Agents</div>
+      <button class="btn btn-primary" onclick="showScreen('start')">+ New Agent</button>
+      <button class="btn btn-secondary" onclick="showScreen('load')">Load Agent</button>
+    </div>
+    <div id="session-list"></div>
+  </div>
+
+  <!-- ── Screen: Start Session ──────────────────────────────────────── -->
+  <div id="screen-start" class="screen">
+    <button class="back-link" onclick="showScreen('list')">← Back to agents</button>
+    <div class="card">
+      <div class="card-header"><h3>Start New Agent</h3></div>
+
+      <div class="form-group">
+        <div class="label-wrap">
+          <label>Wallet Private Key</label>
+          <button class="help-btn" onclick="toggleHelp(event,this)" aria-label="Help">?</button>
+          <div class="help-popover">Private key for the Ethereum wallet this agent uses to sign transactions. Use a dedicated agent wallet — not a personal one. Generate one with <code>cast wallet new</code> (Foundry) or MetaMask, then fund it with a small amount of ETH for gas.</div>
+        </div>
+        <input id="f-walletKey" type="password" autocomplete="off" placeholder="0x..." />
+      </div>
+      <div class="form-group">
+        <div class="label-wrap">
+          <label>Claude API Key</label>
+          <button class="help-btn" onclick="toggleHelp(event,this)" aria-label="Help">?</button>
+          <div class="help-popover">Anthropic API key that powers this agent's reasoning. Get yours at console.anthropic.com under API Keys. Keys start with <code>sk-ant-api03-</code>.</div>
+        </div>
+        <input id="f-claudeKey" type="password" autocomplete="off" placeholder="sk-ant-..." />
+      </div>
+      <div class="form-group">
+        <div class="label-wrap">
+          <label>Session Duration</label>
+          <button class="help-btn" onclick="toggleHelp(event,this)" aria-label="Help">?</button>
+          <div class="help-popover">How long the agent runs before automatically shutting down. The agent keeps running server-side after you close this tab — reconnect anytime using the Session ID.</div>
+        </div>
+        <select id="f-ttl">
+          <option value="1800000">30 minutes</option>
+          <option value="7200000">2 hours</option>
+          <option value="28800000" selected>8 hours</option>
+          <option value="86400000">24 hours</option>
+          <option value="604800000">7 days</option>
+        </select>
+      </div>
+
+      <hr class="divider" />
+      <div class="section-title">Organisations</div>
+      <div id="org-list"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addOrgRow()">+ Add Organisation</button>
+
+      <hr class="divider" />
+      <div class="section-title">Agent Persona</div>
+      <div class="form-group">
+        <label>Agent Name</label>
+        <input id="f-name" placeholder="e.g. Prudent Delegate" />
+      </div>
+      <div class="form-group">
+        <label>Role Description</label>
+        <textarea id="f-roleDesc" placeholder="Brief description of what this agent represents..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Governance Strategy</label>
+        <textarea id="f-strategy" style="min-height:120px"
+          placeholder="e.g. Vote FOR proposals that reduce risk. Propose treasury transfers only to known contributors. Execute passed proposals as soon as timelock clears."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Constraints (optional)</label>
+        <textarea id="f-constraints" placeholder="e.g. Never vote on proposals over 1 ETH without consulting the group."></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="startSession()">Start Agent</button>
+        <button class="btn btn-secondary" onclick="showScreen('list')">Cancel</button>
+      </div>
+      <div id="start-status" class="status"></div>
+
+      <!-- Success box shown after session starts -->
+      <div id="start-success" class="success-box" style="display:none">
+        <h3>✓ Agent is running</h3>
+        <p>Your agent will keep running after you close this tab. Copy your Session ID — you need it to manage or stop your agent.</p>
+        <div id="start-session-id" class="session-id-display"></div>
+        <button class="btn btn-secondary btn-sm" onclick="copySessionId()">Copy Session ID</button>
+        <div class="btn-group" style="margin-top:12px">
+          <button class="btn btn-primary btn-sm" onclick="openManage(currentSessionId)">Manage Agent</button>
+          <button class="btn btn-secondary btn-sm" onclick="showScreen('list')">Back to List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Screen: Load Session ──────────────────────────────────────── -->
+  <div id="screen-load" class="screen">
+    <button class="back-link" onclick="showScreen('list')">← Back to agents</button>
+    <div class="card">
+      <div class="card-header"><h3>Load Agent by Session ID</h3></div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:12px">
+        Enter a session ID to connect to an already-running agent.
+      </p>
+      <div class="form-group">
+        <label>Session ID</label>
+        <input id="f-load-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" />
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="loadSessionById()">Connect</button>
+        <button class="btn btn-secondary" onclick="showScreen('list')">Cancel</button>
+      </div>
+      <div id="load-status" class="status"></div>
+    </div>
+  </div>
+
+  <!-- ── Screen: Manage Session ─────────────────────────────────────── -->
+  <div id="screen-manage" class="screen">
+    <button class="back-link" onclick="showScreen('list')">← Back to agents</button>
+    <div id="manage-content"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

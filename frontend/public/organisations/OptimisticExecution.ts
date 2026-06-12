@@ -49,12 +49,14 @@ export const OptimisticExecution: Organization = {
     address: '0xa05609bdc601499b218f03740e4d2d68c96bbd09' 
   },
   allowedChains: [
-    sepolia.id, 
-    optimismSepolia.id, 
+    sepolia.id,
+    optimismSepolia.id,
+    arbitrumSepolia.id,
   ],
   allowedChainsLocally: [
-    sepolia.id,  
-    optimismSepolia.id, 
+    sepolia.id,
+    optimismSepolia.id,
+    arbitrumSepolia.id,
     foundry.id
   ],
  

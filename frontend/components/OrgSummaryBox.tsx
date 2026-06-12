@@ -42,7 +42,7 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
     // Determine navigation path based on current pathname
     const getNavigationPath = () => {
         if (pathname?.startsWith('/overview')) {
-            return `/overview/${powers.chainId}/${powers.contractAddress}/home`;
+            return `/overview/${powers.chainId}/${powers.contractAddress}/organisation`;
         }
         return `/forum/${powers.chainId}/${powers.contractAddress}`;
     };
@@ -61,7 +61,6 @@ export const OrgSummaryBox = ({ powers, onArchive, alignment, showHeader = false
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                 }}>
-                <div className="absolute inset-0 bg-background/20" />
             </div>
 
             {/* Top row - only visible when showHeader is true */}

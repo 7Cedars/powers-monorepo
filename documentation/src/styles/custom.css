@@ -1,0 +1,474 @@
+/* Commit Mono — all text */
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-400-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-400-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-700-Regular.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('/fonts/CommitMono-700-Italic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+}
+
+/* ─── Starlight colour tokens ────────────────────────────────── */
+/* Accent: #CD5E20 (copper coin orange) ≈ hsl(22, 73%, 46%) */
+
+/* Light mode */
+:root {
+  --sl-color-accent-low:  hsl(22, 100%, 90%);
+  --sl-color-accent:      hsl(22, 73%, 46%);
+  --sl-color-accent-high: hsl(22, 73%, 26%);
+}
+
+/* Dark mode */
+:root[data-theme='dark'] {
+  --sl-color-accent-low:  hsl(22, 40%, 12%);
+  --sl-color-accent:      hsl(22, 85%, 63%);
+  --sl-color-accent-high: hsl(22, 100%, 89%);
+}
+
+/* ─── Functional colours ────────────────────────────────────── */
+/* Success: #00C853 / Error: #FF1744 / Link: #1565C0 (light) #4A90D9 (dark) */
+
+.sl-markdown-content a {
+  color: #1565C0;
+}
+
+:root[data-theme='dark'] .sl-markdown-content a {
+  color: #4A90D9;
+}
+
+/* ─── Starlight font tokens ─────────────────────────────────── */
+:root {
+  --sl-font: 'Commit Mono', 'Courier New', monospace;
+  --sl-font-mono: 'Commit Mono', 'Courier New', monospace;
+}
+
+/* ─── Type scale ─────────────────────────────────────────────── */
+
+/* H1 — Cormorant Garamond, 48px */
+.sl-markdown-content h1 {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 3rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* H2 — Cormorant Garamond, 32px */
+.sl-markdown-content h2 {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* H3 — Cormorant Garamond, 24px */
+.sl-markdown-content h3 {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* H4/H5/H6 — Commit Mono, body size, bold */
+.sl-markdown-content h4,
+.sl-markdown-content h5,
+.sl-markdown-content h6 {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* Body — Commit Mono, 16px */
+.sl-markdown-content p,
+.sl-markdown-content li,
+.sl-markdown-content td,
+.sl-markdown-content th {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Code — Commit Mono, 14px */
+.sl-markdown-content code,
+.sl-markdown-content pre,
+.sl-markdown-content pre code {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Page title (frontmatter title rendered by Starlight's PageTitle.astro) */
+h1#_top {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 3rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Site title text */
+.site-title {
+  color: #212121 !important;
+  font-family: 'Commit Mono', 'Courier New', monospace !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+:root[data-theme='dark'] .site-title {
+  color: #F5F5F5 !important;
+}
+
+/* Caution aside — reduced size + brand orange for "Under Development" notices */
+.starlight-aside--caution {
+  padding: 0.5rem 0.75rem;
+  --sl-color-asides-border:      #FF1744;
+  --sl-color-asides-text-accent: hsl(349, 80%, 35%);
+  background-color:              hsl(349, 100%, 95%);
+  color:                         #212121;
+}
+
+.starlight-aside--caution .starlight-aside__title {
+  font-size: 0.75rem;
+  gap: 0.35rem;
+}
+
+.starlight-aside--caution .starlight-aside__icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.starlight-aside--caution .starlight-aside__content {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Heading anchor — copy-to-clipboard feedback */
+/* Uses ::before because Starlight already uses ::after on .sl-anchor-link for its click area */
+/* Force visible — Starlight sets opacity:0 on non-hovered anchors, which hides pseudo-elements too */
+.sl-anchor-link[data-copied="true"] {
+  opacity: 1 !important;
+}
+
+.sl-anchor-link[data-copied="true"]::before {
+  content: 'Copied!';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 6px);
+  background: #212121;
+  color: #F5F5F5;
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+
+/* Card icons — uniform light grey, larger size */
+.card .icon {
+  font-size: 2em;
+}
+
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .card:nth-child(4n + 1),
+:root[data-theme='dark'] .card:nth-child(4n + 3),
+:root[data-theme='dark'] .card:nth-child(4n + 4),
+:root[data-theme='dark'] .card:nth-child(4n + 5) {
+  --sl-card-border: #CD5E20;
+  --sl-card-bg:     transparent;
+}
+
+.card,
+.card:nth-child(4n + 1),
+.card:nth-child(4n + 3),
+.card:nth-child(4n + 4),
+.card:nth-child(4n + 5) {
+  --sl-card-border: #CD5E20;
+  --sl-card-bg:     #FFFFFF;
+}
+
+/* ─── Forum aesthetic — sharp boxes, flat borders, no radius ─── */
+
+/* Remove border-radius everywhere */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+/* Dark mode panel borders */
+:root[data-theme='dark'] {
+  --sl-color-gray-6: #1E1E1E;  /* surface */
+  --sl-color-gray-5: #2C2C2C;  /* border  */
+}
+
+/* Light mode panel borders */
+:root:not([data-theme='dark']) {
+  --sl-color-gray-5: #E0E0E0;
+}
+
+/* Main content area — bordered panel */
+.sl-markdown-content {
+  border: 1px solid var(--sl-color-gray-5);
+  padding: 2rem;
+}
+
+/* Hide empty content panel (e.g. splash/hero pages with no body content) */
+.sl-markdown-content:not(:has(*)) {
+  display: none;
+}
+
+/* Sidebar right border */
+nav.sidebar {
+  border-inline-end: 1px solid var(--sl-color-gray-5);
+}
+
+/* Header — bottom border */
+header.header {
+  border-block-end: 1px solid var(--sl-color-gray-5);
+}
+
+/* Code blocks — sharp, bordered */
+.sl-markdown-content pre {
+  border: 1px solid var(--sl-color-gray-5);
+  box-shadow: none !important;
+}
+
+/* Tables — bordered cells */
+.sl-markdown-content table {
+  border: 1px solid var(--sl-color-gray-5);
+  border-collapse: collapse;
+}
+.sl-markdown-content th,
+.sl-markdown-content td {
+  border: 1px solid var(--sl-color-gray-5);
+}
+
+/* Table header — muted strip like forum section headers */
+.sl-markdown-content thead th {
+  background-color: var(--sl-color-gray-6, hsl(0, 0%, 12%));
+}
+
+/* Cards — sharp borders, no shadow */
+.card {
+  box-shadow: none !important;
+  border: 1px solid var(--sl-color-gray-5) !important;
+}
+
+/* Search bar — sharp border */
+button[data-open-modal] {
+  box-shadow: none !important;
+}
+
+/* Search bar — full width up to the right-side icons */
+@media (min-width: 50rem) {
+  button[data-open-modal] {
+    max-width: 100%;
+  }
+}
+
+/* Previous / Next pagination */
+.pagination-links a span,
+.pagination-links .link-title {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-weight: 400;
+}
+
+/* "On this page" TOC heading */
+#starlight__on-this-page {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 1.3rem;
+  font-weight: 400;
+}
+
+/* Sidebar group titles */
+.group-label .large {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 1.3rem;
+  font-weight: 400;
+}
+
+/* Sidebar / UI labels — Commit Mono, 12px, uppercase, +0.05em tracking */
+.sidebar-content,
+nav[aria-label] a,
+.sl-sidebar a,
+[class*='sidebar'] a {
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+/* ─── Scanlines background — matches landing page ──────────────── */
+body {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.015) 2px,
+    rgba(0, 0, 0, 0.015) 4px
+  );
+}
+
+:root[data-theme='dark'] body {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.02) 2px,
+    rgba(255, 255, 255, 0.02) 4px
+  );
+}
+
+/* ─── H4/H5/H6 — uppercase + tracking, matches landing page section headers */
+.sl-markdown-content h4,
+.sl-markdown-content h5,
+.sl-markdown-content h6 {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ─── Sidebar active item — orange left border ─────────────────── */
+.sl-sidebar a[aria-current='page'] {
+  border-left: 2px solid #CD5E20;
+  padding-left: calc(var(--sl-sidebar-item-padding-inline, 0.5rem) - 2px);
+  color: #CD5E20 !important;
+}
+
+/* ─── Table header — accent-tinted background ──────────────────── */
+.sl-markdown-content thead th {
+  background-color: hsl(22, 100%, 95%);
+  color: hsl(22, 73%, 26%);
+}
+
+:root[data-theme='dark'] .sl-markdown-content thead th {
+  background-color: hsl(22, 40%, 12%);
+  color: hsl(22, 100%, 89%);
+}
+
+/* ─── Search bar — orange border on focus ──────────────────────── */
+site-search dialog {
+  border: 1px solid #CD5E20 !important;
+}
+
+/* ─── Pagination — orange hover ────────────────────────────────── */
+.pagination-links a:hover {
+  border-color: #CD5E20 !important;
+  color: #CD5E20;
+}
+
+/* ─── Aside (note/tip) — sharp, no radius already handled ──────── */
+
+/* ─── "On this page" section label uppercase ───────────────────── */
+#starlight__on-this-page {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ─── TOC links — smaller, monospace, tracking ─────────────────── */
+.right-sidebar a {
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ─── Section group labels — uppercase tracking ────────────────── */
+.group-label .large {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: 'Commit Mono', 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ─── Mobile polish ─────────────────────────────────────────────── */
+@media (max-width: 50rem) {
+
+  /* Page title — scale down from 3rem */
+  h1#_top,
+  .sl-markdown-content h1 {
+    font-size: 1.6rem;
+    line-height: 1.3;
+  }
+
+  .sl-markdown-content h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  .sl-markdown-content h3 {
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  /* Body — slightly smaller so Commit Mono lines don't wrap as aggressively */
+  .sl-markdown-content p,
+  .sl-markdown-content li,
+  .sl-markdown-content td,
+  .sl-markdown-content th {
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  /* Code — smaller to prevent overflow */
+  .sl-markdown-content code,
+  .sl-markdown-content pre,
+  .sl-markdown-content pre code {
+    font-size: 0.75rem;
+  }
+
+  /* Content panel — remove border and cut padding on mobile */
+  .sl-markdown-content {
+    border: none;
+    padding: 0.75rem 0.25rem;
+  }
+
+  /* Tables — allow horizontal scroll rather than overflowing viewport */
+  .sl-markdown-content table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Pagination — stack vertically on narrow screens */
+  .pagination-links {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* Site title — slightly smaller on mobile */
+  .site-title {
+    font-size: 0.9rem !important;
+  }
+}

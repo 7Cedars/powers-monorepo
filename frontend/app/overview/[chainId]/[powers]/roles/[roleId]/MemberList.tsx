@@ -87,7 +87,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
   }, [powers, roleId, fetchRoleHolders])
 
   return (
-    <div className="flex flex-col max-h-96 border border-b-0 border-border min-h-0">
+    <div className="flex flex-col max-h-96 border border-border min-h-0">
 
       {/* Table content */}
       {status == 'pending' ? 
@@ -98,7 +98,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
         members && members.length > 0 ?
           <div className="flex-1 overflow-auto">
               <table className="w-full font-mono text-xs">
-                <thead className="sticky top-0 bg-background border-b border-border">
+                <thead className="sticky top-0 bg-background">
                   <tr>
                     <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider w-16">#</th>
                     <th className="px-4 py-2 text-left text-muted-foreground uppercase text-[10px] tracking-wider">Address</th>

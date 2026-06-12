@@ -34,7 +34,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 8;
 
     function run() external returns (Powers) {
         // step 0, setup. 
@@ -84,7 +84,7 @@ contract Deploy is DeployHelpers {
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
-        conditions.allowedRole = 0; // = admin.
+        conditions.allowedRole = type(uint256).max; // = public.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",

@@ -1,0 +1,69 @@
+---
+title: "PauseMandates"
+description: "PauseMandates is a reform mandate that pauses or restarts mandates at specific positions in governance flows."
+---
+
+PauseMandates is a reform mandate that can temporarily disable (pause) or re-enable (restart) mandates at specific positions within governance flows. It is configured with a fixed set of flow and mandate positions to manage.
+
+## Overview
+
+This mandate is useful for emergency governance — pausing a compromised or malfunctioning mandate without permanently removing it. When restarted, the mandate is re-adopted with exactly the same configuration and conditions it had before, and its position in the flow is restored.
+
+## Configuration
+
+When adopting a PauseMandates instance, the following parameters are required:
+
+1.  `indexFlow` (uint8[]): The flow indices of the mandates to manage.
+2.  `indexMandate` (uint8[]): The position within each flow of the mandate to manage. `indexMandate[i]` corresponds to `indexFlow[i]`.
+
+Both arrays must be the same length.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, one parameter must be provided:
+
+1.  `paused` (bool):
+    *   `true` — Pause (revoke) the mandates at the configured positions.
+    *   `false` — Restart (re-adopt) the mandates at the configured positions.
+
+### Execution Flow
+
+**When pausing (`paused = true`):**
+1.  Finds the mandate IDs at each configured flow position. Skips any invalid or zero-value positions silently.
+2.  Generates a `revokeMandate` call for each valid mandate found.
+
+**When restarting (`paused = false`):**
+1.  Finds the mandate IDs at each configured position.
+2.  For each mandate that is currently inactive, retrieves its original `nameDescription`, `config`, and `conditions` from the contract.
+3.  Generates an `adoptMandate` call to re-install it.
+4.  Generates an `editFlowByIndex` call to restore its position in the flow.
+5.  Already-active mandates are skipped silently.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Validates that `indexFlow` and `indexMandate` are the same length.
+-   Sets input parameters to `(bool paused)`.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Delegates to `_pauseMandates` or `_restartMandates` based on the input.
+
+### Error Conditions
+
+*   `"Array length mismatch"` — Raised during initialization if `indexFlow` and `indexMandate` have different lengths.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |
