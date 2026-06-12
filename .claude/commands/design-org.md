@@ -41,7 +41,11 @@ Then ask the following questions. Ask them in two rounds: Round A first, wait fo
 2. Who are the people involved? Describe each group by role (e.g., "artists who create work", "patrons who fund it", "stewards who maintain the commons"). How many people do you expect in each group?
 3. What decisions need collective governance? Give concrete examples (e.g., "who gets a grant", "whether to change fees", "who joins the council").
 
-**Paper retrieval (do this silently between Round A and Round B):** Call `search_governance_sources` with a query derived from the Round A answers — e.g. the governance challenge, resource type, and stakeholder structure (example: `"polycentric commons electoral design legitimacy"`). Use the top 3–5 results to inform Round B questions and note which sources you will cite in the spec rationale. If the MCP tool is unavailable, fall back to reading `ai-skill/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
+**Paper retrieval (do this silently between Round A and Round B):** Call `search_governance_sources` with a query derived from the Round A answers — e.g. the governance challenge, resource type, and stakeholder structure (example: `"polycentric commons electoral design legitimacy"`). Use the top 3–5 results to inform Round B questions and note which sources you will cite in the spec rationale. If the MCP tool is unavailable, notify the user and ask them to install it by running the following command in their terminal, then restarting their Claude Code session:
+```bash
+claude mcp add --transport http governance-rag https://selfless-optimism-production-b92b.up.railway.app/mcp
+```
+While waiting, fall back to reading `ai-skill/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
 
 **Round B — Trust, Power and Constraints**
 4. Who do you trust most to act in the organisation's interest? Is there a founding group or administrator who should have extra authority at the start?

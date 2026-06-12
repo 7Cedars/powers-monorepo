@@ -198,21 +198,14 @@ export async function getActionData(
   actionId: bigint
 ): Promise<ActionData> {
   const client = getPublicClient(chainId);
-  const raw = (await client.readContract({
-    address,
-    abi: powersAbi,
-    functionName: 'getActionData',
-    args: [actionId],
-  })) as {
-    mandateId: number;
-    status?: number;
-    proposedAt?: bigint;
-    requestedAt?: bigint;
-    fulfilledAt?: bigint;
-    cancelledAt?: bigint;
-    caller?: Address;
-    nonce?: bigint;
-  };
+  // getActionData returns multiple named outputs — viem decodes these as an array
+  const [mandateId, proposedAt, requestedAt, fulfilledAt, cancelledAt, caller, nonce] =
+    (await client.readContract({
+      address,
+      abi: powersAbi,
+      functionName: 'getActionData',
+      args: [actionId],
+    })) as [number, bigint, bigint, bigint, bigint, Address, bigint];
 
   const state = (await client.readContract({
     address,
@@ -230,14 +223,14 @@ export async function getActionData(
 
   return {
     actionId,
-    mandateId: raw.mandateId,
+    mandateId,
     state,
-    proposedAt: raw.proposedAt ?? 0n,
-    requestedAt: raw.requestedAt ?? 0n,
-    fulfilledAt: raw.fulfilledAt ?? 0n,
-    cancelledAt: raw.cancelledAt ?? 0n,
-    caller: (raw.caller as Address) ?? '0x0',
-    nonce: raw.nonce ?? 0n,
+    proposedAt: proposedAt ?? 0n,
+    requestedAt: requestedAt ?? 0n,
+    fulfilledAt: fulfilledAt ?? 0n,
+    cancelledAt: cancelledAt ?? 0n,
+    caller: caller ?? '0x0',
+    nonce: nonce ?? 0n,
     calldata,
   } as ActionData & { calldata: `0x${string}` };
 }
@@ -248,27 +241,22 @@ export async function getActionVoteData(
   actionId: bigint
 ): Promise<ActionVoteData> {
   const client = getPublicClient(chainId);
-  const raw = (await client.readContract({
-    address,
-    abi: powersAbi,
-    functionName: 'getActionVoteData',
-    args: [actionId],
-  })) as {
-    voteStart: number;
-    voteDuration: number;
-    voteEnd: bigint;
-    againstVotes: number;
-    forVotes: number;
-    abstainVotes: number;
-  };
+  // getActionVoteData returns multiple named outputs — viem decodes these as an array
+  const [voteStart, voteDuration, voteEnd, againstVotes, forVotes, abstainVotes] =
+    (await client.readContract({
+      address,
+      abi: powersAbi,
+      functionName: 'getActionVoteData',
+      args: [actionId],
+    })) as [number, number, bigint, number, number, number];
 
   return {
-    voteStart: raw.voteStart,
-    voteDuration: raw.voteDuration,
-    voteEnd: raw.voteEnd,
-    againstVotes: raw.againstVotes,
-    forVotes: raw.forVotes,
-    abstainVotes: raw.abstainVotes,
+    voteStart,
+    voteDuration,
+    voteEnd,
+    againstVotes,
+    forVotes,
+    abstainVotes,
   };
 }
 

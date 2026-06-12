@@ -1,0 +1,34 @@
+{
+  "icon": "",
+  "banner": "",
+  "description": "Project Orange is an on-chain organisation dedicated to exploring, debating, and developing ideas around the word 'ORANGE' — from colour theory and cultural symbolism to botany, history, and linguistic origins. Anyone can submit a proposal; each is assessed on two criteria: its alignment to the colour orange and its financial impact on the organisation. The Powers protocol ensures every voice carries equal weight, turning curiosity into structured, community-driven inquiry.",
+  "website": "",
+  "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md",
+  "disputeResolution": "",
+  "xmtpAgentAddress": "0xe65d5d40c878339596423b929058a13147f925e1",
+  "communicationChannels": {
+      "discord": "",
+      "telegram": "",
+      "x": "",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo",
+      "forum": "",
+      "documentation": "https://powers-docs.vercel.app/"
+  },
+  "attributes": [
+    {
+      "trait_type": "optional trait 1",
+      "value": "none"
+    },
+    {
+      "trait_type": "optional trait 2",
+      "value": "none"
+    },
+    {
+      "trait_type": "optional trait 3",
+      "value": "none"
+    }
+  ]
+}

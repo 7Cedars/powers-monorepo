@@ -46,8 +46,11 @@ export async function dispatchSkill(
 
     case 'assess_proposal': {
       const proposalUrl = String(input.proposal_url ?? '');
+      const proposalDescription = input.proposal_description
+        ? String(input.proposal_description)
+        : undefined;
       const criteria = String(handlerConfig.criteria ?? '');
-      return assessProposal(proposalUrl, criteria, allowedDomains);
+      return assessProposal(proposalUrl, criteria, allowedDomains, proposalDescription);
     }
 
     default:
