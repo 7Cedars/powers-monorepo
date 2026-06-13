@@ -84,7 +84,7 @@ contract Deploy is DeployHelpers {
         executeResult = new SlateRegistry_ExecuteResult();
         powers = new Powers(
             "Secured Slate Governance",
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/securedSlate.json",
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/securedSlate.json",
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid)

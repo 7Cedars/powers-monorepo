@@ -41,11 +41,24 @@ Then ask the following questions. Ask them in two rounds: Round A first, wait fo
 2. Who are the people involved? Describe each group by role (e.g., "artists who create work", "patrons who fund it", "stewards who maintain the commons"). How many people do you expect in each group?
 3. What decisions need collective governance? Give concrete examples (e.g., "who gets a grant", "whether to change fees", "who joins the council").
 
-**Paper retrieval (do this silently between Round A and Round B):** Call `search_governance_sources` with a query derived from the Round A answers — e.g. the governance challenge, resource type, and stakeholder structure (example: `"polycentric commons electoral design legitimacy"`). Use the top 3–5 results to inform Round B questions and note which sources you will cite in the spec rationale. If the MCP tool is unavailable, notify the user and ask them to install it by running the following command in their terminal, then restarting their Claude Code session:
-```bash
-claude mcp add --transport http governance-rag https://selfless-optimism-production-b92b.up.railway.app/mcp
-```
-While waiting, fall back to reading `ai-skill/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
+**Paper retrieval (do this between Round A and Round B — always attempt both calls):**
+
+1. **Contextual query:** Call `search_governance_sources` with a query derived from the Round A answers — e.g. the governance challenge, resource type, and stakeholder structure (example: `"polycentric commons electoral design legitimacy"`).
+2. **Ostrom query (always required):** Call `search_governance_sources` a second time with `"Ostrom design principles polycentric governance commons boundary rules sanctioning"` — regardless of the organisation's topic. Pull the top 3 results and note which Ostrom design principles (e.g. graduated sanctions, collective-choice arrangements, nested enterprises) apply.
+
+Use the combined results to inform Round B questions and note which sources you will cite in the spec rationale.
+
+**If the MCP tool is unavailable:** Do not fall back silently. Pause and tell the user directly:
+
+> ⚠️ **The `governance-rag` MCP is not connected.** This tool retrieves excerpts from the governance theory library (Ostrom, Carlisle, OECD, etc.) to ground your design in published research. Without it, the design will rely only on built-in knowledge.
+>
+> To connect it, run this command in your terminal and then restart your Claude Code session:
+> ```bash
+> claude mcp add --transport http governance-rag https://selfless-optimism-production-b92b.up.railway.app/mcp
+> ```
+> You can continue now and the design will proceed using locally-loaded reference material — but the RAG search will not be available for this session.
+
+After warning the user, fall back to reading `ai-skill/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
 
 **Round B — Trust, Power and Constraints**
 4. Who do you trust most to act in the organisation's interest? Is there a founding group or administrator who should have extra authority at the start?
@@ -69,7 +82,7 @@ After Round B, summarise your understanding back to the user in plain language a
 
 Using the answers from Phase 2 and the patterns in `ai-skill/prompts/institutionalDesign.md`, design a governance structure. Then write the specification to disk using the template from `ai-skill/templates/orgSpec.md`.
 
-**Save the spec to:** `solidity/governance/claude/<org-name>/Spec.md`
+**Save the spec to:** `solidity/governance/<org-name>/Spec.md`
 (Use a short kebab-case name derived from the organisation name, e.g., `secured-slate`)
 
 The spec must cover:
@@ -93,12 +106,12 @@ After saving the file, present the spec to the user in readable plain language (
 
 Only begin this phase after the user has approved the spec in Phase 3.
 
-All generated files go into a single self-contained folder: **`solidity/governance/claude/<org-name>/`**
+All generated files go into a single self-contained folder: **`solidity/governance/<org-name>/`**
 
 Generate the following files in order. After each file, briefly describe what it does in one sentence before moving to the next.
 
 ### 4a. Deploy Script
-**Save to:** `solidity/governance/claude/<org-name>/Deploy.s.sol`
+**Save to:** `solidity/governance/<org-name>/Deploy.s.sol`
 
 Follow the pattern in `ai-skill/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
 - Contract name: `Deploy`
@@ -143,7 +156,7 @@ Follow the pattern in `ai-skill/templates/deployScript.md` and `solidity/governa
 - Add a console log line: `console2.log("PowersPaymaster deployed at:", address(powersPaymaster));`
 
 ### 4b. Actions Script
-**Save to:** `solidity/governance/claude/<org-name>/Actions.s.sol`
+**Save to:** `solidity/governance/<org-name>/Actions.s.sol`
 
 Follow the pattern in `solidity/governance/examples/actions/Governed721Actions.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Actions.s.sol` as a concrete same-folder example. Key rules:
 - Contract name: `<OrgName>Actions` (e.g. `SecuredSlateActions`)
@@ -153,7 +166,7 @@ Follow the pattern in `solidity/governance/examples/actions/Governed721Actions.s
 - Import `ActionHelpers` using the remapped path: `@governance/examples/actions/ActionHelpers.s.sol`
 
 ### 4c. Runners Script
-**Save to:** `solidity/governance/claude/<org-name>/Runners.s.sol`
+**Save to:** `solidity/governance/<org-name>/Runners.s.sol`
 
 Follow the pattern in `solidity/governance/examples/actions/Governed721Runners.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Runners.s.sol` as a concrete same-folder example. Key rules:
 - Contract name: `<OrgName>Runners` (e.g. `SecuredSlateRunners`)
@@ -163,7 +176,7 @@ Follow the pattern in `solidity/governance/examples/actions/Governed721Runners.s
 - Import the Actions contract as a peer file: `import { <OrgName>Actions } from "./Actions.s.sol";`
 
 ### 4d. Test File
-**Save to:** `solidity/governance/claude/<org-name>/Test.t.sol`
+**Save to:** `solidity/governance/<org-name>/Test.t.sol`
 
 Follow the pattern in `solidity/governance/claude/global-environmental-movement/Test.t.sol`. Key rules:
 - Contract name: `<OrgName>_test` (e.g. `SecuredSlate_test`) — used by `--match-contract`
@@ -174,7 +187,7 @@ Follow the pattern in `solidity/governance/claude/global-environmental-movement/
 - Add a comment at the top: "Run with: `forge test --match-contract <OrgName>_test -vvv`"
 
 ### 4e. README
-**Save to:** `solidity/governance/claude/<org-name>/README.md`
+**Save to:** `solidity/governance/<org-name>/README.md`
 
 Write in plain English for a non-technical operator. Include:
 - **Overview** — one paragraph summarising what the organisation does and what decisions it governs (drawn from the spec)
@@ -182,28 +195,28 @@ Write in plain English for a non-technical operator. Include:
 - **Deployment** — numbered steps: copy `.env.example` to `.env.local` and fill in values → run `make setup-wallet` to create a keystore → run `make deploy-arb-sepolia` (or `deploy-sepolia` / `deploy-anvil`)
 - **Actions script** — what it is, when to use it, and an example invocation:
   ```bash
-  forge script governance/claude/<org-name>/Actions.s.sol:<OrgName>Actions \
+  forge script governance/<org-name>/Actions.s.sol:<OrgName>Actions \
     --sig "propose<FlowName>()" --rpc-url $SEPOLIA_RPC_URL --broadcast
   ```
 - **Runners script** — what it is (stateless, advances a flow as far as on-chain state allows), when to use it (automated/bot execution), and an example invocation:
   ```bash
-  forge script governance/claude/<org-name>/Runners.s.sol:<OrgName>Runners \
+  forge script governance/<org-name>/Runners.s.sol:<OrgName>Runners \
     --sig "run<FlowName>()" --rpc-url $SEPOLIA_RPC_URL --broadcast
   ```
 - **Metadata URI** — if the deploy script contains a `// TODO: set metadata URI` comment, replace the empty string with your IPFS or gateway URL before deploying. Upload your organisation's JSON metadata to [Pinata](https://pinata.cloud) (free tier available) and paste the resulting URL into the constructor call.
-- **Account Abstraction / Paymaster** *(include only if AA was opted in)* — explain that a `PowersPaymaster` was deployed alongside the organisation and pre-funded with `<seed_amount>` ETH. Members can now interact with the organisation without paying gas themselves. When the paymaster balance runs low, authorised members can top it up using the "Fund Paymaster" governance flow. To check the current paymaster balance: `cast call <PAYMASTER_ADDRESS> "getDeposit()(uint256)" --rpc-url $SEPOLIA_RPC_URL`. To trigger the Fund flow: `forge script governance/claude/<org-name>/Actions.s.sol:<OrgName>Actions --sig "proposeFundPaymaster()" --rpc-url $SEPOLIA_RPC_URL --broadcast`. The deployer wallet must hold at least `<seed_amount>` ETH plus gas at deploy time.
+- **Account Abstraction / Paymaster** *(include only if AA was opted in)* — explain that a `PowersPaymaster` was deployed alongside the organisation and pre-funded with `<seed_amount>` ETH. Members can now interact with the organisation without paying gas themselves. When the paymaster balance runs low, authorised members can top it up using the "Fund Paymaster" governance flow. To check the current paymaster balance: `cast call <PAYMASTER_ADDRESS> "getDeposit()(uint256)" --rpc-url $SEPOLIA_RPC_URL`. To trigger the Fund flow: `forge script governance/<org-name>/Actions.s.sol:<OrgName>Actions --sig "proposeFundPaymaster()" --rpc-url $SEPOLIA_RPC_URL --broadcast`. The deployer wallet must hold at least `<seed_amount>` ETH plus gas at deploy time.
 - **Testing** — `make test` runs the fork-based test suite; requires `SEPOLIA_RPC_URL`
 
 ### 4f. Makefile
-**Save to:** `solidity/governance/claude/<org-name>/Makefile`
+**Save to:** `solidity/governance/<org-name>/Makefile`
 
 All targets navigate up three levels to `solidity/` before invoking forge, so Foundry's path config is respected. The Makefile is self-contained: it loads `.env` and `.env.local` directly and defines all deploy-arg variables inline, so it works when run from the org folder without any knowledge of the parent `solidity/Makefile`. Anvil uses the hardcoded default test key; live-network targets depend on `check-wallet` and fail with a friendly error if the wallet is not configured. Template:
 
 ```makefile
--include ../../../.env
+-include ../../.env
 -include .env.local
 
-SCRIPT = governance/claude/<org-name>/Deploy.s.sol:Deploy
+SCRIPT = governance/<org-name>/Deploy.s.sol:Deploy
 TEST   = <OrgName>_test
 
 # Wallet — set DEPLOYER_ACCOUNT and DEPLOYER_ADDRESS in .env.local
@@ -262,25 +275,25 @@ check-wallet:
 	@echo "Wallet OK: $(DEPLOYER_ADDRESS)  (keystore: $(DEPLOYER_ACCOUNT))"
 
 deploy-anvil:
-	cd ../../.. && forge script $(SCRIPT) $(ANVIL_DEPLOY_ARGS)
+	cd ../.. && forge script $(SCRIPT) $(ANVIL_DEPLOY_ARGS)
 
 deploy-sepolia: check-wallet
-	cd ../../.. && forge script $(SCRIPT) $(SEPOLIA_DEPLOY_ARGS)
+	cd ../.. && forge script $(SCRIPT) $(SEPOLIA_DEPLOY_ARGS)
 
 deploy-arb-sepolia: check-wallet
-	cd ../../.. && forge script $(SCRIPT) $(ARB_SEPOLIA_DEPLOY_ARGS)
+	cd ../.. && forge script $(SCRIPT) $(ARB_SEPOLIA_DEPLOY_ARGS)
 
 deploy-opt-sepolia: check-wallet
-	cd ../../.. && forge script $(SCRIPT) $(OPT_SEPOLIA_DEPLOY_ARGS)
+	cd ../.. && forge script $(SCRIPT) $(OPT_SEPOLIA_DEPLOY_ARGS)
 
 test:
-	cd ../../.. && forge test --match-contract $(TEST) -vvv
+	cd ../.. && forge test --match-contract $(TEST) -vvv
 ```
 
 Substitute `<org-name>` and `<OrgName>` with the actual names throughout.
 
 ### 4g. Environment example
-**Save to:** `solidity/governance/claude/<org-name>/.env.example`
+**Save to:** `solidity/governance/<org-name>/.env.example`
 
 This file documents every variable a deployer needs. Users copy it to `.env.local` (already gitignored at repo root) and fill in their values. Template:
 
@@ -331,11 +344,11 @@ After all files are generated:
    - The reference papers you should add to `ai-skill/references/` for future sessions
 
 Close by summarising what was built. All eight generated files live in one folder:
-- `solidity/governance/claude/<org-name>/Spec.md` — governance specification
-- `solidity/governance/claude/<org-name>/Deploy.s.sol` — deploy script
-- `solidity/governance/claude/<org-name>/Actions.s.sol` — actions script
-- `solidity/governance/claude/<org-name>/Runners.s.sol` — runners script
-- `solidity/governance/claude/<org-name>/Test.t.sol` — test suite
-- `solidity/governance/claude/<org-name>/README.md` — operator guide
-- `solidity/governance/claude/<org-name>/Makefile` — deploy/test shortcuts
-- `solidity/governance/claude/<org-name>/.env.example` — environment variable template for deployers
+- `solidity/governance/<org-name>/Spec.md` — governance specification
+- `solidity/governance/<org-name>/Deploy.s.sol` — deploy script
+- `solidity/governance/<org-name>/Actions.s.sol` — actions script
+- `solidity/governance/<org-name>/Runners.s.sol` — runners script
+- `solidity/governance/<org-name>/Test.t.sol` — test suite
+- `solidity/governance/<org-name>/README.md` — operator guide
+- `solidity/governance/<org-name>/Makefile` — deploy/test shortcuts
+- `solidity/governance/<org-name>/.env.example` — environment variable template for deployers

@@ -75,7 +75,7 @@ contract Deploy is DeployHelpers {
         executeResult = new SlateRegistry_ExecuteResult();
         powers = new Powers(
             "Slate Voting DAO",
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/slateVoting.json",
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/slateVoting.json",
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid)
