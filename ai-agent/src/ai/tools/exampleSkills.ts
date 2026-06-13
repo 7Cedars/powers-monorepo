@@ -6,14 +6,15 @@ import type { SkillDefinition } from '../../agent/AgentSession.js';
  * a structured recommendation.
  *
  * Usage: pass `proposal_url` pointing to a publicly accessible Markdown file
- * (GitHub raw, HackMD, etc.). The URL's domain must be in allowedDomains.
+ * (GitHub raw, HackMD, etc.) and/or a `proposal_description` inline string.
+ * At least one of the two must be provided.
  *
  * Add via POST /api/session/:id/skills with this object as the body.
  */
 export const assessProposalImpact: SkillDefinition = {
   name: 'assess_proposal_impact',
   description:
-    'Fetch a governance proposal document (Markdown) from the given URL and assess it against impact criteria. ' +
+    'Fetch a governance proposal document (Markdown) from the given URL and/or use an inline description, then assess against impact criteria. ' +
     'Call this tool whenever you need to evaluate whether a proposal is worth supporting based on its real-world impact. ' +
     'The tool returns the proposal content together with the scoring rubric; produce a structured assessment with a ' +
     'score (1–5) and a one-sentence justification per criterion, followed by an overall recommendation ' +
@@ -25,8 +26,12 @@ export const assessProposalImpact: SkillDefinition = {
         type: 'string',
         description: 'Publicly accessible URL of the proposal Markdown file.',
       },
+      proposal_description: {
+        type: 'string',
+        description: 'Optional inline proposal text (e.g. on-chain proposalDescription field). Used alongside or instead of proposal_url.',
+      },
     },
-    required: ['proposal_url'],
+    required: [],
   },
   handler: 'assess_proposal',
   handlerConfig: {
@@ -58,14 +63,15 @@ After scoring, give an overall recommendation: Approve / Approve with conditions
  * a structured recommendation.
  *
  * Usage: pass `proposal_url` pointing to a publicly accessible Markdown file
- * (GitHub raw, HackMD, etc.). The URL's domain must be in allowedDomains.
+ * (GitHub raw, HackMD, etc.) and/or a `proposal_description` inline string.
+ * At least one of the two must be provided.
  *
  * Add via POST /api/session/:id/skills with this object as the body.
  */
 export const assessProposalFinancial: SkillDefinition = {
   name: 'assess_proposal_financial',
   description:
-    'Fetch a governance proposal document (Markdown) from the given URL and assess it against financial viability criteria. ' +
+    'Fetch a governance proposal document (Markdown) from the given URL and/or use an inline description, then assess against financial viability criteria. ' +
     'Call this tool whenever you need to evaluate whether a proposal represents a sound use of DAO treasury funds. ' +
     'The tool returns the proposal content together with the scoring rubric; produce a structured assessment with a ' +
     'score (1–5) and a one-sentence justification per criterion, followed by an overall recommendation ' +
@@ -77,8 +83,12 @@ export const assessProposalFinancial: SkillDefinition = {
         type: 'string',
         description: 'Publicly accessible URL of the proposal Markdown file.',
       },
+      proposal_description: {
+        type: 'string',
+        description: 'Optional inline proposal text (e.g. on-chain proposalDescription field). Used alongside or instead of proposal_url.',
+      },
     },
-    required: ['proposal_url'],
+    required: [],
   },
   handler: 'assess_proposal',
   handlerConfig: {

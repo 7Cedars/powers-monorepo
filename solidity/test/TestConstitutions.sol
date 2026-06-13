@@ -1846,4 +1846,122 @@ contract TestConstitutions is Test {
 
         return constitution;
     }
+
+    //////////////////////////////////////////////////////////////
+    //            SLATE REGISTRY ADD SLATE CONSTITUTION         //
+    //////////////////////////////////////////////////////////////
+    // Two mandates:
+    //   1. SlateRegistry_AddSlate — restricted to role 1, uses slateRegistryMock + presetActions
+    //   2. SlateRegistry_RemoveSlate — restricted to role 1, links back to mandate 1
+    // Two flows set at closeConstitute time:
+    //   flow[0] — 3 empty slots (all zero), used for the happy-path test
+    //   flow[1] — 1 occupied slot (mandateId=1), used for the no-empty-slot revert test
+    function slateRegistryAddSlateTestConstitution(address slateRegistryMock, address presetActions)
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData, PowersTypes.Flow[] memory flows_)
+    {
+        delete constitution;
+
+        // Mandate 1: SlateRegistry_AddSlate
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SlateRegistry_AddSlate: add a slate to a SlateRegistry election.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"),
+                config: abi.encode(slateRegistryMock, presetActions),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 2: SlateRegistry_RemoveSlate (links to mandate 1 as addSlateMandateId)
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SlateRegistry_RemoveSlate: remove a slate from a SlateRegistry election.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate"),
+                config: abi.encode(slateRegistryMock, uint16(1)), // addSlateMandateId = 1
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 3: SlateRegistry_ExecuteResult
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SlateRegistry_ExecuteResult: execute the results of a SlateRegistry election.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult"),
+                config: abi.encode(slateRegistryMock),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Flow 0: 3 empty slots — happy path (findEmptySlot returns index 0)
+        flows_ = new PowersTypes.Flow[](2);
+        uint16[] memory emptyFlow = new uint16[](3);
+        flows_[0] = PowersTypes.Flow({mandateIds: emptyFlow, nameDescription: "Slate election flow: 3 empty slots"});
+
+        // Flow 1: 1 occupied slot (mandateId=1) — triggers "No empty slot in flow" revert
+        uint16[] memory fullFlow = new uint16[](1);
+        fullFlow[0] = 1;
+        flows_[1] = PowersTypes.Flow({mandateIds: fullFlow, nameDescription: "Slate election flow: all slots occupied"});
+
+        return (constitution, flows_);
+    }
+
+    //////////////////////////////////////////////////////////////
+    //          POWERS FACTORY TEST CONSTITUTION               //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. BespokeAction_Simple calling returnDataMock.getValue() (returns uint256(42))
+    // 2. PowersFactory_AssignRole — factoryMandateId=1, roleIdNewOrg=2
+    // 3. PowersFactory_AddSafeDelegate — factoryMandateId=1, allowanceModule=address(1)
+    function powersFactoryTestConstitution(address returnDataMockAddr)
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        string[] memory emptyParams = new string[](0);
+
+        // Mandate 1: BespokeAction_Simple returning uint256(42), decodable as address(42)
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "BespokeActionReturner: returns address-decodable value for testing.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
+                config: abi.encode(returnDataMockAddr, ReturnDataMock.getValue.selector, emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 2: PowersFactory_AssignRole using mandate 1 as the factory action
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PowersFactory_AssignRole: assign role in new org.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole"),
+                config: abi.encode(uint16(1), uint256(2), emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 3: PowersFactory_AddSafeDelegate using mandate 1 as the factory action
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PowersFactory_AddSafeDelegate: add safe delegate.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate"),
+                config: abi.encode(uint16(1), address(1), emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
 }

@@ -1,6 +1,6 @@
 {
   "icon": "",
-  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaz453grtbgqt2nzwrxhekekt5jl7tep2zulki6eantweadzsvtsq",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaf7uosnihoemmmkajtgxy3s5hm2d4en5thxnf7j44rcvb2wmdhhu/account_abstraction.png",
   "description":
     "Account Abstracted Powers demonstrates ERC-4337 account abstraction integration with the Powers governance protocol. A PowersPaymaster sponsors gas fees for governance transactions, removing the need for users to hold ETH. The organisation has three roles — Admin, Delegate, and Public — and governs four flows: funding and withdrawing from the paymaster, minting ERC20 tokens, and managing role assignments. Delegates can propose and execute paymaster operations and token mints; Admins hold veto power over mints and can assign roles; any delegate can revoke a previously assigned role.",
   "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",

@@ -1,0 +1,7 @@
+node_modules
+dist
+embeddings
+.git
+*.md
+templates
+prompts

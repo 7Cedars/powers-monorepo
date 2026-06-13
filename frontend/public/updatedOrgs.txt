@@ -1,0 +1,132 @@
+Bicameralism:
+forge script governance/examples/Bicameralism.s.sol:Deploy --rpc-url https://arb-sepolia.g.alchemy.com/v2/DX4MFUHA5M5X_c4_LSjsb --account dev_3 --sender 0x328735d26e5Ada93610F0006c32abE2278c46211  --broadcast --etherscan-api-key BSZS422M9J3UN4ZX5VT65IIPS2I83JKW75 --verifier etherscan --chain 421614 --verify --ffi -vv  
+[⠔] Compiling...
+[⠃] Compiling 1 files with Solc 0.8.30
+[⠢] Solc 0.8.30 finished in 29.42s
+Compiler run successful!
+Script ran successfully.
+
+== Return ==
+0: contract Powers 0xA23d34135d285FA4efb51168fb5719405BC36a24
+
+== Logs ==
+  Powers deployed at: 0xA23d34135d285FA4efb51168fb5719405BC36a24
+  Constitution created with length:
+  5
+  Powers successfully constituted.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 421614
+
+
+---------------------
+
+Election List:
+forge script governance/examples/ElectionListsDao.s.sol:Deploy --rpc-url https://arb-sepolia.g.alchemy.com/v2/DX4MFUHA5M5X_c4_LSjsb --account dev_3 --sender 0x328735d26e5Ada93610F0006c32abE2278c46211  --broadcast --etherscan-api-key BSZS422M9J3UN4ZX5VT65IIPS2I83JKW75 --verifier etherscan --chain 421614 --verify --ffi -vv  
+[⠆] Compiling...
+[⠃] Compiling 1 files with Solc 0.8.30
+[⠊] Solc 0.8.30 finished in 2.50s
+Compiler run successful!
+Script ran successfully.
+
+== Return ==
+0: contract Powers 0x44341f8dadB0f1C311D09145bD2fDA688Aea058c
+1: contract ElectionRegistry 0x8BFeef81B06fb6E51f1c83C230f2b106B9cA7bd6
+
+== Logs ==
+  Powers deployed at: 0x44341f8dadB0f1C311D09145bD2fDA688Aea058c
+  Constitution created with length:
+  9
+  Powers successfully constituted.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 421614
+
+-------------------------------------
+
+Governed 721:
+forge script governance/examples/Governed721.s.sol:Deploy --rpc-url https://arb-sepolia.g.alchemy.com/v2/DX4MFUHA5M5X_c4_LSjsb --account dev_3 --sender 0x328735d26e5Ada93610F0006c32abE2278c46211  --broadcast --etherscan-api-key BSZS422M9J3UN4ZX5VT65IIPS2I83JKW75 --verifier etherscan --chain 421614 --verify --ffi -vv  
+[⠒] Compiling...
+[⠒] Compiling 1 files with Solc 0.8.30
+[⠑] Solc 0.8.30 finished in 3.37s
+Compiler run successful!
+Script ran successfully.
+
+== Return ==
+powersAddress: address 0xaa3146fBa89b6e93303c397f76B2cC36545372D0
+governed721Address: address 0xBE6f0eF6c2Fd7DD35152b460cD6C00A4C5d21D62
+electionRegistryAddress: address 0xdaE97900D4B184c5D2012dcdB658c008966466DD
+
+== Logs ==
+  Powers successfully constituted.
+  Constitution length: 30
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 421614
+
+---- 
+
+Nested Safe Governance:
+forge script governance/examples/NestedSafeGovernance.s.sol:Deploy --rpc-url https://arb-sepolia.g.alchemy.com/v2/DX4MFUHA5M5X_c4_LSjsb --account dev_3 --sender 0x328735d26e5Ada93610F0006c32abE2278c46211  --broadcast --etherscan-api-key BSZS422M9J3UN4ZX5VT65IIPS2I83JKW75 --verifier etherscan --chain 421614 --verify --ffi -vv  
+[⠒] Compiling...
+[⠰] Compiling 1 files with Solc 0.8.30
+[⠔] Solc 0.8.30 finished in 3.23s
+Compiler run successful!
+Script ran successfully.
+
+== Return ==
+0: contract Powers 0x69752fE5a307e324cd508d5F6BAD0276b5716Cf3
+1: contract PowersFactory 0x7C93a49f91B04C52Ba9A59A7caC6F9152B2C1d33
+
+== Logs ==
+  Powers Parent deployed at: 0x69752fE5a307e324cd508d5F6BAD0276b5716Cf3
+  Powers Child Factory deployed at: 0x7C93a49f91B04C52Ba9A59A7caC6F9152B2C1d33
+  Safe treasury deployed at: 0xe4f0dA2bce8722F71E683a44327598488Aa636f4
+  Number of Mandates: 10
+  Number of Mandates in Child Factory: 8
+  Parent Powers constituted.
+  Child Factory ownership transferred to Parent.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 421614
+
+
+---
+
+Optimistic Execution:
+forge script governance/examples/OptimisticExecution.s.sol:Deploy --rpc-url https://arb-sepolia.g.alchemy.com/v2/DX4MFUHA5M5X_c4_LSjsb --account dev_3 --sender 0x328735d26e5Ada93610F0006c32abE2278c46211  --broadcast --etherscan-api-key BSZS422M9J3UN4ZX5VT65IIPS2I83JKW75 --verifier etherscan --chain 421614 --verify --ffi -vv  
+[⠢] Compiling...
+[⠑] Compiling 1 files with Solc 0.8.30
+[⠘] Solc 0.8.30 finished in 2.34s
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  Powers deployed at: 0x0133081239254Ca966B3570bd775cAEE93Cfd4E2
+  Constitution created with length:
+  5
+  Powers successfully constituted.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 421614
+
+
+---
+
+
+
