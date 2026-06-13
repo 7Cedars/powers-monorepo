@@ -1,4 +1,4 @@
-# Powers v0.4
+# Powers v0.7
 
 Institutional governance for on-chain organisations.
 
