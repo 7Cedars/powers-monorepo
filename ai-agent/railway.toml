@@ -1,5 +1,5 @@
 [build]
-builder = "railpack"
+builder = "DOCKERFILE"
 
 [deploy]
 startCommand = "pnpm start"

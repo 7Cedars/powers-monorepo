@@ -25,7 +25,6 @@ export function OrgBanner({ title, subtitle, backButton }: OrgBannerProps) {
           backgroundColor: powers?.metadatas?.banner ? undefined : 'hsl(var(--muted))',
         }}
       >
-        <div className="absolute inset-0 bg-background/20" />
       </div>
 
       <div className="px-4 py-2 border-b border-border bg-muted/50">

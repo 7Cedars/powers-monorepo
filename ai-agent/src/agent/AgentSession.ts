@@ -3,11 +3,14 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { PrivateKeyAccount, Address } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Agent } from '@xmtp/agent-sdk';
+import type { HistoricalAction } from '../powers/contract.js';
+import type { LinkedInstance } from '../powers/linkedInstances.js';
 
 export interface OrganisationConfig {
   powersAddress: Address;
   chainId: number;
   label?: string;
+  xmtpAgentAddress?: string;
 }
 
 export interface AgentPersona {
@@ -51,6 +54,8 @@ export interface AgentSession {
 
   histories: Map<string, MessageParam[]>;
   lastReplyAt: Map<string, number>;
+  orgActionHistory: Map<string, HistoricalAction[]>;
+  linkedInstancesCache: Map<string, LinkedInstance[]>;
 
   ttlMs: number;
   createdAt: number;
@@ -74,6 +79,7 @@ export interface SessionSummary {
   agentAddress: Address;
   organisations: OrganisationConfig[];
   personaName: string;
+  persona: AgentPersona;
   createdAt: string;
   lastActiveAt: string;
   expiresAt: string;
@@ -109,6 +115,8 @@ export function createSession(
     xmtpClient: null,
     histories: new Map(),
     lastReplyAt: new Map(),
+    orgActionHistory: new Map(),
+    linkedInstancesCache: new Map(),
     ttlMs: input.ttlMs,
     createdAt: Date.now(),
     lastActiveAt: Date.now(),
@@ -125,6 +133,7 @@ export function sessionToSummary(session: AgentSession): SessionSummary {
     agentAddress: session.userAddress,
     organisations: session.organisations,
     personaName: session.persona.name,
+    persona: session.persona,
     createdAt: new Date(session.createdAt).toISOString(),
     lastActiveAt: new Date(session.lastActiveAt).toISOString(),
     expiresAt,

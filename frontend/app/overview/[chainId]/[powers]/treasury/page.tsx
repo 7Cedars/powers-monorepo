@@ -2,7 +2,6 @@
 
 import React from "react";
 import { AssetList } from "./AssetList";
-import { AddAsset } from "./AddAsset";
 import { usePowersStore } from "@/context/store";
 import { useChains } from "wagmi";
 import { parseChainId } from "@/utils/parsers";
@@ -42,8 +41,6 @@ export default function Page() {
             <div className="mb-6">
               <AssetList />
             </div>
-            
-            <AddAsset /> 
           </>
         ) : (
           <div className="px-4 py-8 text-center text-muted-foreground font-mono text-sm border border-border">

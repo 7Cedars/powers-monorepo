@@ -3,7 +3,7 @@
 import React from "react";
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore, useStatusStore } from "@/context/store";
+import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
 
@@ -12,10 +12,9 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 
-import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon, Bars3Icon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { usePowers } from "@/hooks/usePowers";
+import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { usePowersLive } from "@/hooks/usePowersLive";
-import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
+import { useConnection, useSwitchChain } from "wagmi";
 import { useXmtpClient } from "@/hooks/useXmtpClient";
 
 import { parseChainId } from "@/utils/parsers";
@@ -29,12 +28,10 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
     const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
     const { chainId } = useParams<{ chainId: string }>()
-    const { fetchPowers } = usePowers();
     usePowersLive(
       powersAddress as `0x${string}` | undefined,
       chainId ? parseChainId(chainId) : undefined
     );
-    const publicClient = usePublicClient();
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
     const action = useActionStore();
@@ -42,7 +39,6 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { displayName, isLoading } = useAddressDisplay(effectiveAddress);
     const { client, isConnected: xmtpConnected, initializeClient, disconnect: disconnectXmtp} = useXmtpClient();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const statusPowers = useStatusStore();
 
     console.log("layout being triggered")
 
@@ -172,20 +168,8 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
           }
           </div>
           
-          {/* Refresh and Hamburger buttons - only visible on mobile */}
+          {/* Hamburger button - only visible on mobile */}
           <div className="flex items-center gap-1 sm:hidden">
-            <button
-              onClick={() => {
-                if (powersAddress && chainId) {
-                  fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                }
-              }}
-              disabled={statusPowers.status === "pending" || !publicClient}
-              className="p-2 text-foreground hover:text-foreground/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              aria-label="Refresh"
-            >
-              <ArrowPathIcon className={`h-5 w-5 ${statusPowers.status === "pending" ? 'animate-spin' : ''}`} />
-            </button>
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="p-2 text-foreground hover:text-foreground/80 transition-colors cursor-pointer"

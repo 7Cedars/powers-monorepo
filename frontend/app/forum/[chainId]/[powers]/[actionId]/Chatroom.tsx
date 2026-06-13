@@ -551,24 +551,30 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden min-h-[600px]">
+    <div className="flex flex-col overflow-hidden h-[380px]">
       {/* Header */}
-      <div className="flex items-center px-6 py-2 border-b border-border bg-muted/50">
-        <h4 className="text-xs text-muted-foreground uppercase tracking-wider shrink-0">CHATROOM</h4>
-        <div className="ml-auto flex items-center gap-4">
-          {tabs && tabs.map(tab => (
-            <button
-              key={tab.label}
-              onClick={tab.onClick}
-              className={`text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors ${
-                tab.active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-          {isConnected && groupChat && (
-            <div ref={membersDropdownRef} className="relative">
+      <div className="flex items-center px-6 py-2 bg-background">
+        {tabs && (
+          <div className="ml-auto flex items-center gap-1 text-xs font-mono uppercase tracking-wider">
+            {tabs.map((tab, i) => (
+              <span key={tab.label} className="flex items-center gap-1">
+                {i > 0 && <span className="text-muted-foreground/50">|</span>}
+                <button
+                  onClick={tab.onClick}
+                  className={`transition-colors cursor-pointer ${
+                    tab.active
+                      ? 'font-bold text-foreground'
+                      : 'font-normal text-muted-foreground/50 hover:text-muted-foreground'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        {isConnected && groupChat && (
+            <div ref={membersDropdownRef} className={`relative ${!tabs ? 'ml-auto' : 'ml-6'}`}>
               <button
                 onClick={() => setShowMembersList(!showMembersList)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -584,28 +590,27 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
               )}
             </div>
           )}
-        </div>
       </div>
 
       {/* Content Area */}
       {!hasRole ? (
         // No role - Show informational message
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-4 text-center">
+          <LockClosedIcon className="h-8 w-8 text-muted-foreground mb-2 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
             You do not have the required role to execute any actions in this mandate.
           </p>
         </div>
       ) : isPublicRole ? (
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-4 text-center">
+          <LockClosedIcon className="h-8 w-8 text-muted-foreground mb-2 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
             Due to the risk of spamming, publically accesible mandates do not have chat enabled.
           </p>
         </div>
       ) : !address || !isConnected ? (
         // Not connected - Show connection button
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-4 text-center">
           <LockClosedIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl mb-2">
             These chatrooms use XMTP, an encrypted Web3 messaging protocol.
@@ -630,13 +635,13 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         </div>
       ) : isLoadingChats ? (
         // Loading existing chats
-        <div className="flex-1 min-h-0 flex items-center justify-center">
+        <div className="flex-1 min-h-0 flex items-center justify-center py-8">
           <p className="text-xs text-muted-foreground">Loading chats...</p>
         </div>
       ) : !userInGroup ? (
         // User is not in the group chat - Show request access button
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <ChatroomIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-40" />
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-4 text-center">
+          <ChatroomIcon className="h-8 w-8 text-muted-foreground mb-2 opacity-40" />
           <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-4">
             Join the conversation to start discussing this {chatroomType.toLowerCase()}.
           </p>
@@ -730,7 +735,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           </div>
 
           {/* Message Input */}
-          <div className="flex-shrink-0 px-6 py-3 border-t border-border">
+          <div className="flex-shrink-0 px-6 py-3">
             {sendError && (
               <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20  text-xs text-destructive font-mono">
                 Failed to send: {sendError}

@@ -6,8 +6,14 @@ import {
   getAgentRoles,
   getCurrentBlock,
   getEthBalance,
+  getOrgName,
+  getOrgUri,
+  getAllRoleInfo,
   actionStateLabel,
+  type RoleInfo,
+  type HistoricalAction,
 } from '../powers/contract.js';
+import { formatLinkedInstancesSummary } from '../powers/linkedInstances.js';
 
 export interface GovernanceContext {
   triggeredBy: 'xmtp_message' | 'on_chain_event' | 'heartbeat';
@@ -16,12 +22,17 @@ export interface GovernanceContext {
   contextId: number;
   powersAddress: Address;
   chainId: number;
+  orgName: string;
+  orgUri: string;
   agentAddress: Address;
   currentBlock: bigint;
   agentEthBalance: bigint;
   agentRoles: bigint[];
+  roleInfo: Map<string, RoleInfo>;
+  recentActionHistory: HistoricalAction[];
   mandates: Awaited<ReturnType<typeof getAllMandates>>;
   openActions: Awaited<ReturnType<typeof getOpenActions>>;
+  linkedInstancesSummary: string;
 }
 
 export async function buildContext(
@@ -32,14 +43,22 @@ export async function buildContext(
   groupType: GovernanceContext['groupType'] = 'unknown',
   contextId = 0
 ): Promise<GovernanceContext> {
-  const [mandates, openActions, agentRoles, currentBlock, agentEthBalance] =
+  const [mandates, openActions, agentRoles, currentBlock, agentEthBalance, orgName, orgUri] =
     await Promise.all([
       getAllMandates(org.chainId, org.powersAddress),
       getOpenActions(org.chainId, org.powersAddress, session.userAddress),
       getAgentRoles(org.chainId, org.powersAddress, session.userAddress),
       getCurrentBlock(org.chainId),
       getEthBalance(org.chainId, session.userAddress),
+      getOrgName(org.chainId, org.powersAddress),
+      getOrgUri(org.chainId, org.powersAddress),
     ]);
+
+  const roleInfo = await getAllRoleInfo(org.chainId, org.powersAddress, mandates);
+  const orgKey = `${org.chainId}:${org.powersAddress}`;
+  const recentActionHistory = session.orgActionHistory.get(orgKey) ?? [];
+  const linkedInstances = session.linkedInstancesCache.get(orgKey) ?? [];
+  const linkedInstancesSummary = formatLinkedInstancesSummary(linkedInstances);
 
   return {
     triggeredBy,
@@ -48,12 +67,17 @@ export async function buildContext(
     contextId,
     powersAddress: org.powersAddress,
     chainId: org.chainId,
+    orgName,
+    orgUri,
     agentAddress: session.userAddress,
     currentBlock,
     agentEthBalance,
     agentRoles,
+    roleInfo,
+    recentActionHistory,
     mandates,
     openActions,
+    linkedInstancesSummary,
   };
 }
 
@@ -66,8 +90,12 @@ export function formatContextMessage(ctx: GovernanceContext): string {
     .filter((m) => m.active)
     .map((m) => {
       const canCall = ctx.agentRoles.includes(m.conditions.allowedRole);
+      const ri = ctx.roleInfo.get(m.conditions.allowedRole.toString());
+      const roleDisplay = ri?.label
+        ? `${m.conditions.allowedRole} ("${ri.label}"${ri.metadata ? ` — ${ri.metadata}` : ''})`
+        : `${m.conditions.allowedRole}`;
       return [
-        `  [${m.mandateId}] ${m.mandateId} — role ${m.conditions.allowedRole}`,
+        `  [${m.mandateId}] mandate #${m.mandateId} — role ${roleDisplay}`,
         `    Active: ${m.active} | Can call: ${canCall}`,
         `    Quorum: ${m.conditions.quorum}% | Pass: ${m.conditions.succeedAt}%`,
         `    Voting: ${m.conditions.votingPeriod} blocks | Timelock: ${m.conditions.timelock} blocks`,
@@ -88,10 +116,23 @@ export function formatContextMessage(ctx: GovernanceContext): string {
     })
     .join('\n\n');
 
+  const historyLines = ctx.recentActionHistory
+    .slice(0, 20)
+    .map((a) =>
+      [
+        `  ActionId=${a.actionId} | Mandate=${a.mandateId} | State=${a.state} | Block=${a.proposedAt} | Caller=${a.caller}`,
+        a.description ? `  Description: "${a.description}"` : null,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    )
+    .join('\n\n');
+
   return [
     '=== GOVERNANCE STATE ===',
     `Trigger: ${ctx.triggeredBy}${ctx.groupName ? ` in ${ctx.groupName} (${ctx.groupType} #${ctx.contextId})` : ''}`,
-    `Organisation: ${ctx.powersAddress} (chain ${ctx.chainId})`,
+    `Organisation: ${ctx.orgName || ctx.powersAddress} (${ctx.powersAddress}, chain ${ctx.chainId})`,
+    ...(ctx.orgUri ? [`Org metadata: ${ctx.orgUri}`] : []),
     `Your address: ${ctx.agentAddress}`,
     `Your roles: ${ctx.agentRoles.length ? ctx.agentRoles.join(', ') : 'none'}`,
     `Your ETH balance: ${ethBalanceFormatted} ETH`,
@@ -102,6 +143,10 @@ export function formatContextMessage(ctx: GovernanceContext): string {
     '',
     'OPEN ACTIONS IN SCOPE:',
     actionLines || '  (none)',
+    '',
+    'RECENT ACTION HISTORY (LAST 30 DAYS):',
+    historyLines || '  (none)',
+    ...(ctx.linkedInstancesSummary ? ['', ctx.linkedInstancesSummary] : []),
     '=== END STATE ===',
   ].join('\n');
 }

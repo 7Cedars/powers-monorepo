@@ -57,7 +57,7 @@ contract Deploy is DeployHelpers {
 
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 7;
+    uint16 constant PATCH = 8;
 
     function run() external returns (Powers, SlateRegistry) {
         helperConfig = new Configurations();
@@ -75,7 +75,7 @@ contract Deploy is DeployHelpers {
         executeResult = new SlateRegistry_ExecuteResult();
         powers = new Powers(
             "Slate Voting DAO",
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/slateVoting.json",
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/slateVoting.json",
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid)

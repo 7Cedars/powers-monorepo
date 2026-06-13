@@ -4,9 +4,13 @@ import { createServer } from './api/server.js';
 import { sessionManager } from './agent/SessionManager.js';
 import { createXmtpClient } from './xmtp/client.js';
 import { startGroupStream } from './xmtp/groupStream.js';
+import { requestOrgGroupAccess } from './xmtp/groupAccess.js';
+import { backfillGroupChatHistory } from './xmtp/chatHistory.js';
 import { startWatchers } from './events/onChainWatcher.js';
 import { startHeartbeat, stopHeartbeat } from './events/heartbeat.js';
 import { reason } from './ai/reason.js';
+import { getActionHistory, getAllMandates } from './powers/contract.js';
+import { discoverLinkedInstances } from './powers/linkedInstances.js';
 import { config } from './config/env.js';
 import type { AgentSession, OrganisationConfig } from './agent/AgentSession.js';
 
@@ -47,6 +51,11 @@ async function onSessionStart(sessionId: string): Promise<void> {
     return;
   }
 
+  // 1.5 Backfill XMTP chat history for groups the agent is already in (fire-and-forget)
+  backfillGroupChatHistory(session).catch((err) =>
+    console.error(`[index] chat history backfill failed for ${sessionId}:`, err)
+  );
+
   // 2. Start group message stream — org is resolved from the group name inside the stream
   startGroupStream(
     session,
@@ -55,9 +64,34 @@ async function onSessionStart(sessionId: string): Promise<void> {
     }
   );
 
-  // 3. Start on-chain watchers + heartbeat for each initial organisation
+  // 3. Request access to XMTP groups for all eligible mandates/flows (fire-and-forget)
+  for (const org of session.organisations) {
+    requestOrgGroupAccess(session, org).catch((err) =>
+      console.error(`[index] requestOrgGroupAccess error for ${org.powersAddress}:`, err)
+    );
+  }
+
+  // 5. Start on-chain watchers + heartbeat for each initial organisation
   for (const org of session.organisations) {
     startOrgListeners(session, org);
+  }
+
+  // 6. Load on-chain action history for each org (fire-and-forget)
+  for (const org of session.organisations) {
+    const key = `${org.chainId}:${org.powersAddress}`;
+    getActionHistory(org.chainId, org.powersAddress, 30)
+      .then((history) => {
+        session.orgActionHistory.set(key, history);
+        console.log(`[index] loaded ${history.length} historical actions for ${org.powersAddress}`);
+      })
+      .catch((err) =>
+        console.error(`[index] action history load failed for ${org.powersAddress}:`, err)
+      );
+  }
+
+  // 7. Discover linked Powers instances for each org (fire-and-forget)
+  for (const org of session.organisations) {
+    discoverLinkedInstancesForOrg(session, org);
   }
 
   console.log(
@@ -81,11 +115,30 @@ function onSessionDestroy(sessionId: string): void {
   console.log(`[index] session ${sessionId} torn down`);
 }
 
+function discoverLinkedInstancesForOrg(session: AgentSession, org: OrganisationConfig): void {
+  const orgKey = `${org.chainId}:${org.powersAddress}`;
+  getAllMandates(org.chainId, org.powersAddress)
+    .then((mandates) => discoverLinkedInstances(org.chainId, org.powersAddress, mandates))
+    .then((linked) => {
+      session.linkedInstancesCache.set(orgKey, linked);
+      if (linked.length > 0) {
+        console.log(`[index] found ${linked.length} linked Powers instance(s) for ${orgKey}`);
+      }
+    })
+    .catch((err) =>
+      console.error(`[index] linked instance discovery failed for ${org.powersAddress}:`, err)
+    );
+}
+
 // Called by the API server when a new org is added to a running session
 function onOrgAdded(sessionId: string, org: OrganisationConfig): void {
   const session = sessionManager.getSession(sessionId);
   if (!session) return;
   startOrgListeners(session, org);
+  requestOrgGroupAccess(session, org).catch((err) =>
+    console.error(`[index] requestOrgGroupAccess error for new org ${org.powersAddress}:`, err)
+  );
+  discoverLinkedInstancesForOrg(session, org);
   console.log(`[index] added org ${org.powersAddress} to session ${sessionId}`);
 }
 

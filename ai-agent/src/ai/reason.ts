@@ -9,6 +9,7 @@ import {
 } from './tools/governanceTools.js';
 import { config } from '../config/env.js';
 import { sessionManager } from '../agent/SessionManager.js';
+import { claudeLimiter } from './rateLimiter.js';
 
 export async function reason(
   session: AgentSession,
@@ -46,8 +47,25 @@ export async function reason(
     ...session.skills.map((s) => s.tool),
   ];
 
+  // Cache system prompt and tool list — both are stable per session.
+  // cache_control marks a breakpoint: everything up to and including it is cached.
+  const systemParam = [
+    { type: 'text' as const, text: systemPrompt, cache_control: { type: 'ephemeral' as const } },
+  ];
+  const cachedTools = allTools.length > 0
+    ? [
+        ...allTools.slice(0, -1),
+        { ...allTools[allTools.length - 1], cache_control: { type: 'ephemeral' } },
+      ]
+    : allTools;
+
   let rounds = 0;
   const maxRounds = config.ai.maxToolRounds;
+
+  const thinkingBudget = config.ai.thinkingBudget;
+  const apiParams = thinkingBudget > 0
+    ? { thinking: { type: 'enabled' as const, budget_tokens: thinkingBudget }, max_tokens: Math.max(4096, thinkingBudget + 2000) }
+    : { max_tokens: 4096 };
 
   const assistantParts: MessageParam[] = [];
 
@@ -56,14 +74,16 @@ export async function reason(
 
     let response;
     try {
-      response = await session.claudeClient.messages.create({
-        model: session.persona.model ?? 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages,
-        tools: allTools as any,
-        tool_choice: { type: 'auto' },
-      });
+      response = await claudeLimiter.schedule(() =>
+        session.claudeClient.messages.create({
+          model: session.persona.model ?? 'claude-sonnet-4-6',
+          system: systemParam as any,
+          messages,
+          tools: cachedTools as any,
+          tool_choice: { type: 'auto' },
+          ...apiParams,
+        })
+      );
     } catch (err: any) {
       console.error(`[reason] Claude API error (session ${session.sessionId}):`, err);
 
@@ -79,6 +99,13 @@ export async function reason(
         await groupReply('I encountered an error accessing my AI capabilities. Please try again.');
       }
       return;
+    }
+
+    // Log thinking blocks when extended thinking is enabled
+    for (const block of response.content) {
+      if (block.type === 'thinking') {
+        console.log(`[thinking] session ${session.sessionId}:\n${(block as any).thinking}`);
+      }
     }
 
     // Collect assistant content for history
@@ -158,19 +185,32 @@ export async function reason(
     console.log(`[heartbeat] ${session.sessionId} ${org.powersAddress} — no action`);
   }
 
-  // Update conversation history (trimmed to max turns)
-  const updatedHistory: MessageParam[] = [
-    ...history,
-    { role: 'user', content: userContent },
-    ...assistantParts,
-  ];
-
+  // Update conversation history (trimmed to max turns).
+  // Use `messages` directly — it already contains the full exchange including
+  // tool_result user messages that must follow every tool_use assistant block.
   const maxTurns = config.ai.maxHistoryTurns * 2; // each turn = user + assistant
-  const trimmed = updatedHistory.slice(-maxTurns);
+  let trimmed = messages.slice(-maxTurns);
+
+  // Drop any leading orphaned tool_result or assistant blocks that the slice
+  // may have cut off from their preceding context.
+  while (trimmed.length > 0) {
+    const first = trimmed[0];
+    const isToolResult =
+      Array.isArray(first.content) &&
+      (first.content as any[])[0]?.type === 'tool_result';
+    if (first.role === 'assistant' || isToolResult) {
+      trimmed = trimmed.slice(1);
+    } else {
+      break;
+    }
+  }
+
   session.histories.set(conversationId, trimmed);
 
   sessionManager.touchSession(session.sessionId);
 }
+
+const MAX_REPLY_CHARS = 300;
 
 async function sendRateLimited(
   session: AgentSession,
@@ -178,10 +218,13 @@ async function sendRateLimited(
   text: string,
   groupReply: (text: string) => Promise<void>
 ): Promise<void> {
+  const truncated = text.length > MAX_REPLY_CHARS
+    ? text.slice(0, MAX_REPLY_CHARS - 1) + '…'
+    : text;
   const now = Date.now();
   const last = session.lastReplyAt.get(conversationId) ?? 0;
   const wait = Math.max(0, config.ai.chatRateLimitMs - (now - last));
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-  await groupReply(text);
+  await groupReply(truncated);
   session.lastReplyAt.set(conversationId, Date.now());
 }
