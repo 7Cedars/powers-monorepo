@@ -3,8 +3,10 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { pipeline } from '@huggingface/transformers';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import express, { type Request, type Response, type NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import type { Chunk } from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,7 +28,6 @@ function cosine(a: number[], b: number[]): number {
 }
 
 async function embedQuery(query: string): Promise<number[]> {
-  // nomic-embed requires "search_query:" prefix for query embedding
   const output = await extractor([`search_query: ${query}`], { pooling: 'mean', normalize: true });
   return (output.tolist() as number[][])[0];
 }
@@ -40,21 +41,7 @@ async function search(query: string, k: number) {
     .map((r) => ({ source: r.source, sourceType: r.sourceType, text: r.text, relevanceScore: Math.round(r.score * 100) / 100 }));
 }
 
-async function main() {
-  // Load embedding index
-  try {
-    const raw = await readFile(INDEX_PATH, 'utf-8');
-    index = JSON.parse(raw) as Chunk[];
-    process.stderr.write(`[governance-rag] Loaded ${index.length} chunks\n`);
-  } catch {
-    process.stderr.write(`[governance-rag] Warning: no index found at ${INDEX_PATH}. Run pnpm ingest first.\n`);
-  }
-
-  // Load model eagerly so first search is not slow (~2–5 s from cache)
-  process.stderr.write(`[governance-rag] Loading embedding model ${MODEL}...\n`);
-  extractor = await pipeline('feature-extraction', MODEL);
-  process.stderr.write(`[governance-rag] Model ready\n`);
-
+function buildMcpServer(): Server {
   const server = new Server(
     { name: 'governance-rag', version: '0.1.0' },
     { capabilities: { tools: {} } },
@@ -93,7 +80,7 @@ async function main() {
 
     if (index.length === 0) {
       return {
-        content: [{ type: 'text', text: 'Index is empty. Run `pnpm ingest` in the ai/ directory first.' }],
+        content: [{ type: 'text', text: 'Index is empty. Run `pnpm ingest` in the ai-skill/ directory first.' }],
       };
     }
 
@@ -105,8 +92,63 @@ async function main() {
     return { content: [{ type: 'text', text }] };
   });
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  return server;
+}
+
+async function main() {
+  // Load embedding index
+  try {
+    const raw = await readFile(INDEX_PATH, 'utf-8');
+    index = JSON.parse(raw) as Chunk[];
+    process.stderr.write(`[governance-rag] Loaded ${index.length} chunks\n`);
+  } catch {
+    process.stderr.write(`[governance-rag] Warning: no index found at ${INDEX_PATH}. Run pnpm ingest first.\n`);
+  }
+
+  // Load model eagerly so first search is not slow
+  process.stderr.write(`[governance-rag] Loading embedding model ${MODEL}...\n`);
+  extractor = await pipeline('feature-extraction', MODEL);
+  process.stderr.write(`[governance-rag] Model ready\n`);
+
+  const app = express();
+  app.use(express.json());
+
+  app.use('/mcp', rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' },
+  }));
+
+  // Bearer-token auth — only enforced when MCP_API_KEY is set (allows local dev without a key)
+  app.use('/mcp', (req: Request, res: Response, next: NextFunction) => {
+    const key = process.env.MCP_API_KEY;
+    if (!key) return next();
+    if (req.headers.authorization !== `Bearer ${key}`) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    next();
+  });
+
+  app.get('/health', (_req: Request, res: Response) => {
+    res.json({ status: 'ok', chunks: index.length });
+  });
+
+  // MCP endpoint — stateless: one transport instance per request
+  app.all('/mcp', async (req: Request, res: Response) => {
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    const server = buildMcpServer();
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+    res.on('close', () => { server.close(); });
+  });
+
+  const port = process.env.PORT ?? 3000;
+  app.listen(port, () => {
+    process.stderr.write(`[governance-rag] HTTP server listening on port ${port}\n`);
+  });
 }
 
 main().catch((err) => {

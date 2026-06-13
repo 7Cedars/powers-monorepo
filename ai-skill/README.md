@@ -1,64 +1,51 @@
-# `/design-org` — AI governance design skill
+# `governance-rag` — MCP server for governance design
 
-A Claude Code slash command that guides you through designing and deploying an on-chain organisation on the Powers protocol. You describe your organisation in plain language; the skill produces a complete, ready-to-deploy Solidity package.
-
-No Solidity knowledge required to use it. Foundry is only needed at the end to compile and run tests.
+A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) HTTP server that provides semantic search over a curated library of governance theory papers (Ostrom, Carlisle, OECD, and others). It exposes a single tool — `search_governance_sources` — used by the [`/design-org`](../.claude/commands/design-org.md) Claude Code skill to ground governance design conversations in published research.
 
 ---
 
-## Quick start
+## Quick start (hosted server)
+
+A public instance is deployed on Railway. Connect it to Claude Code with one command:
 
 ```bash
-# 1. Build the RAG index (one-time setup, ~2–5 min on first run)
-cd ai-skill
-pnpm install
-pnpm ingest
-
-# 2. Restart Claude Code — the MCP server registers automatically via .claude/settings.json
-
-# 3. Open a Claude Code session in the repo root and type:
-/design-org
+claude mcp add --transport http governance-rag https://selfless-optimism-production-b92b.up.railway.app/mcp
 ```
 
-That's it. Claude will lead the conversation from there.
+Then restart your Claude Code session and run `/design-org`. No local setup required.
 
 ---
 
-## What it produces
+## How the `/design-org` skill uses this MCP
 
-One conversation generates five files:
+The [`/design-org`](../.claude/commands/design-org.md) slash command guides non-technical users through designing an on-chain organisation on the Powers protocol. It calls `search_governance_sources` at two specific points during Phase 2 (the elicitation dialogue):
 
-| File | What it is |
-|------|------------|
-| `documentation/src/content/docs/organisations/<name>.mdx` | Human-readable governance specification |
-| `solidity/governance/claude/<name>/Deploy.s.sol` | Foundry deploy script |
-| `solidity/governance/claude/<name>/Actions.s.sol` | Propose and execute helpers |
-| `solidity/governance/claude/<name>/Runners.s.sol` | Stateless runners that advance governance flows |
-| `solidity/governance/claude/<name>/Test.t.sol` | Fork-based end-to-end tests |
+1. **Contextual query** — after the user describes their organisation's purpose and stakeholders, Claude searches for theory relevant to that specific governance challenge (e.g. `"polycentric commons electoral design legitimacy"`).
 
-See [`solidity/governance/claude/`](../solidity/governance/claude/) for examples of what the output looks like.
+The MCP tool returns scored excerpts from the source corpus. Claude cites these in the spec it writes to `solidity/governance/<org-name>/Spec.md`.
+
+If the MCP is unreachable, the skill warns the user and prints the `claude mcp add` command shown above before falling back to locally-loaded reference files.
 
 ---
 
-## How the conversation works
+## The `search_governance_sources` tool
 
-The skill runs a five-phase workflow:
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `string` | Free-text semantic search query |
+| `k` | `number` (optional, default 5) | Number of results to return |
 
-**Phase 1 — Load context** (silent). Claude reads the mandate catalogue, templates, and example constitutions.
-
-**Phase 2 — Elicit**. Two rounds of questions about your organisation's purpose, stakeholders, decision types, trust structure, and any external integrations (Safe, NFTs, tokens, paymasters). Claude searches the governance theory library between rounds to inform its questions.
-
-**Phase 3 — Specification**. Claude writes a human-readable `Spec.md` that you review and correct before any code is generated.
-
-**Phase 4 — Code generation**. Claude generates the deploy script, action helpers, runners, and tests from the approved spec.
-
-**Phase 5 — Build check**. Claude runs `forge build` and fixes any compilation errors before handing off.
+Each result contains:
+- `source` — filename of the paper or summary the excerpt came from
+- `sourceType` — `"pdf"` or `"markdown"`
+- `text` — the retrieved passage
+- `relevanceScore` — cosine similarity (0–1)
 
 ---
 
-## RAG setup (required once before first use)
+## Self-hosting
 
-The skill uses a local embedding index to retrieve relevant excerpts from governance theory papers (Ostrom, Carlisle, OECD, and others) during the design dialogue. No API key is needed — embeddings are computed locally using `nomic-ai/nomic-embed-text-v1.5` via `@huggingface/transformers`.
+Run your own instance if you want to extend the corpus or keep everything local.
 
 **1. Install dependencies**
 
@@ -67,19 +54,44 @@ cd ai-skill
 pnpm install
 ```
 
-**2. Build the index**
+**2. Build the embedding index**
 
 ```bash
 pnpm ingest
 ```
 
-On first run this downloads the `nomic-embed-text-v1.5` model (~275 MB) from Hugging Face into your system cache (`~/.cache/huggingface/hub/`). Subsequent runs load from cache and are fast.
+This reads every PDF in `sources/` and every Markdown file in `references/`, splits them into chunks, and computes embeddings using `nomic-ai/nomic-embed-text-v1.5` via `@huggingface/transformers`. The model (~275 MB) is downloaded on first run into `~/.cache/huggingface/hub/` and cached for subsequent runs. The index is written to `embeddings/index.json` (gitignored).
 
-**3. Restart Claude Code**
+Re-run `pnpm ingest` any time you add PDFs to `sources/` or update summaries in `references/`.
 
-The MCP server (`pnpm serve`) is registered in `.claude/settings.json` and starts automatically when you open a Claude Code session. It loads the model on startup (~2–5 s) and stays ready. No network access is needed after the initial download.
+**3. Start the server**
 
-Re-run `pnpm ingest` any time you add new PDFs to `sources/` or update summaries in `references/`.
+```bash
+pnpm serve          # development (tsx, hot-reload)
+pnpm start          # production (compiled JS)
+```
+
+The server listens on `PORT` (default `3000`). It exposes a single MCP endpoint at `/mcp` using the Streamable HTTP transport.
+
+**4. Register with Claude Code**
+
+```bash
+claude mcp add --transport http governance-rag http://localhost:3000/mcp
+```
+
+Restart Claude Code, then run `/design-org` as normal.
+
+---
+
+## Adding sources
+
+| What to add | Where to put it |
+|-------------|-----------------|
+| New governance theory paper | `sources/*.pdf` |
+| Per-paper summary or annotated notes | `references/*.md` |
+| Annotated guide to the whole corpus | `references/reading_guide.md` |
+
+After adding files, re-run `pnpm ingest` to rebuild the index.
 
 ---
 
@@ -91,7 +103,7 @@ ai-skill/
 │   └── institutionalDesign.md   # Mandate catalogue, design heuristics, condition encoding
 ├── references/
 │   ├── reading_guide.md         # Annotated guide to the governance theory papers
-│   └── *.md                     # Per-paper summaries used as fallback context
+│   └── *.md                     # Per-paper summaries (also ingested into the RAG index)
 ├── sources/
 │   └── *.pdf                    # Governance theory papers (Ostrom, Carlisle, OECD…)
 ├── templates/
@@ -99,43 +111,28 @@ ai-skill/
 │   └── deployScript.md          # Annotated Solidity deploy script template
 ├── embeddings/                  # Generated vector index (gitignored — run pnpm ingest)
 └── src/
-    ├── types.ts                 # Shared types for the RAG package
-    ├── ingest.ts                # Parses sources/ and references/, builds embeddings/index.json
-    └── server.ts                # MCP stdio server exposing search_governance_sources tool
+    ├── types.ts                 # Shared types
+    ├── ingest.ts                # Parses sources/ and references/, writes embeddings/index.json
+    └── server.ts                # Express + MCP HTTP server exposing search_governance_sources
 ```
 
-The skill uses the `search_governance_sources` MCP tool (served from `src/server.ts`) to retrieve relevant excerpts during the design dialogue, rather than loading files directly.
-
 ---
 
-## How Claude Code slash commands work
-
-Claude Code looks for slash commands in two places:
-
-| Location | Scope |
-|----------|-------|
-| `~/.claude/commands/<name>.md` | Available in every project on your machine |
-| `<project-root>/.claude/commands/<name>.md` | Available only inside this project |
-
-The `design-org` command lives at `.claude/commands/design-org.md` in this repository (project-scoped) and is version-controlled alongside the code it generates.
-
----
-
-## Using this skill in a different project
+## Using `/design-org` in a different project
 
 **Option A — Copy the command file (project-scoped)**
 
 1. Create `.claude/commands/` in the target project root if it does not exist.
 2. Copy `.claude/commands/design-org.md` into it.
-3. Copy the entire `ai-skill/` directory into the target project root.
-4. Open a Claude Code session in the target project and run `/design-org`.
+3. Copy the `ai-skill/prompts/`, `ai-skill/templates/`, and `ai-skill/references/` directories into an `ai-skill/` folder in the target project.
+4. Register the hosted MCP (or your self-hosted instance) via `claude mcp add` as shown above.
+5. Open a Claude Code session in the target project and run `/design-org`.
 
 **Option B — Install globally (machine-scoped)**
 
 1. Copy `design-org.md` to `~/.claude/commands/design-org.md`.
-2. Put `ai-skill/` somewhere stable on your machine (e.g., `~/.claude/powers-ai/`).
-3. Edit the file-path references inside `design-org.md` (the Phase 1 load list) to use the absolute path where you placed `ai-skill/`.
-4. The command will now be available in every Claude Code project on your machine.
+2. Edit the file-path references inside `design-org.md` (the Phase 1 load list) to use absolute paths pointing to wherever you placed the `ai-skill/` directory.
+3. The command will now be available in every Claude Code project on your machine.
 
 ---
 
@@ -148,19 +145,22 @@ The skill has three layers that can be changed independently:
 | Conversation logic | `.claude/commands/design-org.md` | Phases, questions, output rules |
 | Mandate knowledge | `ai-skill/prompts/institutionalDesign.md` | New mandates, updated config encodings, condition heuristics |
 | Templates | `ai-skill/templates/orgSpec.md`, `ai-skill/templates/deployScript.md` | Output format for generated files |
-| Theory | `ai-skill/references/` | Add PDFs to `sources/`; update `reading_guide.md` |
 
 When a new mandate version ships, update the `MAJOR`/`MINOR`/`PATCH` constants at the top of `deployScript.md` and in the Phase 4 instructions inside `design-org.md`.
 
 ---
 
-## Prerequisites for Phase 5 (compilation and tests)
+## Prerequisites for Phase 5 (compilation check)
 
-The skill runs `forge build` at the end of a session. For this to work:
-
-- Foundry must be installed: `forge --version`
-- For fork tests, set `SEPOLIA_RPC_URL` in your environment before running:
+The `/design-org` skill runs `forge build` after generating code. For this to work, Foundry must be installed:
 
 ```bash
+forge --version
+```
+
+To run the generated fork tests:
+
+```bash
+export SEPOLIA_RPC_URL=<your-url>
 forge test --match-contract <OrgName>_test -vvv
 ```

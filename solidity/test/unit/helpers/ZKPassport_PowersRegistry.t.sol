@@ -174,4 +174,36 @@ contract ZKPassport_PowersRegistryTest is TestSetupHelpers {
         vm.expectRevert("No registration found");
         zkReg.deleteProof();
     }
+
+    // ─── ADDITIONAL EDGE CASES ───
+
+    /// @notice mockAddDisclosedData called twice on the same account overwrites the entry
+    /// with a fresh identifier (different block.timestamp). The newer proof timestamp is returned.
+    function testMockAddDisclosedDataOverwritesPreviousEntry() public {
+        zkReg.mockAddDisclosedData(alice);
+        uint256 ts1 = zkReg.getProofTimestamp(alice);
+
+        vm.warp(block.timestamp + 100);
+        zkReg.mockAddDisclosedData(alice);
+        uint256 ts2 = zkReg.getProofTimestamp(alice);
+
+        assertGt(ts2, ts1);
+        // After overwrite getDisclosed still resolves correctly
+        DisclosedData memory data = zkReg.getDisclosed(alice);
+        assertEq(data.name, "Mock Entry");
+    }
+
+    /// @notice Constructor does not validate zkPassportHelper for address(0), unlike
+    /// zkPassportVerifier. This asymmetry is documented here. A zero helper would only
+    /// fail at runtime inside registerProof when zkPassportHelper is called.
+    function testConstructorAcceptsZeroHelper() public {
+        // Should not revert — only verifier is validated
+        new ZKPassport_PowersRegistry(alice, address(0), "powers.xyz", "powers");
+    }
+
+    // FAILING: registerProof requires a live ZKPassport verifier that cannot be supplied
+    // in a local Foundry environment — zkPassportVerifier.verify() has no available stub.
+    // All other surface area of the contract is exercised by the mock-based tests above.
+    // To test registerProof: use a forked test against a network where the ZKPassport
+    // verifier is deployed, or introduce a IZKPassportVerifier stub in test/mocks/.
 }
