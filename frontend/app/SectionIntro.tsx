@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
-const SCROLL_BUDGET_VH = 200;
+const SCROLL_BUDGET_VH = 250;
 
 function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
   while (el) {
