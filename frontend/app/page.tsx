@@ -24,9 +24,9 @@ export default function Page() {
             <HeroSection />
 
             <SectionIntro />
-            <div className="min-h-screen"><SectionDemo /></div>
-            <div className="min-h-screen"><SectionApplications /></div>
-            <div className="min-h-screen"><SectionExamples /></div>
+            <SectionDemo />
+            <SectionApplications />
+            <SectionExamples />
             {/* <div className="min-h-screen"><SectionForum /></div> */}
             <Footer />
            
