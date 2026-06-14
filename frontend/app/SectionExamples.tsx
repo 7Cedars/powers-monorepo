@@ -19,7 +19,7 @@ export function SectionExamples() {
   const next = () => setSelected(i => (i + 1) % total);
 
   return (
-    <section id="examples" className="w-full min-h-screen flex flex-col items-center justify-center px-4 bg-muted/25 border-t border-border py-16">
+    <section id="examples" className="w-full min-h-screen flex flex-col items-center justify-start px-4 bg-muted/25 border-t border-border py-6 sm:py-10">
 
       {/* Title & subtitle */}
       <div className="w-full flex flex-col justify-center items-center pb-10 gap-3">
@@ -34,7 +34,7 @@ export function SectionExamples() {
       <div className="w-full max-w-3xl flex flex-col border border-border bg-background">
 
         {/* Banner — 2:1 */}
-        <div className="w-full aspect-[2/1] flex-shrink-0 bg-muted/30 overflow-hidden">
+        <div className="w-full aspect-[2/1] max-h-[200px] sm:max-h-[280px] flex-shrink-0 bg-muted/30 overflow-hidden">
           {org.banner ? (
             <img
               src={org.banner}
