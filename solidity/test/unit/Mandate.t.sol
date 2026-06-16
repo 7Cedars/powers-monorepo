@@ -397,7 +397,7 @@ contract MandateEdgeCaseTest is TestSetupMandate {
         );
 
         // assert: verify mandate is initialized successfully
-        assertEq(testMandate.getInputParams(address(daoMock), mandateId).length, 288);
+        assertEq(testMandate.getInputParams(address(daoMock), mandateId).length, 352);
     }
 
     function testInitializeMandateWithEmptyConfig() public {

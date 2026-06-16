@@ -1,0 +1,54 @@
+---
+title: "GovernedToken_MintEncodedToken"
+description: "GovernedToken_MintEncodedToken is an integration mandate that mints a Governed721 token with an ID that encodes the caller's address and the current block number."
+---
+
+GovernedToken_MintEncodedToken is an integration mandate that mints a Governed721 token to a specified recipient. The token ID is automatically constructed by encoding the caller's address and the current block number, making each token traceable back to its minter and mint time.
+
+## Overview
+
+This mandate is used to issue tokens that carry provenance information in their ID. The encoded token ID makes it possible for downstream mandates (like `GovernedToken_GatedAccess`) to verify who minted a token and when.
+
+## Configuration
+
+When adopting a GovernedToken_MintEncodedToken instance, the following parameter is required:
+
+1.  `governedToken` (address): The address of the Governed721 token contract.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, one parameter must be provided:
+
+1.  `To` (address): The recipient address for the minted token.
+
+### Execution Flow
+
+1.  **Token ID Construction**
+    *   Encodes the token ID as: `(uint256(caller) << 48) | uint256(block.number)`.
+    *   This packs the caller's address into the upper bits and the block number into the lower 48 bits.
+
+2.  **Mint**
+    *   Calls `mint(to, tokenId)` on the Governed721 contract.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Constructs the encoded token ID from the caller address and current block number.
+-   Returns a `mint` call targeting the Governed721 contract.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur at the Governed721 contract level if minting is not permitted.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

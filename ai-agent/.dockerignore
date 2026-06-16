@@ -1,0 +1,7 @@
+node_modules/
+dist/
+data/
+.env
+*.db3
+*.db3-shm
+*.db3-wal

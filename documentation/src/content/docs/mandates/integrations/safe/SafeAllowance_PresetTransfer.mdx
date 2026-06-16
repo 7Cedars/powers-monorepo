@@ -1,0 +1,58 @@
+---
+title: "SafeAllowance_PresetTransfer"
+description: "SafeAllowance_PresetTransfer is an integration mandate that executes a preset token transfer from a Gnosis Safe via the Allowance Module. The token and amount are fixed at configuration time; the caller provides only the recipient address."
+---
+
+SafeAllowance_PresetTransfer is an integration mandate that sends a fixed amount of a fixed token from a Gnosis Safe via the Allowance Module. The token, amount, and Safe address are all locked in at configuration time — the caller only specifies where the funds should go.
+
+## Overview
+
+This mandate is useful for recurring or pre-approved payments where the amount and token are known in advance. It calls `executeAllowanceTransfer` on the Allowance Module directly, using a `v=1` Powers contract signature as the delegate authorization.
+
+## Configuration
+
+When adopting a SafeAllowance_PresetTransfer instance, the following parameters are required:
+
+1.  `Token` (address): The ERC20 token to transfer.
+2.  `Amount` (uint256): The fixed amount to transfer (in token base units).
+3.  `allowanceModule` (address): The address of the Gnosis Safe Allowance Module.
+4.  `safeProxy` (address): The address of the Gnosis Safe from which tokens will be transferred.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, one parameter must be provided:
+
+1.  `PayableTo` (address): The recipient of the token transfer.
+
+### Execution Flow
+
+1.  **Signature Construction**
+    *   Constructs a `v=1` delegate signature authorizing the Powers contract to act as the delegate.
+
+2.  **Transfer**
+    *   Calls `executeAllowanceTransfer` on the Allowance Module with the preset token, amount, Safe address, recipient, and delegate signature.
+    *   The Allowance Module verifies the allowance and executes the transfer via the Safe.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Reads the preset config.
+-   Decodes the recipient from the input.
+-   Returns the `executeAllowanceTransfer` call.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur at the Allowance Module if the allowance is insufficient or the delegate is not registered.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

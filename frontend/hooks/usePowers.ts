@@ -2,11 +2,10 @@ import { Status, Action, Powers, Mandate, Metadata, Role, Conditions, ChainId, F
 import { wagmiConfig } from '../context/wagmiConfig'
 import { useCallback, useState } from "react";
 import { mandateAbi, powersAbi } from "@/context/abi";
-import { readContract, readContracts, getBlockNumber, getPublicClient } from "wagmi/actions";
+import { readContract, readContracts, getBlockNumber } from "wagmi/actions";
 import { bytesToParams, parseMetadata } from "@/utils/parsers";
 import { useParams } from "next/navigation";
 import { setPowers, setError, setStatus } from "@/context/store";
-import { getConstants } from "@/context/constants";
 import { stringifyWithBigInt, parseWithBigInt } from "@/utils/localStorage";
 
 export const usePowers = () => {
@@ -461,7 +460,7 @@ export const usePowers = () => {
     const activeMandates = mandates.filter((mandate) => mandate.active)
 
     const staleActionsByMandate = new Map<string, Set<number>>()
-    
+
     activeMandates.forEach((mandate) => {
       const savedActions = mandate.actions || []
       const staleIndices = new Set<number>()
@@ -560,7 +559,7 @@ export const usePowers = () => {
       if (!newActionsByIndex && !mandate.active) {
         return mandate
       }
-      
+
       const mandateIndex = activeMandates.findIndex(l => l.index === mandate.index)
       const quantity = mandateIndex >= 0 ? Number(actionQuantities[mandateIndex]) : 0
       
@@ -595,165 +594,7 @@ export const usePowers = () => {
     return updatedMandates
   }
 
-  // ============ WARM FETCH LOGIC ============
-  // Warm fetch uses event logs to incrementally update state instead of full contract reads
-
-  const warmFetch = async (
-    existingPowers: Powers,
-    fromBlock: bigint,
-    toBlock: bigint,
-    chainId: ChainId
-  ): Promise<Powers> => {
-    console.log("@warmFetch: Fetching events from block", fromBlock.toString(), "to", toBlock.toString())
-    
-    let updatedPowers = { ...existingPowers }
-    let needsFullMandateRefresh = false
-    let needsFullRoleRefresh = false
-    let needsFullFlowRefresh = false
-    let actionIdsToRefresh: Set<string> = new Set()
-    let mandateIdsToRefresh: Set<number> = new Set()
-
-    try {
-      // Fetch all relevant events in a single batch using viem client
-      const client = getPublicClient(wagmiConfig, { chainId })
-      if (!client) {
-        throw new Error("Failed to get public client")
-      }
-      
-      const logs = await client.getContractEvents({
-        address: existingPowers.contractAddress,
-        abi: powersAbi,
-        fromBlock,
-        toBlock
-      })
-
-      console.log("@warmFetch: Found", logs.length, "events")
-
-      // Process each event
-      for (const log of logs) {
-        const eventName = log.eventName
-
-        switch (eventName) {
-          case 'ActionRequested':
-          case 'ProposedActionCreated':
-            // New action created - need to refresh the mandate's actions
-            const mandateId = Number((log.args as any).mandateId)
-            mandateIdsToRefresh.add(mandateId)
-            break
-
-          case 'ActionFulfilled':
-          case 'ProposedActionCancelled':
-            // Action state changed - refresh this specific action
-            const actionId = String((log.args as any).actionId)
-            actionIdsToRefresh.add(actionId)
-            break
-
-          case 'VoteCast':
-            // Vote cast on action - refresh vote counts for this action
-            const votedActionId = String((log.args as any).actionId)
-            actionIdsToRefresh.add(votedActionId)
-            break
-
-          case 'RoleSet':
-          case 'RoleLabel':
-            // Role changed - refresh all roles
-            needsFullRoleRefresh = true
-            break
-
-          case 'MandateAdopted':
-          case 'MandateRevoked':
-            // Mandate structure changed - need full mandate refresh
-            needsFullMandateRefresh = true
-            break
-
-          case 'FlowAdded':
-          case 'FlowDeleted':
-          case 'FlowAdapted':
-            // Flow structure changed - need full flow refresh
-            needsFullFlowRefresh = true
-            break
-
-          case 'PaymasterSet':
-            // Paymaster updated - update directly from event
-            updatedPowers.paymaster = (log.args as any).newPaymaster
-            break
-        }
-      }
-
-      // If no events found, check for actions in state 3 (Active voting).
-      // The 3→4/5 transition is block-time-based (no event fires), so we must
-      // re-fetch those action states explicitly to catch an ended voting period.
-      if (logs.length === 0) {
-        const hasActiveVotingActions = updatedPowers.mandates?.some(
-          m => m.actions?.some(a => a.state === 3)
-        )
-        updatedPowers.lastFetched = toBlock
-        if (!hasActiveVotingActions) {
-          return updatedPowers
-        }
-        if (updatedPowers.mandates) {
-          const refreshedMandates = await fetchActions(updatedPowers.mandates, chainId)
-          if (refreshedMandates) updatedPowers.mandates = refreshedMandates
-        }
-        return updatedPowers
-      }
-
-      // Perform targeted refreshes based on events
-
-      // Full mandate refresh if structure changed
-      if (needsFullMandateRefresh) {
-        console.log("@warmFetch: Full mandate refresh required")
-        const mandates = await fetchMandates(updatedPowers, chainId)
-        if (mandates) {
-          const mandatesWithActions = await fetchActions(mandates, chainId)
-          updatedPowers.mandates = mandatesWithActions
-        }
-      } else if (mandateIdsToRefresh.size > 0 || actionIdsToRefresh.size > 0) {
-        // Selective action refresh for affected mandates
-        console.log("@warmFetch: Refreshing actions for mandates:", Array.from(mandateIdsToRefresh))
-        
-        if (updatedPowers.mandates) {
-          // Refresh actions for specific mandates or all if we have action IDs
-          const mandatesToRefresh = updatedPowers.mandates.filter(m => 
-            mandateIdsToRefresh.has(Number(m.index)) || 
-            (actionIdsToRefresh.size > 0 && m.active)
-          )
-          
-          if (mandatesToRefresh.length > 0) {
-            const refreshedMandates = await fetchActions(updatedPowers.mandates, chainId)
-            if (refreshedMandates) {
-              updatedPowers.mandates = refreshedMandates
-            }
-          }
-        }
-      }
-
-      // Refresh roles if needed
-      if (needsFullRoleRefresh && updatedPowers.mandates) {
-        console.log("@warmFetch: Full role refresh required")
-        const roles = await fetchRoles(updatedPowers.mandates, chainId)
-        updatedPowers.roles = roles
-      }
-
-      // Refresh flows if needed
-      if (needsFullFlowRefresh) {
-        console.log("@warmFetch: Full flow refresh required")
-        const flows = await fetchFlows(updatedPowers.contractAddress, chainId)
-        updatedPowers.flows = flows
-      }
-
-      updatedPowers.lastFetched = toBlock
-      return updatedPowers
-
-    } catch (error) {
-      console.error("@warmFetch error:", error)
-      // On error, fall back to returning existing powers with updated lastFetched
-      // The next fetch might trigger a cold fetch if this fails
-      throw error
-    }
-  }
-
-  // ============ COLD FETCH LOGIC (existing full fetch) ============
+  // ============ COLD FETCH LOGIC ============
   const coldFetch = async (
     address: `0x${string}`,
     chainId: ChainId,
@@ -818,49 +659,16 @@ export const usePowers = () => {
   // ============ MAIN FETCH FUNCTION ============
   const fetchPowers = useCallback(
     async (address: `0x${string}`, chainId: ChainId) => {
-      console.log("@fetchPowers: Starting fetch for", address)
+      console.log("@fetchPowers: Starting cold fetch for", address)
       setStatus({status: "pending"})
 
       try {
-        // Get current block number
-        const currentBlock = await getBlockNumber(wagmiConfig, { chainId })
-        const constants = getConstants(chainId)
-        const maxBlocksFetch = BigInt(constants.MAX_BLOCKS_FETCH)
-
-        // Check for existing data in localStorage
         let existing: Powers | undefined
         const localStore = localStorage.getItem("powersProtocols")
         const saved: Powers[] = localStore && localStore != "undefined" ? parseWithBigInt<Powers[]>(localStore) : []
         existing = saved.find(item => item.contractAddress == address)
 
-        // Determine if we should do a warm or cold fetch
-        const shouldWarmFetch = existing && 
-          existing.lastFetched !== undefined && 
-          currentBlock < existing.lastFetched + maxBlocksFetch &&
-          existing.mandates !== undefined  // Must have existing data to update
-
-        let newPowers: Powers | undefined
-
-        if (shouldWarmFetch && existing && existing.lastFetched !== undefined) {
-          // WARM FETCH: Use events to incrementally update
-          console.log("@fetchPowers: Using WARM fetch (event-based incremental update)")
-          try {
-            newPowers = await warmFetch(
-              existing,
-              BigInt(existing.lastFetched) + 1n, // Start from block after last fetch (ensure BigInt in case of legacy string storage)
-              currentBlock,
-              chainId
-            )
-          } catch (warmError) {
-            // If warm fetch fails, fall back to cold fetch
-            console.warn("@fetchPowers: Warm fetch failed, falling back to cold fetch", warmError)
-            newPowers = await coldFetch(address, chainId, existing)
-          }
-        } else {
-          // COLD FETCH: Full data refresh from contracts
-          console.log("@fetchPowers: Using COLD fetch (full contract reads)")
-          newPowers = await coldFetch(address, chainId, existing)
-        }
+        const newPowers = await coldFetch(address, chainId, existing)
 
         if (newPowers) {
           setPowers(newPowers)
@@ -875,7 +683,7 @@ export const usePowers = () => {
         setStatus({status: "error"})
         setError({error: error as Error})
       }
-    }, [] 
+    }, []
   )
 
   return {fetchPowers}  

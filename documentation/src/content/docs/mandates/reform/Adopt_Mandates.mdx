@@ -1,0 +1,55 @@
+---
+title: "Adopt_Mandates"
+description: "Adopt_Mandates is a reform mandate that adopts a set of mandates into the Powers protocol in a single transaction, each with a specified allowed role."
+---
+
+Adopt_Mandates is a reform mandate that adopts multiple mandates into the Powers protocol in one transaction. Each mandate is assigned a role that controls who can call it.
+
+## Overview
+
+This mandate is used to expand a Powers organisation's governance capabilities by installing new mandates. The caller provides a list of mandate contract addresses and corresponding role IDs, and the mandate generates `adoptMandate` calls for each one.
+
+## Configuration
+
+This mandate requires no configuration parameters at adoption time.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, two parameters must be provided:
+
+1.  `mandates` (address[]): The addresses of the mandate contracts to adopt.
+2.  `roleIds` (uint256[]): The role IDs to assign to each mandate. `roleIds[i]` is the allowed role for `mandates[i]`.
+
+Both arrays must be the same length.
+
+### Execution Flow
+
+1.  **Decoding**
+    *   Decodes the `mandates` and `roleIds` arrays from the input.
+
+2.  **Adoption Calls**
+    *   For each mandate address, builds a `MandateInitData` struct with the corresponding role ID and calls `IPowers.adoptMandate`.
+    *   All mandates are adopted with a name of `"Reform mandate"` and empty config — these can be configured further after adoption if needed.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public pure override returns (...)
+```
+-   Decodes the mandate addresses and role IDs.
+-   Returns a batch of `adoptMandate` calls.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur at the Powers contract level if any adoption is invalid.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

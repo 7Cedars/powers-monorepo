@@ -40,22 +40,10 @@ When calling the mandate, four parameters must be provided:
    - Ensures description is not empty
 
 2. **Proposal Creation**
-   - Encodes proposal parameters
-   - Creates call to Governor.propose function
-   - Prepares execution data
-
-3. **State Management**
-   - Records proposal creation
-   - Updates governance state
-   - Tracks proposal history
+   - Encodes proposal parameters.
+   - Creates and returns a call to `Governor.propose`.
 
 ## Technical Specifications
-
-### State Variables
-
-```solidity
-mapping(bytes32 mandateHash => address governorContract) public governorContracts;
-```
 
 ### Functions
 
@@ -104,11 +92,6 @@ function handleRequest(
    - "Governor_CreateProposal: Targets and calldatas length mismatch"
    - "Governor_CreateProposal: Description cannot be empty"
 
-3. **Validation Errors**
-   - Zero address governor contract
-   - Empty targets array
-   - Mismatched array lengths
-   - Empty description
 
 ## Current Deployments
 

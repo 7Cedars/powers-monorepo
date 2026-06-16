@@ -213,10 +213,6 @@ send:
 	@echo "Sending transaction..."
 	cast send $(CONTRACT_ADDRESS) $(FUNCTION_SIG) $(ARGS) --rpc-url $(RPC_URL) --private-key $(PRIVATE_KEY)
 
-paymaster-deposit:
-	@echo "Depositing 0.1 ether into PowersPaymaster at $(PAYMASTER_ADDRESS)..."
-	cast send $(PAYMASTER_ADDRESS) "deposit()" --value 0.1ether --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 
-
 # Debug helpers
 debug-test:
 	@echo "Debugging test: $(TEST)"
@@ -321,30 +317,30 @@ fork-anvil :
 # NOTE: all mandates and helper contracts will be deployed as part of the organisation deployment script. 
 registry-deploy : 
 	@echo "Deploying mandate registry..."
-	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
+	forge script script/DeployMandates.s.sol:DeployMandates $(ARB_SEPOLIA_DEPLOY_ARGS)
 
 mandates-deploy : 
 	@echo "Deploying mandates..."
-	forge script script/DeployMandates.s.sol:DeployMandates $(SEPOLIA_DEPLOY_ARGS)
+	forge script script/DeployMandates.s.sol:DeployMandates $(ARB_SEPOLIA_DEPLOY_ARGS)
 
 examples-deploy : 
 	@echo "Deploying example contracts..."
-# 	@echo "Account Abstraction:"
-# 	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	@echo "Account Abstraction:"
+	forge script governance/examples/AccountAbstraction.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
 	@echo "Bicameralism:"
-	forge script governance/examples/Bicameralism.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-# 	@echo "Election List:"
-# 	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-# 	@echo "Governed 721:"
-# 	forge script governance/examples/Governed721.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-# 	@echo "Nested Safe Governance:"
-# 	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
-# 	@echo "Optimistic Execution:"
-	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 
+	forge script governance/examples/Bicameralism.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
+	@echo "Election List:"
+	forge script governance/examples/ElectionListsDao.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
+	@echo "Governed 721:"
+	forge script governance/examples/Governed721.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
+	@echo "Nested Safe Governance:"
+	forge script governance/examples/NestedSafeGovernance.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
+	@echo "Optimistic Execution:"
+	forge script governance/examples/OptimisticExecution.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
 	@echo "Powers 101:"
-	forge script governance/examples/Powers101.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+	forge script governance/examples/Powers101.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS)
 	@echo "Token Delegates:"
-	forge script governance/examples/TokenDelegates.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
+	forge script governance/examples/TokenDelegates.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS)
 	@echo "All example contracts deployed."
 
 organisation-deploy : 

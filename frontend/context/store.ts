@@ -105,16 +105,29 @@ type SavedProtocolsStore = {
 }
 
 // UI State Store - for global UI toggles
+export type HighlightMode =
+  | { type: 'none' }
+  | { type: 'action';  mandateIds: Set<string> }
+  | { type: 'mandate'; mandateId: string }
+  | { type: 'flow';    mandateIds: Set<string> }
+  | { type: 'role';    roleId: bigint }
+
 type UIStateStore = {
   showAllMandates: boolean;
   setShowAllMandates: (value: boolean) => void;
   toggleShowAllMandates: () => void;
+  highlightMode: HighlightMode;
+  setHighlightMode: (mode: HighlightMode) => void;
+  clearHighlightMode: () => void;
 }
 
 export const useUIStateStore = create<UIStateStore>((set) => ({
-  showAllMandates: false, // Default to false - only show user's roles
+  showAllMandates: false,
   setShowAllMandates: (value: boolean) => set({ showAllMandates: value }),
   toggleShowAllMandates: () => set((state) => ({ showAllMandates: !state.showAllMandates })),
+  highlightMode: { type: 'none' },
+  setHighlightMode: (mode: HighlightMode) => set({ highlightMode: mode }),
+  clearHighlightMode: () => set({ highlightMode: { type: 'none' } }),
 }));
 
 // Saved Protocols Store
@@ -122,6 +135,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
   savedProtocols: [],
   
   loadSavedProtocols: () => {
+    if (typeof window === 'undefined') return
     try {
       const localStore = localStorage.getItem('powersProtocols')
       let protocols: Powers[] = []
@@ -162,6 +176,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
   },
   
   addProtocol: (protocol: Powers) => {
+    if (typeof window === 'undefined') return
     const { savedProtocols } = get()
     const exists = savedProtocols.some(
       p => p.contractAddress.toLowerCase() === protocol.contractAddress.toLowerCase()
@@ -176,6 +191,7 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
   },
   
   removeProtocol: (contractAddress: `0x${string}`) => {
+    if (typeof window === 'undefined') return
     const { savedProtocols } = get()
     const updated = savedProtocols.filter(
       p => p.contractAddress.toLowerCase() !== contractAddress.toLowerCase()
@@ -187,8 +203,9 @@ export const useSavedProtocolsStore = create<SavedProtocolsStore>((set, get) => 
   },
   
   updateProtocol: (contractAddress: `0x${string}`, updates: Partial<Powers>) => {
+    if (typeof window === 'undefined') return
     const { savedProtocols } = get()
-    const updated = savedProtocols.map(p => 
+    const updated = savedProtocols.map(p =>
       p.contractAddress === contractAddress ? { ...p, ...updates } : p
     )
     localStorage.setItem('powersProtocols', stringifyWithBigInt(updated))

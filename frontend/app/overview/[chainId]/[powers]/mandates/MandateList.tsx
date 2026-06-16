@@ -11,38 +11,11 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
   const router = useRouter();
   const chains = useChains();
   const { chainId } = useParams<{ chainId: string }>()
-  const [deselectedRoles, setDeselectedRoles] = useState<bigint[]>([])
   const ActiveMandates = powers?.mandates?.filter(mandate => mandate.active)
-
-  const handleRoleSelection = (role: bigint) => {
-    let newDeselection: bigint[] = []
-
-    if (deselectedRoles?.includes(role)) {
-      newDeselection = deselectedRoles?.filter(oldRole => oldRole != role)
-    } else {
-      newDeselection = [...deselectedRoles, role]
-    }
-    setDeselectedRoles(newDeselection)
-  };
-
   const blockExplorerUrl = chains.find(chain => chain.id === parseInt(chainId))?.blockExplorers?.default.url;
 
   return (
     <div className="w-full grow flex flex-col justify-start items-center bg-background border border-border overflow-hidden">
-      {/* Role filter bar */}
-      <div className="w-full flex flex-row gap-12 justify-start items-center py-4 overflow-x-auto border-b border-border p-4 pe-8">
-        {powers?.roles?.map((role, i) => (
-          <button 
-            key={i}
-            onClick={() => handleRoleSelection(BigInt(role.roleId))}
-            className="w-fit h-full hover:text-foreground/80 text-sm aria-selected:text-foreground text-foreground/50 cursor-pointer whitespace-nowrap"
-            aria-selected={!deselectedRoles?.includes(BigInt(role.roleId))}
-          >  
-            <p className="text-sm text-left">{bigintToRole(role.roleId, powers)}</p>
-          </button>
-        ))}
-      </div>
-
       {/* Table content */}
       {status == "pending" ?  
         <div className="w-full flex flex-col justify-center items-center p-6">
@@ -62,8 +35,7 @@ export function MandateList({powers, status}: {powers: Powers | undefined, statu
                 </tr>
               </thead>
               <tbody>
-                {ActiveMandates
-                  ?.filter(mandate => mandate.conditions?.allowedRole != undefined && !deselectedRoles?.includes(BigInt(`${mandate.conditions?.allowedRole}`)))
+                {ActiveMandates 
                   ?.map((mandate: Mandate, i) => {
                     const roleName = mandate.conditions?.allowedRole != undefined ? bigintToRole(mandate.conditions?.allowedRole, powers as Powers) : "-";
                     const fullText = mandate.nameDescription || `Mandate #${mandate.index}`;

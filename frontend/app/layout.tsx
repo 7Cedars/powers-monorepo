@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "../context/Providers"
 import "./globals.css";
+import "reactflow/dist/style.css";
 import { ThemeProvider } from "next-themes";
 import { ThemeColorMeta } from "../components/ThemeColorMeta";
 
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html suppressHydrationWarning lang="en">
       <head />
      
-      <body className="h-dvh w-screen relative bg-background overflow-hidden">
+      <body className="h-screen w-screen relative bg-background overflow-hidden">
         <ThemeProvider attribute="class">
           <ThemeColorMeta />
           <Providers>

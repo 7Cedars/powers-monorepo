@@ -8,6 +8,7 @@ import { Configurations } from "./Configurations.s.sol";
 
 // --- Interfaces ---
 import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandate } from "@src/interfaces/IMandate.sol";
 
 // ELECTORAL MANDATES
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
@@ -82,6 +83,11 @@ import { SafeAllowance_Transfer } from "@src/mandates/integrations/Safe/SafeAllo
 import { SafeAllowance_PresetTransfer } from "@src/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
 import { SafeAllowance_Action } from "@src/mandates/integrations/Safe/SafeAllowance_Action.sol";
 
+// Slate Registry
+import { SlateRegistry_AddSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
+import { SlateRegistry_RemoveSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
+import { SlateRegistry_ExecuteResult } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
+
 // Snapshot
 // Will be reintegrated soon.
 
@@ -137,6 +143,13 @@ contract DeployMandates is Script {
             address mandateAddr = deploy(creationCodes[i], constructorArgs[i]);
             addresses.push(mandateAddr);
 
+            // Skip if name+version already registered (bytecode may differ without version bump)
+            (uint16 maj, uint16 min, uint16 pat) = IMandate(mandateAddr).version();
+            if (registry.isVersionActive(maj, min, pat, names[i])) {
+                console2.log("Mandate name+version already active, skipping:", names[i]);
+                continue;
+            }
+
             regNames[regCount] = names[i];
             regAddresses[regCount] = mandateAddr;
             regCreationCodeHashes[regCount] = bytes32(keccak256(creationCodes[i]));
@@ -165,7 +178,7 @@ contract DeployMandates is Script {
                 console2.log(" - ", finalNames[i], " at ", finalAddresses[i]);
             }
 
-            vm.startBroadcast(msg.sender); 
+            vm.startBroadcast(registry.owner());
             registry.batchRegisterMandates(finalNames, finalAddresses, finalCreationCodeHashes);
             vm.stopBroadcast();
 
@@ -367,6 +380,18 @@ contract DeployMandates is Script {
         names.push("ElectionRegistry_CleanUpVoteMandate");
         creationCodes.push(type(ElectionRegistry_CleanUpVoteMandate).creationCode);
         constructorArgs.push(abi.encode("ElectionRegistry_CleanUpVoteMandate"));
+
+        names.push("SlateRegistry_AddSlate");
+        creationCodes.push(type(SlateRegistry_AddSlate).creationCode);
+        constructorArgs.push(abi.encode("SlateRegistry_AddSlate"));
+
+        names.push("SlateRegistry_RemoveSlate");
+        creationCodes.push(type(SlateRegistry_RemoveSlate).creationCode);
+        constructorArgs.push(abi.encode("SlateRegistry_RemoveSlate"));
+
+        names.push("SlateRegistry_ExecuteResult");
+        creationCodes.push(type(SlateRegistry_ExecuteResult).creationCode);
+        constructorArgs.push(abi.encode("SlateRegistry_ExecuteResult"));
 
         names.push("GovernedToken_CollectSplitPayment");
         creationCodes.push(type(GovernedToken_CollectSplitPayment).creationCode);

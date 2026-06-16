@@ -1,18 +1,17 @@
 'use client'
 
 import React from "react";
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, useStatusStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
+import { useConnection, useSwitchChain } from "wagmi";
 import { usePowers } from "@/hooks/usePowers";
+import { usePowersLive } from "@/hooks/usePowersLive";
 import { parseChainId } from "@/utils/parsers";
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAddressDisplay } from "@/hooks/useAddressDisplay";
-import { BlockCounter } from "@/components/BlockCounter";
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
 interface OverviewLayoutProps {
   children: React.ReactNode;
@@ -26,10 +25,12 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
     const { savedProtocols, loadSavedProtocols, addProtocol } = useSavedProtocolsStore();
     const { wallets, ready: walletsReady } = useWallets();
     const {ready, authenticated, login, logout, connectWallet} = usePrivy();
-    const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
     const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>();
     const { fetchPowers } = usePowers();
-    const publicClient = usePublicClient();
+    usePowersLive(
+      powersAddress as `0x${string}` | undefined,
+      chainId ? parseChainId(chainId) : undefined
+    );
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
     const action = useActionStore();
@@ -68,20 +69,6 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
       loadAndFetchData();
     }, []);
 
-    const fetchBlockNumber = async () => {
-      if (!publicClient) return;
-      try {
-        const number = await publicClient.getBlockNumber();
-        setBlockNumber(number);
-      } catch (error) {
-        console.error('Failed to fetch block number:', error);
-      }
-    };
-
-    useEffect(() => {
-        fetchBlockNumber();
-    }, [ publicClient ])
-
     // Switch chain when selected chain changes
     useEffect(() => {
       if (chainId && chain?.id !== Number(chainId)) {
@@ -110,7 +97,7 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
         <div className="max-w-md text-center space-y-6">
           <div className="space-y-2">
             <h1 className="font-mono text-2xl text-foreground tracking-wider">
-              EDITOR
+              OVERVIEW
             </h1>
             <p className="text-sm text-muted-foreground">
               Not optimized for small screens
@@ -119,28 +106,20 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
           
           <div className="space-y-4">
             <p className="text-foreground">
-              The Overview is designed for larger screens to provide the best experience when building and managing governance protocols.
+              The overview is designed for larger screens to provide the best experience when managing governance systems.
             </p>
             <p className="text-muted-foreground text-sm">
               Please visit the Forum to view and interact with existing protocols on mobile devices.
             </p>
           </div>
 
-          <button
-            onClick={() => router.push('/forum')}
+          <a
+            href={chainId && powersAddress ? `/forum/${chainId}/${powersAddress}` : '/forum'}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors rounded"
           >
-            <span>GO TO FORUM</span>
-            <ChevronRightIcon className="h-4 w-4" />
-          </button>
-
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mx-auto"
-          >
-            <ArrowLeftIcon className="h-3 w-3" />
-            <span>BACK TO HOME</span>
-          </button>
+            <ArrowLeftIcon className="h-4 w-4" />
+            <span>BACK TO FORUM</span>
+          </a>
         </div>
       </div>
 
@@ -150,55 +129,10 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-background">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a href="/overview" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
-              {powers.name ? powers.name : "EDITOR"} 
+              {powers.name ? powers.name : "OVERVIEW"}
             </a>
-            {!isOverviewPage && powersAddress && chainId &&
-              <BlockCounter onRefresh={() => {
-                fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId));
-                fetchBlockNumber();
-              }} blockNumber={blockNumber} />
-            }
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            {ready && authenticated && walletsReady && wallets[0] &&
-            <>
-                <button
-                onClick={() => router.push('/profile')}
-                className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors">
-                  {isLoading ? 'Loading...' : displayName}
-                </button>
-                <button
-                onClick={ logout }
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                
-                  <ArrowRightStartOnRectangleIcon className="h-3 w-3" />
-                  <span className="hidden sm:inline">DISCONNECT</span>
-                </button>
-                <span className="text-muted-foreground">|</span>
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <CheckCircleIcon className="h-2 w-2 fill-primary text-primary" />
-                  <span className="text-foreground">CONNECTED</span>
-                </div>
-              </>
-            }
-            {ready && !authenticated &&
-            <button
-              onClick={ login }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
-                <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
-                <span className="text-muted-foreground">NOT CONNECTED</span>
-              </button>
-            }
-            {ready && authenticated && walletsReady && !wallets[0] &&
-            <button
-              onClick={ connectWallet }
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-all duration-200">
-              
-                <CheckCircleIcon className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
-                <span className="text-muted-foreground">NOT CONNECTED</span>
-              </button>
-            }
             <ThemeToggle />
           </div>
         </div>

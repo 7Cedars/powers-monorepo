@@ -1,4 +1,4 @@
-import { http } from '@wagmi/core'
+import { http, webSocket, fallback } from '@wagmi/core'
 import { createConfig } from '@privy-io/wagmi'
 import { injected } from '@wagmi/connectors'
 import { foundry, sepolia, baseSepolia, arbitrumSepolia, zksyncSepoliaTestnet, surgeTestnet, mainnet } from '@wagmi/core/chains' 
@@ -70,13 +70,21 @@ export const wagmiConfig = createConfig({
   connectors: [injected()],
   transports: {
     [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`),
-    [arbitrumSepolia.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_ARB_SEPOLIA_HTTPS), 
-    [sepolia.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA_HTTPS), 
-    [optimismSepolia.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_OPT_SEPOLIA_HTTPS),
-    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_HTTPS),
+    [arbitrumSepolia.id]: process.env.NEXT_PUBLIC_ALCHEMY_ARB_SEPOLIA_WSS
+      ? fallback([webSocket(process.env.NEXT_PUBLIC_ALCHEMY_ARB_SEPOLIA_WSS), http(process.env.NEXT_PUBLIC_ALCHEMY_ARB_SEPOLIA_HTTPS)])
+      : http(process.env.NEXT_PUBLIC_ALCHEMY_ARB_SEPOLIA_HTTPS),
+    [sepolia.id]: process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA_WSS
+      ? fallback([webSocket(process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA_WSS), http(process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA_HTTPS)])
+      : http(process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA_HTTPS),
+    [optimismSepolia.id]: process.env.NEXT_PUBLIC_ALCHEMY_OPT_SEPOLIA_WSS
+      ? fallback([webSocket(process.env.NEXT_PUBLIC_ALCHEMY_OPT_SEPOLIA_WSS), http(process.env.NEXT_PUBLIC_ALCHEMY_OPT_SEPOLIA_HTTPS)])
+      : http(process.env.NEXT_PUBLIC_ALCHEMY_OPT_SEPOLIA_HTTPS),
+    [baseSepolia.id]: process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS
+      ? fallback([webSocket(process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_WSS), http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_HTTPS)])
+      : http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_HTTPS),
     [zksyncSepoliaTestnet.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_ZKSYNC_SEPOLIA_HTTPS),
     [surgeTestnet.id]: http(),
-    [foundry.id]: http("http://localhost:8545"),   
+    [foundry.id]: http("http://localhost:8545"),
   },
   ssr: true,
   // storage: createStorage({
