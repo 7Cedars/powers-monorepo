@@ -15,6 +15,15 @@
 /solidity/broadcast/
 /solidity/lib/
 
+# ai-agent artifacts
+/ai-agent/data/
+/ai-agent/node_modules/
+
+
+# ai-skill artifacts
+/ai-skill/node_modules/
+
+
 # Logs
 logs
 *.log
