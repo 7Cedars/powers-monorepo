@@ -17,6 +17,10 @@ let index: Chunk[] = [];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let extractor: any;
 
+function log(msg: string) {
+  process.stdout.write(`[governance-rag] ${new Date().toISOString()} ${msg}\n`);
+}
+
 function cosine(a: number[], b: number[]): number {
   let dot = 0, na = 0, nb = 0;
   for (let i = 0; i < a.length; i++) {
@@ -77,14 +81,18 @@ function buildMcpServer(): Server {
     }
 
     const { query, k = 5 } = request.params.arguments as { query: string; k?: number };
+    log(`Tool call: search_governance_sources query="${query}" k=${k}`);
 
     if (index.length === 0) {
+      log('Warning: search requested but index is empty');
       return {
         content: [{ type: 'text', text: 'Index is empty. Run `pnpm ingest` in the ai-skill/ directory first.' }],
       };
     }
 
+    const start = Date.now();
     const results = await search(query, Math.min(k, 10));
+    log(`Search returned ${results.length} results in ${Date.now() - start}ms`);
     const text = results
       .map((r, i) => `## Result ${i + 1} — ${r.source} (${r.sourceType}, relevance: ${r.relevanceScore})\n\n${r.text}`)
       .join('\n\n---\n\n');
@@ -132,6 +140,11 @@ async function main() {
     next();
   });
 
+  app.use('/mcp', (req: Request, _res: Response, next: NextFunction) => {
+    log(`Incoming ${req.method} /mcp request`);
+    next();
+  });
+
   app.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', chunks: index.length });
   });
@@ -141,7 +154,14 @@ async function main() {
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     const server = buildMcpServer();
     await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+    try {
+      await transport.handleRequest(req, res, req.body);
+    } catch (err) {
+      process.stderr.write(`[governance-rag] ${new Date().toISOString()} Error handling /mcp request: ${err}\n`);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    }
     res.on('close', () => { server.close(); });
   });
 

@@ -60,9 +60,9 @@ pnpm install
 pnpm ingest
 ```
 
-This reads every PDF in `sources/` and every Markdown file in `references/`, splits them into chunks, and computes embeddings using `nomic-ai/nomic-embed-text-v1.5` via `@huggingface/transformers`. The model (~275 MB) is downloaded on first run into `~/.cache/huggingface/hub/` and cached for subsequent runs. The index is written to `embeddings/index.json` (gitignored).
+This reads every PDF in `sources/` and every Markdown file in `references/`, splits them into chunks, and computes embeddings using `nomic-ai/nomic-embed-text-v1.5` via `@huggingface/transformers`. The model (~275 MB) is downloaded on first run into `~/.cache/huggingface/hub/` and cached for subsequent runs. The index is written to `embeddings/index.json`, which is committed to git and deployed as a pre-built artifact — ingestion always runs locally, never on the server.
 
-Re-run `pnpm ingest` any time you add PDFs to `sources/` or update summaries in `references/`.
+Re-run `pnpm ingest` any time you add PDFs to `sources/` or update summaries in `references/`, then commit the updated `embeddings/index.json` before deploying.
 
 **3. Start the server**
 
@@ -95,6 +95,18 @@ After adding files, re-run `pnpm ingest` to rebuild the index.
 
 ---
 
+## Deploying
+
+```bash
+cd ai-skill
+pnpm ingest   # regenerate embeddings/index.json locally, only needed when sources/ or references/ change
+railway up
+```
+
+The Railway build only installs dependencies, copies `src/` and the pre-built `embeddings/`, and compiles TypeScript — it never re-runs ingestion or downloads the embedding model. `sources/` (the raw PDFs) is excluded from the upload via `.railwayignore` and never reaches the server.
+
+---
+
 ## Directory layout
 
 ```
@@ -109,7 +121,7 @@ ai-skill/
 ├── templates/
 │   ├── orgSpec.md               # MDX template for the governance specification
 │   └── deployScript.md          # Annotated Solidity deploy script template
-├── embeddings/                  # Generated vector index (gitignored — run pnpm ingest)
+├── embeddings/                  # Generated vector index (committed — run pnpm ingest locally to update)
 └── src/
     ├── types.ts                 # Shared types
     ├── ingest.ts                # Parses sources/ and references/, writes embeddings/index.json

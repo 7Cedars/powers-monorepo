@@ -95,5 +95,4 @@ ai-skill/sources/*.pdf
 # RAG package artifacts
 ai-skill/node_modules/
 ai-skill/dist/
-ai-skill/embeddings/
 ai-skill/.env

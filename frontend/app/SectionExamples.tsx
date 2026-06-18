@@ -53,7 +53,7 @@ export function SectionExamples() {
           <div className="font-mono font-bold text-foreground uppercase tracking-wider text-base sm:w-40 flex-shrink-0">
             {org.title}
           </div>
-          <div className="font-mono text-sm text-muted-foreground leading-relaxed">
+          <div className="font-mono text-sm text-muted-foreground leading-relaxed line-clamp-4">
             {org.description}
           </div>
         </div>

@@ -86,8 +86,8 @@ async function ingest() {
 
   console.log(`\nEmbedding ${rawChunks.length} chunks...`);
 
-  // Batch size of 32 — conservative for local ONNX runtime memory
-  const BATCH = 32;
+  // Batch size of 8 — reduced from 32 to keep peak memory manageable on memory-constrained hosts
+  const BATCH = 8;
   const chunks: Chunk[] = [];
 
   for (let i = 0; i < rawChunks.length; i += BATCH) {

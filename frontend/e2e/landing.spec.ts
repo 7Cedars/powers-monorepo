@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Locator } from '@playwright/test';
+import { VIEWPORTS } from './viewports';
 
 // Mirrors public/organisations/DeployedExamples.ts. Inlined rather than
 // imported: that file pulls in `@wagmi/core/chains`, which breaks when
@@ -26,12 +27,6 @@ const TYPEWRITER_SENTENCES = [
   'to make governance verifiable.',
   'to enable anonymous participation.',
   'to govern without intermediaries.',
-];
-
-const VIEWPORTS = [
-  { label: 'iPhone (390x844)', width: 390, height: 844 },
-  { label: 'Hannah (1440x900)', width: 1440, height: 900 },
-  { label: 'Teije (2560x1440)', width: 2560, height: 1440 },
 ];
 
 async function getOpacity(locator: Locator): Promise<number> {
@@ -92,7 +87,7 @@ for (const viewport of VIEWPORTS) {
 
       test('all paragraphs fade fully in before the section scrolls away', async ({ page }) => {
         await page.goto('/');
-        const main = page.locator('main');
+        const main = page.locator('main').first();
         const heroSection = page.locator('main > div').first().locator('section');
         const paragraphs = heroSection.locator('p');
         await expect(paragraphs).toHaveCount(3);
@@ -114,7 +109,7 @@ for (const viewport of VIEWPORTS) {
     test.describe('SectionIntro', () => {
       test('all paragraphs fade fully in before the section scrolls away', async ({ page }) => {
         await page.goto('/');
-        const main = page.locator('main');
+        const main = page.locator('main').first();
         const intro = page.locator('#intro');
         const paragraphs = intro.locator('p');
         await expect(paragraphs).toHaveCount(4);
@@ -226,6 +221,23 @@ for (const viewport of VIEWPORTS) {
       });
 
       test('links in the carousel items are correct', async ({ page }) => {
+        // Mock RPC so navigating to /forum and /overview doesn't depend on
+        // live testnet calls (Alchemy WSS, then HTTP fallback) - this test
+        // only checks that the URL is correct after navigation, not that
+        // on-chain org data renders.
+        await page.routeWebSocket(/g\.alchemy\.com/, (ws) => ws.close());
+        await page.route('**/g.alchemy.com/v2/**', async (route) => {
+          let body: unknown;
+          try {
+            body = JSON.parse(route.request().postData() ?? '{}');
+          } catch {
+            body = {};
+          }
+          const toResult = (entry: any) => ({ jsonrpc: '2.0', id: entry?.id, result: '0x' });
+          const payload = Array.isArray(body) ? body.map(toResult) : toResult(body);
+          await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) });
+        });
+
         await page.goto('/');
         const examples = page.locator('#examples');
 
@@ -273,7 +285,11 @@ for (const viewport of VIEWPORTS) {
           await expect(link).toHaveAttribute('href', href);
           await link.click();
           await expect(page).toHaveURL(href);
-          await page.goBack();
+          // Use goto rather than goBack: clicking "Home" while already on
+          // "/" doesn't push a new history entry, which makes goBack()
+          // overshoot to about:blank. goto deterministically resets state
+          // regardless of whether a history entry was created.
+          await page.goto('/');
           await footer.scrollIntoViewIfNeeded();
         }
       });

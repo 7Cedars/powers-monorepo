@@ -12,15 +12,10 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-# Copy source material for ingest and the TypeScript source
-COPY sources/ ./sources/
-COPY references/ ./references/
+# Embedding index is built locally (`pnpm ingest`) and committed — copy it in pre-built
+COPY embeddings/ ./embeddings/
 COPY src/ ./src/
 COPY tsconfig.json ./
-
-# Generate the embedding index — downloads the nomic-embed model (~275 MB) on first build,
-# then cached by Docker layer. Re-runs only if sources/ or references/ change.
-RUN pnpm ingest
 
 # Compile TypeScript
 RUN pnpm build

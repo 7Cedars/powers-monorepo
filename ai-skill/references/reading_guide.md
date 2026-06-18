@@ -16,6 +16,31 @@ most directly. Full guides are in the individual source files listed below.
 | [`ostrom_2009.md`](ostrom_2009.md) | Ostrom, Elinor. 2010. "Beyond Markets and States: Polycentric Governance of Complex Economic Systems." Nobel Prize Lecture, Dec 8, 2009. *American Economic Review* 100(3): 641–672. | Structural + Dynamic |
 | [`ostrom_2011.md`](ostrom_2011.md) | Ostrom, Elinor. 2011. "Background on the Institutional Analysis and Development Framework." *Policy Studies Journal* 39(1): 7–27. | Structural + Parametric |
 
+### UK Community Interest Company (CIC) sources
+
+A family of real-world legal-governance templates and regulatory documents. Treated as a single
+analytical "tier" below (cited as Quaternary) because they post-date and supplement the academic
+core sources rather than replacing them — they contribute concrete, statutorily-validated
+calibration points and a genuinely novel external-oversight mechanism not found in the academic
+sources.
+
+| File | Citation | Analytical level |
+|---|---|---|
+| [`cic_model_articles_guarantee_small.md`](cic_model_articles_guarantee_small.md) | UK CIC Model Articles of Association, Limited by Guarantee, Small Membership, Companies House template. | Structural + Parametric |
+| [`cic_model_articles_guarantee_large.md`](cic_model_articles_guarantee_large.md) | UK CIC Model Articles of Association, Limited by Guarantee, Large Membership, Companies House template. | Structural + Parametric |
+| [`cic_model_articles_shares_sch2_small.md`](cic_model_articles_shares_sch2_small.md) | UK CIC Model Articles of Association, Limited by Shares (Schedule 2 — no private distribution), Small Membership, Companies House template. | Structural + Parametric |
+| [`cic_model_articles_shares_sch2_large.md`](cic_model_articles_shares_sch2_large.md) | UK CIC Model Articles of Association, Limited by Shares (Schedule 2 — no private distribution), Large Membership, Companies House template. | Structural + Parametric |
+| [`cic_model_articles_shares_sch3_small.md`](cic_model_articles_shares_sch3_small.md) | UK CIC Model Articles of Association, Limited by Shares (Schedule 3 — capped distribution permitted), Small Membership, Companies House template. | Structural + Parametric |
+| [`cic_model_articles_shares_sch3_large.md`](cic_model_articles_shares_sch3_large.md) | UK CIC Model Articles of Association, Limited by Shares (Schedule 3 — capped distribution permitted), Large Membership, Companies House template. | Structural + Parametric |
+| [`cic_memorandum_guarantee.md`](cic_memorandum_guarantee.md) | UK CIC Model Memorandum of Association, Limited by Guarantee, Companies Act 2006 template. | Structural (minimal) |
+| [`cic_memorandum_shares.md`](cic_memorandum_shares.md) | UK CIC Model Memorandum of Association, Limited by Shares, Companies Act 2006 template. | Structural (minimal) |
+| [`cic_regulations_2005.md`](cic_regulations_2005.md) | The Community Interest Company Regulations 2005, SI 2005/1788. | Structural + Parametric + Dynamic |
+| [`cic_guidance_govuk.md`](cic_guidance_govuk.md) | UK Dept for Business and Trade / CIC Regulator, 2025. *Community Interest Companies Guidance.* GOV.UK. | Structural + Parametric + Dynamic |
+| [`cic_model_articles_intro_govuk.md`](cic_model_articles_intro_govuk.md) | UK Dept for Business and Trade / CIC Regulator, 2025. *CIC model Articles of Association: introduction.* GOV.UK. | Structural |
+| [`cic_plinth_guide.md`](cic_plinth_guide.md) | Plinth Team, 2026. *What is a Community Interest Company (CIC)? Complete Guide.* | Structural (comparative framing) |
+| [`cic_wikipedia.md`](cic_wikipedia.md) | Wikipedia contributors. "Community interest company." *Wikipedia.* | Structural |
+| [`cic_annual_report_2024_2025.md`](cic_annual_report_2024_2025.md) | Office of the Regulator of Community Interest Companies. *Annual Report 2024 to 2025.* | Dynamic (empirical) |
+
 ---
 
 ## Which source to read for which design question
@@ -46,6 +71,31 @@ polycentric. Also provides the three-mechanism framework for why smaller, specia
 outperform large monolithic ones. Use it when choosing between a single broad role and
 multiple specialised roles.
 
+**Quaternary:** `cic_model_articles_guarantee_large.md` (representative of the six model-articles
+files — see also the small-membership and shares variants)
+Adds real statutory precedent for a layered delegation chain (executive role → revocable
+committee-equivalent grants) and a dual-track removal design: peer-triggered automatic removal
+for disengagement (three consecutive absences) versus member-voted removal for cause with a
+mandatory hearing step. Use it when designing `Adopt_Mandates`/`Revoke_Mandates` delegation chains
+or calibrating a removal-track split for an executive role.
+
+**Quaternary:** `cic_regulations_2005.md`
+Adds the one genuinely external-to-the-organisation oversight role in the library: the CIC
+Regulator's power to appoint, pay, and remove a manager over a CIC's property and affairs, plus a
+hard cap on how much board control non-members may hold (never a majority). Use it when a
+constitution needs an external/funder oversight role with no Powers-native equivalent.
+
+**Quaternary:** `cic_wikipedia.md`
+Adds the CIC form's core role-design insight: "can be compensated" and "loses governance control"
+are independently decidable, not bundled by default (contra the charity model). Use it when
+assigning `allowedRole` to paid operator roles versus deliberation/oversight roles.
+
+**Quaternary:** `cic_model_articles_intro_govuk.md`
+Adds the rationale for collapsing a member role and an executive role into one `allowedRole` when
+the two sets are coextensive, versus splitting them once membership exceeds the executive set. Use
+it as a first-pass check before defining two separate roles: ask whether the stakeholder set and
+the decision-making set are actually identical.
+
 ---
 
 ### Q2 — Voting parameters
@@ -64,6 +114,15 @@ calibrated to the expected active membership size, not set as absolute values. A
 the cross-type interaction: changing `allowedRole` (boundary rule) may require adjusting
 `votingPeriod` (aggregation rule). Use it when a role membership change prompts a review of
 voting parameters.
+
+**Quaternary:** `cic_model_articles_guarantee_large.md` (consistent across all six model-articles
+files)
+Adds concrete, externally-validated calibration anchors: a minimum quorum floor of 2; a hybrid
+quorum formula ("2 persons or 10% of total membership, whichever is greater") for roles of
+variable size; an automatic quorum-waiver fallback on a failed-quorum adjournment, to prevent
+permanent deadlock; a 75%-supermajority / simple-majority two-tier resolution threshold; and a
+90%-near-unanimity threshold for bypassing standard notice/deliberation periods. Use these as
+ready-made `votingPeriod`/quorum benchmarks when no other calibration source is available.
 
 ---
 
@@ -94,6 +153,31 @@ Adds the three-tier IAD match: operational mandates for execution, collective-ch
 for rule modification, constitutional mandates for wholesale restructuring. Use it to confirm
 that the mandate type selected matches the decision tier being addressed.
 
+**Quaternary:** `cic_regulations_2005.md`
+Adds the clearest binary mandate-selection fork in the library: choose once, at the
+constitutional level, between a treasury mandate with no payout path to role-holders at all
+(asset-lock-only) versus one permitting capped distributions. Use it when deciding whether a
+treasury should ever pay out to role-holders, and if so, under what hard ceiling.
+
+**Quaternary:** `cic_guidance_govuk.md`
+Adds the four-branch transfer-justification gate (full consideration / nominated asset-locked
+body / regulator-consented body / community benefit) and the pattern of hard-coding a fixed
+distribution-cap percentage rather than leaving it to a discretionary vote each time. Use it when
+designing treasury-outflow mandates that must balance flexibility against self-dealing risk.
+
+**Quaternary:** `cic_plinth_guide.md`
+Adds an income-model heuristic — ongoing trading/fee revenue favours an asset-locked,
+restricted-distribution mandate set; one-off grant/donation revenue favours simpler
+grant-compliance/reporting mandates instead. Use it early, before selecting any specific
+mandate, to check that an asset-lock-style pattern actually fits the organisation's revenue model.
+
+**Quaternary:** `cic_wikipedia.md`
+Adds the hybrid-goods framing: an organisation that behaves like a flexible private enterprise but
+must produce a structural public-good commitment needs operational mandates left unconstrained
+while treasury/dissolution mandates carry a standing, non-bypassable purpose check. Use it to
+distinguish this hybrid pattern from a pure charity-style pattern (which would instead restrict
+*who may propose* financial mandates).
+
 ---
 
 ### Q4 — Dependency chains
@@ -107,6 +191,18 @@ sequential dependencies) and the fat-tailed risk argument for robust emergency p
 Adds the conflict resolution dimension: dependency chains that create winner-take-all competition
 need a deliberation step. Also provides the "rapid access" argument for keeping conflict
 resolution mandates short in `votingPeriod`.
+
+**Quaternary:** `cic_regulations_2005.md`
+Adds the only sourced example of an external-approval dependency: a purpose-change reform has no
+legal effect until an outside party approves it, independent of and subsequent to the internal
+vote. Use it when a reform mandate must remain verifiably aligned with an outside standard (a
+legal wrapper, grant condition, or registry membership) rather than being fully self-amendable.
+
+**Quaternary:** `cic_guidance_govuk.md`
+Adds a consult-then-decide-then-appeal chain around the single highest-stakes treasury action
+(final asset distribution on wind-up): notify affected parties, allow objection, only then
+execute. Use it when designing a dissolution or final-liquidation mandate that should not be a
+single-step vote.
 
 ---
 
@@ -136,6 +232,26 @@ drift into on-chain constitutions automatically — they must be formally codifi
 `Adopt_Mandates`. Use it when auditing whether informal membership practices match the formal
 mandate rules.
 
+**Quaternary:** `cic_model_articles_guarantee_small.md` (and the other model-articles files)
+Adds concrete closed-membership patterns: gatekept entry requiring approval by the existing
+controlling role, non-transferable membership with no secondary-market exit, and automatic
+(non-discretionary) termination triggers tied to inactivity or to a member ceasing to exist. Use
+it when designing an admission/exit mandate pair that should not rely on a tradeable instrument.
+
+**Quaternary:** `cic_regulations_2005.md` / `cic_guidance_govuk.md` / `cic_wikipedia.md`
+Add a third boundary type, distinct from `allowedRole` (who can act): a recipient-class
+restriction on `target` — who funds may flow to — that persists independently of current role
+membership (the "asset-locked body" concept). Use it when a treasury mandate's destination
+restriction needs to survive membership turnover, and to avoid conflating a beneficiary/output
+boundary with a governance-participation boundary.
+
+**Quaternary:** `cic_memorandum_guarantee.md` / `cic_memorandum_shares.md`
+Add the binary founding choice between capital-stake membership (token-gated `allowedRole`) and
+personal-undertaking membership (`SelfSelect`/`PeerSelect` keyed to identity, no balance
+requirement) as a one-time, foundational decision UK company law forces explicitly at
+incorporation. Use it as the first design question when scoping a new constitution's membership
+unit.
+
 ---
 
 ### Q6 — Adaptive capacity and reform
@@ -158,6 +274,19 @@ must be accessible to member roles, not restricted to admin.
 
 **Gap:** `may_2022.md` is expected to be the strongest source for this question but is currently
 unreadable. Replacing that file is the highest-priority scholarship gap.
+
+**Quaternary:** `cic_regulations_2005.md`
+Adds the clearest example of a reform constraint sitting permanently outside the ordinary
+amendment surface: the asset lock cannot be removed by any internal vote, while the
+distribution-cap percentage layered on top of it is an ordinary, revocable parameter. Use it when
+deciding which parts of a constitution should be excluded from `Adopt_Mandates`/`Revoke_Mandates`
+entirely versus left as a votable parameter.
+
+**Quaternary:** `cic_annual_report_2024_2025.md`
+Adds real longitudinal data: roughly 78% lifetime attrition among UK CICs registered since 2005,
+and a regulatory cost structure that scaled with a 100x population increase over 20 years without
+requiring any rule amendment. Use it when deciding whether a constitution needs an explicit,
+low-cost wind-down/dissolution mandate path rather than assuming indefinite persistence.
 
 ---
 
@@ -191,12 +320,36 @@ conformance to values, sustainability) as a post-design review checklist. Also d
 between accountability (attributable, on-chain) and conformance to values (reputation-building
 over time). Use it when the designer asks "how do we know the governance is working?"
 
+**Quaternary:** `cic_annual_report_2024_2025.md`
+Adds the strongest empirical accountability evidence in the entire library: real complaint and
+enforcement statistics from a 37,000-entity population showing the harshest sanction (asset
+seizure) was never invoked in a year with multiple financial-mismanagement and governance
+complaints logged, and that hard-coded constraints (the asset lock) generated zero disputes while
+discretionary judgment calls generated the most. Use it when deciding how aggressively to design
+an enforcement/escalation chain — design the harshest sanction as a credible-but-rare backstop,
+not the primary mechanism.
+
+**Quaternary:** `cic_regulations_2005.md`
+Adds the external-manager-appointment mechanism (no Powers-native equivalent) and the
+disclosure-after-vote pattern: a distribution vote alone is not treated as accountability-complete
+without a mandatory downstream public report. Use it when a constitution needs an external
+oversight role or a mandatory post-distribution reporting mandate.
+
+**Quaternary:** `cic_guidance_govuk.md`
+Adds the "excessive role-holder compensation is a disguised asset-lock breach" framing, and the
+light-touch/complaint-driven oversight model (most effective oversight here is reactive, not
+constantly active). Use it when designing remuneration mandates or scoping how active an
+oversight role needs to be.
+
 ---
 
-## Cross-cutting design rules supported by all three sources
+## Cross-cutting design rules
 
-These rules appear independently in all three readable sources and can be treated as
-well-grounded design constraints:
+Rules 1–8 appear independently in all three core academic sources (Podger, Carlisle, OECD) and
+can be treated as well-grounded design constraints. Rules 9–10 are added from the CIC source
+family and are well-grounded in statute/regulation and empirical enforcement data rather than
+academic meta-analysis, but are corroborated by the academic sources' boundary and sanctions
+principles (see cross-references):
 
 1. **Formal ≠ de facto independence.** A role's actual independence is determined by its
    appointment and revocation mechanisms, not only its execution mandate. (Podger Ch 2,
@@ -232,3 +385,17 @@ well-grounded design constraints:
    to admin violates Ostrom's Design Principle 3, which is associated with institutional failure
    in the empirical record. (Ostrom 2009 Section 4E, Carlisle Section 4.1, OECD Ch 13
    cogeneration principle)
+
+9. **Recipient/output boundaries are a third boundary type, distinct from participant
+   boundaries.** A restriction on *who funds may flow to* (`target`) must be designed
+   independently of, and can outlive, a restriction on *who may act* (`allowedRole`) — changing
+   role membership should never silently change where treasury assets are allowed to go.
+   (CIC Regulations 2005 Sched. 1 ¶1, CIC Guidance "Asset Lock" section, Wikipedia "The asset
+   lock" section)
+
+10. **Hard-coded constraints prevent more disputes than discretionary review.** Real-world
+    enforcement data shows non-discretionary, automatically-checked rules generate far fewer
+    disputes than rules that depend on after-the-fact judgment calls about whether discretionary
+    behaviour was appropriate. Prefer `needFulfilled`/`needNotFulfilled` checks evaluated
+    automatically over relying solely on `StatementOfIntent` deliberation to catch the same
+    problem later. (CIC Annual Report 2024–25 §8, reinforcing Cross-cutting rule 6)
