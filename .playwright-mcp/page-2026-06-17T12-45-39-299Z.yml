@@ -1,0 +1,224 @@
+- generic [ref=e4]:
+  - generic [ref=e6]:
+    - text:  
+    - generic [ref=e8]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic: 0ms
+          - generic [ref=e13]:
+            - generic: 1.0s
+          - generic [ref=e14]:
+            - generic: 2.0s
+          - generic [ref=e15]:
+            - generic: 3.0s
+          - generic [ref=e16]:
+            - generic: 4.0s
+          - generic [ref=e17]:
+            - generic: 5.0s
+          - generic [ref=e18]:
+            - generic: 6.0s
+          - generic [ref=e169]:
+            - generic: 7.0s
+          - generic [ref=e170]:
+            - generic: 8.0s
+          - generic [ref=e171]:
+            - generic: 9.0s
+          - generic [ref=e172]:
+            - generic: 10.0s
+          - generic [ref=e173]:
+            - generic: 11.0s
+          - generic [ref=e174]:
+            - generic: 12.0s
+          - generic [ref=e175]:
+            - generic: 13.0s
+          - generic [ref=e176]:
+            - generic: 14.0s
+          - generic [ref=e177]:
+            - generic: 15.0s
+          - generic [ref=e178]:
+            - generic: 16.0s
+          - generic [ref=e179]:
+            - generic: 17.0s
+          - generic [ref=e180]:
+            - generic: 18.0s
+          - generic [ref=e181]:
+            - generic: 19.0s
+          - generic [ref=e182]:
+            - generic: 20.0s
+          - generic [ref=e183]:
+            - generic: 21.0s
+          - generic [ref=e184]:
+            - generic: 22.0s
+          - generic [ref=e185]:
+            - generic: 23.0s
+          - generic [ref=e186]:
+            - generic: 24.0s
+          - generic [ref=e187]:
+            - generic: 25.0s
+          - generic [ref=e188]:
+            - generic: 26.0s
+          - generic [ref=e189]:
+            - generic: 27.0s
+          - generic [ref=e190]:
+            - generic: 28.0s
+          - generic [ref=e191]:
+            - generic: 29.0s
+          - generic [ref=e192]:
+            - generic: 30.0s
+          - generic [ref=e193]:
+            - generic: 31.0s
+          - generic [ref=e194]:
+            - generic: 32.0s
+        - slider "Playback position" [ref=e21] [cursor=pointer]
+      - generic [ref=e24]:
+        - generic [ref=e26]:
+          - generic [ref=e28]:
+            - generic [ref=e29]:
+              - button "Pick locator" [ref=e30] [cursor=pointer]:
+                - generic [ref=e31]: 
+              - tablist [ref=e32]:
+                - tab "Action" [selected] [ref=e33] [cursor=pointer]:
+                  - generic [ref=e34]: Action
+                - tab "Before" [ref=e35] [cursor=pointer]:
+                  - generic [ref=e36]: Before
+                - tab "After" [ref=e37] [cursor=pointer]:
+                  - generic [ref=e38]: After
+              - button "Previous action" [disabled] [ref=e39]:
+                - generic [ref=e40]: 
+              - button "Play" [disabled] [ref=e41]:
+                - generic [ref=e42]: 
+              - button "Stop" [disabled] [ref=e43]:
+                - generic [ref=e44]: 
+              - button "Next action" [disabled] [ref=e45]:
+                - generic [ref=e46]: 
+              - button "1x" [ref=e47] [cursor=pointer]
+              - button "Open snapshot in a new tab" [disabled] [ref=e48]:
+                - generic [ref=e49]: 
+            - generic [ref=e52]:
+              - generic "about:blank" [ref=e58]:
+                - generic [ref=e59]: about:blank
+              - iframe [active] [ref=e68]:
+                
+          - generic [ref=e71]:
+            - generic [ref=e72]:
+              - tablist [ref=e73]:
+                - tab "Actions" [selected] [ref=e74] [cursor=pointer]:
+                  - generic [ref=e75]: Actions
+                - tab "Metadata" [ref=e76] [cursor=pointer]:
+                  - generic [ref=e77]: Metadata
+              - button "Filter actions" [ref=e79] [cursor=pointer]:
+                - generic [ref=e80]: 
+            - tabpanel "Actions" [ref=e81]:
+              - searchbox "Filter actions" [ref=e84]
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - tablist [ref=e93]:
+              - tab "Locator" [ref=e94] [cursor=pointer]:
+                - generic [ref=e95]: Locator
+              - tab "Source" [selected] [ref=e96] [cursor=pointer]:
+                - generic [ref=e97]: Source
+              - tab "Call" [ref=e98] [cursor=pointer]:
+                - generic [ref=e99]: Call
+              - tab "Log" [ref=e100] [cursor=pointer]:
+                - generic [ref=e101]: Log
+              - tab "Errors" [ref=e102] [cursor=pointer]:
+                - generic [ref=e103]: Errors
+              - tab "Console" [ref=e104] [cursor=pointer]:
+                - generic [ref=e105]: Console
+              - tab "Network" [ref=e106] [cursor=pointer]:
+                - generic [ref=e107]: Network
+              - tab "Attachments" [ref=e108] [cursor=pointer]:
+                - generic [ref=e109]: Attachments
+              - tab "Annotations" [ref=e110] [cursor=pointer]:
+                - generic [ref=e111]: Annotations
+            - button "Dock to right" [ref=e113] [cursor=pointer]:
+              - generic [ref=e114]: 
+          - tabpanel "Source" [ref=e115]:
+            - generic [ref=e120]:
+              - textbox [ref=e121]
+              - generic [ref=e126]: "1"
+  - generic [ref=e132]:
+    - generic [ref=e133]:
+      - img "Playwright logo" [ref=e134]
+      - generic [ref=e135]: Playwright
+      - button "Reload" [disabled] [ref=e136]:
+        - generic [ref=e137]: 
+      - 'button "Toggle output — Ctrl + `" [ref=e139] [cursor=pointer]':
+        - generic [ref=e140]: 
+    - generic [ref=e141]:
+      - generic [ref=e143] [cursor=pointer]:
+        - generic [ref=e144]: 
+        - searchbox "Filter (e.g. text, @tag)" [ref=e145]
+      - 'generic "Status: all Projects: chromium" [ref=e195] [cursor=pointer]': "Status: allProjects: chromium"
+    - generic [ref=e147]:
+      - generic [ref=e250]: Running 0/4 (0%)
+      - button "Run all — F5" [disabled] [ref=e149]:
+        - generic [ref=e150]: 
+      - button "Stop — Shift + F5" [ref=e151] [cursor=pointer]:
+        - generic [ref=e152]: 
+      - button "Watch all" [ref=e153] [cursor=pointer]:
+        - generic [ref=e154]: 
+      - button "Collapse all" [ref=e155] [cursor=pointer]:
+        - generic [ref=e156]: 
+      - button "Expand all" [ref=e157] [cursor=pointer]:
+        - generic [ref=e158]: 
+    - tree [ref=e196]:
+      - treeitem "[icon-clock] forum.spec.ts" [expanded] [ref=e251]:
+        - generic [ref=e198] [cursor=pointer]:
+          - generic [ref=e199]: 
+          - generic "[icon-clock]" [ref=e252]: 
+          - generic "forum.spec.ts" [ref=e201]:
+            - generic [ref=e202]: forum.spec.ts
+            - generic [ref=e203]:   
+        - group [ref=e204]:
+          - treeitem "[icon-clock] forum index lists saved organisations" [ref=e253]:
+            - generic [ref=e206] [cursor=pointer]:
+              - generic [ref=e207]: 
+              - generic "[icon-clock]" [ref=e254]: 
+              - generic "forum index lists saved organisations" [ref=e209]:
+                - generic [ref=e210]: forum index lists saved organisations
+                - generic [ref=e211]:   
+          - treeitem "[icon-clock] forum org page renders without crashing" [ref=e255]:
+            - generic [ref=e213] [cursor=pointer]:
+              - generic [ref=e214]: 
+              - generic "[icon-clock]" [ref=e256]: 
+              - generic "forum org page renders without crashing" [ref=e216]:
+                - generic [ref=e217]: forum org page renders without crashing
+                - generic [ref=e218]:   
+      - treeitem "[icon-clock] landing.spec.ts" [expanded] [ref=e257]:
+        - generic [ref=e220] [cursor=pointer]:
+          - generic [ref=e221]: 
+          - generic "[icon-clock]" [ref=e258]: 
+          - generic "landing.spec.ts" [ref=e223]:
+            - generic [ref=e224]: landing.spec.ts
+            - generic [ref=e225]:   
+        - group [ref=e226]:
+          - treeitem "[icon-clock] landing page renders hero and footer" [ref=e259]:
+            - generic [ref=e228] [cursor=pointer]:
+              - generic [ref=e229]: 
+              - generic "[icon-clock]" [ref=e260]: 
+              - generic "landing page renders hero and footer" [ref=e231]:
+                - generic [ref=e232]: landing page renders hero and footer
+                - generic [ref=e233]:   
+      - treeitem "[icon-clock] overview.spec.ts" [expanded] [ref=e261]:
+        - generic [ref=e235] [cursor=pointer]:
+          - generic [ref=e236]: 
+          - generic "[icon-clock]" [ref=e262]: 
+          - generic "overview.spec.ts" [ref=e238]:
+            - generic [ref=e239]: overview.spec.ts
+            - generic [ref=e240]:   
+        - group [ref=e241]:
+          - treeitem "[icon-clock] overview dashboard shell renders nav tabs" [ref=e263]:
+            - generic [ref=e243] [cursor=pointer]:
+              - generic [ref=e244]: 
+              - generic "[icon-clock]" [ref=e264]: 
+              - generic "overview dashboard shell renders nav tabs" [ref=e246]:
+                - generic [ref=e247]: overview dashboard shell renders nav tabs
+                - generic [ref=e248]:   
+    - generic [ref=e162] [cursor=pointer]:
+      - generic "Show Testing Options" [ref=e163]: 
+      - generic [ref=e164]: Testing Options
+    - generic [ref=e165] [cursor=pointer]:
+      - generic "Show Settings" [ref=e166]: 
+      - generic [ref=e167]: Settings
