@@ -35,7 +35,11 @@ make initialise-anvil                # Deploy all contracts to local Anvil
 pnpm dev        # Start dev server (localhost:3000)
 pnpm build      # Production build
 pnpm lint       # ESLint
+pnpm test:e2e   # Playwright e2e tests
 ```
+Requires Node 20 or 22 (LTS) — see `frontend/.nvmrc`. Node 23 breaks Playwright's TS loader (`context.conditions` is a `Set` instead of an `Array` on that version).
+
+**Never run the e2e test suite (`pnpm test:e2e` or any Playwright invocation) yourself — the user runs these manually.**
 
 ### xmtp-agent (`cd xmtp-agent/`)
 ```bash

@@ -159,7 +159,6 @@ export default function OverviewPage() {
               childContracts={powers?.metadatas?.childContracts}
               chainId={powers?.chainId}
               powersAddress={powers?.contractAddress}
-              xmtpAgentAddress={powers?.metadatas?.xmtpAgentAddress}
             />
           )}
 

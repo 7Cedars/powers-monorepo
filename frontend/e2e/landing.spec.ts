@@ -69,6 +69,7 @@ for (const viewport of VIEWPORTS) {
     test.describe('HeroSection', () => {
       test('typewriter cycles through multiple distinct sentences', async ({ page }) => {
         await page.goto('/');
+        await page.waitForLoadState('networkidle');
         const typewriter = page.locator('main > div').first().locator('div.text-muted-foreground').first();
         await expect(typewriter).toBeVisible();
 
@@ -144,11 +145,6 @@ for (const viewport of VIEWPORTS) {
     });
 
     test.describe('SectionDemo', () => {
-      // SectionDemo currently renders no title/heading text at all (verified
-      // by reading app/SectionDemo.tsx) - flagging this rather than asserting
-      // against text that doesn't exist.
-      test.fixme('title is visible', async () => {});
-
       test('all flow nodes are visible and draggable', async ({ page }) => {
         await page.goto('/');
         const demo = page.locator('#demo');
@@ -176,12 +172,6 @@ for (const viewport of VIEWPORTS) {
         const moved = Math.abs(after!.x - before!.x) + Math.abs(after!.y - before!.y);
         expect(moved, 'dragging a node should change its rendered position').toBeGreaterThan(20);
       });
-
-      // SectionDemo's ReactFlow instance is configured with showZoom={false}
-      // and zoomOnScroll={false} (app/DemoFlow.tsx) - there is no user-facing
-      // way to re-zoom the demo canvas today, so "can view be re-zoomed" is
-      // not currently testable as a user-facing behavior.
-      test.fixme('view can be re-zoomed', async () => {});
     });
 
     test.describe('SectionExamples', () => {
@@ -254,13 +244,13 @@ for (const viewport of VIEWPORTS) {
           }
 
           await examples.getByRole('button', { name: 'Forum', exact: true }).click();
-          await expect(page).toHaveURL(`/forum/${org.chainId}/${org.address}`);
+          await expect(page).toHaveURL(`/forum/${org.chainId}/${org.address}`, { timeout: 15_000 });
           await page.goBack();
 
           await examples.scrollIntoViewIfNeeded();
           await examples.locator(`button[aria-label="Go to example ${i + 1}"]`).click();
           await examples.getByRole('button', { name: 'Overview', exact: true }).click();
-          await expect(page).toHaveURL(`/overview/${org.chainId}/${org.address}/organisation`);
+          await expect(page).toHaveURL(`/overview/${org.chainId}/${org.address}/organisation`, { timeout: 15_000 });
           await page.goBack();
         }
       });
@@ -284,7 +274,7 @@ for (const viewport of VIEWPORTS) {
           await expect(link).toBeVisible();
           await expect(link).toHaveAttribute('href', href);
           await link.click();
-          await expect(page).toHaveURL(href);
+          await expect(page).toHaveURL(href, { timeout: 15_000 });
           // Use goto rather than goBack: clicking "Home" while already on
           // "/" doesn't push a new history entry, which makes goBack()
           // overshoot to about:blank. goto deterministically resets state

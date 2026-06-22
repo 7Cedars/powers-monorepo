@@ -38,6 +38,17 @@ const nextConfig = {
             ...config.resolve.alias,
             '@react-native-async-storage/async-storage': false,
         };
+
+        // E2E builds only: swap Privy's auth hooks for a test-controlled mock
+        // so Playwright can simulate a connected wallet without going through
+        // the real login flow (email OTP / wallet popup can't be automated).
+        if (process.env.E2E_MOCK_AUTH === 'true') {
+            config.resolve.alias = {
+                ...config.resolve.alias,
+                '@privy-io/react-auth/smart-wallets$': new URL('./e2e/mocks/privy-smart-wallets-mock.tsx', import.meta.url).pathname,
+                '@privy-io/react-auth$': new URL('./e2e/mocks/privy-react-auth-mock.tsx', import.meta.url).pathname,
+            };
+        }
         
         // Enable WASM support for XMTP SDK
         config.experiments = {

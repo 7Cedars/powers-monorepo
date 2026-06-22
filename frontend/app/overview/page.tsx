@@ -65,7 +65,7 @@ export default function ProtocolPage() {
             <OrgSummaryBox
               key={protocol.contractAddress}
               powers={protocol}
-              onArchive={() => handleArchiveDao(protocol.contractAddress)}
+              onArchive={() => setArchiveTarget(protocol)}
               alignment="column"
               showHeader={true}
             />

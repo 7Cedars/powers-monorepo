@@ -36,7 +36,7 @@ interface OrgMetadataProps {
   childContracts?: familyMember[]
   chainId?: bigint | number
   powersAddress?: string
-  xmtpAgentAddress?: string
+  showAdminActions?: boolean
 }
 
 function MetaRow({
@@ -82,7 +82,7 @@ export function OrgMetadata({
   childContracts,
   chainId,
   powersAddress,
-  xmtpAgentAddress,
+  showAdminActions = true,
 }: OrgMetadataProps) {
   const params = useParams<{ chainId?: string; powers?: string }>()
   const { address: userAddress } = useAccount()
@@ -243,7 +243,7 @@ export function OrgMetadata({
         </div>
       )}
 
-      {isAdmin && (
+      {showAdminActions && isAdmin && (
         <div className="py-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Admin</p>
           <button
@@ -257,7 +257,7 @@ export function OrgMetadata({
         </div>
       )}
 
-      {!description && !isValidLink(website) && !isValidLink(codeOfConduct) && !isValidLink(disputeResolution) && socials.length === 0 && !isAdmin && (
+      {!description && !isValidLink(website) && !isValidLink(codeOfConduct) && !isValidLink(disputeResolution) && socials.length === 0 && !(showAdminActions && isAdmin) && (
         <p className="py-6 text-center text-xs text-muted-foreground font-mono">No organisation information available</p>
       )}
     </div>

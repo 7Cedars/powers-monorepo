@@ -20,14 +20,14 @@ const FOUNDED_BLOCK = '12345';
 const FOUNDED_TIMESTAMP = 1700000000; // fixed, cached so no live RPC call is needed
 
 const ORG_A = {
-  contractAddress: '0x1111111111111111111111111111111111111A',
+  contractAddress: '0x111111111111111111111111111111111111111A',
   chainId: CHAIN_ID,
   name: 'Org A Full',
   metadatas: { icon: '', banner: '', description: 'A fully described organisation.', attributes: [] },
   foundedAt: FOUNDED_BLOCK,
-  treasury: '0x2222222222222222222222222222222222222B',
+  treasury: '0x222222222222222222222222222222222222222B',
   mandateCount: '3',
-  mandates: [{ powers: '0x1111111111111111111111111111111111111A', mandateAddress: '0x0', mandateHash: '0x0', index: '0', active: true }],
+  mandates: [{ powers: '0x111111111111111111111111111111111111111A', mandateAddress: '0x0', mandateHash: '0x0', index: '0', active: true }],
   roles: [
     { roleId: '0', label: 'Member', amountHolders: '1', members: [] },
     { roleId: '1', label: 'Admin', amountHolders: '1', members: [] },
@@ -36,13 +36,13 @@ const ORG_A = {
 };
 
 const ORG_B = {
-  contractAddress: '0x3333333333333333333333333333333333333C',
+  contractAddress: '0x333333333333333333333333333333333333333C',
   chainId: CHAIN_ID,
   name: 'Org B Minimal',
   metadatas: { icon: '', banner: '', description: '', attributes: [] },
   treasury: '0x0000000000000000000000000000000000000000',
   mandateCount: '0',
-  mandates: [{ powers: '0x3333333333333333333333333333333333333C', mandateAddress: '0x0', mandateHash: '0x0', index: '0', active: true }],
+  mandates: [{ powers: '0x333333333333333333333333333333333333333C', mandateAddress: '0x0', mandateHash: '0x0', index: '0', active: true }],
   roles: [],
   layout: {},
 };
@@ -70,6 +70,25 @@ function orgBox(page: Page, orgName: string) {
 
 test.describe('overview index', () => {
   test.beforeEach(async ({ page }) => {
+    // The store always injects two real default orgs (Powers 101,
+    // Governed721) alongside whatever's in localStorage, and their empty
+    // `mandates` trigger a live fetchPowers() RPC call. Mock Alchemy so
+    // that call resolves instantly instead of racing test teardown - an
+    // in-flight live request gets cut off when the page closes, which
+    // Playwright surfaces as an unrelated `_wrapApiCall` stream error.
+    await page.routeWebSocket(/g\.alchemy\.com/, (ws) => ws.close());
+    await page.route('**/g.alchemy.com/v2/**', async (route) => {
+      let body: unknown;
+      try {
+        body = JSON.parse(route.request().postData() ?? '{}');
+      } catch {
+        body = {};
+      }
+      const toResult = (entry: any) => ({ jsonrpc: '2.0', id: entry?.id, result: '0x' });
+      const payload = Array.isArray(body) ? body.map(toResult) : toResult(body);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) });
+    });
+
     await seedSavedProtocols(page);
     await page.goto('/overview');
   });
@@ -108,8 +127,36 @@ test.describe('overview index', () => {
     await footer.scrollIntoViewIfNeeded();
     await expect(footer).toBeVisible();
   });
+
+  test('organisation box has a delete button', async ({ page }) => {
+    const box = orgBox(page, ORG_A.name);
+    await expect(box.getByRole('button')).toBeVisible();
+  });
+
+  test('delete button opens a confirmation dialog', async ({ page }) => {
+    const box = orgBox(page, ORG_A.name);
+    await box.getByRole('button').click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('ARCHIVE PROTOCOL', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Go back' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Confirm' })).toBeVisible();
+  });
+
+  test('confirming removes the organisation from the list', async ({ page }) => {
+    await orgBox(page, ORG_A.name).getByRole('button').click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+
+    await expect(page.getByRole('heading', { name: ORG_A.name, exact: true })).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: ORG_B.name, exact: true })).toBeVisible();
+  });
+
+  test('cancelling the dialog keeps the organisation in the list', async ({ page }) => {
+    await orgBox(page, ORG_A.name).getByRole('button').click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Go back' }).click();
+
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: ORG_A.name, exact: true })).toBeVisible();
+  });
 });
-
-test.fixme('archiving a saved organisation removes it from the list', async () => {});
-
-test.fixme('clicking a saved organisation navigates to its overview dashboard', async () => {});
