@@ -216,7 +216,7 @@ for (const viewport of VIEWPORTS) {
         // only checks that the URL is correct after navigation, not that
         // on-chain org data renders.
         await page.routeWebSocket(/g\.alchemy\.com/, (ws) => ws.close());
-        await page.route('**/g.alchemy.com/v2/**', async (route) => {
+        await page.route(/g\.alchemy\.com\/v2\//, async (route) => {
           let body: unknown;
           try {
             body = JSON.parse(route.request().postData() ?? '{}');

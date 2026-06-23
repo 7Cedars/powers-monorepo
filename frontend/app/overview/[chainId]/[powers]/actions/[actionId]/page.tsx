@@ -21,7 +21,7 @@ const STATE_STYLES: Record<number, string> = {
 }
 
 export default function ActionDetailPage() {
-  const { actionId, chainId } = useParams<{ actionId: string; chainId: string }>()
+  const { actionId, chainId, powers: powersAddress } = useParams<{ actionId: string; chainId: string; powers: string }>()
   const router = useRouter()
   const powers = usePowersStore()
   const { setHighlightMode } = useUIStateStore()
@@ -87,7 +87,7 @@ export default function ActionDetailPage() {
 
   return (
     <main className="w-full h-full flex flex-col bg-background pb-16">
-      <OrgBanner title="Action" subtitle={actionId ?? ''} backButton={{ label: "ALL ACTIONS", href: `/overview/${chainId}/${powers?.contractAddress}/actions` }} />
+      <OrgBanner title="Action" subtitle={actionId ?? ''} backButton={{ label: "ALL ACTIONS", href: `/overview/${chainId}/${powersAddress}/actions` }} />
       <div className="px-4 flex flex-col gap-6 mt-6">
 
       {/* Input parameters */}
@@ -124,7 +124,7 @@ export default function ActionDetailPage() {
                 <div className="flex items-center justify-between">
                   <button
                     className="text-foreground hover:text-primary hover:underline transition-colors text-left"
-                    onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates/${mandateId}`)}
+                    onClick={() => router.push(`/overview/${chainId}/${powersAddress}/mandates/${mandateId}`)}
                   >
                     #{String(mandateId)} {mandateName}
                   </button>

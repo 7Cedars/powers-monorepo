@@ -105,7 +105,6 @@ function encodeHasRoleSinceResult(since: bigint): Hex {
 }
 
 function handleEthCall(roleGrants: RoleGrant[], to: string | undefined, data: Hex | undefined): Hex {
-  console.error('[mockOnChainRpc] handleEthCall', { to, data, roleGrants });
   if (!to || !data) return '0x';
 
   if (to.toLowerCase() === MULTICALL3_ADDRESS) {
@@ -116,7 +115,6 @@ function handleEthCall(roleGrants: RoleGrant[], to: string | undefined, data: He
         try {
           const decoded = decodeFunctionData({ abi: hasRoleSinceAbi, data: call.callData });
           const since = findSince(roleGrants, call.target, decoded.args[0] as string, decoded.args[1] as bigint);
-          console.error('[mockOnChainRpc] inner call decoded', { target: call.target, account: decoded.args[0], roleId: decoded.args[1], since });
           return { success: true, returnData: encodeHasRoleSinceResult(since) };
         } catch (err) {
           console.error('[mockOnChainRpc] failed to decode hasRoleSince call', call.target, call.callData, err);
@@ -189,7 +187,7 @@ export async function mockOnChainRpc(page: Page, options: MockOnChainRpcOptions 
   const { roleGrants = [], votes = [], chainIdHex = '0xaa36a7' } = options;
 
   await page.routeWebSocket(/g\.alchemy\.com/, (ws) => ws.close());
-  await page.route('**/g.alchemy.com/v2/**', async (route) => {
+  await page.route(/g\.alchemy\.com\/v2\//, async (route) => {
     let body: unknown;
     try {
       body = JSON.parse(route.request().postData() ?? '{}');

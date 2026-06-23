@@ -77,7 +77,7 @@ test.describe('forum index', () => {
     // in-flight live request gets cut off when the page closes, which
     // Playwright surfaces as an unrelated `_wrapApiCall` stream error.
     await page.routeWebSocket(/g\.alchemy\.com/, (ws) => ws.close());
-    await page.route('**/g.alchemy.com/v2/**', async (route) => {
+    await page.route(/g\.alchemy\.com\/v2\//, async (route) => {
       let body: unknown;
       try {
         body = JSON.parse(route.request().postData() ?? '{}');

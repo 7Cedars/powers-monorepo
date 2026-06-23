@@ -14,6 +14,7 @@ import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { usePowersLive } from "@/hooks/usePowersLive";
+import { useActionStateSync } from "@/hooks/useActionStateSync";
 import { useConnection, useSwitchChain } from "wagmi";
 import { useXmtpClient } from "@/hooks/useXmtpClient";
 
@@ -29,6 +30,10 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const { powers: powersAddress } = useParams<{ chainId: string, powers: string }>()
     const { chainId } = useParams<{ chainId: string }>()
     usePowersLive(
+      powersAddress as `0x${string}` | undefined,
+      chainId ? parseChainId(chainId) : undefined
+    );
+    useActionStateSync(
       powersAddress as `0x${string}` | undefined,
       chainId ? parseChainId(chainId) : undefined
     );
