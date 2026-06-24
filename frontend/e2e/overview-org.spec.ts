@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { getAddress } from 'viem';
 import { mockPowersRpc, type MockPowersConfig, type MockMandate } from './mocks/powers-rpc';
 
 const PUBLIC_ROLE_ID = 115792089237316195423570985008687907853269984665640564039457584007913129639935n;
@@ -159,7 +160,7 @@ async function mockOrgMetadata(page: Page) {
         website: '',
         codeOfConduct: '',
         disputeResolution: '',
-        xmtpAgentAddress: undefined,
+        xmtpAgentAddress: null,
         communicationChannels: {},
         attributes: [],
         description: ORG_DESCRIPTION,
@@ -634,8 +635,8 @@ test.describe('overview org dashboard', () => {
           await expect(page.getByRole('columnheader', { name: header, exact: true })).toBeVisible();
         }
         await expect(page.locator('tbody tr')).toHaveCount(2);
-        await expect(page.getByText(MEMBER_HOLDER_1, { exact: true })).toBeVisible();
-        await expect(page.getByText(MEMBER_HOLDER_2, { exact: true })).toBeVisible();
+        await expect(page.getByText(getAddress(MEMBER_HOLDER_1), { exact: true })).toBeVisible();
+        await expect(page.getByText(getAddress(MEMBER_HOLDER_2), { exact: true })).toBeVisible();
       });
 
       test('shows "No members found" when the role has no members', async ({ page }) => {
@@ -680,10 +681,10 @@ test.describe('overview org dashboard', () => {
       });
 
       test('shows assets when the treasury is set', async ({ page }) => {
+        await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 15_000 });
         for (const header of ['Asset', 'Symbol', 'Address', 'Quantity', 'Value']) {
           await expect(page.getByRole('columnheader', { name: header, exact: true })).toBeVisible();
         }
-        await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 15_000 });
       });
     });
   });
@@ -722,6 +723,14 @@ test.describe('overview org dashboard', () => {
         await expect(label).toBeVisible();
         await expect(label.locator('xpath=following-sibling::p[1]')).toHaveText(ORG_DESCRIPTION);
       });
+    });
+
+    test('shows the "no organisation information" fallback when no uri is set', async ({ page }) => {
+      await mockPowersRpc(page, ORG_BASIC);
+      await page.goto(`${ORG_PATH}/organisation`);
+
+      await expect(page.getByText('No organisation information available', { exact: true })).toBeVisible();
+      await expect(page.getByText('About', { exact: true })).not.toBeVisible();
     });
 
     test('the "To Forum" button navigates to the forum page for this org', async ({ page }) => {

@@ -45,22 +45,6 @@ export function Footer() {
             <Link href="/forum" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Forum</Link>
             <span className="text-xs text-muted-foreground">·</span>
             <Link href="/overview" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Overview</Link>
-            <span className="text-xs text-muted-foreground">·</span>
-            <a
-              href="/#deploy" rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
-                if (pathname === '/') {
-                  document.getElementById('deploy')?.scrollIntoView({ behavior: 'smooth' });
-                  window.history.pushState(null, '', '/#deploy');
-                } else {
-                  router.push('/#deploy');
-                }
-              }}
-            >
-              Deploy
-            </a>
           </div>
           <div className="flex flex-wrap items-center gap-x-2">
             <span className="text-xs font-bold text-foreground mr-2">Protocol</span>

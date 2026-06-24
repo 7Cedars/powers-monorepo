@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = { 
+const nextConfig = {
+    // E2E builds use a separate output dir so they never share (or get
+    // reused from) the same webpack cache as a normal build/dev session —
+    // otherwise a stale cache can leak the E2E_MOCK_AUTH Privy alias below
+    // into a real production build.
+    distDir: process.env.E2E_MOCK_AUTH === 'true' ? '.next-e2e' : '.next',
+
     images: {
         remotePatterns: [
             {

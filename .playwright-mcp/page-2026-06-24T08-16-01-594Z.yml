@@ -1,0 +1,139 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Forum" [ref=e6] [cursor=pointer]:
+          - /url: /forum
+        - generic [ref=e7]:
+          - button "NOT CONNECTED" [ref=e58] [cursor=pointer]:
+            - img [ref=e59]
+            - generic [ref=e61]: NOT CONNECTED
+          - button "Switch to dark mode" [ref=e62] [cursor=pointer]:
+            - img [ref=e63]
+    - generic [ref=e11]:
+      - img [ref=e13]
+      - generic [ref=e16] [cursor=pointer]: Navigation
+    - main [ref=e17]:
+      - generic [ref=e18]:
+        - main [ref=e19]:
+          - heading "All organisations" [level=1] [ref=e20]
+          - paragraph [ref=e21]: Here is an overview of all organisations saved in your browser.
+          - generic [ref=e65]:
+            - generic [ref=e66] [cursor=pointer]:
+              - generic [ref=e68]:
+                - heading "Powers 101" [level=3] [ref=e69]
+                - button [ref=e70]:
+                  - img [ref=e71]
+              - generic [ref=e73]:
+                - paragraph [ref=e75]: A base example of an on-chain organisation that uses the Powers protocol to govern itself and create a simple check and balance system.
+                - generic [ref=e77]:
+                  - generic [ref=e78]:
+                    - text: Founded
+                    - paragraph [ref=e79]: 21-05-2026
+                  - generic [ref=e80]:
+                    - text: Mandates
+                    - paragraph [ref=e81]: "7"
+                  - generic [ref=e82]:
+                    - text: Roles
+                    - paragraph [ref=e83]: "3"
+                  - generic [ref=e84]:
+                    - text: Powers
+                    - paragraph [ref=e85]: 0x7EF3...9098
+                  - generic [ref=e86]:
+                    - text: Treasury
+                    - paragraph [ref=e87]: 0x7EF3...9098
+                  - generic [ref=e88]:
+                    - text: Network
+                    - paragraph [ref=e89]: "11155111"
+            - generic [ref=e90] [cursor=pointer]:
+              - generic [ref=e92]:
+                - heading "Governed721" [level=3] [ref=e93]
+                - button [ref=e94]:
+                  - img [ref=e95]
+              - generic [ref=e97]:
+                - paragraph [ref=e99]: The Governed721 organization governs a Governed721 NFT contract (deployed at 0xA69300486514ae20Dd987eB30c736f4F682e2275) and manages the distribution of royalties in this collection of NFTs. Three types of stakeholders - Artists, Owners and Operators - decide on how revenues from resale of artists are distributed. Together, they elect executive that are responsible for enforcement of split payments by blacklisting any account that is deemed non-compliant.
+                - generic [ref=e101]:
+                  - generic [ref=e102]:
+                    - text: Founded
+                    - paragraph [ref=e103]: 21-05-2026
+                  - generic [ref=e104]:
+                    - text: Mandates
+                    - paragraph [ref=e105]: "31"
+                  - generic [ref=e106]:
+                    - text: Roles
+                    - paragraph [ref=e107]: "6"
+                  - generic [ref=e108]:
+                    - text: Powers
+                    - paragraph [ref=e109]: 0x9a33...DAd6
+                  - generic [ref=e110]:
+                    - text: Treasury
+                    - paragraph [ref=e111]: 0x9a33...DAd6
+                  - generic [ref=e112]:
+                    - text: Network
+                    - paragraph [ref=e113]: "11155111"
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - img "Powers Protocol" [ref=e25]
+            - generic [ref=e26]:
+              - generic [ref=e27]: Made with
+              - img [ref=e28]
+              - generic [ref=e30]: by Publius Projects
+            - generic [ref=e31]:
+              - link [ref=e32] [cursor=pointer]:
+                - /url: https://discordapp.com/users/1006928106487021638
+                - img [ref=e33]
+              - link [ref=e35] [cursor=pointer]:
+                - /url: https://t.me/thd83
+                - img [ref=e36]
+              - link [ref=e38] [cursor=pointer]:
+                - /url: https://github.com/7Cedars
+                - img [ref=e39]
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - generic [ref=e43]: dApp
+              - link "Home" [ref=e44] [cursor=pointer]:
+                - /url: /
+              - generic [ref=e45]: ·
+              - link "Forum" [ref=e46] [cursor=pointer]:
+                - /url: /forum
+              - generic [ref=e47]: ·
+              - link "Overview" [ref=e48] [cursor=pointer]:
+                - /url: /overview
+            - generic [ref=e49]:
+              - generic [ref=e50]: Protocol
+              - link "Litepaper" [ref=e51] [cursor=pointer]:
+                - /url: https://powers-docs.vercel.app/for-developers/litepaper
+              - generic [ref=e52]: ·
+              - link "Docs" [ref=e53] [cursor=pointer]:
+                - /url: https://powers-docs.vercel.app/welcome
+              - generic [ref=e54]: ·
+              - link "Github" [ref=e55] [cursor=pointer]:
+                - /url: https://github.com/7Cedars/powers/tree/main/solidity
+          - button "Switch to dark mode" [ref=e114] [cursor=pointer]:
+            - img [ref=e115]
+  - button "Open Next.js Dev Tools" [ref=e122] [cursor=pointer]:
+    - img [ref=e123]
+  - alert [ref=e126]
+  - generic:
+    - generic:
+      - generic:
+        - dialog "log in or sign up" [active]:
+          - generic [ref=e135]:
+            - generic [ref=e136]:
+              - button "close modal" [ref=e141] [cursor=pointer]:
+                - img [ref=e142]
+              - generic [ref=e144]:
+                - img "powers-protocol logo" [ref=e146]
+                - heading "Log in or sign up" [level=3] [ref=e148]
+            - generic [ref=e150]:
+              - generic [ref=e153]:
+                - img [ref=e155]
+                - textbox "Submit" [ref=e158]:
+                  - /placeholder: your@email.com
+                - button "Submit" [disabled] [ref=e159]: Submit
+              - button "Continue with a wallet" [ref=e162] [cursor=pointer]:
+                - img [ref=e164]
+                - generic [ref=e167]: Continue with a wallet
+            - link [ref=e171] [cursor=pointer]:
+              - /url: https://privy.io/?utm_source=module&utm_medium=module&utm_campaign=registration_module
+              - img [ref=e172]
