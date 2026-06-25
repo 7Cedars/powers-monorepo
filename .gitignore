@@ -20,8 +20,8 @@
 /ai-agent/node_modules/
 
 
-# ai-skill artifacts
-/ai-skill/node_modules/
+# governance-rag artifacts
+/governance-rag/node_modules/
 
 
 # Logs
@@ -89,10 +89,10 @@ typings/
 .vscode/
 
 # AI reference PDFs — distilled into ai/references/reading_guide.md
-ai-skill/references/*.pdf
-ai-skill/sources/*.pdf
+governance-rag/references/*.pdf
+governance-rag/sources/*.pdf
 
 # RAG package artifacts
-ai-skill/node_modules/
-ai-skill/dist/
-ai-skill/.env
+governance-rag/node_modules/
+governance-rag/dist/
+governance-rag/.env

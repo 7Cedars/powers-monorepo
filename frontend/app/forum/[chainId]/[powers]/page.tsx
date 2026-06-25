@@ -36,11 +36,8 @@ export default function OverviewPage() {
   const [activeTab, setActiveTab] = useState<Tab>('actions')
   const [mandateModalOpen, setMandateModalOpen] = useState(false)
 
-  useEffect(() => {
-    if (powers.contractAddress == undefined || powers.contractAddress == '0x0' || powers.contractAddress != powersAddress) {
-      fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId))
-    }
-  }, [powersAddress, chainId])
+  // Initial fetch is triggered by the shared layout (app/forum/layout.tsx)
+  // so it also covers direct navigation to sub-routes like /new.
 
   const handleFetchPowers = async () => {
     if (powersAddress && chainId) {

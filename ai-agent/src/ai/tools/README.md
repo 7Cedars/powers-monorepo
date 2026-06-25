@@ -1,6 +1,6 @@
 # Agent Tools
 
-This document is the reference for the tools available to the AI governance agent during reasoning. For an overview of the agent itself, see [`ai-agent/README.md`](../../README.md). For the `/design-org` skill that generates organisations, see [`ai-skill/README.md`](../../../../ai-skill/README.md).
+This document is the reference for the tools available to the AI governance agent during reasoning. For an overview of the agent itself, see [`ai-agent/README.md`](../../README.md). For the `/design-org` skill that generates organisations, see [`governance-rag/README.md`](../../../../governance-rag/README.md).
 
 The agent has two categories of tools it can call during reasoning:
 

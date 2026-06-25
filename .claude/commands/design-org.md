@@ -12,15 +12,15 @@ Work through the five phases below in order. Never skip a phase. Speak in plain 
 
 Read the following files to ground your design work. Do not show this loading work to the user; just note internally that you have done it.
 
-1. `ai-skill/prompts/institutionalDesign.md` — mandate catalogue, encoding templates, design heuristics
-2. `ai-skill/templates/orgSpec.md` — spec sheet template you will fill in Phase 3
-3. `ai-skill/templates/deployScript.md` — annotated deploy script template for Phase 4
+1. `governance-rag/prompts/institutionalDesign.md` — mandate catalogue, encoding templates, design heuristics
+2. `governance-rag/templates/orgSpec.md` — spec sheet template you will fill in Phase 3
+3. `governance-rag/templates/deployScript.md` — annotated deploy script template for Phase 4
 4. `solidity/test/TestConstitutions.sol` — seven concrete governance examples you can draw patterns from
 5. `solidity/governance/examples/OptimisticExecution.s.sol` — a simple, readable deploy script example
 6. `solidity/governance/examples/Powers101.s.sol` — another concise deploy example
 7. `AGENTS.md` — project workflow and principles
 
-**Note:** The `search_governance_sources` MCP tool is available to retrieve relevant excerpts from the governance theory library (`ai-skill/sources/`). Use it during Phase 2 (between Round A and B) and Phase 3 instead of reading individual reference files. Do not pre-load the reference files.
+**Note:** The `search_governance_sources` MCP tool is available to retrieve relevant excerpts from the governance theory library (`governance-rag/sources/`). Use it during Phase 2 (between Round A and B) and Phase 3 instead of reading individual reference files. Do not pre-load the reference files.
 
 Once loading is complete, greet the user briefly and move to Phase 2.
 
@@ -58,7 +58,7 @@ Use the combined results to inform Round B questions and note which sources you 
 > ```
 > You can continue now and the design will proceed using locally-loaded reference material — but the RAG search will not be available for this session.
 
-After warning the user, fall back to reading `ai-skill/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
+After warning the user, fall back to reading `governance-rag/references/reading_guide.md` and loading the 1–2 most relevant guide files manually.
 
 **Round B — Trust, Power and Constraints**
 4. Who do you trust most to act in the organisation's interest? Is there a founding group or administrator who should have extra authority at the start?
@@ -80,7 +80,7 @@ After Round B, summarise your understanding back to the user in plain language a
 
 ## Phase 3 — Governance Specification
 
-Using the answers from Phase 2 and the patterns in `ai-skill/prompts/institutionalDesign.md`, design a governance structure. Then write the specification to disk using the template from `ai-skill/templates/orgSpec.md`.
+Using the answers from Phase 2 and the patterns in `governance-rag/prompts/institutionalDesign.md`, design a governance structure. Then write the specification to disk using the template from `governance-rag/templates/orgSpec.md`.
 
 **Save the spec to:** `solidity/governance/<org-name>/Spec.md`
 (Use a short kebab-case name derived from the organisation name, e.g., `secured-slate`)
@@ -113,7 +113,7 @@ Generate the following files in order. After each file, briefly describe what it
 ### 4a. Deploy Script
 **Save to:** `solidity/governance/<org-name>/Deploy.s.sol`
 
-Follow the pattern in `ai-skill/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
+Follow the pattern in `governance-rag/templates/deployScript.md` and `solidity/governance/examples/OptimisticExecution.s.sol`. Also read `solidity/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
 - Contract name: `Deploy`
 - Use `MAJOR=0, MINOR=1, PATCH=8` for registry lookups
 - **Metadata URI**: use the URI supplied by the user as the second argument to the `Powers` constructor. If no URI was provided, use an empty string with a TODO comment:
@@ -341,7 +341,7 @@ After all files are generated:
 3. List any remaining manual steps:
    - Run `make update-builds` from `solidity/` if the frontend needs to pick up new contract ABIs
    - Update `frontend/context/constants.ts` if deploying to a live network
-   - The reference papers you should add to `ai-skill/references/` for future sessions
+   - The reference papers you should add to `governance-rag/references/` for future sessions
 
 Close by summarising what was built. All eight generated files live in one folder:
 - `solidity/governance/<org-name>/Spec.md` — governance specification

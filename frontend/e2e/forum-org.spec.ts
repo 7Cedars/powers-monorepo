@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
+import { encodeAbiParameters, parseAbiParameters } from 'viem';
 import { mockAuth } from './mocks/auth-fixture';
+import { mockXmtp } from './mocks/xmtp-fixture';
 import { mockPowersRpc, type MockPowersConfig, type MockMandate } from './mocks/powers-rpc';
 
 const SEPOLIA_CHAIN_ID = '11155111';
@@ -101,6 +103,56 @@ const ORG_WITH_MANDATE: MockPowersConfig = {
   roles: [{ roleId: MEMBER_ROLE, label: 'member' }],
 };
 
+const NEW_ACTION_PATH = `${ORG_PATH}/new?mandateId=1`;
+
+// Same mandate as ORG_WITH_MANDATE plus a param, to exercise DynamicInput
+// rendering in the "new action" page's INPUT section.
+const ORG_WITH_MANDATE_PARAMS: MockPowersConfig = {
+  ...ORG_WITH_MANDATE,
+  mandates: [{ ...ORG_WITH_MANDATE.mandates[0], params: [{ varName: 'amount', dataType: 'uint256' }] }],
+};
+
+// Distinct values so each rendered condition can be asserted unambiguously
+// against the Conditions tab's info grid (new/page.tsx).
+const CONDITIONS_QUORUM = 51n;
+const CONDITIONS_SUCCEED_AT = 60n;
+const CONDITIONS_VOTING_PERIOD = 100n;
+const CONDITIONS_TIMELOCK = 50n;
+
+const ORG_WITH_CONDITIONS: MockPowersConfig = {
+  ...ORG_WITH_MANDATE,
+  mandates: [
+    {
+      ...ORG_WITH_MANDATE.mandates[0],
+      conditions: {
+        allowedRole: MEMBER_ROLE,
+        quorum: CONDITIONS_QUORUM,
+        succeedAt: CONDITIONS_SUCCEED_AT,
+        votingPeriod: CONDITIONS_VOTING_PERIOD,
+        timelock: CONDITIONS_TIMELOCK,
+      },
+    },
+  ],
+};
+
+const FLOW_FIRST_NAME = 'First Mandate';
+const FLOW_SECOND_NAME = 'Second Mandate';
+
+// `mandates` is deliberately listed in the *reverse* of the flow's
+// mandateIds order, and neither mandate sets needFulfilled/needNotFulfilled
+// - SingleFlow.tsx's layout (createSingleFlowLayout) positions nodes purely
+// by the Flow struct's mandateIds order, so this fixture proves the Flow
+// tab follows that struct rather than mandate insertion order or
+// need(Not)Fulfilled conditions.
+const ORG_WITH_FLOW: MockPowersConfig = {
+  ...ORG_BASIC,
+  mandates: [
+    { index: 2n, mandateAddress: '0x7777777777777777777777777777777777777777', active: true, nameDescription: `${FLOW_SECOND_NAME}: runs second` },
+    { index: 1n, mandateAddress: MINT_MANDATE_ADDRESS, active: true, nameDescription: `${FLOW_FIRST_NAME}: runs first` },
+  ],
+  flows: [{ nameDescription: 'Mint Flow', mandateIds: [1n, 2n] }],
+};
+
 const MINT_ACTION: MockMandate['actions'] = [
   { actionId: '1', state: 7, proposedAt: 100n, fulfilledAt: 110n, description: 'Mint 100 tokens to treasury' },
 ];
@@ -165,6 +217,13 @@ function mandateModal(page: Page) {
 // Playwright's strict-mode element-count check.
 function desktopActionItem(page: Page) {
   return page.locator('div.hidden.sm\\:flex.items-start.gap-3');
+}
+
+// Chatroom's own Mandate/Flow context switcher (only rendered when the
+// mandate is part of a flow) - scoped to this wrapper so its "Flow" button
+// isn't confused with the info-tab-nav's "Flow" tab button (tabBar above).
+function chatTabSwitcher(page: Page) {
+  return page.locator('div.ml-auto.flex.items-center.gap-1.text-xs.font-mono.uppercase.tracking-wider');
 }
 
 // Navigating straight to an org's page triggers a live fetchPowers() RPC
@@ -814,6 +873,530 @@ test.describe('forum org page', () => {
 
         await expect(page.getByRole('button', { name: 'Register XMTP Agent' })).not.toBeVisible();
       });
+    });
+  });
+
+  test.describe('new action page', () => {
+    test.describe('info tabs', () => {
+      test('shows Conditions, Flow and Chat tabs', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        const bar = tabBar(page);
+        await expect(bar.getByText('Conditions', { exact: true })).toBeVisible();
+        await expect(bar.getByText('Flow', { exact: true })).toBeVisible();
+        await expect(bar.getByText('Chat', { exact: true })).toBeVisible();
+      });
+
+      test('Conditions tab is selected by default', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        const bar = tabBar(page);
+        await expect(bar.getByRole('button', { name: 'Conditions' })).toHaveClass(/border-foreground/);
+        await expect(bar.getByRole('button', { name: 'Flow' })).not.toHaveClass(/border-foreground/);
+        await expect(bar.getByRole('button', { name: 'Chat' })).not.toHaveClass(/border-foreground/);
+      });
+
+      test.describe('on small screens', () => {
+        test.use({ viewport: MOBILE_VIEWPORT });
+
+        test('hides tab labels, leaving only icons', async ({ page }) => {
+          await mockAuth(page, { address: TEST_ADDRESS });
+          await mockPowersRpc(page, ORG_WITH_MANDATE);
+          await page.goto(NEW_ACTION_PATH);
+
+          const bar = tabBar(page);
+          await expect(bar.getByText('Conditions', { exact: true })).not.toBeVisible();
+          await expect(bar.locator('button').first()).toBeVisible();
+        });
+      });
+    });
+
+    test.describe('navigation dropdown', () => {
+      test('shows "BACK TO ORGANISATION" instead of the dropdown trigger', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        await expect(page.getByRole('button', { name: 'BACK TO ORGANISATION' })).toBeVisible();
+        await expect(page.getByText('Main', { exact: true })).not.toBeVisible();
+      });
+
+      test('clicking "BACK TO ORGANISATION" navigates back to the org page', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        await page.getByRole('button', { name: 'BACK TO ORGANISATION' }).click();
+
+        await expect(page).toHaveURL(ORG_PATH);
+      });
+    });
+
+    test.describe('INPUT section', () => {
+      test('shows a Description input on every info tab', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        const bar = tabBar(page);
+        await expect(page.getByPlaceholder('Enter description of action (or uri) here.')).toBeVisible();
+
+        await bar.getByText('Flow', { exact: true }).click();
+        await expect(page.getByPlaceholder('Enter description of action (or uri) here.')).toBeVisible();
+
+        await bar.getByText('Chat', { exact: true }).click();
+        await expect(page.getByPlaceholder('Enter description of action (or uri) here.')).toBeVisible();
+      });
+
+      test('shows a Nonce input with a randomize button', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        await expect(page.getByPlaceholder('Enter random number...')).toBeVisible();
+      });
+
+      test('shows an input field for each mandate param', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE_PARAMS);
+        await page.goto(NEW_ACTION_PATH);
+
+        await expect(page.getByText('amount', { exact: true })).toBeVisible();
+        await expect(page.getByPlaceholder('Enter uint256 value here.')).toBeVisible();
+      });
+
+      test('shows a "Run Checks" button before checks have been run', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        await expect(page.getByRole('button', { name: 'Run Checks' })).toBeVisible();
+      });
+    });
+
+    test.describe('running checks', () => {
+      test('shows an enabled "Execute Action" button when checks pass', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE, {
+          roleGrants: [
+            { contractAddress: POWERS_101_ADDRESS, account: TEST_ADDRESS, roleId: MEMBER_ROLE, since: 100n },
+          ],
+        });
+        await page.goto(NEW_ACTION_PATH);
+
+        await page.getByRole('button', { name: 'Run Checks' }).click();
+
+        await expect(page.getByRole('button', { name: 'Run Checks' })).not.toBeVisible();
+        await expect(page.getByRole('button', { name: 'Execute Action' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Execute Action' })).toBeEnabled();
+      });
+
+      test('shows "Cannot submit" with the failed-check reason when checks fail', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        await page.getByRole('button', { name: 'Run Checks' }).click();
+
+        await expect(
+          page.getByText('Cannot submit: You are not authorised to perform this action', { exact: true })
+        ).toBeVisible();
+      });
+    });
+
+    test.describe('Conditions tab', () => {
+      test("shows the mandate's role, quorum, succeed-at, voting period and timelock", async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_CONDITIONS);
+        await page.goto(NEW_ACTION_PATH);
+
+        await expect(page.getByText('Member', { exact: true })).toBeVisible();
+        await expect(page.getByText(`${CONDITIONS_QUORUM}%`, { exact: true })).toBeVisible();
+        await expect(page.getByText(`${CONDITIONS_SUCCEED_AT}%`, { exact: true })).toBeVisible();
+        await expect(page.getByText(`${CONDITIONS_VOTING_PERIOD} blocks`, { exact: true })).toBeVisible();
+        await expect(page.getByText(`${CONDITIONS_TIMELOCK} blocks`, { exact: true })).toBeVisible();
+      });
+    });
+
+    test.describe('Flow tab', () => {
+      test("renders the flow's mandates positioned in the Flow struct's mandateIds order", async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_FLOW);
+        await page.goto(NEW_ACTION_PATH);
+
+        await tabBar(page).getByText('Flow', { exact: true }).click();
+
+        const flowPane = page.locator('.react-flow');
+        await expect(flowPane.locator('.react-flow__node')).toHaveCount(2);
+
+        const firstNode = flowPane.getByText(FLOW_FIRST_NAME, { exact: true });
+        const secondNode = flowPane.getByText(FLOW_SECOND_NAME, { exact: true });
+        await expect(firstNode).toBeVisible();
+        await expect(secondNode).toBeVisible();
+
+        const firstBox = await firstNode.boundingBox();
+        const secondBox = await secondNode.boundingBox();
+        expect(firstBox).not.toBeNull();
+        expect(secondBox).not.toBeNull();
+        // mandateIds: [1n, 2n] puts mandate #1 (First Mandate) to the left
+        // of mandate #2 (Second Mandate), even though `mandates` above lists
+        // them in the opposite order.
+        expect(firstBox!.x).toBeLessThan(secondBox!.x);
+      });
+
+      test('does not render an overview-style flow group box around the mandates', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_FLOW);
+        await page.goto(NEW_ACTION_PATH);
+
+        await tabBar(page).getByText('Flow', { exact: true }).click();
+
+        // The overview's AllFlows/FlowNodes "flowGroup" node wraps mandates
+        // in a dashed-border box (div.border-dashed) - SingleFlow.tsx (used
+        // here) registers no such node type, so this must be absent.
+        await expect(page.locator('.react-flow div.border-dashed')).toHaveCount(0);
+      });
+
+      test('clicking a node does not select it or navigate away', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_FLOW);
+        await page.goto(NEW_ACTION_PATH);
+
+        await tabBar(page).getByText('Flow', { exact: true }).click();
+        await page.locator('.react-flow').getByText(FLOW_FIRST_NAME, { exact: true }).click();
+
+        await expect(page).toHaveURL(NEW_ACTION_PATH);
+        await expect(page.locator('.react-flow__node.selected')).toHaveCount(0);
+      });
+    });
+
+    test.describe('Chat tab', () => {
+      test('shows no Mandate/Flow toggle when the mandate is not part of a flow', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_MANDATE);
+        await page.goto(NEW_ACTION_PATH);
+
+        await tabBar(page).getByText('Chat', { exact: true }).click();
+
+        await expect(chatTabSwitcher(page)).toHaveCount(0);
+      });
+
+      test('shows a Mandate/Flow toggle when the mandate is part of a flow, and switching tabs changes the chat context', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockXmtp(page, { isConnected: true });
+        await mockPowersRpc(page, ORG_WITH_FLOW);
+        await page.goto(NEW_ACTION_PATH);
+
+        await tabBar(page).getByText('Chat', { exact: true }).click();
+
+        const switcher = chatTabSwitcher(page);
+        await expect(switcher.getByRole('button', { name: 'Mandate' })).toBeVisible();
+        await expect(switcher.getByRole('button', { name: 'Flow' })).toBeVisible();
+
+        await expect(
+          page.getByText('Join the conversation to start discussing this mandate.', { exact: true })
+        ).toBeVisible();
+
+        await switcher.getByRole('button', { name: 'Flow' }).click();
+
+        await expect(
+          page.getByText('Join the conversation to start discussing this flow.', { exact: true })
+        ).toBeVisible();
+      });
+    });
+  });
+});
+
+// `[actionId]/page.tsx` (the action detail page reached by clicking an item
+// in the org page's "previous actions" list) - distinct from the org page
+// above and the "new action" page covered earlier in this file.
+test.describe('forum action detail page', () => {
+  test.use({ viewport: LARGE_VIEWPORT, timezoneId: 'UTC' });
+
+  test.beforeEach(async ({ page }) => {
+    await mockAlchemyRpc(page);
+  });
+
+  // Real Powers actionIds are large hashes, not small ints - long enough to
+  // trip ActionOverview's abbreviateActionId() truncation (length > 10).
+  const ACTION_ID = '123456789012345678901234567890123456789012345678901234567890';
+  const ACTION_ID_TRUNCATED = `${ACTION_ID.slice(0, 8)}...${ACTION_ID.slice(-8)}`;
+  const ACTION_DESCRIPTION = 'Mint 250 tokens to treasury';
+  const ACTION_NONCE = 42n;
+
+  const AMOUNT_PARAM = { varName: 'amount', dataType: 'uint256' };
+  const AMOUNT_VALUE = 250n;
+  // Real ABI-encoded callData for the param above - ActionOverview decodes
+  // this with decodeAbiParameters, it isn't satisfied by a description string.
+  const AMOUNT_CALLDATA = encodeAbiParameters(parseAbiParameters('uint256'), [AMOUNT_VALUE]);
+
+  const ACTION_PATH = `${ORG_PATH}/${ACTION_ID}`;
+
+  const BASE_ACTION: MockMandate['actions'] = [
+    { actionId: ACTION_ID, state: 7, description: ACTION_DESCRIPTION, callData: AMOUNT_CALLDATA, nonce: ACTION_NONCE },
+  ];
+
+  const ORG_FOR_ACTION_PAGE: MockPowersConfig = {
+    ...ORG_WITH_MANDATE,
+    mandates: [{ ...ORG_WITH_MANDATE.mandates[0], actions: BASE_ACTION }],
+  };
+
+  const ORG_WITH_PARAMS_AND_ACTION: MockPowersConfig = {
+    ...ORG_WITH_MANDATE,
+    mandates: [{ ...ORG_WITH_MANDATE.mandates[0], params: [AMOUNT_PARAM], actions: BASE_ACTION }],
+  };
+
+  const ORG_WITH_QUORUM: MockPowersConfig = {
+    ...ORG_WITH_MANDATE,
+    mandates: [{
+      ...ORG_WITH_MANDATE.mandates[0],
+      conditions: { allowedRole: MEMBER_ROLE, quorum: 51n },
+      actions: BASE_ACTION,
+    }],
+  };
+
+  const ORG_WITH_TIMELOCK_ONLY: MockPowersConfig = {
+    ...ORG_WITH_MANDATE,
+    mandates: [{
+      ...ORG_WITH_MANDATE.mandates[0],
+      conditions: { allowedRole: MEMBER_ROLE, timelock: 50n },
+      actions: BASE_ACTION,
+    }],
+  };
+
+  const ORG_FOR_CONDITIONS_TAB: MockPowersConfig = {
+    ...ORG_WITH_MANDATE,
+    mandates: [{
+      ...ORG_WITH_MANDATE.mandates[0],
+      conditions: {
+        allowedRole: MEMBER_ROLE,
+        quorum: CONDITIONS_QUORUM,
+        succeedAt: CONDITIONS_SUCCEED_AT,
+        votingPeriod: CONDITIONS_VOTING_PERIOD,
+        timelock: CONDITIONS_TIMELOCK,
+      },
+      actions: BASE_ACTION,
+    }],
+  };
+
+  // blockNumber is pinned to 0x64 (100) by mockPowersRpc (frontend/e2e/mocks/powers-rpc.ts)
+  // - chosen so proposedAt + votingPeriod/timelock both resolve to *past*
+  // blocks, which Timeline.tsx formats directly via formatBlockNumberOrTimestamp
+  // rather than the separate (approximate) "future date" estimator.
+  const TIMELINE_PROPOSED_AT = 50n;
+  const TIMELINE_VOTING_PERIOD = 30n; // voteEndBlock = 80, still <= 100
+  const TIMELINE_TIMELOCK = 20n; // delayEndBlock = 70, still <= 100
+  const TIMELINE_REQUESTED_AT = 85n;
+  const TIMELINE_FULFILLED_AT = 95n;
+
+  const ORG_FOR_TIMELINE_TAB: MockPowersConfig = {
+    ...ORG_WITH_MANDATE,
+    mandates: [{
+      ...ORG_WITH_MANDATE.mandates[0],
+      conditions: {
+        allowedRole: MEMBER_ROLE,
+        quorum: 51n,
+        votingPeriod: TIMELINE_VOTING_PERIOD,
+        timelock: TIMELINE_TIMELOCK,
+      },
+      actions: [{
+        actionId: ACTION_ID,
+        state: 7,
+        description: ACTION_DESCRIPTION,
+        proposedAt: TIMELINE_PROPOSED_AT,
+        requestedAt: TIMELINE_REQUESTED_AT,
+        fulfilledAt: TIMELINE_FULFILLED_AT,
+      }],
+    }],
+  };
+
+  // Mirrors mockPowersRpc's deterministic fake block timestamps
+  // (1700000000n + blockNumber * 60n) and Timeline.tsx's formatting
+  // (toFullDateFormat + toEurTimeFormat) - computed with UTC getters so it
+  // matches the browser regardless of the host machine's local timezone
+  // (the describe block above pins the browser itself to timezoneId: 'UTC').
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function expectedTimelineValue(blockNumber: bigint): string {
+    const timestamp = 1700000000n + blockNumber * 60n;
+    const date = new Date(Number(timestamp) * 1000);
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()} ${date.getUTCHours()}:${minutes}`;
+  }
+
+  test.describe('tabs', () => {
+    test('shows Action, Conditions, Timeline, Execution, Flow and Chat tabs', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      const bar = tabBar(page);
+      await expect(bar.getByText('Action', { exact: true })).toBeVisible();
+      await expect(bar.getByText('Conditions', { exact: true })).toBeVisible();
+      await expect(bar.getByText('Timeline', { exact: true })).toBeVisible();
+      await expect(bar.getByText('Execution', { exact: true })).toBeVisible();
+      await expect(bar.getByText('Flow', { exact: true })).toBeVisible();
+      await expect(bar.getByText('Chat', { exact: true })).toBeVisible();
+      await expect(bar.getByText('Votes', { exact: true })).not.toBeVisible();
+      await expect(bar.getByText('Timelock', { exact: true })).not.toBeVisible();
+    });
+
+    test('shows an optional Votes tab when the mandate has quorum conditions', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_WITH_QUORUM);
+      await page.goto(ACTION_PATH);
+
+      await expect(tabBar(page).getByText('Votes', { exact: true })).toBeVisible();
+    });
+
+    test('shows an optional Timelock tab when the mandate has a timelock and no quorum', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_WITH_TIMELOCK_ONLY);
+      await page.goto(ACTION_PATH);
+
+      await expect(tabBar(page).getByText('Timelock', { exact: true })).toBeVisible();
+    });
+
+    test('Action tab is selected by default', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      const bar = tabBar(page);
+      await expect(bar.getByRole('button', { name: 'Action' })).toHaveClass(/border-foreground/);
+      await expect(page.getByText('Action ID', { exact: true })).toBeVisible();
+    });
+
+    test.describe('on small screens', () => {
+      test.use({ viewport: MOBILE_VIEWPORT });
+
+      test('hides tab labels, leaving only icons', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+        await page.goto(ACTION_PATH);
+
+        const bar = tabBar(page);
+        await expect(bar.getByText('Action', { exact: true })).not.toBeVisible();
+        await expect(bar.locator('button').first()).toBeVisible();
+      });
+    });
+  });
+
+  test.describe('navigation dropdown', () => {
+    test('shows "BACK TO ORGANISATION" instead of the dropdown trigger', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await expect(page.getByRole('button', { name: 'BACK TO ORGANISATION' })).toBeVisible();
+      await expect(page.getByText('Main', { exact: true })).not.toBeVisible();
+    });
+
+    test('clicking "BACK TO ORGANISATION" navigates back to the org page', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await page.getByRole('button', { name: 'BACK TO ORGANISATION' }).click();
+
+      await expect(page).toHaveURL(ORG_PATH);
+    });
+  });
+
+  test.describe('Action tab', () => {
+    test('shows Description, Action ID and Input Data sections', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await expect(page.getByText('Description', { exact: true })).toBeVisible();
+      await expect(page.getByText('Action ID', { exact: true })).toBeVisible();
+      await expect(page.getByText('Input Data', { exact: true })).toBeVisible();
+    });
+
+    test('shows the action description', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await expect(page.getByText(ACTION_DESCRIPTION, { exact: true })).toBeVisible();
+    });
+
+    test('shows the action ID truncated', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      const idText = page.getByText(ACTION_ID_TRUNCATED, { exact: true });
+      await expect(idText).toBeVisible();
+      await expect(idText).toHaveAttribute('title', ACTION_ID);
+    });
+
+    test('shows a nonce field in Input Data', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await expect(page.getByText('nonce', { exact: true })).toBeVisible();
+      await expect(page.getByText('(uint256)', { exact: true })).toBeVisible();
+      await expect(page.getByText(ACTION_NONCE.toString(), { exact: true })).toBeVisible();
+    });
+
+    test('shows a decoded field for each mandate param', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_WITH_PARAMS_AND_ACTION);
+      await page.goto(ACTION_PATH);
+
+      await expect(page.getByText('amount', { exact: true })).toBeVisible();
+      await expect(page.getByText(AMOUNT_VALUE.toString(), { exact: true })).toBeVisible();
+    });
+  });
+
+  test.describe('Conditions tab', () => {
+    test("shows the mandate's role, quorum, succeed-at, voting period and timelock", async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_CONDITIONS_TAB);
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Conditions', { exact: true }).click();
+
+      await expect(page.getByText('Member', { exact: true })).toBeVisible();
+      await expect(page.getByText(`${CONDITIONS_QUORUM}%`, { exact: true })).toBeVisible();
+      await expect(page.getByText(`${CONDITIONS_SUCCEED_AT}%`, { exact: true })).toBeVisible();
+      await expect(page.getByText(`${CONDITIONS_VOTING_PERIOD} blocks`, { exact: true })).toBeVisible();
+      await expect(page.getByText(`${CONDITIONS_TIMELOCK} blocks`, { exact: true })).toBeVisible();
+    });
+  });
+
+  test.describe('Timeline tab', () => {
+    test('shows the dates and times of each state change', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_TIMELINE_TAB);
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Timeline', { exact: true }).click();
+
+      await expect(page.getByText('Proposed', { exact: true })).toBeVisible();
+      await expect(page.getByText(expectedTimelineValue(TIMELINE_PROPOSED_AT), { exact: true })).toBeVisible();
+
+      await expect(page.getByText('Vote End', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText(expectedTimelineValue(TIMELINE_PROPOSED_AT + TIMELINE_VOTING_PERIOD), { exact: true })
+      ).toBeVisible();
+
+      await expect(page.getByText('Delay End', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText(expectedTimelineValue(TIMELINE_PROPOSED_AT + TIMELINE_TIMELOCK), { exact: true })
+      ).toBeVisible();
+
+      await expect(page.getByText('Requested', { exact: true })).toBeVisible();
+      await expect(page.getByText(expectedTimelineValue(TIMELINE_REQUESTED_AT), { exact: true })).toBeVisible();
+
+      await expect(page.getByText('Fulfilled', { exact: true })).toBeVisible();
+      await expect(page.getByText(expectedTimelineValue(TIMELINE_FULFILLED_AT), { exact: true })).toBeVisible();
     });
   });
 });

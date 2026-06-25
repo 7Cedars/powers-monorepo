@@ -50,7 +50,7 @@ Run your own instance if you want to extend the corpus or keep everything local.
 **1. Install dependencies**
 
 ```bash
-cd ai-skill
+cd governance-rag
 pnpm install
 ```
 
@@ -98,7 +98,7 @@ After adding files, re-run `pnpm ingest` to rebuild the index.
 ## Deploying
 
 ```bash
-cd ai-skill
+cd governance-rag
 pnpm ingest   # regenerate embeddings/index.json locally, only needed when sources/ or references/ change
 railway up
 ```
@@ -110,7 +110,7 @@ The Railway build only installs dependencies, copies `src/` and the pre-built `e
 ## Directory layout
 
 ```
-ai-skill/
+governance-rag/
 ├── prompts/
 │   └── institutionalDesign.md   # Mandate catalogue, design heuristics, condition encoding
 ├── references/
@@ -136,14 +136,14 @@ ai-skill/
 
 1. Create `.claude/commands/` in the target project root if it does not exist.
 2. Copy `.claude/commands/design-org.md` into it.
-3. Copy the `ai-skill/prompts/`, `ai-skill/templates/`, and `ai-skill/references/` directories into an `ai-skill/` folder in the target project.
+3. Copy the `governance-rag/prompts/`, `governance-rag/templates/`, and `governance-rag/references/` directories into an `governance-rag/` folder in the target project.
 4. Register the hosted MCP (or your self-hosted instance) via `claude mcp add` as shown above.
 5. Open a Claude Code session in the target project and run `/design-org`.
 
 **Option B — Install globally (machine-scoped)**
 
 1. Copy `design-org.md` to `~/.claude/commands/design-org.md`.
-2. Edit the file-path references inside `design-org.md` (the Phase 1 load list) to use absolute paths pointing to wherever you placed the `ai-skill/` directory.
+2. Edit the file-path references inside `design-org.md` (the Phase 1 load list) to use absolute paths pointing to wherever you placed the `governance-rag/` directory.
 3. The command will now be available in every Claude Code project on your machine.
 
 ---
@@ -155,8 +155,8 @@ The skill has three layers that can be changed independently:
 | Layer | File | What to change |
 |-------|------|----------------|
 | Conversation logic | `.claude/commands/design-org.md` | Phases, questions, output rules |
-| Mandate knowledge | `ai-skill/prompts/institutionalDesign.md` | New mandates, updated config encodings, condition heuristics |
-| Templates | `ai-skill/templates/orgSpec.md`, `ai-skill/templates/deployScript.md` | Output format for generated files |
+| Mandate knowledge | `governance-rag/prompts/institutionalDesign.md` | New mandates, updated config encodings, condition heuristics |
+| Templates | `governance-rag/templates/orgSpec.md`, `governance-rag/templates/deployScript.md` | Output format for generated files |
 
 When a new mandate version ships, update the `MAJOR`/`MINOR`/`PATCH` constants at the top of `deployScript.md` and in the Phase 4 instructions inside `design-org.md`.
 

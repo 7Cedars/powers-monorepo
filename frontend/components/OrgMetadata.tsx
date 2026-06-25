@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
-import { useAccount, useSignMessage, useReadContract } from 'wagmi'
+import { useSignMessage, useReadContract } from 'wagmi'
+import { useEffectiveAddress } from '@/hooks/useEffectiveAddress'
 import {
   GlobeAltIcon,
   DocumentTextIcon,
@@ -85,7 +86,7 @@ export function OrgMetadata({
   showAdminActions = true,
 }: OrgMetadataProps) {
   const params = useParams<{ chainId?: string; powers?: string }>()
-  const { address: userAddress } = useAccount()
+  const userAddress = useEffectiveAddress()
   const { signMessageAsync } = useSignMessage()
   const [isRegistering, setIsRegistering] = useState(false)
 

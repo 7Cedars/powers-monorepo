@@ -52,18 +52,18 @@ Mandates are the building blocks of governance. They transform input data into e
 
 ### A. Institutional Design
 Use the `/design-org` skill (`.claude/commands/design-org.md`) for end-to-end governance design.
-The skill follows a **5-Phase Process** guided by `ai-skill/prompts/institutionalDesign.md`:
-1.  **Load context**: Read protocol docs, mandate catalogue, and reference papers in `ai-skill/references/`.
+The skill follows a **5-Phase Process** guided by `governance-rag/prompts/institutionalDesign.md`:
+1.  **Load context**: Read protocol docs, mandate catalogue, and reference papers in `governance-rag/references/`.
 2.  **Elicit**: Structured dialogue to understand stakeholders, decisions, and trust assumptions.
 3.  **Spec**: Create a `.mdx` specification in `documentation/src/content/docs/organisations/`.
 4.  **Implement**: Generate deploy script (`solidity/governance/examples/`), actions, runners, and tests.
 5.  **Verify**: Compile (`forge build`) and run tests (`forge test --match-contract <Name>`).
 
 **Reference materials for governance design:**
--   `ai-skill/prompts/institutionalDesign.md` — mandate catalogue, encoding templates, design heuristics
--   `ai-skill/templates/orgSpec.md` — governance specification template
--   `ai-skill/templates/deployScript.md` — annotated deploy script template
--   `ai-skill/references/` — governance theory papers (add new PDFs here; Ostrom, Dahl, etc.)
+-   `governance-rag/prompts/institutionalDesign.md` — mandate catalogue, encoding templates, design heuristics
+-   `governance-rag/templates/orgSpec.md` — governance specification template
+-   `governance-rag/templates/deployScript.md` — annotated deploy script template
+-   `governance-rag/references/` — governance theory papers (add new PDFs here; Ostrom, Dahl, etc.)
 
 ### B. Smart Contract Development
 -   **Refactoring**: When refactoring contracts (e.g., `Mandate.sol`), ensure you update related tests in `test/`.
@@ -80,7 +80,7 @@ The skill follows a **5-Phase Process** guided by `ai-skill/prompts/institutiona
 
 -   **Simplicity**: Prefer simple, modular solutions over complex monolithic ones.
 -   **Verification**: Always verify your changes. Run tests for Solidity (`forge test`) and ensure the frontend builds (`yarn build` in `frontend/`).
--   **Context**: When working on a task, load relevant files into your context. For design tasks, this includes the specific prompt files in `ai-skill/prompts/`.
+-   **Context**: When working on a task, load relevant files into your context. For design tasks, this includes the specific prompt files in `governance-rag/prompts/`.
 
 ---
 *This file is intended to be expanded as the project evolves.*

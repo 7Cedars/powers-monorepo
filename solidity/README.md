@@ -151,7 +151,7 @@ Governance self-modification — adopt, revoke, or pause mandates from within go
 
 ## Using `/design-org` to generate a governance structure
 
-The [`ai-skill/`](../ai-skill/) package provides a Claude Code slash command that generates a complete organisation deployment package from a plain-language conversation. The output lands in `governance/claude/<name>/`. See [`ai-skill/README.md`](../ai-skill/README.md) for setup and usage.
+The [`governance-rag/`](../governance-rag/) package provides a Claude Code slash command that generates a complete organisation deployment package from a plain-language conversation. The output lands in `governance/claude/<name>/`. See [`governance-rag/README.md`](../governance-rag/README.md) for setup and usage.
 
 ---
 
