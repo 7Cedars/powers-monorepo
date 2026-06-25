@@ -2,6 +2,7 @@
 
 import { HeartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image'
+import Link from 'next/link';
 import { DiscordIcon, TelegramIcon, GithubIcon } from '@/components/MetadataLinks';
 import { useRouter, usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -39,27 +40,11 @@ export function Footer() {
         <div className="border-t border-border pt-6 flex flex-col gap-2 items-center">
           <div className="flex flex-wrap items-center gap-x-2">
             <span className="text-xs font-bold text-foreground mr-2">dApp</span>
-            <a href="/" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Home</a>
+            <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Home</Link>
             <span className="text-xs text-muted-foreground">·</span>
-            <a href="/forum" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Forum</a>
+            <Link href="/forum" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Forum</Link>
             <span className="text-xs text-muted-foreground">·</span>
-            <a href="/overview" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Overview</a>
-            <span className="text-xs text-muted-foreground">·</span>
-            <a
-              href="/#deploy" rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
-                if (pathname === '/') {
-                  document.getElementById('deploy')?.scrollIntoView({ behavior: 'smooth' });
-                  window.history.pushState(null, '', '/#deploy');
-                } else {
-                  router.push('/#deploy');
-                }
-              }}
-            >
-              Deploy
-            </a>
+            <Link href="/overview" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Overview</Link>
           </div>
           <div className="flex flex-wrap items-center gap-x-2">
             <span className="text-xs font-bold text-foreground mr-2">Protocol</span>

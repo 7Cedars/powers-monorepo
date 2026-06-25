@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { usePowersStore } from '@/context/store'
+import { usePowersStore, useStatusStore } from '@/context/store'
 import { Action, Mandate } from '@/context/types'
 import { Chatroom } from './Chatroom'
 import { Vote } from './Vote'
@@ -26,16 +26,27 @@ export default function ActionPage() {
   const { chainId, powers: powersAddress, actionId } = useParams<{ chainId: string; powers: string; actionId: string }>()
   const powers = usePowersStore()
   const action = useActionStore()
+  const status = useStatusStore()
 
   const [activeTab, setActiveTab] = useState<Tab>('action')
   const [chatroomMode, setChatroomMode] = useState<ChatroomMode>('mandate')
   const [isLoading, setIsLoading] = useState(true)
-  // Redirect to overview page if powers data is not loaded yet
+
+  // Powers is fetched by the layout, not this page - on a direct/refreshed
+  // navigation the store is still empty on first render. Only treat it as
+  // "failed to load" once the layout's fetch has actually settled, mirroring
+  // app/forum/[chainId]/[powers]/new/page.tsx's isLoadingPowers guard.
+  const isLoadingPowers =
+    status.status === 'pending' ||
+    (status.status === 'idle' && powers.contractAddress !== powersAddress)
+
+  // Redirect to overview page if powers data failed to load
   useEffect(() => {
+    if (isLoadingPowers) return
     if (!powers?.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
       router.push(`/forum/${chainId}/${powersAddress}`)
     }
-  }, [powers, router, chainId, powersAddress])
+  }, [isLoadingPowers, powers, router, chainId, powersAddress])
 
   // Fall back to "not found" after 15s if action never arrives via websocket
   useEffect(() => {

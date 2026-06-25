@@ -70,7 +70,7 @@ export function SectionIntro() {
             Governance is in crisis. Rules exist, but there is little trust they are actually followed — centralised power, no accountability, inaccessible processes, no historical record.
           </p>
           <p ref={para3Ref} className="text-base sm:text-2xl font-mono text-foreground text-left text-pretty max-w-xl mr-auto" style={{ opacity: 0 }}>
-            Powers makes rules enforceable: mandates — modular, role-restricted contracts — define who can take what action, and under which conditions. No hidden authority, no inaccessible processes.
+            Powers makes rules transparent and enforceable: mandates (modular, role-restricted contracts) define who can take what action, and under which conditions. Deliberate in private, act in public.  
           </p>
           <p ref={para4Ref} className="text-base sm:text-2xl font-mono text-foreground text-right text-pretty max-w-xl ml-auto" style={{ opacity: 0 }}>
             Communities can design their own governance systems: assign roles to accounts, grant powers to roles, build in checks and balances, and govern their own reforms.

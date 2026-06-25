@@ -14,7 +14,7 @@ Powers lets you build DAOs where every action flows through a single hub contrac
 |---|---|---|
 | [`solidity/`](solidity/) | Foundry | Core protocol + mandate contracts |
 | [`frontend/`](frontend/) | Next.js 14, Wagmi/Viem, Privy | dApp interface |
-| [`ai-skill/`](ai-skill/) | Claude Code skill, RAG (MCP) | `/design-org` — AI-assisted org design |
+| [`governance-rag/`](governance-rag/) | Claude Code skill, RAG (MCP) | `/design-org` — AI-assisted org design |
 | [`ai-agent/`](ai-agent/) | TypeScript, Claude API | Autonomous governance agent |
 | [`xmtp-agent/`](xmtp-agent/) | TypeScript, XMTP Agent SDK | Governance group chat management |
 | [`documentation/`](documentation/) | Astro + Starlight | Documentation site |
@@ -38,7 +38,7 @@ A Claude Code slash command that guides any developer (or non-technical governan
 
 ```bash
 # 1. Build the RAG index (one-time, ~2–5 min on first run)
-cd ai-skill && pnpm install && pnpm ingest
+cd governance-rag && pnpm install && pnpm ingest
 
 # 2. Restart Claude Code — the MCP server registers automatically
 
@@ -46,7 +46,7 @@ cd ai-skill && pnpm install && pnpm ingest
 /design-org
 ```
 
-See [`ai-skill/README.md`](ai-skill/README.md) for the full setup guide and how to port the skill to another project.
+See [`governance-rag/README.md`](governance-rag/README.md) for the full setup guide and how to port the skill to another project.
 
 ---
 

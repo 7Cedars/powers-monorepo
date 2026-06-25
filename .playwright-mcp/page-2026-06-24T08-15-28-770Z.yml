@@ -1,0 +1,50 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - link "Forum" [ref=e6] [cursor=pointer]:
+      - /url: /forum
+  - generic [ref=e11]:
+    - img [ref=e13]
+    - generic [ref=e16] [cursor=pointer]: Navigation
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - main [ref=e19]:
+        - heading "All organisations" [level=1] [ref=e20]
+        - paragraph [ref=e21]: Here is an overview of all organisations saved in your browser.
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - img "Powers Protocol" [ref=e25]
+          - generic [ref=e26]:
+            - generic [ref=e27]: Made with
+            - img [ref=e28]
+            - generic [ref=e30]: by Publius Projects
+          - generic [ref=e31]:
+            - link [ref=e32] [cursor=pointer]:
+              - /url: https://discordapp.com/users/1006928106487021638
+              - img [ref=e33]
+            - link [ref=e35] [cursor=pointer]:
+              - /url: https://t.me/thd83
+              - img [ref=e36]
+            - link [ref=e38] [cursor=pointer]:
+              - /url: https://github.com/7Cedars
+              - img [ref=e39]
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - generic [ref=e43]: dApp
+            - link "Home" [ref=e44] [cursor=pointer]:
+              - /url: /
+            - generic [ref=e45]: ·
+            - link "Forum" [ref=e46] [cursor=pointer]:
+              - /url: /forum
+            - generic [ref=e47]: ·
+            - link "Overview" [ref=e48] [cursor=pointer]:
+              - /url: /overview
+          - generic [ref=e49]:
+            - generic [ref=e50]: Protocol
+            - link "Litepaper" [ref=e51] [cursor=pointer]:
+              - /url: https://powers-docs.vercel.app/for-developers/litepaper
+            - generic [ref=e52]: ·
+            - link "Docs" [ref=e53] [cursor=pointer]:
+              - /url: https://powers-docs.vercel.app/welcome
+            - generic [ref=e54]: ·
+            - link "Github" [ref=e55] [cursor=pointer]:
+              - /url: https://github.com/7Cedars/powers/tree/main/solidity

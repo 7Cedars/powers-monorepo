@@ -101,9 +101,11 @@ export const usePowers = () => {
   }
   
   const checkMandates = async (mandateIds: bigint[], address: `0x${string}`, chainId: ChainId) => {
+    if (mandateIds.length === 0) return []
+
     const fetchedMandates: Mandate[] = []
 
-    if (wagmiConfig && mandateIds.length > 0 && address) {
+    if (wagmiConfig && address) {
         try {
           const contracts = mandateIds.map((id) => ({
             abi: powersAbi,
