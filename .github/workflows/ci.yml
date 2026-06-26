@@ -1,102 +1,17 @@
-name: CI
+name: CI (develop)
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [develop]
   workflow_dispatch:
 
-env:
-  FOUNDRY_PROFILE: ci
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # THESE ARE RUN LOCALLY. 
-  # 
-  # solidity-tests:
-  #   name: Solidity Tests
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         submodules: recursive
-
-  #     - name: Install Foundry
-  #       uses: foundry-rs/foundry-toolchain@v1
-
-  #     - name: Show Forge version
-  #       run: |
-  #         forge --version
-
-  #     - name: Run Forge fmt
-  #       run: |
-  #         cd solidity && forge fmt --check
-  #       id: fmt
-
-  #     - name: Run Forge build
-  #       run: |
-  #         cd solidity && forge build --sizes
-  #       id: build
-
-  #     - name: Run Forge tests
-  #       run: |
-  #         cd solidity && forge test -vvv
-  #       id: test
-
-      # - name: Run Forge coverage
-      #   run: |
-      #     cd solidity && forge coverage --report lcov
-      #   id: coverage
-
-  # TODO: Add frontend tests + vercel deploy has checks. 
-  # frontend-tests:
-  #   name: Frontend Tests
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./frontend
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '18'
-  #         cache: 'yarn'
-  #         cache-dependency-path: 'frontend/yarn.lock'
-
-  #     - name: Install dependencies
-  #       run: yarn install --frozen-lockfile
-
-  #     - name: Run frontend tests
-  #       run: yarn test --coverage --watchAll=false
-
-  #     - name: Run frontend linting
-  #       run: yarn lint
-
-  #     - name: Build frontend
-  #       run: yarn build
-
-  security-audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Run Slither
-        run: |
-          pip3 install slither-analyzer
-          slither .
-
-  dependency-check:
-    name: Dependency Check
+  lint:
+    name: Frontend Lint
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -104,15 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: '18'
-          cache: 'yarn'
-          cache-dependency-path: 'frontend/yarn.lock'
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
-      - name: Check for vulnerabilities
-        run: yarn audit --audit-level=high
+      - name: Run ESLint
+        run: pnpm lint

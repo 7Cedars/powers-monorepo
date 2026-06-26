@@ -1,7 +1,7 @@
 import { Powers, Action } from "@/context/types";
 import { toEurTimeFormat, toFullDateFormat } from "@/utils/toDates";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useBlocks } from "@/hooks/useBlocks";
 import { callDataToActionParams } from "@/utils/callDataToActionParams";
 import { setAction } from "@/context/store";
@@ -23,27 +23,33 @@ export const MandateActions = ({mandateId, powers}: MandateActionsProps) => {
   const { chainId } = useParams<{ chainId: string }>()
   const { timestamps, fetchTimestamps } = useBlocks()
   const mandateActions = powers?.mandates?.find(mandate => mandate.index == mandateId)?.actions || []
-  const sortedActions = mandateActions
-    ?.filter((action): action is Action => action !== undefined)
-    .sort((a, b) => {
-      // Get block numbers, prioritizing proposedAt over requestedAt
-      const getBlockNumber = (action: Action): bigint => {
-        const proposed = typeof action.proposedAt === 'bigint' 
-          ? action.proposedAt 
-          : (action.proposedAt ? BigInt(action.proposedAt as unknown as string) : 0n);
-        const requested = typeof action.requestedAt === 'bigint'
-          ? action.requestedAt
-          : (action.requestedAt ? BigInt(action.requestedAt as unknown as string) : 0n);
-        
-        return proposed > 0n ? proposed : requested;
-      };
-      
-      const blockA = getBlockNumber(a);
-      const blockB = getBlockNumber(b);
-      
-      // Sort descending (newer/higher block numbers first)
-      return blockB > blockA ? 1 : blockB < blockA ? -1 : 0;
-    })
+  // Memoized so the array reference is stable across renders unless the
+  // underlying data changes — otherwise this feeds a fresh reference into
+  // the fetchTimestamps effect below on every render, looping forever now
+  // that fetchTimestamps unconditionally updates state on each call.
+  const sortedActions = useMemo(() => {
+    return mandateActions
+      ?.filter((action): action is Action => action !== undefined)
+      .sort((a, b) => {
+        // Get block numbers, prioritizing proposedAt over requestedAt
+        const getBlockNumber = (action: Action): bigint => {
+          const proposed = typeof action.proposedAt === 'bigint'
+            ? action.proposedAt
+            : (action.proposedAt ? BigInt(action.proposedAt as unknown as string) : 0n);
+          const requested = typeof action.requestedAt === 'bigint'
+            ? action.requestedAt
+            : (action.requestedAt ? BigInt(action.requestedAt as unknown as string) : 0n);
+
+          return proposed > 0n ? proposed : requested;
+        };
+
+        const blockA = getBlockNumber(a);
+        const blockB = getBlockNumber(b);
+
+        // Sort descending (newer/higher block numbers first)
+        return blockB > blockA ? 1 : blockB < blockA ? -1 : 0;
+      })
+  }, [mandateId, powers])
   // const allTimestamps = Array.from(new Set(sortedActions?.flatMap(action => [action?.requestedAt, action?.proposedAt, action?.fulfilledAt, action?.cancelledAt].filter((timestamp): timestamp is bigint => timestamp !== undefined && timestamp !== null))))
   const router = useRouter()
   // console.log("@MandateActions, waypoint 0", {timestamps, sortedActions})
