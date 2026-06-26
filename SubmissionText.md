@@ -120,7 +120,7 @@ Shortly before the buildathon we ran a user simulation, which surfaced the front
 
 Final note
 
-Everything built during the buildathon is included in the publius-projects/powers-monorepo. After the buildathon, /ai-agent, /ai-skill, and /xmtp-agent will be moved to a dedicated publius-projects/powers-utils repository.
+Everything built during the buildathon is included in the publius-projects/powers-monorepo. After the buildathon, /ai-agent, /governance-rag, and /xmtp-agent will be moved to a dedicated publius-projects/powers-utils repository.
 
 ### *Fundraising Status*
 
@@ -157,7 +157,7 @@ N/A
 ### *Which parts of your code have been produced during the Buildathon?*
 
 /ai-agent  
-/ai-skill  
+/governance-rag  
 Also:   
 Integration zeroDev into Account Abstraction stack   
 As an extra we completely overhauled the UI.  

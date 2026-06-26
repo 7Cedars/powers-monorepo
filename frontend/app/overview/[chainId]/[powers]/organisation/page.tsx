@@ -13,7 +13,7 @@ export default function OrganisationPage() {
   const router = useRouter()
 
   return (
-    <div className="flex flex-col">
+    <main className="w-full h-full flex flex-col bg-background">
       <OrgBanner title={powers?.name ?? ''} subtitle={powers?.contractAddress ?? ''} />
 
       {/* Metadata */}
@@ -28,7 +28,7 @@ export default function OrganisationPage() {
           childContracts={powers?.metadatas?.childContracts}
           chainId={powers?.chainId}
           powersAddress={powers?.contractAddress}
-          xmtpAgentAddress={powers?.metadatas?.xmtpAgentAddress}
+          showAdminActions={false}
         />
       </div>
 
@@ -45,6 +45,6 @@ export default function OrganisationPage() {
           <div className="text-xs px-1">To Forum</div>
         </Button>
       </div>
-    </div>
+    </main>
   )
 }

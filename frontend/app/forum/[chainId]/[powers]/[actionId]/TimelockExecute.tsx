@@ -5,7 +5,9 @@ import { Action, Mandate, Powers } from '@/context/types';
 import { usePowersStore, useActionStore, useStatusStore, setError, setAction } from '@/context/store';
 import { useMandate } from '@/hooks/useMandate';
 import { useChecks } from '@/hooks/useChecks';
-import { useBlockNumber } from 'wagmi';
+import { useScheduledDeadlinePoll } from '@/hooks/useScheduledDeadlinePoll';
+import { getBlockNumber } from 'wagmi/actions';
+import { wagmiConfig } from '@/context/wagmiConfig';
 import { useParams } from 'next/navigation';
 import { parseChainId } from '@/utils/parsers';
 import { useWallets } from '@privy-io/react-auth';
@@ -23,12 +25,13 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
   const action = useActionStore();
   const status = useStatusStore();
   const { chainId } = useParams<{ chainId: string }>();
-  const { data: blockNumber } = useBlockNumber();
   const { request } = useMandate();
   const { checks, fetchChecks, status: checksStatus } = useChecks();
   const { wallets } = useWallets();
 
   const [populatedAction, setPopulatedAction] = useState<Action | undefined>();
+  const [timelockExpired, setTimelockExpired] = useState(false);
+  const [estimatedRemaining, setEstimatedRemaining] = useState<string | null>(null);
 
   useEffect(() => {
     if (propAction) {
@@ -41,20 +44,40 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
 
   const parsedChainId = parseChainId(chainId);
 
-  const timelockRemaining =
-    populatedAction?.proposedAt &&
-    mandate.conditions?.timelock &&
-    blockNumber &&
-    parsedChainId
-      ? calculateTimelockRemaining(
-          BigInt(populatedAction.proposedAt),
-          BigInt(mandate.conditions.timelock),
-          blockNumber,
-          parsedChainId
-        )
-      : null;
+  const timelockEndBlock =
+    populatedAction?.proposedAt && mandate.conditions?.timelock
+      ? BigInt(populatedAction.proposedAt) + BigInt(mandate.conditions.timelock)
+      : undefined;
 
-  const timelockExpired = timelockRemaining === 'Ready';
+  // Readiness is a pure block-number comparison (no "timelock passed" state
+  // exists in getActionState()), so the check is a cheap one-off block read -
+  // no contract call, no continuous block-number watching.
+  useScheduledDeadlinePoll(
+    timelockEndBlock,
+    parsedChainId,
+    async () => {
+      const currentBlock = await getBlockNumber(wagmiConfig, { chainId: parsedChainId })
+      if (currentBlock >= timelockEndBlock!) {
+        setTimelockExpired(true)
+        return true
+      }
+      return false
+    }
+  );
+
+  // Display-only estimate, fetched once (not continuously watched) - the
+  // burst-poll above is what actually decides readiness, this is just a
+  // human-readable approximation shown until then.
+  useEffect(() => {
+    if (!populatedAction?.proposedAt || !mandate.conditions?.timelock || !parsedChainId) return
+    const proposedAt = populatedAction.proposedAt
+    const timelock = mandate.conditions.timelock
+    getBlockNumber(wagmiConfig, { chainId: parsedChainId }).then(currentBlock => {
+      setEstimatedRemaining(
+        calculateTimelockRemaining(BigInt(proposedAt), BigInt(timelock), currentBlock, parsedChainId)
+      )
+    })
+  }, [populatedAction?.proposedAt, mandate.conditions?.timelock, parsedChainId])
 
   // Sync checks status back to global action state (same pattern as Vote.tsx)
   useEffect(() => {
@@ -131,8 +154,8 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
               >
                 {timelockExpired
                   ? 'Ready to Execute'
-                  : timelockRemaining
-                  ? `${timelockRemaining} remaining`
+                  : estimatedRemaining
+                  ? `${estimatedRemaining} remaining`
                   : '-'}
               </span>
             </div>

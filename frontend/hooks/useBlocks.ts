@@ -1,7 +1,7 @@
 // ok, what does this need to do?
 
 import { Status } from "@/context/types"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 import { GetBlockReturnType } from "wagmi/actions";
 import { wagmiConfig } from "@/context/wagmiConfig"
 import { getBlock } from "wagmi/actions";
@@ -136,9 +136,17 @@ export const useBlocks = () => {
             }
             
             saved.set(cacheKey, blockTimestamp)
-            
+
+            // Re-read the latest storage right before writing - a concurrent
+            // fetchTimestamps() call (e.g. Timeline.tsx fires one effect for
+            // proposed/requested/fulfilled and a separate one for vote-end/
+            // delay-end) can write its own entries between this call's start
+            // and now. Writing through `saved` (this call's stale snapshot)
+            // would silently drop those entries.
+            const latest = loadTimestampsFromStorage()
+            latest.set(cacheKey, blockTimestamp)
             try {
-              localStorage.setItem("blockTimestamps", JSON.stringify(Array.from(saved.entries()), bigintReplacer))
+              localStorage.setItem("blockTimestamps", JSON.stringify(Array.from(latest.entries()), bigintReplacer))
             } catch (storageError) {
               console.error("@useBlocks, error saving to localStorage: ", storageError)
               // Continue execution even if localStorage fails
@@ -151,16 +159,16 @@ export const useBlocks = () => {
           }
         }
       }
+      // Apply this call's results directly rather than via a status-change
+      // effect - concurrent fetchTimestamps calls (e.g. Timeline.tsx firing
+      // once before and once after blockNumber resolves) share this hook's
+      // `status` state, so a later call's setStatus("success") can be a
+      // no-op if status is already "success", silently dropping its results.
+      setTimestamps(loadTimestampsFromStorage())
       setStatus("success")
-    }, 
+    },
     []
   )
 
-  useEffect(() => {
-    if (status === "success" || status === "error") {
-      setTimestamps(loadTimestampsFromStorage())
-    }
-  }, [status])
-  
   return { status, error, timestamps, fetchTimestamps }
 }

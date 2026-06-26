@@ -1,87 +1,76 @@
 # Branch Protection Rules
 
-This document outlines the recommended branch protection rules for the Powers repository.
+This document describes the branch protection rules for `develop → staging → main` and
+the `gh` CLI commands to apply them. Run each command once after creating the `staging` branch.
 
-## Main Branch Protection
+## Workflow overview
 
-### Required Settings
+| Branch | Who can PR | Required checks | Review |
+|---|---|---|---|
+| `develop` | Anyone | Vercel build + `Frontend Lint` | None |
+| `staging` | Only from `develop` | `Check source branch` + `Solidity Tests` + `E2E Tests` | None |
+| `main` | Only from `staging` | `Check source branch` | 1 approval (admin-bypassable) |
 
-1. **Require a pull request before merging**
-   - ✅ Enable
-   - ✅ Require approvals: 1
-   - ✅ Dismiss stale PR approvals when new commits are pushed
-   - ✅ Require review from code owners
+## Setup commands
 
-2. **Require status checks to pass before merging**
-   - ✅ Require branches to be up to date before merging
-   - ✅ Status checks that are required:
-     - `solidity-tests`
-     - `frontend-tests`
-     - `security-audit`
-     - `dependency-check`
+### Step 1 — create the staging branch (if it doesn't exist yet)
 
-3. **Require conversation resolution before merging**
-   - ✅ Enable
-
-4. **Require signed commits**
-   - ✅ Enable (recommended for security)
-
-5. **Require linear history**
-   - ✅ Enable (prevents merge commits)
-
-6. **Include administrators**
-   - ✅ Enable (applies rules to admins too)
-
-### Optional Settings
-
-1. **Restrict pushes that create files that are larger than 100 MB**
-   - ✅ Enable
-
-2. **Require deployments to succeed before merging**
-   - ⚠️ Enable if you have deployment workflows
-
-## Develop Branch Protection
-
-Apply the same rules as main branch, but with:
-- Require approvals: 1 (can be reduced from main)
-- Status checks: Same as main
-
-## Feature Branch Guidelines
-
-- No protection rules needed
-- Use descriptive names: `feature/descriptive-name`
-- Delete after merge
-
-## Setting Up Branch Protection
-
-1. Go to your repository on GitHub
-2. Navigate to Settings > Branches
-3. Click "Add rule" or edit existing rules
-4. Apply the settings above for `main` and `develop` branches
-
-## Code Owners
-
-Create a `.github/CODEOWNERS` file with:
-
-```
-# Global owners
-* @7Cedars
-
-# Solidity contracts
-/solidity/ @7Cedars
-
-# Frontend
-/frontend/ @7Cedars
-
-# Documentation
-/gitbook/ @7Cedars
-/docs/ @7Cedars
+```bash
+git checkout develop && git checkout -b staging
+git push -u origin staging
 ```
 
-## Benefits
+### Step 2 — apply branch protection rules via gh CLI
 
-- **Code Quality**: Ensures all code is reviewed
-- **Security**: Prevents unauthorized changes to main branches
-- **Collaboration**: Encourages proper PR workflow
-- **Automation**: Leverages CI/CD for quality checks
-- **History**: Maintains clean git history
+```bash
+# develop — require Vercel check + lint; no review needed
+gh api repos/7Cedars/powers-monorepo/branches/develop/protection \
+  --method PUT \
+  --field enforce_admins=false \
+  --field "required_status_checks[strict]=false" \
+  --field "required_status_checks[contexts][]=Frontend Lint" \
+  --field "required_status_checks[contexts][]=<vercel-check-name>" \
+  --field required_pull_request_reviews=null \
+  --field restrictions=null
+
+# staging — source branch check + solidity + e2e; no review needed
+gh api repos/7Cedars/powers-monorepo/branches/staging/protection \
+  --method PUT \
+  --field enforce_admins=false \
+  --field "required_status_checks[strict]=true" \
+  --field "required_status_checks[contexts][]=Check source branch" \
+  --field "required_status_checks[contexts][]=Solidity Tests" \
+  --field "required_status_checks[contexts][]=E2E Tests" \
+  --field required_pull_request_reviews=null \
+  --field restrictions=null
+
+# main — source branch check + 1 reviewer; admins can bypass (overwritable)
+gh api repos/7Cedars/powers-monorepo/branches/main/protection \
+  --method PUT \
+  --field enforce_admins=false \
+  --field "required_status_checks[strict]=true" \
+  --field "required_status_checks[contexts][]=Check source branch" \
+  --field "required_pull_request_reviews[required_approving_review_count]=1" \
+  --field "required_pull_request_reviews[require_code_owner_reviews]=true" \
+  --field "required_pull_request_reviews[dismiss_stale_reviews]=false" \
+  --field restrictions=null
+```
+
+### Step 3 — find the Vercel check name
+
+The `<vercel-check-name>` placeholder above needs to be the exact string Vercel posts
+as a GitHub check. To find it:
+
+1. Open any existing PR to `develop` on GitHub
+2. Scroll to the merge checklist — the Vercel check name appears there (e.g. `"Vercel – powers-monorepo"`)
+3. Replace `<vercel-check-name>` in the develop command above and re-run it
+
+## Notes
+
+- `enforce_admins=false` means repository admins can merge without satisfying the rules
+  (the "overwritable" requirement for `main`). Set to `true` to enforce for everyone.
+- The `Check source branch` job in `ci-staging.yml` / `ci-main.yml` only enforces the
+  source-branch restriction on real PRs — manual `workflow_dispatch` triggers skip the check.
+- Solidity fork tests (if any) may need `RPC_URL_*` secrets added to the repo. Add them
+  under Settings → Secrets and variables → Actions, then reference them as
+  `env: RPC_URL_OP_SEPOLIA: ${{ secrets.RPC_URL_OP_SEPOLIA }}` in the `solidity-tests` job.

@@ -4,7 +4,6 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Powers } from "@/context/types";
 import { cn } from "@/utils/utils";
-import { usePowersStore } from "@/context/store";
 
 interface NavigationDropdownMenuProps {
   savedProtocols: Powers[];
@@ -22,7 +21,6 @@ export function NavigationDropdownMenu({
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const powers = usePowersStore();
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -66,7 +64,11 @@ export function NavigationDropdownMenu({
   return (
     <div ref={dropdownRef} className="relative inline-block font-mono">
       {/* Trigger */}
-      <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer py-0.5">
+      <div
+        data-testid="nav-dropdown-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        className="cursor-pointer py-0.5"
+      >
         {trigger}
       </div>
 

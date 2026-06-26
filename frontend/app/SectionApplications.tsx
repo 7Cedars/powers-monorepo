@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
 import {
   ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon,
   QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
-  PuzzlePieceIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon,
+  PuzzlePieceIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon, ScaleIcon,
 } from "@heroicons/react/24/outline";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -14,6 +14,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   puzzle:    PuzzlePieceIcon,
   magnifier: MagnifyingGlassIcon,
   comment:   ChatBubbleLeftIcon,
+  scale:     ScaleIcon,
 };
 import { powersApplications } from "../public/powersApplications";
 

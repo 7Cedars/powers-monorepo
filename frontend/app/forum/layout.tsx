@@ -1,7 +1,7 @@
 'use client'
 
 import React from "react";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
@@ -14,6 +14,8 @@ import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { usePowersLive } from "@/hooks/usePowersLive";
+import { useActionStateSync } from "@/hooks/useActionStateSync";
+import { usePowers } from "@/hooks/usePowers";
 import { useConnection, useSwitchChain } from "wagmi";
 import { useXmtpClient } from "@/hooks/useXmtpClient";
 
@@ -32,6 +34,12 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       powersAddress as `0x${string}` | undefined,
       chainId ? parseChainId(chainId) : undefined
     );
+    useActionStateSync(
+      powersAddress as `0x${string}` | undefined,
+      chainId ? parseChainId(chainId) : undefined
+    );
+    const { fetchPowers } = usePowers();
+    const fetchingPowersRef = useRef(false);
     const switchChain = useSwitchChain();
     const { chain } = useConnection();
     const action = useActionStore();
@@ -50,13 +58,29 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
     const powersBasePath = chainId && powersAddress ? `/forum/${chainId}/${powersAddress}` : null
     const isOnSubPage = powersBasePath !== null && pathname !== powersBasePath
 
-    // Load powers instance if not loaded yet.
     // Switch chain when selected chain changes
     useEffect(() => {
       if (chainId && chain?.id !== Number(chainId)) {
         switchChain.mutate({ chainId: Number(chainId) });
       }
     }, [ chain?.id ]);
+
+    // Load powers instance if not loaded yet. Lives here (not in a specific
+    // sub-page) so every route under /forum/[chainId]/[powers]/* - including
+    // a direct/refreshed navigation to e.g. /new - gets the data. Dependency
+    // array is route params only (not `powers` or `fetchPowers`) so a
+    // successful fetch's new `powers` object reference doesn't re-trigger
+    // this effect and loop; a ref guards against overlapping calls.
+    useEffect(() => {
+      if (!powersAddress || !chainId) return
+      if (powers.contractAddress === undefined || powers.contractAddress === '0x0' || powers.contractAddress !== powersAddress) {
+        if (fetchingPowersRef.current) return
+        fetchingPowersRef.current = true
+        fetchPowers(powersAddress as `0x${string}`, parseChainId(chainId)).finally(() => {
+          fetchingPowersRef.current = false
+        })
+      }
+    }, [powersAddress, chainId]);
   
     // reset status and error when pathname changes
     useEffect(() => {

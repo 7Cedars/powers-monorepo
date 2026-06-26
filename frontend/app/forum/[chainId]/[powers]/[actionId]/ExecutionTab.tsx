@@ -3,14 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'next/navigation'
-import { useWallets } from '@privy-io/react-auth'
 import { useEffectiveAddress } from '@/hooks/useEffectiveAddress'
-import { useMandate } from '@/hooks/useMandate'
 import { SimulationBox } from '@/components/SimulationBox'
 import { usePowersStore } from '@/context/store'
-import { Action, Mandate } from '@/context/types'
+import { Action, Mandate, MandateSimulation } from '@/context/types'
 import { bigintToRole } from '@/utils/bigintTo'
-import { useChainId } from 'wagmi'
+import { useChainId, usePublicClient } from 'wagmi'
+import { powersAbi } from '@/context/abi'
+import { useMandate } from '@/hooks/useMandate'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 
 interface ExecutionTabProps {
@@ -21,10 +21,10 @@ interface ExecutionTabProps {
 export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProps) {
   const { chainId: chainIdStr } = useParams<{ chainId: string }>()
   const powers = usePowersStore()
-  const { simulation, simulate } = useMandate()
-  const { wallets, ready } = useWallets()
   const effectiveAddress = useEffectiveAddress()
   const chainId = useChainId()
+  const publicClient = usePublicClient({ chainId: Number(chainIdStr) })
+  const { simulation, simulate } = useMandate()
 
   // Collect all mandates in the same flow as the current mandate
   const flowMandates = useMemo<Mandate[]>(() => {
@@ -40,7 +40,7 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
 
   const [selectedMandateIndex, setSelectedMandateIndex] = useState<string>(currentMandate.index.toString())
   const [isSimulating, setIsSimulating] = useState(false)
-  const [hasSimulated, setHasSimulated] = useState(false)
+  const [fulfilledSimulation, setFulfilledSimulation] = useState<MandateSimulation | undefined>()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -74,52 +74,91 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
     [flowMandates, selectedMandateIndex, currentMandate]
   )
 
-  // Find the action to use for simulation for the selected mandate
-  const targetAction = useMemo<Action | undefined>(() => {
-    if (selectedMandateIndex === currentMandate.index.toString()) return currentAction
-    // Find most recent action in the selected mandate
-    const mandate = flowMandates.find(m => m.index.toString() === selectedMandateIndex)
-    if (!mandate?.actions || mandate.actions.length === 0) return undefined
-    return [...mandate.actions].sort((a, b) => {
-      const aBlock = a.fulfilledAt ?? a.requestedAt ?? a.proposedAt ?? 0n
-      const bBlock = b.fulfilledAt ?? b.requestedAt ?? b.proposedAt ?? 0n
-      return aBlock > bBlock ? -1 : 1
-    })[0]
-  }, [selectedMandateIndex, currentMandate, currentAction, flowMandates])
+  const hasCallData = !!currentAction.callData && currentAction.callData !== '0x0'
+  const isFulfilled = !!(currentAction.fulfilledAt && currentAction.fulfilledAt > 0n)
 
-  useEffect(() => {
-    setHasSimulated(false)
-  }, [selectedMandateIndex])
+  const caller = currentAction.caller ?? effectiveAddress ?? '0x0'
+  const nonce = BigInt(currentAction.nonce ?? 0)
 
+  // Live simulation for non-fulfilled actions
   useEffect(() => {
-    if (!targetAction?.callData || targetAction.callData === '0x0' || !ready || !wallets?.[0] || hasSimulated) return
+    if (isFulfilled || !hasCallData) return
+    const run = async () => {
+      setIsSimulating(true)
+      await simulate(caller as `0x${string}`, currentAction.callData as `0x${string}`, nonce, selectedMandate)
+      setIsSimulating(false)
+    }
+    void run()
+  }, [selectedMandate.mandateAddress, selectedMandate.index, currentAction.callData, currentAction.nonce, isFulfilled])
+
+  // Fetch ActionFulfilled event log for already-executed actions
+  useEffect(() => {
+    if (!isFulfilled || !publicClient) return
     const run = async () => {
       setIsSimulating(true)
       try {
-        await simulate(
-          targetAction.caller ?? effectiveAddress ?? '0x0',
-          targetAction.callData as `0x${string}`,
-          BigInt(targetAction.nonce ?? 0),
-          selectedMandate
-        )
-        setHasSimulated(true)
-      } catch {
-        setHasSimulated(true)
+        const logs = await publicClient.getContractEvents({
+          address: selectedMandate.powers as `0x${string}`,
+          abi: powersAbi,
+          eventName: 'ActionFulfilled',
+          args: { actionId: BigInt(currentAction.actionId) },
+          fromBlock: currentAction.fulfilledAt,
+          toBlock: currentAction.fulfilledAt,
+        })
+        if (logs[0]?.args) {
+          const { actionId, targets, values, calldatas } = logs[0].args as {
+            actionId?: bigint
+            targets?: `0x${string}`[]
+            values?: bigint[]
+            calldatas?: `0x${string}`[]
+          }
+          setFulfilledSimulation([
+            actionId ?? 0n,
+            targets ?? [],
+            values ?? [],
+            calldatas ?? [],
+            '0x',
+          ] as MandateSimulation)
+        }
       } finally {
         setIsSimulating(false)
       }
     }
-    run()
-  }, [targetAction, selectedMandate, ready, wallets, hasSimulated])
+    void run()
+  }, [isFulfilled, currentAction.actionId, currentAction.fulfilledAt, publicClient, selectedMandate.powers])
+
+  // Other mandates in the same flow that this mandate's fulfilment will block or enable.
+  // Use String() comparison throughout: needFulfilled/needNotFulfilled come from uint16 ABI
+  // and may decode as number or bigint depending on viem version; mandate.index is always bigint.
+  const affectedMandates = useMemo(() => {
+    const blocks: Mandate[] = []
+    const enables: Mandate[] = []
+    const selectedIdx = selectedMandate.index.toString()
+    for (const m of flowMandates) {
+      if (m.index.toString() === selectedIdx) continue
+      if (m.conditions?.needFulfilled && String(m.conditions.needFulfilled) === selectedIdx) enables.push(m)
+      if (m.conditions?.needNotFulfilled && String(m.conditions.needNotFulfilled) === selectedIdx) blocks.push(m)
+    }
+    return { blocks, enables }
+  }, [flowMandates, selectedMandate])
+
+  const displaySimulation = isFulfilled
+    ? fulfilledSimulation
+    : (simulation as MandateSimulation | undefined)
+
+  const hasTransactions = useMemo(() => {
+    if (isSimulating || !displaySimulation?.[1]?.length) return false
+    return displaySimulation[1].some(target => target !== '0x0000000000000000000000000000000000000000')
+  }, [displaySimulation, isSimulating])
 
   return (
     <div className="space-y-4">
       {/* Mandate dropdown */}
-      {flowMandates.length > 1 && (
-        <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
-            Mandate
-          </label>
+      <div>
+        <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
+          Mandate
+        </label>
+        {flowMandates.length > 1 ? (
           <div ref={dropdownRef} className="relative">
             <button
               ref={buttonRef}
@@ -154,21 +193,50 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
               document.body
             )}
           </div>
+        ) : (
+          <div className="w-full flex items-center justify-between bg-background border border-border pl-3 pr-3 py-2 text-xs font-mono text-left">
+            <span className="truncate">
+              #{selectedMandate.index.toString()} {selectedMandate.nameDescription?.split(':')[0] ?? 'Mandate'} — {bigintToRole(selectedMandate.conditions?.allowedRole ?? 0n, powers)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Effects of fulfilling this action */}
+      {(affectedMandates.blocks.length > 0 || affectedMandates.enables.length > 0 || hasTransactions) && (
+        <div className="text-xs font-mono space-y-1">
+          <p className="text-muted-foreground">Fulfilling this action</p>
+          <ul className="list-disc list-inside pl-2 space-y-0.5">
+            {affectedMandates.blocks.map(m => (
+              <li key={`block-${m.index.toString()}`}>
+                blocks #{m.index.toString()} {m.nameDescription?.split(':')[0] ?? 'Mandate'}
+              </li>
+            ))}
+            {affectedMandates.enables.map(m => (
+              <li key={`enable-${m.index.toString()}`}>
+                enables #{m.index.toString()} {m.nameDescription?.split(':')[0] ?? 'Mandate'}
+              </li>
+            ))}
+          </ul>
+          {hasTransactions && <p className="text-muted-foreground">executes the following transactions:</p>}
         </div>
       )}
 
       {/* Simulation output */}
-      {!targetAction ? (
-        <p className="text-xs text-muted-foreground font-mono">No actions found for this mandate</p>
-      ) : isSimulating ? (
-        <p className="text-xs text-muted-foreground font-mono">Running simulation···</p>
-      ) : simulation ? (
-        <SimulationBox mandate={selectedMandate} simulation={simulation} chainId={chainId} />
-      ) : hasSimulated ? (
-        <p className="text-xs text-muted-foreground font-mono">No simulation data available</p>
-      ) : (
-        <p className="text-xs text-muted-foreground font-mono">Loading simulation···</p>
-      )}
+      <SimulationBox
+        mandate={selectedMandate}
+        simulation={isSimulating ? undefined : displaySimulation}
+        chainId={chainId}
+        emptyMessage={
+          isSimulating
+            ? 'Running simulation···'
+            : !hasCallData && !isFulfilled
+            ? 'No call data available'
+            : displaySimulation
+            ? undefined
+            : 'No simulation data available'
+        }
+      />
     </div>
   )
 }

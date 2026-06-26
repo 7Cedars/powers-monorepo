@@ -51,8 +51,8 @@ export default function ProtocolPage() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-background scanlines">
-      <main className="h-full max-w-4/5 mx-auto overflow-y-auto bg-background w-full px-4 py-8 min-h-0">
+    <div className="h-full w-full flex flex-col overflow-y-auto min-h-0 bg-background scanlines">
+      <main className="max-w-4/5 mx-auto bg-background w-full px-4 py-8">
         <h1 className="font-mono text-foreground tracking-wider mb-2 text-center uppercase text-lg">
           SAVED ORGANISATIONS
         </h1>
@@ -65,7 +65,7 @@ export default function ProtocolPage() {
             <OrgSummaryBox
               key={protocol.contractAddress}
               powers={protocol}
-              onArchive={() => handleArchiveDao(protocol.contractAddress)}
+              onArchive={() => setArchiveTarget(protocol)}
               alignment="column"
               showHeader={true}
             />

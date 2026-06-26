@@ -392,14 +392,15 @@ export const useMandate = () => {
     }, [chainId])
   
   const simulate = useCallback(
-    async (caller: `0x${string}`, mandateCalldata: `0x${string}`, nonce: bigint, mandate: Mandate): Promise<boolean> => {
+    async (caller: `0x${string}`, mandateCalldata: `0x${string}`, nonce: bigint, mandate: Mandate, blockNumber?: bigint): Promise<boolean> => {
       try {
           const result = await readContract(wagmiConfig, {
             abi: mandateAbi,
             address: mandate.mandateAddress as `0x${string}`,
             functionName: 'handleRequest',
             args: [caller, mandate.powers, mandate.index, mandateCalldata, nonce],
-            chainId: parseChainId(chainId)
+            chainId: parseChainId(chainId),
+            ...(blockNumber !== undefined ? { blockNumber } : {})
             })
           setSimulation(result as MandateSimulation)
           return true

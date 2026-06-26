@@ -9,6 +9,8 @@ import { useParams } from "next/navigation";
 import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { OrgBanner } from "@/components/OrgBanner";
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
 export default function Page() {
   const { chainId, powers: addressPowers } = useParams<{ chainId: string, powers: string }>()
   const powers = usePowersStore();
@@ -21,8 +23,24 @@ export default function Page() {
     <main className="w-full min-h-screen flex flex-col bg-background scanlines">
       <OrgBanner title="Treasury" subtitle="View and manage the assets held by your Powers." />
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
-        
-        {powers.treasury && powers.treasury !== "0x0000000000000000000000000000000000000000" ? (
+
+        {powers.paymaster && powers.paymaster !== ZERO_ADDRESS && (
+          <div className="mb-4 border border-border bg-muted/50 px-4 py-3">
+            <a
+              href={`${supportedChain?.blockExplorers?.default.url}/address/${powers.paymaster as `0x${string}`}#code`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="text-xs font-mono break-all">
+                Paymaster: {powers.paymaster as `0x${string}`}
+              </span>
+              <ArrowUpRightIcon className="w-4 h-4 flex-shrink-0" />
+            </a>
+          </div>
+        )}
+
+        {powers.treasury && powers.treasury !== ZERO_ADDRESS ? (
           <>
             <div className="mb-4 border border-border bg-muted/50 px-4 py-3">
               <a
