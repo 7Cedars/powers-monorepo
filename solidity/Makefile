@@ -343,6 +343,10 @@ examples-deploy :
 	forge script governance/examples/TokenDelegates.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS)
 	@echo "All example contracts deployed."
 
+claude-org-deploy : 
+	@echo "Deploying organisation..."
+	forge script governance/claude/mandate-sandbox/Deploy.s.sol:Deploy $(ARB_SEPOLIA_DEPLOY_ARGS) 
+
 organisation-deploy : 
 	@echo "Deploying organisation..."
 	forge script governance/publius-registry/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS) 

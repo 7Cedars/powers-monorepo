@@ -6,7 +6,7 @@ import { DemoFlow } from './DemoFlow';
 export function SectionDemo() {
 
   return (
-    <section id="demo" className="w-full h-screen flex flex-col items-center gap-4 bg-muted/25 border-t border-border px-4 py-8">
+    <section id="demo" className="w-full min-h-screen shrink-0 flex flex-col items-center gap-4 bg-muted/25 border-t border-border px-4 py-8">
 
       <section className="relative w-full flex-1 min-h-0 border border-border overflow-hidden group">
         <DemoFlow />

@@ -21,7 +21,7 @@ const STATE_STYLES: Record<number, string> = {
 }
 
 export default function ActionDetailPage() {
-  const { actionId, chainId } = useParams<{ actionId: string; chainId: string }>()
+  const { actionId, chainId, powers: powersAddress } = useParams<{ actionId: string; chainId: string; powers: string }>()
   const router = useRouter()
   const powers = usePowersStore()
   const { setHighlightMode } = useUIStateStore()
@@ -87,7 +87,7 @@ export default function ActionDetailPage() {
 
   return (
     <main className="w-full h-full flex flex-col bg-background pb-16">
-      <OrgBanner title="Action" subtitle={actionId ?? ''} backButton={{ label: "ALL ACTIONS", href: `/overview/${chainId}/${powers?.contractAddress}/actions` }} />
+      <OrgBanner title="Action" subtitle={actionId ?? ''} backButton={{ label: "ALL ACTIONS", href: `/overview/${chainId}/${powersAddress}/actions` }} />
       <div className="px-4 flex flex-col gap-6 mt-6">
 
       {/* Input parameters */}
@@ -110,10 +110,10 @@ export default function ActionDetailPage() {
         </div>
       )}
 
-      {/* State across mandates */}
+      {/* Action State */}
       <div className="flex flex-col gap-2">
         <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
-          State across mandates
+          Action State
         </span>
         {occurrences.length === 0 ? (
           <p className="text-xs text-muted-foreground font-mono">No mandate occurrences found.</p>
@@ -124,7 +124,7 @@ export default function ActionDetailPage() {
                 <div className="flex items-center justify-between">
                   <button
                     className="text-foreground hover:text-primary hover:underline transition-colors text-left"
-                    onClick={() => router.push(`/overview/${chainId}/${powers?.contractAddress}/mandates/${mandateId}`)}
+                    onClick={() => router.push(`/overview/${chainId}/${powersAddress}/mandates/${mandateId}`)}
                   >
                     #{String(mandateId)} {mandateName}
                   </button>
@@ -133,16 +133,16 @@ export default function ActionDetailPage() {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10px] text-muted-foreground">
-                  {a.proposedAt && a.proposedAt > 0n && (
+                  {(a.proposedAt ?? 0n) > 0n && (
                     <><span>Proposed</span><span>{formatTs(a.proposedAt)}</span></>
                   )}
-                  {a.requestedAt && a.requestedAt > 0n && (
+                  {(a.requestedAt ?? 0n) > 0n && (
                     <><span>Requested</span><span>{formatTs(a.requestedAt)}</span></>
                   )}
-                  {a.fulfilledAt && a.fulfilledAt > 0n && (
+                  {(a.fulfilledAt ?? 0n) > 0n && (
                     <><span>Fulfilled</span><span>{formatTs(a.fulfilledAt)}</span></>
                   )}
-                  {a.cancelledAt && a.cancelledAt > 0n && (
+                  {(a.cancelledAt ?? 0n) > 0n && (
                     <><span>Cancelled</span><span>{formatTs(a.cancelledAt)}</span></>
                   )}
                 </div>

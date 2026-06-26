@@ -43,24 +43,37 @@ export default function NewActionPage() {
   const [showSelectInput, setShowSelectInput] = useState(false)
   const [activeInfoTab, setActiveInfoTab] = useState<'conditions' | 'flow' | 'chat'>('conditions')
   const [chatroomMode, setChatroomMode] = useState<'mandate' | 'flow'>('mandate')
-  // Redirect to org home if powers not loaded
+
+  // Powers is fetched by the layout, not this page - on a direct/refreshed
+  // navigation the store is still empty on first render, and the layout
+  // resets `status` to 'idle' on every pathname change (even once this org
+  // is already cached). So "loading" only while genuinely pending, or while
+  // 'idle' AND this org's data isn't cached yet - not just because the
+  // pathname changed after the data was already loaded.
+  const isLoadingPowers =
+    status.status === 'pending' ||
+    (status.status === 'idle' && powers.contractAddress !== powersAddress)
+
+  // Redirect to org home if powers failed to load
   useEffect(() => {
+    if (isLoadingPowers) return
     if (!powers?.name || powers.contractAddress === '0x0' || powers.contractAddress === undefined) {
       router.push(`/forum/${chainId}/${powersAddress}`)
     }
-  }, [powers, router, chainId, powersAddress])
+  }, [isLoadingPowers, powers, router, chainId, powersAddress])
 
   const mandate: Mandate | undefined = useMemo(
     () => powers.mandates?.find(m => m.index.toString() === mandateIdParam),
     [powers.mandates, mandateIdParam]
   )
 
-  // Redirect if mandate not found
+  // Redirect if mandate not found, once the fetch has settled
   useEffect(() => {
+    if (isLoadingPowers) return
     if (powers?.name && mandateIdParam && !mandate) {
       router.push(`/forum/${chainId}/${powersAddress}`)
     }
-  }, [powers?.name, mandate, mandateIdParam, router, chainId, powersAddress])
+  }, [isLoadingPowers, powers?.name, mandate, mandateIdParam, router, chainId, powersAddress])
 
   const params = mandate?.params || []
   const dataTypes = params.map(p => p.dataType)
@@ -225,7 +238,16 @@ export default function NewActionPage() {
     }
   }, [flowActions, dataTypes, mandate, action])
 
-  if (!mandate) return null
+  if (!mandate) {
+    if (isLoadingPowers) {
+      return (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <p className="text-muted-foreground text-sm font-mono">Loading mandate...</p>
+        </div>
+      )
+    }
+    return null
+  }
 
   const needsVote = !!(mandate.conditions?.quorum && mandate.conditions.quorum > 0n)
   const needsProposalFirst = !needsVote && !!(mandate.conditions?.timelock && BigInt(mandate.conditions.timelock) > 0n)

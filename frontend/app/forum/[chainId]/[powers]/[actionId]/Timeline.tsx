@@ -24,34 +24,39 @@ export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) 
 
   const cond = mandate.conditions;
 
-  // Fetch timestamps for relevant blocks
+  // Always-available blocks - fetch once, independent of blockNumber resolving.
   React.useEffect(() => {
     const blockNumbers: bigint[] = [];
-    
-    if (action.proposedAt && BigInt(action.proposedAt) !== 0n) {
-      const proposedAtBig = BigInt(action.proposedAt);
-      blockNumbers.push(proposedAtBig);
-      
-      // Also fetch timestamp for vote end block if vote has ended
-      if (cond?.votingPeriod && blockNumber) {
-        const voteEndBlock = proposedAtBig + BigInt(cond.votingPeriod);
-        if (voteEndBlock <= blockNumber) {
-          blockNumbers.push(voteEndBlock);
-        }
-      }
-      
-      // Also fetch timestamp for delay end block if delay has passed
-      if (cond?.timelock && BigInt(cond.timelock) > 0n && blockNumber) {
-        const delayEndBlock = proposedAtBig + BigInt(cond.timelock);
-        if (delayEndBlock <= blockNumber) {
-          blockNumbers.push(delayEndBlock);
-        }
-      }
-    }
-    
+    if (action.proposedAt && BigInt(action.proposedAt) !== 0n) blockNumbers.push(BigInt(action.proposedAt));
     if (action.requestedAt && BigInt(action.requestedAt) !== 0n) blockNumbers.push(BigInt(action.requestedAt));
     if (action.fulfilledAt && BigInt(action.fulfilledAt) !== 0n) blockNumbers.push(BigInt(action.fulfilledAt));
-    
+    if (blockNumbers.length > 0) {
+      fetchTimestamps(blockNumbers, chainId);
+    }
+  }, [action, chainId, fetchTimestamps]);
+
+  // Vote End / Delay End - only fetchable once blockNumber resolves; kept in its
+  // own effect so it doesn't re-trigger a redundant re-fetch of the blocks above
+  // every time blockNumber changes.
+  React.useEffect(() => {
+    if (!action.proposedAt || BigInt(action.proposedAt) === 0n || !blockNumber) return;
+    const proposedAtBig = BigInt(action.proposedAt);
+    const blockNumbers: bigint[] = [];
+
+    if (cond?.votingPeriod) {
+      const voteEndBlock = proposedAtBig + BigInt(cond.votingPeriod);
+      if (voteEndBlock <= blockNumber) {
+        blockNumbers.push(voteEndBlock);
+      }
+    }
+
+    if (cond?.timelock && BigInt(cond.timelock) > 0n) {
+      const delayEndBlock = proposedAtBig + BigInt(cond.timelock);
+      if (delayEndBlock <= blockNumber) {
+        blockNumbers.push(delayEndBlock);
+      }
+    }
+
     if (blockNumbers.length > 0) {
       fetchTimestamps(blockNumbers, chainId);
     }
