@@ -246,6 +246,7 @@ export const SimulationBox = ({mandate, simulation, chainId, emptyMessage}: Simu
       }
     }
     const sim = [jsxElements1, jsxElements0]
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setJsxSimulation(sim)
   }, [simulation, decodedCalls])
 

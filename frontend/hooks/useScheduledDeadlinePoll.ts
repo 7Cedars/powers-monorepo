@@ -16,7 +16,10 @@ export function useScheduledDeadlinePoll(
   intervalMs = 5000
 ) {
   const checkFnRef = useRef(checkFn)
-  checkFnRef.current = checkFn
+
+  useEffect(() => {
+    checkFnRef.current = checkFn
+  })
 
   useEffect(() => {
     if (!targetBlock || !chainId) return

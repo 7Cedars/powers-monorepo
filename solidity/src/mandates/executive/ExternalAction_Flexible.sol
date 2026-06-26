@@ -17,12 +17,10 @@ contract ExternalAction_Flexible is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         (string[] memory params_) = abi.decode(config, (string[]));
         string[] memory newParams_ = new string[](params_.length + 2);
         newParams_[0] = "address PowersTarget";

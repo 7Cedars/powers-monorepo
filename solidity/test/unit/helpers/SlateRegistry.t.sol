@@ -468,7 +468,10 @@ contract SlateRegistryLifecycleTest is TestSetupHelpers {
         vm.roll(startBlock);
         // MAX_VOTES = 3, attempt 4
         uint16[] memory votes = new uint16[](4);
-        votes[0] = 1; votes[1] = 2; votes[2] = 3; votes[3] = 4;
+        votes[0] = 1;
+        votes[1] = 2;
+        votes[2] = 3;
+        votes[3] = 4;
         vm.prank(address(powersStub));
         vm.expectRevert("too many votes");
         slateReg.vote(elId, alice, votes);
@@ -508,12 +511,14 @@ contract SlateRegistryLifecycleTest is TestSetupHelpers {
 
         // alice votes for 10 and 30
         uint16[] memory aliceVotes = new uint16[](2);
-        aliceVotes[0] = 10; aliceVotes[1] = 30;
+        aliceVotes[0] = 10;
+        aliceVotes[1] = 30;
         _vote(elId, alice, aliceVotes);
 
         // bob votes for 20 and 30
         uint16[] memory bobVotes = new uint16[](2);
-        bobVotes[0] = 20; bobVotes[1] = 30;
+        bobVotes[0] = 20;
+        bobVotes[1] = 30;
         _vote(elId, bob, bobVotes);
 
         // charlotte votes for 30 only

@@ -13,12 +13,12 @@ import { powersAbi } from '@/context/abi'
 import { useMandate } from '@/hooks/useMandate'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 
-interface ExecutionTabProps {
+interface DependenciesTabProps {
   currentAction: Action
   currentMandate: Mandate
 }
 
-export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProps) {
+export function DependenciesTab({ currentAction, currentMandate }: DependenciesTabProps) {
   const { chainId: chainIdStr } = useParams<{ chainId: string }>()
   const powers = usePowersStore()
   const effectiveAddress = useEffectiveAddress()
@@ -102,8 +102,8 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
           abi: powersAbi,
           eventName: 'ActionFulfilled',
           args: { actionId: BigInt(currentAction.actionId) },
-          fromBlock: currentAction.fulfilledAt,
-          toBlock: currentAction.fulfilledAt,
+          fromBlock: BigInt(currentAction.fulfilledAt!),
+          toBlock: BigInt(currentAction.fulfilledAt!),
         })
         if (logs[0]?.args) {
           const { actionId, targets, values, calldatas } = logs[0].args as {
@@ -153,6 +153,12 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
 
   return (
     <div className="space-y-4">
+      {/* Explainer */}
+      <p className="text-xs font-mono text-muted-foreground">
+        When fulfilled, this action will execute on-chain via the mandate selected below.
+        The simulation shows the resulting transactions; the effects section lists which other mandates in the same flow will be unlocked or blocked.
+      </p>
+
       {/* Mandate dropdown */}
       <div>
         <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">

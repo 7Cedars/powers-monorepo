@@ -6,6 +6,7 @@ import ReactFlow, {
   Edge,
   Background,
   BackgroundVariant,
+  Controls,
   useNodesState,
   useEdgesState,
   ConnectionMode,
@@ -493,6 +494,7 @@ const FlowContent: React.FC = () => {
           size={1}
           color="hsl(var(--border))"
         />
+        <Controls showZoom={false} showInteractive={false} position="bottom-left" />
       </ReactFlow>
     </div>
   )

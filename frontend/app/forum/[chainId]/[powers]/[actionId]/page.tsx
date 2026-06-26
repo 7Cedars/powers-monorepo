@@ -12,13 +12,13 @@ import { setAction, useActionStore } from '@/context/store'
 import { Timeline } from './Timeline'
 import { TimelockExecute } from './TimelockExecute'
 import { SingleFlow } from '@/components/SingleFlow'
-import { ExecutionTab } from './ExecutionTab'
+import { DependenciesTab } from './DependenciesTab'
 import { bigintToRole } from '@/utils/bigintTo'
 import { DocumentTextIcon, ClipboardDocumentListIcon, ClockIcon, HandRaisedIcon, LockClosedIcon, PlayIcon, ArrowsRightLeftIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 
 const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
-type Tab = 'action' | 'timeline' | 'conditions' | 'votes' | 'timelock' | 'execution' | 'flow' | 'chat'
+type Tab = 'action' | 'timeline' | 'conditions' | 'votes' | 'timelock' | 'dependencies' | 'flow' | 'chat'
 type ChatroomMode = 'mandate' | 'flow'
 
 export default function ActionPage() {
@@ -102,7 +102,7 @@ export default function ActionPage() {
     ]
     if (hasVoting)       tabs.push({ id: 'votes',     label: 'Votes',     icon: HandRaisedIcon })
     if (hasTimelockOnly) tabs.push({ id: 'timelock',  label: 'Timelock',  icon: LockClosedIcon })
-    tabs.push({ id: 'execution', label: 'Execution', icon: PlayIcon })
+    tabs.push({ id: 'dependencies', label: 'Dependencies', icon: PlayIcon })
     tabs.push({ id: 'flow',      label: 'Flow',      icon: ArrowsRightLeftIcon })
     tabs.push({ id: 'chat',      label: 'Chat',      icon: ChatBubbleLeftRightIcon })
     return tabs
@@ -282,8 +282,8 @@ export default function ActionPage() {
               </div>
             )}
 
-            {activeTab === 'execution' && (
-              <ExecutionTab currentAction={action} currentMandate={mandate} />
+            {activeTab === 'dependencies' && (
+              <DependenciesTab currentAction={action} currentMandate={mandate} />
             )}
 
             {activeTab === 'flow' && (

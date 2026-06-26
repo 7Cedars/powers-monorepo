@@ -4,7 +4,9 @@ pragma solidity ^0.8.26;
 import { Mandate } from "../../../Mandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { ZKPassport_PowersRegistry } from "../../../helpers/ZKPassport_PowersRegistry.sol";
-import { DisclosedData } from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
+import {
+    DisclosedData
+} from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 
 /// @title ZKPassport Check Mandate
 /// @notice Checks if a caller has a valid ZKPassport proof registered with specific data.
@@ -45,12 +47,10 @@ contract ZKPassport_Check is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         (string[] memory params_,,,,,) = abi.decode(config, (string[], address, uint256, bool, bytes4, bytes));
 
         string[] memory newParams_ = new string[](params_.length + 1);

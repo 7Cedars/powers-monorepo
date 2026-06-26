@@ -52,11 +52,7 @@ contract ChainlinkFunctions_Open is AsyncMandate, FunctionsClient {
     constructor(address router) FunctionsClient(router) {
         // Define the parameters required to configure this mandate
         bytes memory configParams = abi.encode(
-            "string source",
-            "string[] inputParams",
-            "uint64 subscriptionId",
-            "uint32 gasLimit",
-            "bytes32 donID"
+            "string source", "string[] inputParams", "uint64 subscriptionId", "uint32 gasLimit", "bytes32 donID"
         );
         emit Mandate__Deployed(configParams);
     }
@@ -66,26 +62,24 @@ contract ChainlinkFunctions_Open is AsyncMandate, FunctionsClient {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory /* inputParams */, // Ignored, as we construct it from config
+        bytes memory,
+        /* inputParams */ // Ignored, as we construct it from config
         bytes memory config
-    ) public override {
+    )
+        public
+        override
+    {
         bytes32 mandateHash = MandateUtilities.hashMandate(msg.sender, index);
 
-        (
-            string memory source,
-            string[] memory inputParams,
-            uint64 subscriptionId,
-            uint32 gasLimit,
-            bytes32 donId
-        ) = abi.decode(config, (string, string[], uint64, uint32, bytes32));
+        (string memory source, string[] memory inputParams, uint64 subscriptionId, uint32 gasLimit, bytes32 donId) =
+            abi.decode(config, (string, string[], uint64, uint32, bytes32));
 
         // Check if all inputParams are strings (meaning they start with "string ")
         for (uint256 i = 0; i < inputParams.length; i++) {
             bytes memory paramBytes = bytes(inputParams[i]);
             if (
-                paramBytes.length < 7 || 
-                paramBytes[0] != 's' || paramBytes[1] != 't' || paramBytes[2] != 'r' || 
-                paramBytes[3] != 'i' || paramBytes[4] != 'n' || paramBytes[5] != 'g' || paramBytes[6] != ' '
+                paramBytes.length < 7 || paramBytes[0] != "s" || paramBytes[1] != "t" || paramBytes[2] != "r"
+                    || paramBytes[3] != "i" || paramBytes[4] != "n" || paramBytes[5] != "g" || paramBytes[6] != " "
             ) {
                 revert("All input parameters must be of type string");
             }
@@ -125,7 +119,7 @@ contract ChainlinkFunctions_Open is AsyncMandate, FunctionsClient {
 
         // Copy to memory to use our assembly decoder
         bytes memory calldataMem = mandateCalldata;
-        
+
         // Decode the tuple of strings from mandateCalldata dynamically
         string[] memory args = _decodeStringTuple(calldataMem, data_.inputParams.length);
 
@@ -154,12 +148,7 @@ contract ChainlinkFunctions_Open is AsyncMandate, FunctionsClient {
         bytes32 requestId = sendRequest(args, mandateHash);
 
         // Store the request details for fulfillment
-        requests[requestId] = Request({
-            caller: caller,
-            powers: powers,
-            mandateId: mandateId,
-            actionId: actionId
-        });
+        requests[requestId] = Request({ caller: caller, powers: powers, mandateId: mandateId, actionId: actionId });
     }
 
     // --- Chainlink Functions ---

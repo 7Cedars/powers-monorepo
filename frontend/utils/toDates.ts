@@ -15,7 +15,7 @@ export const toFullDateFormat = (timestamp: number): string => {
 export const toFullDateAndTimeFormat = (timestamp: number): string => {
   const date = new Date(timestamp * 1000) 
   let minutes = date.getMinutes().toString()
-  minutes.length == 1 ? minutes = `0${minutes}` : minutes
+  if (minutes.length == 1) minutes = `0${minutes}`
   return `${date.getDate()} ${nameMonths[date.getMonth()]} ${date.getFullYear()}: ${date.getHours()}:${minutes}`
 }; 
 
@@ -23,7 +23,7 @@ export const toFullDateAndTimeFormat = (timestamp: number): string => {
 export const toEurTimeFormat = (timestamp: number): string => {
   const date = new Date(timestamp * 1000) 
   let minutes = date.getMinutes().toString()
-  minutes.length == 1 ? minutes = `0${minutes}` : minutes
+  if (minutes.length == 1) minutes = `0${minutes}`
   return `${date.getHours()}:${minutes}`
 }; 
 

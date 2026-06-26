@@ -16,7 +16,7 @@ import { Configurations } from "@script/Configurations.s.sol";
 import { TestConstitutions } from "./TestConstitutions.sol";
 import { console2 } from "forge-std/console2.sol";
 
-// deploy scripts 
+// deploy scripts
 import { PowersMock } from "./mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 
@@ -50,7 +50,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     PowersMock daoMock;
     PowersMock daoMockChild1;
     PowersMock daoMockChild2;
-    ElectionRegistrysDAO openElections; 
+    ElectionRegistrysDAO openElections;
     string[] mandateNames;
     address[] mandateAddresses;
     TestConstitutions testConstitutions;
@@ -65,7 +65,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     Nominees nominees;
     ElectionRegistry openElection;
     Erc20DelegateElection erc20DelegateElection;
-    SimpleGovernor simpleGovernor; 
+    SimpleGovernor simpleGovernor;
     PowersFactory powersFactory;
     Soulbound1155 soulbound1155;
     ElectionRegistry electionList;
@@ -82,7 +82,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     uint8 constant ABSTAIN = 2;
 
     // versioning
-    uint16 constant MAJOR = 0; 
+    uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
     uint16 constant PATCH = 8;
 
@@ -293,10 +293,13 @@ abstract contract TestHelperFunctions is Test, TestVariables {
                     failCount++;
                     failures = string.concat(
                         failures,
-                        "\n[", Strings.toString(failCount), "] '",
+                        "\n[",
+                        Strings.toString(failCount),
+                        "] '",
                         Mandate(mandateAddr).getNameDescription(powers, mandateId),
                         "' needs fulfilled '",
-                        Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled), "'"
+                        Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled),
+                        "'"
                     );
                 }
             }
@@ -311,18 +314,20 @@ abstract contract TestHelperFunctions is Test, TestVariables {
                     failCount++;
                     failures = string.concat(
                         failures,
-                        "\n[", Strings.toString(failCount), "] '",
+                        "\n[",
+                        Strings.toString(failCount),
+                        "] '",
                         Mandate(mandateAddr).getNameDescription(powers, mandateId),
                         "' needs not fulfilled '",
-                        Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled), "'"
+                        Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled),
+                        "'"
                     );
                 }
             }
         }
 
         vm.assertTrue(
-            failCount == 0,
-            string.concat("InputParams mismatches (", Strings.toString(failCount), "):", failures)
+            failCount == 0, string.concat("InputParams mismatches (", Strings.toString(failCount), "):", failures)
         );
     }
 
@@ -672,9 +677,9 @@ abstract contract TestSetupIntegrations is BaseSetup {
         simpleErc20Votes = new SimpleErc20Votes();
         simpleGovernor = new SimpleGovernor(address(simpleErc20Votes));
         soulbound1155 = new Soulbound1155("this is a test uri");
-        electionList = new ElectionRegistry(300,300);
+        electionList = new ElectionRegistry(300, 300);
         PowersDeployer powersDeployer = new PowersDeployer();
-        powersFactory = new PowersFactory( 
+        powersFactory = new PowersFactory(
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),

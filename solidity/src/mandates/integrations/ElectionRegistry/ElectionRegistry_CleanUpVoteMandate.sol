@@ -20,7 +20,7 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 contract ElectionRegistry_CleanUpVoteMandate is Mandate {
     struct Mem {
-        string title; 
+        string title;
         uint256 electionId;
         uint16 createVoteMandate_Id;
         bytes returnData;
@@ -33,24 +33,23 @@ contract ElectionRegistry_CleanUpVoteMandate is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         string[] memory params = new string[](1);
         params[0] = "string Title";
         super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
-    /// @notice Build a call to nominate or revoke nomination for the caller 
+    /// @notice Build a call to nominate or revoke nomination for the caller
     /// @param powers The Powers contract address
     /// @param mandateId The mandate identifier
     /// @param mandateCalldata Encoded boolean (true = nominate, false = revoke)
     /// @param nonce Unique nonce to build the action id
     function handleRequest(
-        address /* caller */,
+        address,
+        /* caller */
         address powers,
         uint16 mandateId,
         bytes calldata mandateCalldata,

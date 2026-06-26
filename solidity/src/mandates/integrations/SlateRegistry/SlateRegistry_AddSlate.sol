@@ -60,7 +60,8 @@ contract SlateRegistry_AddSlate is Mandate {
     /// @param mandateCalldata Encoded input parameters
     /// @param nonce Unique nonce to build the action id
     function handleRequest(
-        address /* caller */,
+        address,
+        /* caller */
         address powers,
         uint16 mandateId,
         bytes calldata mandateCalldata,
@@ -78,13 +79,8 @@ contract SlateRegistry_AddSlate is Mandate {
         // Decode input parameters into struct to reduce stack usage
         {
             string memory electionTitle;
-            (
-                electionTitle,
-                mem.slateNameDescription,
-                mem.slateTargets,
-                mem.slateValues,
-                mem.slateCalldatas
-            ) = abi.decode(mandateCalldata, (string, string, address[], uint256[], bytes[]));
+            (electionTitle, mem.slateNameDescription, mem.slateTargets, mem.slateValues, mem.slateCalldatas) =
+                abi.decode(mandateCalldata, (string, string, address[], uint256[], bytes[]));
 
             // Decode config parameters
             (mem.slateRegistry, mem.presetActions) = abi.decode(getConfig(powers, mandateId), (address, address));
@@ -94,7 +90,7 @@ contract SlateRegistry_AddSlate is Mandate {
         }
 
         // Get election info from SlateRegistry to retrieve flowIndex
-        (mem.flowIndex, , , , , ) = SlateRegistry(mem.slateRegistry).elections(mem.electionId);
+        (mem.flowIndex,,,,,) = SlateRegistry(mem.slateRegistry).elections(mem.electionId);
 
         // Get roleId from SlateRegistry
         mem.roleId = SlateRegistry(mem.slateRegistry).roleId();
@@ -121,11 +117,11 @@ contract SlateRegistry_AddSlate is Mandate {
     }
 
     /// @dev Build the target calls for adoptMandate and editFlowByIndex
-    function _buildCalls(
-        address powers,
-        Mem memory mem,
-        uint256 actionId
-    ) internal pure returns (uint256, address[] memory targets, uint256[] memory values, bytes[] memory calldatas) {
+    function _buildCalls(address powers, Mem memory mem, uint256 actionId)
+        internal
+        pure
+        returns (uint256, address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
+    {
         // Create MandateInitData for the PresetActions mandate
         PowersTypes.MandateInitData memory initData = PowersTypes.MandateInitData({
             nameDescription: mem.slateNameDescription,
@@ -153,10 +149,7 @@ contract SlateRegistry_AddSlate is Mandate {
         // Call 2: Add the new mandate to the flow at the empty slot
         targets[1] = powers;
         calldatas[1] = abi.encodeWithSelector(
-            IPowers.editFlowByIndex.selector,
-            mem.flowIndex,
-            mem.emptySlotIndex,
-            mem.newMandateId
+            IPowers.editFlowByIndex.selector, mem.flowIndex, mem.emptySlotIndex, mem.newMandateId
         );
 
         // Call 3: Register the slate in SlateRegistry so it appears in vote tallying

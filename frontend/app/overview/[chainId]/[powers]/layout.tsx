@@ -26,6 +26,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
     if (savedWidth) {
       const width = parseInt(savedWidth, 10)
       if (width >= 300 && width <= 1200) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPanelWidth(width)
       }
     }

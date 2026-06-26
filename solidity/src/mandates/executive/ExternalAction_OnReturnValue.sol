@@ -12,21 +12,15 @@ import { IPowers } from "../../interfaces/IPowers.sol";
 
 contract ExternalAction_OnReturnValue is Mandate {
     constructor() {
-        bytes memory configParams = abi.encode(
-            "bytes paramsBefore",
-            "string[] Params",
-            "uint16 parentMandateId",
-            "bytes paramsAfter"
-        );
+        bytes memory configParams =
+            abi.encode("bytes paramsBefore", "string[] Params", "uint16 parentMandateId", "bytes paramsAfter");
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         (, string[] memory params_,,) = abi.decode(config, (bytes, string[], uint16, bytes));
         string[] memory newParams_ = new string[](params_.length + 2);
         newParams_[0] = "address PowersTarget";

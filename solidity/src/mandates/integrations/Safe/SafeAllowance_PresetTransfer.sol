@@ -38,12 +38,10 @@ contract SafeAllowance_PresetTransfer is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         super.initializeMandate(index, nameDescription, abi.encode("address PayableTo"), config);
     }
 

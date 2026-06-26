@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { TestSetupElectoral, TestSetupDelegateTokenFlow, TestSetupAssignExternalRoleParentFlow, TestSetupRevokeInactiveAccounts, TestSetupRevokeAccountsRoleId } from "../../TestSetup.t.sol";
+import {
+    TestSetupElectoral,
+    TestSetupDelegateTokenFlow,
+    TestSetupAssignExternalRoleParentFlow,
+    TestSetupRevokeInactiveAccounts,
+    TestSetupRevokeAccountsRoleId
+} from "../../TestSetup.t.sol";
 import { Checks } from "@src/libraries/Checks.sol";
 
 import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
@@ -547,10 +553,8 @@ contract AssignExternalRoleBasicTest is TestSetupAssignExternalRoleParentFlow {
     }
 
     function testInitializationStoresConfig() public {
-        (address externalPowersAddress, uint256 roleId) = abi.decode(
-            assignExternalRole.getConfig(address(daoMockChild1), mandateId),
-            (address, uint256)
-        );
+        (address externalPowersAddress, uint256 roleId) =
+            abi.decode(assignExternalRole.getConfig(address(daoMockChild1), mandateId), (address, uint256));
         assertEq(externalPowersAddress, address(daoMock));
         assertEq(roleId, ROLE_ONE);
     }
