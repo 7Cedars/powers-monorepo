@@ -1286,7 +1286,7 @@ test.describe('forum action detail page', () => {
       await expect(bar.getByText('Action', { exact: true })).toBeVisible();
       await expect(bar.getByText('Conditions', { exact: true })).toBeVisible();
       await expect(bar.getByText('Timeline', { exact: true })).toBeVisible();
-      await expect(bar.getByText('Execution', { exact: true })).toBeVisible();
+      await expect(bar.getByText('Dependencies', { exact: true })).toBeVisible();
       await expect(bar.getByText('Flow', { exact: true })).toBeVisible();
       await expect(bar.getByText('Chat', { exact: true })).toBeVisible();
       await expect(bar.getByText('Votes', { exact: true })).not.toBeVisible();

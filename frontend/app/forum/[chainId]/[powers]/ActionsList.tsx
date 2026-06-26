@@ -150,7 +150,8 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
     <div className="space-y-3">
       <button
         onClick={onNewAction}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-foreground text-background hover:bg-foreground/80 transition-colors text-xs font-mono uppercase tracking-wider cursor-pointer"
+        disabled={!userAddress}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-foreground text-background hover:bg-foreground/80 transition-colors text-xs font-mono uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <PlusIcon className="h-4 w-4" />
         New Action

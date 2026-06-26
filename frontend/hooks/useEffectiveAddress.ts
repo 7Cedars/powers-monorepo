@@ -11,8 +11,10 @@ import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
  */
 export const useEffectiveAddress = (): `0x${string}` | undefined => {
   const { wallets, ready: walletsReady } = useWallets();
-  const { user } = usePrivy();
+  const { user, authenticated } = usePrivy();
   const { client } = useSmartWallets();
+
+  if (!authenticated) return undefined;
 
   const hasSmartWalletAccount = user?.linkedAccounts.find((a) => a.type === 'smart_wallet') !== undefined;
   const isSmartWallet = hasSmartWalletAccount && !!client?.account;
