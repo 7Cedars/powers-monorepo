@@ -83,9 +83,12 @@ module.exports = {
   ignorePatterns: [
     'node_modules/',
     '.next/',
+    '.next-e2e/',
     'out/',
     'build/',
     'dist/',
+    'playwright-report/',
+    'test-results/',
     '*.config.js',
     '*.config.mjs',
     'public/sw.js',

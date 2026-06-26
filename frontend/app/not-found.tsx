@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 const NotFound = () => {
   return (
@@ -14,12 +15,12 @@ const NotFound = () => {
           <p className="text-muted-foreground text-center text-sm">
             Page not found. The address you are looking for does not exist.
           </p>
-          <a
+          <Link
             href="/"
             className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground hover:opacity-80 transition-opacity cursor-pointer"
           >
             <span className="text-sm uppercase tracking-wider">Return to Home</span>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

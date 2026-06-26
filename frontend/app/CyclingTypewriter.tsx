@@ -29,8 +29,8 @@ export function CyclingTypewriter({ className }: { className?: string }) {
 
     if (phase === "typing") {
       if (displayed.length >= sentence.length) {
-        setPhase("holding");
-        return;
+        const t = setTimeout(() => setPhase("holding"), 0);
+        return () => clearTimeout(t);
       }
       const delay =
         Math.random() < 0.15
@@ -50,9 +50,11 @@ export function CyclingTypewriter({ className }: { className?: string }) {
 
     if (phase === "erasing") {
       if (displayed.length === 0) {
-        setIndex((i) => (i + 1) % SENTENCES.length);
-        setPhase("pausing");
-        return;
+        const t = setTimeout(() => {
+          setIndex((i) => (i + 1) % SENTENCES.length);
+          setPhase("pausing");
+        }, 0);
+        return () => clearTimeout(t);
       }
       const delay = Math.random() * 20 + 15;
       const t = setTimeout(() => setDisplayed((d) => d.slice(0, -1)), delay);

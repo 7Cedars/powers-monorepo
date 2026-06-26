@@ -3,6 +3,7 @@
 import React from "react";
 import { useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { usePowersStore, useStatusStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useConnection, useSwitchChain } from "wagmi";
@@ -113,13 +114,13 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
             </p>
           </div>
 
-          <a
+          <Link
             href={chainId && powersAddress ? `/forum/${chainId}/${powersAddress}` : '/forum'}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm hover:bg-primary/90 transition-colors rounded"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             <span>BACK TO FORUM</span>
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -128,9 +129,9 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
       <header className="z-25 border-b border-border px-3 sm:px-4 py-4 bg-background">
         <div className="w-full flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-background">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <a href="/overview" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
+            <Link href="/overview" className="font-mono text-base sm:text-lg text-foreground tracking-wider whitespace-nowrap hover:text-foreground/80 transition-colors">
               {powers.name ? powers.name : "OVERVIEW"}
-            </a>
+            </Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <ThemeToggle />
