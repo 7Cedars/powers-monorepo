@@ -226,6 +226,17 @@ function chatTabSwitcher(page: Page) {
   return page.locator('div.ml-auto.flex.items-center.gap-1.text-xs.font-mono.uppercase.tracking-wider');
 }
 
+// Votes tab renders <Vote> and <PastVotes> side by side (page.tsx); both can
+// render a "FOR" label (the vote bar vs. a past-vote row), so assertions need
+// to be scoped to one or the other rather than the page as a whole.
+function voteSection(page: Page) {
+  return page.locator('div.lg\\:w-80.flex-shrink-0');
+}
+
+function pastVotesSection(page: Page) {
+  return page.locator('div.flex-1.min-w-0');
+}
+
 // Navigating straight to an org's page triggers a live fetchPowers() RPC
 // call (and, once authenticated, an ENS lookup against mainnet) - stub
 // Alchemy so those resolve instantly instead of racing test teardown.
@@ -1072,6 +1083,31 @@ test.describe('forum org page', () => {
         await expect(page).toHaveURL(NEW_ACTION_PATH);
         await expect(page.locator('.react-flow__node.selected')).toHaveCount(0);
       });
+
+      // SingleFlow.tsx sets nodesDraggable={true} alongside
+      // elementsSelectable={false} - nodes can be repositioned by dragging
+      // even though a plain click (tested above) does nothing.
+      test('a node can be dragged to a new position', async ({ page }) => {
+        await mockAuth(page, { address: TEST_ADDRESS });
+        await mockPowersRpc(page, ORG_WITH_FLOW);
+        await page.goto(NEW_ACTION_PATH);
+
+        await tabBar(page).getByText('Flow', { exact: true }).click();
+
+        const node = page.locator('.react-flow').getByText(FLOW_FIRST_NAME, { exact: true });
+        const before = await node.boundingBox();
+        expect(before).not.toBeNull();
+
+        await page.mouse.move(before!.x + before!.width / 2, before!.y + before!.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(before!.x + before!.width / 2 + 150, before!.y + before!.height / 2 + 100, { steps: 10 });
+        await page.mouse.up();
+
+        const after = await node.boundingBox();
+        expect(after).not.toBeNull();
+        expect(after!.x).not.toBe(before!.x);
+        expect(after!.y).not.toBe(before!.y);
+      });
     });
 
     test.describe('Chat tab', () => {
@@ -1181,6 +1217,19 @@ test.describe('forum action detail page', () => {
       },
       actions: BASE_ACTION,
     }],
+  };
+
+  // Mirrors ORG_WITH_FLOW (above, used by the "new action page" Flow tab
+  // tests) but attaches BASE_ACTION to mandate #1 so /forum/.../[actionId]
+  // can resolve this action - [actionId]/page.tsx's lookup (mandates[].actions)
+  // requires this to render anything at all.
+  const ORG_FOR_ACTION_FLOW_PAGE: MockPowersConfig = {
+    ...ORG_BASIC,
+    mandates: [
+      { index: 2n, mandateAddress: '0x7777777777777777777777777777777777777777', active: true, nameDescription: `${FLOW_SECOND_NAME}: runs second` },
+      { index: 1n, mandateAddress: MINT_MANDATE_ADDRESS, active: true, nameDescription: `${FLOW_FIRST_NAME}: runs first`, actions: BASE_ACTION },
+    ],
+    flows: [{ nameDescription: 'Mint Flow', mandateIds: [1n, 2n] }],
   };
 
   // blockNumber is pinned to 0x64 (100) by mockPowersRpc (frontend/e2e/mocks/powers-rpc.ts)
@@ -1397,6 +1446,301 @@ test.describe('forum action detail page', () => {
 
       await expect(page.getByText('Fulfilled', { exact: true })).toBeVisible();
       await expect(page.getByText(expectedTimelineValue(TIMELINE_FULFILLED_AT), { exact: true })).toBeVisible();
+    });
+  });
+
+  test.describe('Votes tab', () => {
+    // Mirrors Vote.tsx's own quorum/threshold math: roleHolders comes from
+    // roles[].holders.length, not a literal "amount" field.
+    const VOTE_ROLE_HOLDERS = [
+      '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      '0xcccccccccccccccccccccccccccccccccccccccc',
+      '0xdddddddddddddddddddddddddddddddddddddddd',
+    ];
+
+    const VOTE_CONDITIONS = { allowedRole: MEMBER_ROLE, quorum: 50n, succeedAt: 50n, votingPeriod: 30n };
+
+    test('shows the correct vote stats', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, {
+        ...ORG_WITH_MANDATE,
+        mandates: [{
+          ...ORG_WITH_MANDATE.mandates[0],
+          conditions: VOTE_CONDITIONS,
+          // state: 5 (Succeeded) - voting has ended, so Vote.tsx renders the
+          // results breakdown rather than the active-voting status display.
+          actions: [{ actionId: ACTION_ID, state: 5, description: ACTION_DESCRIPTION, proposedAt: 50n, forVotes: 3n, againstVotes: 1n, abstainVotes: 0n }],
+        }],
+        roles: [{ roleId: MEMBER_ROLE, label: 'member', holders: VOTE_ROLE_HOLDERS }],
+      });
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Votes', { exact: true }).click();
+
+      const section = voteSection(page);
+      await expect(section.getByText('Vote Results', { exact: true })).toBeVisible();
+      // 3 for + 1 against + 0 abstain cast out of 4 role holders.
+      await expect(section.getByText('4/4 votes cast', { exact: true })).toBeVisible();
+      // Quorum Reached: (forVotes + abstainVotes) / quorum, where quorum = ceil(4 * 50%) = 2.
+      await expect(section.getByText('3 / 2', { exact: true })).toBeVisible();
+      await expect(section.getByText('PASSED', { exact: true })).toBeVisible();
+    });
+
+    test('shows vote buttons when the user has not voted yet', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, {
+        ...ORG_WITH_MANDATE,
+        mandates: [{
+          ...ORG_WITH_MANDATE.mandates[0],
+          conditions: VOTE_CONDITIONS,
+          // state: 3 (Active); proposedAt + votingPeriod (120) is still ahead
+          // of the mock's pinned block (100), so voting hasn't ended yet.
+          actions: [{ actionId: ACTION_ID, state: 3, description: ACTION_DESCRIPTION, proposedAt: 90n, hasVoted: false }],
+        }],
+        roles: [{ roleId: MEMBER_ROLE, label: 'member', holders: VOTE_ROLE_HOLDERS }],
+      });
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Votes', { exact: true }).click();
+
+      const section = voteSection(page);
+      await expect(section.getByRole('button', { name: 'FOR' })).toBeVisible();
+      await expect(section.getByRole('button', { name: 'AGAINST' })).toBeVisible();
+      await expect(section.getByRole('button', { name: 'ABSTAIN' })).toBeVisible();
+    });
+
+    test('shows an "already voted" message instead of vote buttons once the user has voted', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, {
+        ...ORG_WITH_MANDATE,
+        mandates: [{
+          ...ORG_WITH_MANDATE.mandates[0],
+          conditions: VOTE_CONDITIONS,
+          // callData/nonce present so Vote.tsx's checks-fetch effect (gated on
+          // action.callData) actually runs and populates checks.hasVoted.
+          actions: [{ actionId: ACTION_ID, state: 3, description: ACTION_DESCRIPTION, proposedAt: 90n, hasVoted: true, callData: AMOUNT_CALLDATA, nonce: ACTION_NONCE }],
+        }],
+        roles: [{ roleId: MEMBER_ROLE, label: 'member', holders: VOTE_ROLE_HOLDERS }],
+      });
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Votes', { exact: true }).click();
+
+      const section = voteSection(page);
+      await expect(section.getByText('You have already voted on this action', { exact: true })).toBeVisible();
+      await expect(section.getByRole('button', { name: 'FOR' })).not.toBeVisible();
+    });
+
+    test('shows an execute button once the vote has succeeded', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, {
+        ...ORG_WITH_MANDATE,
+        mandates: [{
+          ...ORG_WITH_MANDATE.mandates[0],
+          conditions: VOTE_CONDITIONS,
+          // callData/nonce present so the page's automatic checks-fetch has
+          // something to run against and can flip "Run checks" to "Execute".
+          actions: [{ actionId: ACTION_ID, state: 5, description: ACTION_DESCRIPTION, proposedAt: 50n, callData: AMOUNT_CALLDATA, nonce: ACTION_NONCE, forVotes: 3n, againstVotes: 1n }],
+        }],
+        roles: [{ roleId: MEMBER_ROLE, label: 'member', holders: VOTE_ROLE_HOLDERS }],
+      });
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Votes', { exact: true }).click();
+
+      await expect(voteSection(page).getByRole('button', { name: /Execute/ })).toBeVisible();
+    });
+
+    test('shows past votes with the voter, choice and reason', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, {
+        ...ORG_WITH_MANDATE,
+        mandates: [{
+          ...ORG_WITH_MANDATE.mandates[0],
+          conditions: VOTE_CONDITIONS,
+          actions: [{
+            actionId: ACTION_ID,
+            state: 5,
+            description: ACTION_DESCRIPTION,
+            proposedAt: 50n,
+            votes: [{ account: TEST_ADDRESS, support: 1, reason: 'Looks good to me', blockNumber: 55n }],
+          }],
+        }],
+      });
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Votes', { exact: true }).click();
+
+      const section = pastVotesSection(page);
+      await expect(section.getByText('Past Votes (1)', { exact: true })).toBeVisible();
+      await expect(section.getByText('FOR', { exact: true })).toBeVisible();
+      await expect(section.getByText('"Looks good to me"', { exact: true })).toBeVisible();
+    });
+  });
+
+  test.describe('Timelock tab', () => {
+    // Mirrors calculateTimelockRemaining (public/organisations/helpers.ts)
+    // using Sepolia's BLOCKS_PER_HOUR (context/constants.ts) - same pattern
+    // as expectedTimelineValue above, computed independently of the
+    // component rather than asserting a hardcoded guess.
+    function expectedTimelockRemaining(blocksRemaining: number): string {
+      const BLOCKS_PER_HOUR = 300;
+      const minutesRemaining = (blocksRemaining * 60) / BLOCKS_PER_HOUR;
+      const days = Math.floor(minutesRemaining / (60 * 24));
+      const hours = Math.floor((minutesRemaining % (60 * 24)) / 60);
+      const minutes = Math.floor(minutesRemaining % 60);
+      const parts: string[] = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0) parts.push(`${hours}h`);
+      if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+      return parts.join(' ');
+    }
+
+    test('shows the time remaining until execution is allowed', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, {
+        ...ORG_WITH_MANDATE,
+        mandates: [{
+          ...ORG_WITH_MANDATE.mandates[0],
+          conditions: { allowedRole: MEMBER_ROLE, timelock: 50n },
+          // proposedAt + timelock (130) is still ahead of the pinned mock
+          // block (100) - 30 blocks remaining.
+          actions: [{ actionId: ACTION_ID, state: 3, description: ACTION_DESCRIPTION, proposedAt: 80n }],
+        }],
+      });
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Timelock', { exact: true }).click();
+
+      await expect(page.getByText('Ready to Execute', { exact: true })).not.toBeVisible();
+      await expect(page.getByText(`${expectedTimelockRemaining(30)} remaining`, { exact: true })).toBeVisible();
+    });
+
+    test('shows an execute button once the timelock has passed', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, {
+        ...ORG_WITH_MANDATE,
+        mandates: [{
+          ...ORG_WITH_MANDATE.mandates[0],
+          conditions: { allowedRole: MEMBER_ROLE, timelock: 20n },
+          // proposedAt + timelock (50) is behind the pinned mock block (100).
+          actions: [{ actionId: ACTION_ID, state: 5, description: ACTION_DESCRIPTION, proposedAt: 30n, callData: AMOUNT_CALLDATA, nonce: ACTION_NONCE }],
+        }],
+      });
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Timelock', { exact: true }).click();
+
+      await expect(page.getByText('Ready to Execute', { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Execute/ })).toBeVisible();
+    });
+  });
+
+  test.describe('Flow tab', () => {
+    test("renders the flow's mandates positioned in the Flow struct's mandateIds order", async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_FLOW_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Flow', { exact: true }).click();
+
+      const flowPane = page.locator('.react-flow');
+      await expect(flowPane.locator('.react-flow__node')).toHaveCount(2);
+
+      const firstNode = flowPane.getByText(FLOW_FIRST_NAME, { exact: true });
+      const secondNode = flowPane.getByText(FLOW_SECOND_NAME, { exact: true });
+      await expect(firstNode).toBeVisible();
+      await expect(secondNode).toBeVisible();
+
+      const firstBox = await firstNode.boundingBox();
+      const secondBox = await secondNode.boundingBox();
+      expect(firstBox).not.toBeNull();
+      expect(secondBox).not.toBeNull();
+      // mandateIds: [1n, 2n] puts mandate #1 (First Mandate) to the left
+      // of mandate #2 (Second Mandate), regardless of `mandates` order.
+      expect(firstBox!.x).toBeLessThan(secondBox!.x);
+    });
+
+    test('does not render an overview-style flow group box around the mandates', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_FLOW_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Flow', { exact: true }).click();
+
+      // SingleFlow.tsx (used here) registers no "flowGroup" node type, so
+      // the overview's dashed-border wrapper box must be absent.
+      await expect(page.locator('.react-flow div.border-dashed')).toHaveCount(0);
+    });
+
+    test('a node can be dragged to a new position but clicking it does not select it or navigate away', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_FLOW_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Flow', { exact: true }).click();
+
+      const node = page.locator('.react-flow').getByText(FLOW_FIRST_NAME, { exact: true });
+
+      await node.click();
+      await expect(page).toHaveURL(ACTION_PATH);
+      await expect(page.locator('.react-flow__node.selected')).toHaveCount(0);
+
+      const before = await node.boundingBox();
+      expect(before).not.toBeNull();
+
+      await page.mouse.move(before!.x + before!.width / 2, before!.y + before!.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(before!.x + before!.width / 2 + 150, before!.y + before!.height / 2 + 100, { steps: 10 });
+      await page.mouse.up();
+
+      const after = await node.boundingBox();
+      expect(after).not.toBeNull();
+      expect(after!.x).not.toBe(before!.x);
+      expect(after!.y).not.toBe(before!.y);
+    });
+  });
+
+  // Chatroom's mandate/flow context switcher (chatTabSwitcher, defined near
+  // the top of this file) - same component as the "new action page" Chat
+  // tab tests above. Note: message content/send/receive is NOT exercised
+  // here - e2e/mocks/xmtp-client-mock.tsx always returns `client: null`, and
+  // every send/receive call site in Chatroom.tsx is guarded by `if (!client)
+  // return`, so actual conversation exchange would require a live XMTP
+  // network rather than this mock.
+  test.describe('Chat tab', () => {
+    test('shows no Mandate/Flow toggle when the mandate is not part of a flow', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockPowersRpc(page, ORG_FOR_ACTION_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Chat', { exact: true }).click();
+
+      await expect(chatTabSwitcher(page)).toHaveCount(0);
+    });
+
+    test('shows a Mandate/Flow toggle when the mandate is part of a flow, and switching tabs changes the chat context', async ({ page }) => {
+      await mockAuth(page, { address: TEST_ADDRESS });
+      await mockXmtp(page, { isConnected: true });
+      await mockPowersRpc(page, ORG_FOR_ACTION_FLOW_PAGE);
+      await page.goto(ACTION_PATH);
+
+      await tabBar(page).getByText('Chat', { exact: true }).click();
+
+      const switcher = chatTabSwitcher(page);
+      await expect(switcher.getByRole('button', { name: 'Mandate' })).toBeVisible();
+      await expect(switcher.getByRole('button', { name: 'Flow' })).toBeVisible();
+
+      await expect(
+        page.getByText('Join the conversation to start discussing this mandate.', { exact: true })
+      ).toBeVisible();
+
+      await switcher.getByRole('button', { name: 'Flow' }).click();
+
+      await expect(
+        page.getByText('Join the conversation to start discussing this flow.', { exact: true })
+      ).toBeVisible();
     });
   });
 });

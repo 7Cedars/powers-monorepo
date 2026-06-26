@@ -74,22 +74,43 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
     [flowMandates, selectedMandateIndex, currentMandate]
   )
 
-  // Find the action to use for simulation for the selected mandate
+  // eslint-disable-next-line no-console
+  console.log('DEBUG flowMandates', flowMandates.map(m => ({ index: m.index, needFulfilled: m.conditions?.needFulfilled, needNotFulfilled: m.conditions?.needNotFulfilled })), 'selected', selectedMandate.index)
+
+  // Other mandates in the same flow that this mandate's fulfilment will block or enable.
+  // Use String() comparison throughout: needFulfilled/needNotFulfilled come from uint16 ABI
+  // and may decode as number or bigint depending on viem version; mandate.index is always bigint.
+  const affectedMandates = useMemo(() => {
+    const blocks: Mandate[] = []
+    const enables: Mandate[] = []
+    const selectedIdx = selectedMandate.index.toString()
+    for (const m of flowMandates) {
+      if (m.index.toString() === selectedIdx) continue
+      if (m.conditions?.needFulfilled && String(m.conditions.needFulfilled) === selectedIdx) enables.push(m)
+      if (m.conditions?.needNotFulfilled && String(m.conditions.needNotFulfilled) === selectedIdx) blocks.push(m)
+    }
+    return { blocks, enables }
+  }, [flowMandates, selectedMandate])
+
+  const hasTransactions = useMemo(() => {
+    if (isSimulating || !simulation || !simulation[1]?.length) return false
+    return simulation[1].some(target => target !== '0x0000000000000000000000000000000000000000')
+  }, [simulation, isSimulating])
+
+  // For the current mandate use the real action (preserving fulfilledAt for historical simulation).
+  // For any other mandate in the flow, replay the same callData hypothetically — fulfilledAt cleared
+  // so we always do a live "what if this mandate processed it" simulate, not a historical-block call.
   const targetAction = useMemo<Action | undefined>(() => {
+    if (!currentAction?.callData || currentAction.callData === '0x0') return undefined
     if (selectedMandateIndex === currentMandate.index.toString()) return currentAction
-    // Find most recent action in the selected mandate
-    const mandate = flowMandates.find(m => m.index.toString() === selectedMandateIndex)
-    if (!mandate?.actions || mandate.actions.length === 0) return undefined
-    return [...mandate.actions].sort((a, b) => {
-      const aBlock = a.fulfilledAt ?? a.requestedAt ?? a.proposedAt ?? 0n
-      const bBlock = b.fulfilledAt ?? b.requestedAt ?? b.proposedAt ?? 0n
-      return aBlock > bBlock ? -1 : 1
-    })[0]
-  }, [selectedMandateIndex, currentMandate, currentAction, flowMandates])
+    return { ...currentAction, fulfilledAt: undefined }
+  }, [selectedMandateIndex, currentMandate, currentAction])
 
   useEffect(() => {
     setHasSimulated(false)
   }, [selectedMandateIndex])
+
+  const isFulfilled = !!targetAction?.fulfilledAt && targetAction.fulfilledAt > 0n
 
   useEffect(() => {
     if (!targetAction?.callData || targetAction.callData === '0x0' || !ready || !wallets?.[0] || hasSimulated) return
@@ -100,7 +121,8 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
           targetAction.caller ?? effectiveAddress ?? '0x0',
           targetAction.callData as `0x${string}`,
           BigInt(targetAction.nonce ?? 0),
-          selectedMandate
+          selectedMandate,
+          isFulfilled ? targetAction.fulfilledAt! - 1n : undefined
         )
         setHasSimulated(true)
       } catch {
@@ -110,16 +132,16 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
       }
     }
     run()
-  }, [targetAction, selectedMandate, ready, wallets, hasSimulated])
+  }, [targetAction, selectedMandate, ready, wallets, hasSimulated, isFulfilled])
 
   return (
     <div className="space-y-4">
       {/* Mandate dropdown */}
-      {flowMandates.length > 1 && (
-        <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
-            Mandate
-          </label>
+      <div>
+        <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
+          Mandate
+        </label>
+        {flowMandates.length > 1 ? (
           <div ref={dropdownRef} className="relative">
             <button
               ref={buttonRef}
@@ -154,21 +176,54 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
               document.body
             )}
           </div>
+        ) : (
+          <div className="w-full flex items-center justify-between bg-background border border-border pl-3 pr-3 py-2 text-xs font-mono text-left">
+            <span className="truncate">
+              #{selectedMandate.index.toString()} {selectedMandate.nameDescription?.split(':')[0] ?? 'Mandate'} — {bigintToRole(selectedMandate.conditions?.allowedRole ?? 0n, powers)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Effects of fulfilling this action */}
+      {(affectedMandates.blocks.length > 0 || affectedMandates.enables.length > 0 || hasTransactions) && (
+        <div className="text-xs font-mono space-y-1">
+          <p className="text-muted-foreground">Fulfilling this action</p>
+          <ul className="list-disc list-inside pl-2 space-y-0.5">
+            {affectedMandates.blocks.map(m => (
+              <li key={`block-${m.index.toString()}`}>
+                blocks #{m.index.toString()} {m.nameDescription?.split(':')[0] ?? 'Mandate'}
+              </li>
+            ))}
+            {affectedMandates.enables.map(m => (
+              <li key={`enable-${m.index.toString()}`}>
+                enables #{m.index.toString()} {m.nameDescription?.split(':')[0] ?? 'Mandate'}
+              </li>
+            ))}
+          </ul>
+          {hasTransactions && <p className="text-muted-foreground">executes the following transactions:</p>}
         </div>
       )}
 
       {/* Simulation output */}
-      {!targetAction ? (
-        <p className="text-xs text-muted-foreground font-mono">No actions found for this mandate</p>
-      ) : isSimulating ? (
-        <p className="text-xs text-muted-foreground font-mono">Running simulation···</p>
-      ) : simulation ? (
-        <SimulationBox mandate={selectedMandate} simulation={simulation} chainId={chainId} />
-      ) : hasSimulated ? (
-        <p className="text-xs text-muted-foreground font-mono">No simulation data available</p>
-      ) : (
-        <p className="text-xs text-muted-foreground font-mono">Loading simulation···</p>
-      )}
+      <SimulationBox
+        mandate={selectedMandate}
+        simulation={!targetAction || isSimulating ? undefined : simulation}
+        chainId={chainId}
+        emptyMessage={
+          !targetAction
+            ? 'No call data available'
+            : isSimulating
+            ? 'Running simulation···'
+            : simulation
+            ? undefined
+            : hasSimulated
+            ? isFulfilled
+              ? 'Already executed — simulation unavailable'
+              : 'No simulation data available'
+            : 'Loading simulation···'
+        }
+      />
     </div>
   )
 }

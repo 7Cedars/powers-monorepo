@@ -65,7 +65,7 @@ contract Deploy is DeployHelpers {
 
         powers = new Powers(
             "Mandate Sandbox", // name
-            "", // TODO: set metadata URI before deploying — upload a JSON file to Pinata (https://pinata.cloud) and paste the resulting URL here
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicqstgxzdv2edfuaadxkz76ijtjedgmq2ovvkececchnfdkj77jeq", 
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid)
