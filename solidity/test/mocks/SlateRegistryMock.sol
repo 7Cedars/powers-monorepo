@@ -34,9 +34,22 @@ contract SlateRegistryMock {
         });
     }
 
-    function registerSlate(uint256 /*electionId*/, uint16 /*mandateId*/) external { }
+    function registerSlate(
+        uint256,
+        /*electionId*/
+        uint16 /*mandateId*/
+    )
+        external { }
 
-    function removeSlate(uint256 /*electionId*/, uint16 /*mandateId*/) external { }
+    function removeSlate(
+        uint256,
+        /*electionId*/
+        uint16 /*mandateId*/
+    )
+        external { }
 
-    function executeResults(uint256 /*electionId*/) external { }
+    function executeResults(
+        uint256 /*electionId*/
+    )
+        external { }
 }

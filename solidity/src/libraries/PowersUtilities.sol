@@ -10,12 +10,9 @@ import { Mandate } from "../Mandate.sol";
 /// @title Powers Utilities
 /// @notice Library with bytecode-heavy internal logic extracted from Powers to keep it under EIP-170's 24KB limit.
 library PowersUtilities {
-    function setRole(
-        mapping(uint256 => PowersTypes.Role) storage roles,
-        uint256 roleId,
-        address account,
-        bool access
-    ) public {
+    function setRole(mapping(uint256 => PowersTypes.Role) storage roles, uint256 roleId, address account, bool access)
+        public
+    {
         if (roleId == type(uint256).max) revert PowersErrors.Powers__CannotSetPublicRole();
         if (account == address(0)) revert PowersErrors.Powers__CannotAddZeroAddress();
         if (account == address(this)) revert PowersErrors.Powers__CannotAddPowersAddressAsMember();

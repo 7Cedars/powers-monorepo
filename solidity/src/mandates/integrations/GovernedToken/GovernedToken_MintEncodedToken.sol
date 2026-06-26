@@ -29,16 +29,14 @@ contract GovernedToken_MintEncodedToken is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         string[] memory params = new string[](1);
         params[0] = "address To";
         super.initializeMandate(index, nameDescription, abi.encode(params), config);
-    } 
+    }
 
     function handleRequest(
         address caller,
@@ -64,9 +62,7 @@ contract GovernedToken_MintEncodedToken is Mandate {
 
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);
         targets[0] = mem.governedToken;
-        calldatas[0] = abi.encodeWithSignature(
-            "mint(address,uint256)", mem.to, mem.tokenId
-        );
+        calldatas[0] = abi.encodeWithSignature("mint(address,uint256)", mem.to, mem.tokenId);
 
         return (actionId, targets, values, calldatas);
     }

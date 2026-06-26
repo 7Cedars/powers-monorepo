@@ -417,7 +417,9 @@ contract AsyncMandateFlowTest is TestSetupAsync {
         assertEq(uint8(daoMock.getActionState(actionId)), uint8(ActionState.Requested));
 
         // act: call _replyPowers directly (bypassing _callOracle)
-        asyncMock.callReplyPowers(address(daoMock), mandateId, actionId, new address[](0), new uint256[](0), new bytes[](0));
+        asyncMock.callReplyPowers(
+            address(daoMock), mandateId, actionId, new address[](0), new uint256[](0), new bytes[](0)
+        );
 
         // assert: action is Fulfilled
         assertEq(uint8(daoMock.getActionState(actionId)), uint8(ActionState.Fulfilled));
@@ -430,7 +432,9 @@ contract AsyncMandateFlowTest is TestSetupAsync {
 
         // act & assert: calling fulfill on a non-requested action reverts
         vm.expectRevert(PowersErrors.Powers__ActionNotRequested.selector);
-        asyncMock.callReplyPowers(address(daoMock), mandateId, actionId, new address[](0), new uint256[](0), new bytes[](0));
+        asyncMock.callReplyPowers(
+            address(daoMock), mandateId, actionId, new address[](0), new uint256[](0), new bytes[](0)
+        );
     }
 
     function testExecuteMandateDoesNotCallFulfillDirectly() public {

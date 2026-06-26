@@ -102,8 +102,8 @@ export function ExecutionTab({ currentAction, currentMandate }: ExecutionTabProp
           abi: powersAbi,
           eventName: 'ActionFulfilled',
           args: { actionId: BigInt(currentAction.actionId) },
-          fromBlock: currentAction.fulfilledAt,
-          toBlock: currentAction.fulfilledAt,
+          fromBlock: BigInt(currentAction.fulfilledAt!),
+          toBlock: BigInt(currentAction.fulfilledAt!),
         })
         if (logs[0]?.args) {
           const { actionId, targets, values, calldatas } = logs[0].args as {

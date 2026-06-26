@@ -19,12 +19,10 @@ contract BespokeAction_Simple is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         (,, string[] memory params_) = abi.decode(config, (address, bytes4, string[]));
         super.initializeMandate(index, nameDescription, abi.encode(params_), config);
     }

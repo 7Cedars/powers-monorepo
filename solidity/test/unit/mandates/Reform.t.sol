@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { TestSetupReform, TestSetupExecutive, TestSetupMandatePackageStatic, TestSetupRevokeMandates } from "../../TestSetup.t.sol";
+import {
+    TestSetupReform,
+    TestSetupExecutive,
+    TestSetupMandatePackageStatic,
+    TestSetupRevokeMandates
+} from "../../TestSetup.t.sol";
 
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { Powers } from "@src/Powers.sol";
@@ -291,7 +296,8 @@ contract AdoptMandatesAccessTest is TestSetupExecutive {
         roleIdsArr[0] = type(uint256).max;
         mandateCalldata = abi.encode(mandatesArr, roleIdsArr);
 
-        uint16 restrictedId = findMandateIdInOrg("Adopt_Mandates: restricted to role 1.", Powers(payable(address(freshDao))));
+        uint16 restrictedId =
+            findMandateIdInOrg("Adopt_Mandates: restricted to role 1.", Powers(payable(address(freshDao))));
 
         // charlotte has no roles in freshDao — must be rejected
         vm.prank(charlotte);
@@ -542,8 +548,7 @@ contract MandatePackageEdgeCaseTest is TestSetupExecutive {
         MandatePackage pkg = new MandatePackage(pkgAddresses);
 
         uint16 mandateCount = 42;
-        PowersTypes.MandateInitData[] memory initData =
-            pkg.getNewMandates(pkgAddresses, address(daoMock), mandateCount);
+        PowersTypes.MandateInitData[] memory initData = pkg.getNewMandates(pkgAddresses, address(daoMock), mandateCount);
 
         // Veto slot depends on propose slot (mandateCount)
         assertEq(initData[1].conditions.needFulfilled, mandateCount);

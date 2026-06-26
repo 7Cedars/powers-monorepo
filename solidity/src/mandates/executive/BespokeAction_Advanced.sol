@@ -34,7 +34,8 @@ contract BespokeAction_Advanced is Mandate {
     function initializeMandate(
         uint16 index,
         string memory nameDescription,
-        bytes memory /* inputParams */,
+        bytes memory,
+        /* inputParams */
         bytes memory config
     ) public override {
         Mem memory mem;
