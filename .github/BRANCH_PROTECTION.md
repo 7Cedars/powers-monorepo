@@ -29,7 +29,7 @@ gh api repos/publius-projects/powers-monorepo/branches/develop/protection \
   --field enforce_admins=false \
   --field "required_status_checks[strict]=false" \
   --field "required_status_checks[contexts][]=Frontend Lint" \
-  --field "required_status_checks[contexts][]=<vercel-check-name>" \
+  --field "required_status_checks[contexts][]=Vercel – powers" \
   --field required_pull_request_reviews=null \
   --field restrictions=null
 
