@@ -1,0 +1,17 @@
+name: CI (main)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check-source-branch:
+    name: Check source branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if not from staging
+        if: github.event_name == 'pull_request' && github.head_ref != 'staging'
+        run: |
+          echo "PRs to main must come from the staging branch (got: ${{ github.head_ref }})"
+          exit 1
