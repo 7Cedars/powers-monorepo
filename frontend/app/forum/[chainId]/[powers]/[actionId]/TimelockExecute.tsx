@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Action, Mandate, Powers } from '@/context/types';
-import { usePowersStore, useActionStore, useStatusStore, setError, setAction } from '@/context/store';
+import { usePowersStore, useActionStore, useStatusStore, useErrorStore, setError, setAction } from '@/context/store';
+import { parseMandateError } from '@/utils/parsers';
 import { useMandate } from '@/hooks/useMandate';
 import { useChecks } from '@/hooks/useChecks';
 import { useScheduledDeadlinePoll } from '@/hooks/useScheduledDeadlinePoll';
@@ -24,6 +25,7 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
   const powers = usePowersStore();
   const action = useActionStore();
   const status = useStatusStore();
+  const error = useErrorStore();
   const { chainId } = useParams<{ chainId: string }>();
   const { request } = useMandate();
   const { checks, fetchChecks, status: checksStatus } = useChecks();
@@ -119,6 +121,7 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
   };
 
   const handleRunChecks = () => {
+    setError({ error: null });
     if (powers && mandate && action?.callData && wallets.length > 0) {
       fetchChecks(
         mandate,
@@ -149,11 +152,29 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
               <span className="text-muted-foreground text-xs">Status</span>
               <span
                 className={`font-mono text-xs ${
-                  timelockExpired ? 'text-green-600' : 'text-yellow-600'
+                  timelockExpired
+                    ? checks && !checks.allPassed
+                      ? 'text-yellow-600'
+                      : 'text-green-600'
+                    : 'text-yellow-600'
                 }`}
               >
                 {timelockExpired
-                  ? 'Ready to Execute'
+                  ? (() => {
+                      if (checks && !checks.allPassed) {
+                        const failing = [
+                          [checks.authorised,          'Not authorised'],
+                          [checks.throttlePassed,      'Throttle active'],
+                          [checks.actionNotFulfilled,  'Already executed'],
+                          [checks.mandateFulfilled,    `Mandate #${mandate.conditions?.needFulfilled} not fulfilled`],
+                          [checks.mandateNotFulfilled, `Mandate #${mandate.conditions?.needNotFulfilled} has been fulfilled`],
+                          [checks.delayPassed,         'Timelock not passed'],
+                          [checks.proposalPassed,      'Vote not passed'],
+                        ].find(([passed]) => passed === false)
+                        if (failing) return failing[1] as string
+                      }
+                      return 'Ready to Execute'
+                    })()
                   : estimatedRemaining
                   ? `${estimatedRemaining} remaining`
                   : '-'}
@@ -164,6 +185,11 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
           {/* Only show execute controls once timelock has expired and action is in Succeeded state */}
           {timelockExpired && populatedAction?.state === 5 && (
             <div className="pt-2">
+              {error.error && (
+                <div className="w-full text-xs text-red-600 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 px-3 py-2 mb-2">
+                  Failed check: {parseMandateError(error)}
+                </div>
+              )}
               {action?.upToDate ? (
                 <Button
                   size={0}
@@ -179,7 +205,7 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
                       : 'disabled'
                   }
                 >
-                  Execute {checks?.allPassed ? '' : '(checks did not pass)'}
+                  Execute
                 </Button>
               ) : (
                 <Button

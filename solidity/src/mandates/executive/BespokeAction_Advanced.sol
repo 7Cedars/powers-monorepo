@@ -37,7 +37,10 @@ contract BespokeAction_Advanced is Mandate {
         bytes memory,
         /* inputParams */
         bytes memory config
-    ) public override {
+    )
+        public
+        override
+    {
         Mem memory mem;
         (,,, mem.dynamicParams,) = abi.decode(config, (address, bytes4, bytes, string[], bytes));
         super.initializeMandate(index, nameDescription, abi.encode(mem.dynamicParams), config);

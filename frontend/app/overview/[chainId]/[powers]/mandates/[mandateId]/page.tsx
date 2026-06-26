@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { usePowersStore, useUIStateStore } from "@/context/store";
 import { shorterDescription } from "@/utils/parsers";
 import { bigintToRole } from "@/utils/bigintTo";
+import { blocksToApproxDuration } from "@/utils/toDates";
+import { getConstants } from "@/context/constants";
 import { MandateActions } from "./MandateActions";
 import { OrgBanner } from "@/components/OrgBanner";
 
@@ -42,10 +44,11 @@ export default function MandateDetailPage() {
   const description = nameParts.slice(1).join(':').trim()
   const cond = mandate.conditions
   const roleName = cond ? bigintToRole(cond.allowedRole, powers) : '—'
+  const blocksPerHour = getConstants(Number(chainId)).BLOCKS_PER_HOUR
 
   const formatBlocks = (value: bigint | undefined): string => {
     if (!value || value === 0n) return '—'
-    return `${value.toString()} blocks`
+    return `${value.toString()} blocks (${blocksToApproxDuration(value, blocksPerHour)})`
   }
 
   return (

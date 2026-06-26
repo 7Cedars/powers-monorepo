@@ -27,7 +27,7 @@ const EVENT_DISPLAY: Record<ActionItem['event'], { label: string; color: string 
   fulfilled: { label: 'Fulfilled', color: 'text-green-600'  },
   cancelled: { label: 'Cancelled', color: 'text-orange-500' },
   defeated:  { label: 'Defeated',  color: 'text-red-500'    },
-  succeeded: { label: 'Succeeded', color: 'text-teal-500'   },
+  succeeded: { label: 'Passed',   color: 'text-lime-600'   },
 }
 
 interface ActionsListProps {

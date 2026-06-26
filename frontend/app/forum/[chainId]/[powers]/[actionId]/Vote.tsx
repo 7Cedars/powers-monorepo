@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePowersStore, useActionStore, useStatusStore, useErrorStore, setError, setAction } from "@/context/store";
 import { useMandate } from "@/hooks/useMandate";
+import { parseMandateError } from "@/utils/parsers";
 import { useBlocks, L2_TO_L1_CHAIN_MAP } from "@/hooks/useBlocks";
 import { useBlockNumber } from "wagmi";
 import { useParams } from "next/navigation";
@@ -41,9 +42,6 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const [populatedAction, setPopulatedAction] = useState<Action | undefined>();
   const [voteReason, setVoteReason] = useState<string>("");
 
-  console.log({checks, checksStatus, populatedAction })
-  
-
   // Calculate vote parameters
   const roleHolders = Number(
     powers?.roles?.find(
@@ -73,8 +71,6 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   const thresholdPassed = Number(actionVote?.forVotes || 0) >= threshold;
   const voteActive = populatedAction?.state === 3;
   const voteEnded = blockNumber && voteEnd ? BigInt(blockNumber) >= voteEnd : false;
-
-  console.log({ voteEnd, blockNumber, voteEnded, hasVoted: checks?.hasVoted });
 
   // Fetch action data
   useEffect(() => {
@@ -184,6 +180,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
   };
 
   const handleRunChecks = () => {
+    setError({ error: null });
     if (powers && mandate && action && wallets.length > 0 && action.callData) {
       // console.log("Running checks with data:", {
       //   mandate,
@@ -370,6 +367,11 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
       {/* Execute Button or Run Checks Button - Show when vote has passed */}
       {populatedAction?.state === 5 && (
         <div className="pt-2">
+          {error.error && (
+            <div className="w-full text-xs text-red-600 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 px-3 py-2 mb-2">
+              Failed check: {parseMandateError(error)}
+            </div>
+          )}
           {action?.upToDate ? (
             <Button
               size={0}
@@ -385,7 +387,7 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
                   : "disabled"
               }
             >
-              Execute {checks?.allPassed ? "" : " (checks did not pass)"}
+              Execute
             </Button>
           ) : (
             <Button

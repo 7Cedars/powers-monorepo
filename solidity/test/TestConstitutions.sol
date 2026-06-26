@@ -1243,7 +1243,10 @@ contract TestConstitutions is Test {
         address,
         /*openElection*/
         address simpleErc20Votes
-    ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
+    )
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData)
+    {
         delete constitution; // restart constitution array.
 
         // Mandate 1: Nominate for Delegates
