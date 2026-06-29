@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { usePowersStore, useStatusStore } from '@/context/store'
 import { Action, Mandate } from '@/context/types'
 import { Chatroom } from './Chatroom'
@@ -24,11 +24,16 @@ type ChatroomMode = 'mandate' | 'flow'
 export default function ActionPage() {
   const router = useRouter()
   const { chainId, powers: powersAddress, actionId } = useParams<{ chainId: string; powers: string; actionId: string }>()
+  const searchParams = useSearchParams()
   const powers = usePowersStore()
   const action = useActionStore()
   const status = useStatusStore()
 
-  const [activeTab, setActiveTab] = useState<Tab>('action')
+  const VALID_TABS: Tab[] = ['action', 'timeline', 'conditions', 'votes', 'timelock', 'dependencies', 'flow', 'chat']
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const t = searchParams.get('tab') as Tab | null
+    return t && VALID_TABS.includes(t) ? t : 'action'
+  })
   const [chatroomMode, setChatroomMode] = useState<ChatroomMode>('mandate')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -75,6 +80,13 @@ export default function ActionPage() {
   const hasVoting = (mandate?.conditions?.quorum ? BigInt(mandate.conditions.quorum) : 0n) > 0n
   const hasTimelockOnly =
     !hasVoting && (mandate?.conditions?.timelock ? BigInt(mandate.conditions.timelock) : 0n) > 0n
+
+  // If the URL-supplied tab isn't valid for this mandate, fall back to 'action'
+  useEffect(() => {
+    if (!mandate) return
+    if (activeTab === 'votes'    && !hasVoting)       setActiveTab('action')
+    if (activeTab === 'timelock' && !hasTimelockOnly) setActiveTab('action')
+  }, [mandate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const allowedRole = mandate?.conditions?.allowedRole !== undefined
     ? BigInt(mandate.conditions.allowedRole) : 0n
@@ -222,7 +234,7 @@ export default function ActionPage() {
 
             {activeTab === 'votes' && hasVoting && (
               <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-                <div className="lg:w-80 flex-shrink-0">
+                <div className="flex-1 min-w-0">
                   <Vote action={action} mandate={mandate} />
                 </div>
                 <div className="flex-1 min-w-0">

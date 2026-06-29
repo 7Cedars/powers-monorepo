@@ -7,6 +7,7 @@ import { parseMandateError } from '@/utils/parsers';
 import { useMandate } from '@/hooks/useMandate';
 import { useChecks } from '@/hooks/useChecks';
 import { useScheduledDeadlinePoll } from '@/hooks/useScheduledDeadlinePoll';
+import { L2_TO_L1_CHAIN_MAP } from '@/hooks/useBlocks';
 import { getBlockNumber } from 'wagmi/actions';
 import { wagmiConfig } from '@/context/wagmiConfig';
 import { useParams } from 'next/navigation';
@@ -45,6 +46,7 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
   }, [propAction?.actionId, mandate]);
 
   const parsedChainId = parseChainId(chainId);
+  const blockChainId = (L2_TO_L1_CHAIN_MAP[parsedChainId] ?? parsedChainId) as typeof parsedChainId;
 
   const timelockEndBlock =
     populatedAction?.proposedAt && mandate.conditions?.timelock
@@ -58,7 +60,7 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
     timelockEndBlock,
     parsedChainId,
     async () => {
-      const currentBlock = await getBlockNumber(wagmiConfig, { chainId: parsedChainId })
+      const currentBlock = await getBlockNumber(wagmiConfig, { chainId: blockChainId })
       if (currentBlock >= timelockEndBlock!) {
         setTimelockExpired(true)
         return true
@@ -74,9 +76,9 @@ export const TimelockExecute: React.FC<TimelockExecuteProps> = ({ action: propAc
     if (!populatedAction?.proposedAt || !mandate.conditions?.timelock || !parsedChainId) return
     const proposedAt = populatedAction.proposedAt
     const timelock = mandate.conditions.timelock
-    getBlockNumber(wagmiConfig, { chainId: parsedChainId }).then(currentBlock => {
+    getBlockNumber(wagmiConfig, { chainId: blockChainId }).then(currentBlock => {
       setEstimatedRemaining(
-        calculateTimelockRemaining(BigInt(proposedAt), BigInt(timelock), currentBlock, parsedChainId)
+        calculateTimelockRemaining(BigInt(proposedAt), BigInt(timelock), currentBlock, blockChainId)
       )
     })
   }, [populatedAction?.proposedAt, mandate.conditions?.timelock, parsedChainId])

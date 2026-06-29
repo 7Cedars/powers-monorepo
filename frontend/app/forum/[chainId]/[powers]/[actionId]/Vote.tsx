@@ -11,7 +11,7 @@ import { parseChainId } from "@/utils/parsers";
 import { getConstants } from "@/context/constants";
 import { CheckIcon, XMarkIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { fromFutureBlockToDateTime } from "@/public/organisations/helpers";
-import { Action, Powers, Mandate } from "@/context/types";
+import { Action, Powers, Mandate, Checks } from "@/context/types";
 import { ForumModal } from "@/components/ForumModal";
 import { useChecks } from "@/hooks/useChecks";
 import { useWallets } from "@privy-io/react-auth";
@@ -179,6 +179,24 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
     );
   };
 
+  const CHECK_MESSAGES: Partial<Record<keyof Checks, string>> = {
+    authorised:          "Not authorised to execute this action.",
+    actionExists:        "Action not found on-chain.",
+    proposalPassed:      "Proposal has not reached the required state.",
+    actionNotFulfilled:  "This action has already been fulfilled.",
+    mandateFulfilled:    "A prerequisite action has not been completed yet.",
+    mandateNotFulfilled: "A blocking condition has not been cleared (another action must remain unfulfilled).",
+    delayPassed:         "Timelock delay has not passed yet.",
+    throttlePassed:      "Execution throttle limit reached — try again later.",
+  };
+
+  const failedCheckMessages =
+    action?.upToDate && checks && !checks.allPassed
+      ? (Object.entries(CHECK_MESSAGES) as [keyof Checks, string][])
+          .filter(([key]) => checks[key] === false)
+          .map(([, msg]) => msg)
+      : [];
+
   const handleRunChecks = () => {
     setError({ error: null });
     if (powers && mandate && action && wallets.length > 0 && action.callData) {
@@ -302,10 +320,10 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
           <span className="text-xs text-muted-foreground">Voting has ended</span>
           <span
             className={`text-xs font-bold ml-auto ${
-              populatedAction?.state === 5 ? "text-green-500" : "text-red-500"
+              populatedAction?.fulfilledAt ? "text-green-500" : populatedAction?.state === 5 ? "text-green-500" : "text-red-500"
             }`}
           >
-            {populatedAction?.state === 5 ? "PASSED" : populatedAction?.state === 4 ? "DEFEATED" : "CLOSED"}
+            {populatedAction?.fulfilledAt ? "FULFILLED" : populatedAction?.state === 5 ? "PASSED" : populatedAction?.state === 4 ? "DEFEATED" : "CLOSED"}
           </span>
         </div>
       )}
@@ -370,6 +388,14 @@ export const Vote: React.FC<VoteProps> = ({ action: propAction, mandate }) => {
           {error.error && (
             <div className="w-full text-xs text-red-600 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 px-3 py-2 mb-2">
               Failed check: {parseMandateError(error)}
+            </div>
+          )}
+          {failedCheckMessages.length > 0 && (
+            <div className="w-full text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 px-3 py-2 mb-2 space-y-1">
+              <p className="font-semibold">Cannot execute — condition(s) not met:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {failedCheckMessages.map((msg, i) => <li key={i}>{msg}</li>)}
+              </ul>
             </div>
           )}
           {action?.upToDate ? (

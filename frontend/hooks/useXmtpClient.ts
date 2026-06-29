@@ -1,34 +1,83 @@
-import { useCallback, useEffect } from 'react'
-import { Client, type Signer, type Identifier } from '@xmtp/browser-sdk'
+import { useCallback, useEffect, useRef } from 'react'
+import { Client, type Signer } from '@xmtp/browser-sdk'
 import { IdentifierKind } from '@xmtp/browser-sdk'
 import { useWalletClient } from 'wagmi'
 import { hexToBytes } from 'viem'
 import { useXmtpStore } from '@/context/xmtpStore'
+import { usePrivy } from '@privy-io/react-auth'
 
 export function useXmtpClient() {
   const { data: walletClient } = useWalletClient()
-  
+  const { authenticated } = usePrivy()
+
   // Use Zustand store instead of local state
   const client = useXmtpStore((state) => state.client)
   const isLoading = useXmtpStore((state) => state.isLoading)
   const error = useXmtpStore((state) => state.error)
-  const isConnected = useXmtpStore((state) => state.isConnected) 
+  const isConnected = useXmtpStore((state) => state.isConnected)
   const setClient = useXmtpStore((state) => state.setClient)
   const setIsLoading = useXmtpStore((state) => state.setIsLoading)
   const setError = useXmtpStore((state) => state.setError)
-  const setIsConnected = useXmtpStore((state) => state.setIsConnected) 
+  const setIsConnected = useXmtpStore((state) => state.setIsConnected)
   const resetStore = useXmtpStore((state) => state.reset)
 
-  const initializeClient = useCallback(async () => {
-    // If already connected, don't reinitialize
-    if (client && isConnected) {
-      console.log('XMTP client already initialized')
-      return
-    }
+  // Tracks which EOA address the current XMTP session was initialized for.
+  // Used to detect wallet switches without relying on isConnected in effect deps.
+  const xmtpWalletAddressRef = useRef<string | undefined>(undefined)
 
+  // Keep a ref of isConnected so the address watcher can read it without
+  // listing it as a dependency (which would create a cycle via resetStore).
+  const isConnectedRef = useRef(isConnected)
+  useEffect(() => { isConnectedRef.current = isConnected }, [isConnected])
+
+  // Reset XMTP when the signing EOA changes mid-session (e.g. user switches
+  // from AA to a different EOA without a full Privy logout).
+  // Only walletClient.account.address is in deps — resetStore() modifies
+  // isConnected but that does NOT re-trigger this effect.
+  const prevAddressRef = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    const currentAddress = walletClient?.account?.address?.toLowerCase()
+    const prev = prevAddressRef.current
+    if (prev !== undefined && currentAddress !== undefined && prev !== currentAddress) {
+      if (isConnectedRef.current) {
+        resetStore()
+        xmtpWalletAddressRef.current = undefined
+      }
+    }
+    // Only update the ref for real addresses. During a wallet switch wagmi
+    // briefly passes through null/undefined; updating the ref at that point
+    // would lose the "old address" and prevent detecting the new wallet.
+    if (currentAddress !== undefined) {
+      prevAddressRef.current = currentAddress
+    }
+  }, [walletClient?.account?.address, resetStore])
+
+  // Reset XMTP when Privy logs out. authenticated → false does not feed back
+  // into this effect, so there is no dependency cycle.
+  const prevAuthRef = useRef(authenticated)
+  useEffect(() => {
+    if (prevAuthRef.current && !authenticated) {
+      resetStore()
+      xmtpWalletAddressRef.current = undefined
+    }
+    prevAuthRef.current = authenticated
+  }, [authenticated, resetStore])
+
+  const initializeClient = useCallback(async () => {
     if (!walletClient?.account) {
       setError('No wallet connected')
       return
+    }
+
+    const currentAddress = walletClient.account.address.toLowerCase()
+
+    if (client && isConnected) {
+      if (xmtpWalletAddressRef.current === currentAddress) {
+        console.log('XMTP client already initialized')
+        return
+      }
+      // Different wallet connected — reset and re-initialize
+      resetStore()
     }
 
     setIsLoading(true)
@@ -63,8 +112,9 @@ export function useXmtpClient() {
         loggingLevel: 3, // Set logging level to debug for development
       } as any) // Cast to any to bypass type issues with loggingLevel
 
+      xmtpWalletAddressRef.current = currentAddress
       setClient(xmtpClient)
-      setIsConnected(true) 
+      setIsConnected(true)
       console.log(`XMTP client initialized for inbox:`, xmtpClient.inboxId, xmtpClient)
     } catch (err) {
       console.error('Failed to initialize XMTP client:', err)
@@ -73,7 +123,7 @@ export function useXmtpClient() {
     } finally {
       setIsLoading(false)
     }
-  }, [walletClient, client, isConnected, setClient, setIsConnected, setError, setIsLoading])
+  }, [walletClient, client, isConnected, setClient, setIsConnected, setError, setIsLoading, resetStore])
 
   const disconnect = useCallback(() => {
     resetStore()

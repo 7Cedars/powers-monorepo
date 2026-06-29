@@ -152,7 +152,7 @@ export const usePowers = () => {
 
       mandates.forEach((l, idx) => {
         if (l.mandateAddress != `0x0000000000000000000000000000000000000000`) {
-          if (!l.conditions) {
+          if (!l.conditions || l.conditions.throttleExecution === undefined) {
             contracts.push({
               abi: powersAbi,
               address: l.powers as `0x${string}`,

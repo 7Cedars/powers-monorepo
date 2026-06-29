@@ -124,7 +124,18 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
       isUserInGroup().then(setUserInGroup)
     }
   }, [groupChat, client, isUserInGroup])
-  
+
+  // Clear all local chat state when XMTP disconnects (wallet switch or logout).
+  // The Zustand store resets automatically; this keeps component state in sync.
+  useEffect(() => {
+    if (!isConnected) {
+      setGroupChat(null)
+      setMessages([])
+      setUserInGroup(null)
+      setInboxToAddress(new Map())
+    }
+  }, [isConnected])
+
   console.log('NB: XMTP Chatroom render:', { client, address, isConnected, connectedUserNeedsInit, groupChat, messages, error, baseChatroomId })
 
   useEffect(() => {
@@ -181,15 +192,19 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   useEffect(() => {
     if (!client || !isConnected || !baseChatroomId) return
 
+    let cancelled = false
+
     const loadGroupChats = async () => {
       setIsLoadingChats(true)
       try {
         await client.conversations.sync()
+        if (cancelled) return
         const allConvos = await client.conversations.list()
+        if (cancelled) return
 
         console.log('All conversations:', allConvos)
         console.log('Looking for chatroom with base ID:', baseChatroomId)
-        
+
         // Filter for group chats only (explicitly check conversationType to exclude DMs)
         const groupConvos = allConvos.filter((convo: any) => {
           return 'addMembers' in convo || convo.conversationType === 'group'
@@ -201,21 +216,22 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
         const matchingConvo = groupConvos.find((convo: any) => {
           const name = convo.name || ''
           const description = convo.description || ''
-          
+
           return name === baseChatroomId || description === baseChatroomId
         })
-        
-        if (matchingConvo) {
+
+        if (matchingConvo && !cancelled) {
           console.log('Selected matching conversation:', matchingConvo.id, 'name:', (matchingConvo as any).name)
           // Load the matching chatroom
           const convo = matchingConvo as any
           const members: string[] = []
           let isOptimistic = false
           const mapping = new Map<string, string>()
-          
+
           try {
             if ('members' in convo && typeof convo.members === 'function') {
               const memberList = await convo.members()
+              if (cancelled) return
               console.log('Group members:', memberList)
               memberList.forEach((m: any) => {
                 const inboxId = m.inboxId || 'Unknown'
@@ -226,7 +242,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
                 }
               })
             }
-            
+
             if ('sync' in convo) {
               try {
                 await convo.sync()
@@ -239,7 +255,11 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
             console.error('Error getting group members:', err)
           }
 
+          if (cancelled) return
+
           const uninitializedMembers = await checkMemberInitialization(members)
+
+          if (cancelled) return
 
           console.log('@checkMemberInitialization: uninitializedMembers:', uninitializedMembers)
 
@@ -252,19 +272,21 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           })
         }
       } catch (err) {
-        console.error('Failed to load group chats:', err)
+        if (!cancelled) console.error('Failed to load group chats:', err)
       } finally {
-        setIsLoadingChats(false)
+        if (!cancelled) setIsLoadingChats(false)
       }
     }
 
     loadGroupChats()
 
     // Stream new conversations
+    // Reuses the shared `cancelled` flag so cleanup stops both loadGroupChats and this stream
     const streamConversations = async () => {
       try {
         const stream = await client.conversations.stream()
         for await (const conversation of stream) {
+          if (cancelled) break
           if ('addMembers' in conversation || (conversation as any).conversationType === 'group') {
             // Check if this is the exact chatroom we're looking for
             const name = (conversation as any).name || ''
@@ -272,7 +294,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
             if (name !== baseChatroomId && desc !== baseChatroomId) {
               continue
             }
-            
+
             const members: string[] = []
             try {
               if ('members' in conversation && typeof (conversation as any).members === 'function') {
@@ -285,7 +307,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
 
             const uninitializedMembers = await checkMemberInitialization(members)
 
-            if (!groupChat) {
+            if (!cancelled && !groupChat) {
               setGroupChat({
                 conversation,
                 memberAddresses: members,
@@ -296,11 +318,13 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           }
         }
       } catch (err) {
-        console.error('Error streaming conversations:', err)
+        if (!cancelled) console.error('Error streaming conversations:', err)
       }
     }
 
     streamConversations()
+
+    return () => { cancelled = true }
   }, [client, isConnected, baseChatroomId])
 
   // Load messages for the group chat
@@ -618,6 +642,11 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
           <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-2xl mb-4">
             Connect your wallet and log in to chat to participate in governance discussions.
           </p>
+          {effectiveAddress && eoaAddress && effectiveAddress.toLowerCase() !== eoaAddress.toLowerCase() && (
+            <p className="text-xs text-muted-foreground/50 leading-relaxed max-w-2xl mb-2 font-mono">
+              Chat identity: {eoaAddress.slice(0, 6)}...{eoaAddress.slice(-4)} (your EOA)
+            </p>
+          )}
           {address && !isConnected && (
             <> 
               <button

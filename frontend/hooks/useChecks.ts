@@ -82,12 +82,12 @@ export const useChecks = () => {
     })
     // console.log("checkThrottledExecution, waypoint 1", {latestFulfillment, mandate, blockNumber})
 
-    if (latestFulfillment && blockNumber) {
+    if (blockNumber) {
       const result = Number(latestFulfillment) + Number(mandate.conditions?.throttleExecution) < Number(blockNumber)
       return result as boolean
     } else {
       return true
-    } 
+    }
   }, [])
 
   const checkDelayedExecution = async (mandateId: bigint, nonce: bigint, calldata: `0x${string}`, powers: Powers) => {
@@ -174,7 +174,7 @@ export const useChecks = () => {
 
           const newChecks: Checks =  {
             delayPassed: mandate.conditions.timelock == 0n ? true : delayed,
-            throttlePassed: mandate.conditions.throttleExecution == 0n ? true : throttled,
+            throttlePassed: mandate.conditions.throttleExecution === 0n ? true : throttled,
             authorised,
             actionExists: mandate.conditions.quorum == 0n ? true : actionState != 0n,
             proposalPassed: mandate.conditions.quorum == 0n ? true : actionState == 5n || actionState == 6n || actionState == 7n,
