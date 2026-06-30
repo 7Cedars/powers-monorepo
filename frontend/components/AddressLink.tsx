@@ -15,14 +15,14 @@ interface AddressLinkProps {
 
 export const AddressLink = ({ address, chainId, className = '', showFull = false }: AddressLinkProps) => {
   const numericChainId = chainId !== undefined ? parseInt(chainId.toString()) : undefined
-  const { displayName } = useAddressDisplay(address)
+  const { displayName, ensName } = useAddressDisplay(address)
   const { isPowers, isLoading } = useAddressType(address, numericChainId)
   const chains = useChains()
   const pathname = usePathname()
 
   const blockExplorerUrl = chains.find(c => c.id === numericChainId)?.blockExplorers?.default.url
 
-  const text = showFull ? (address ?? 'Unknown') : displayName
+  const text = ensName ?? (showFull ? (address ?? 'Unknown') : displayName)
 
   if (!address || isLoading) {
     return <span className={className}>{isLoading ? displayName : 'Unknown'}</span>

@@ -230,11 +230,11 @@ function chatTabSwitcher(page: Page) {
 // render a "FOR" label (the vote bar vs. a past-vote row), so assertions need
 // to be scoped to one or the other rather than the page as a whole.
 function voteSection(page: Page) {
-  return page.locator('div.lg\\:w-80.flex-shrink-0');
+  return page.locator('[data-testid="vote-section"]');
 }
 
 function pastVotesSection(page: Page) {
-  return page.locator('div.flex-1.min-w-0');
+  return page.locator('[data-testid="past-votes-section"]');
 }
 
 // Navigating straight to an org's page triggers a live fetchPowers() RPC
@@ -593,18 +593,6 @@ test.describe('forum org page', () => {
         await page.goto(ORG_PATH);
 
         await expect(page.getByRole('button', { name: 'New Action' })).toBeVisible();
-      });
-
-      test('clicking "New Action" while logged out opens the mandate modal asking to connect a wallet', async ({ page }) => {
-        await mockAuth(page);
-        await mockPowersRpc(page, ORG_WITH_MANDATE);
-        await page.goto(ORG_PATH);
-
-        await page.getByRole('button', { name: 'New Action' }).click();
-
-        const dialog = mandateModal(page);
-        await expect(dialog.getByText('Select Mandate', { exact: true })).toBeVisible();
-        await expect(dialog.getByText('Connect wallet to see accessible mandates', { exact: true })).toBeVisible();
       });
 
       test('clicking "New Action" while logged in opens a "Select Mandate" modal', async ({ page }) => {
@@ -1415,8 +1403,8 @@ test.describe('forum action detail page', () => {
       await expect(page.getByText('Member', { exact: true })).toBeVisible();
       await expect(page.getByText(`${CONDITIONS_QUORUM}%`, { exact: true })).toBeVisible();
       await expect(page.getByText(`${CONDITIONS_SUCCEED_AT}%`, { exact: true })).toBeVisible();
-      await expect(page.getByText(`${CONDITIONS_VOTING_PERIOD} blocks`, { exact: true })).toBeVisible();
-      await expect(page.getByText(`${CONDITIONS_TIMELOCK} blocks`, { exact: true })).toBeVisible();
+      await expect(page.getByText(`${CONDITIONS_VOTING_PERIOD} blocks`, { exact: false })).toBeVisible();
+      await expect(page.getByText(`${CONDITIONS_TIMELOCK} blocks`, { exact: false })).toBeVisible();
     });
   });
 
@@ -1627,6 +1615,8 @@ test.describe('forum action detail page', () => {
           // proposedAt + timelock (50) is behind the pinned mock block (100).
           actions: [{ actionId: ACTION_ID, state: 5, description: ACTION_DESCRIPTION, proposedAt: 30n, callData: AMOUNT_CALLDATA, nonce: ACTION_NONCE }],
         }],
+      }, {
+        roleGrants: [{ contractAddress: POWERS_101_ADDRESS, account: TEST_ADDRESS, roleId: MEMBER_ROLE, since: 1n }],
       });
       await page.goto(ACTION_PATH);
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { usePowersStore, useStatusStore } from '@/context/store'
 import { Action, Mandate } from '@/context/types'
 import { Chatroom } from './Chatroom'
@@ -13,7 +13,7 @@ import { Timeline } from './Timeline'
 import { TimelockExecute } from './TimelockExecute'
 import { SingleFlow } from '@/components/SingleFlow'
 import { DependenciesTab } from './DependenciesTab'
-import { bigintToRole } from '@/utils/bigintTo'
+import { ConditionsTab } from './ConditionsTab'
 import { DocumentTextIcon, ClipboardDocumentListIcon, ClockIcon, HandRaisedIcon, LockClosedIcon, PlayIcon, ArrowsRightLeftIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 
 const PUBLIC_ROLE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
@@ -24,11 +24,16 @@ type ChatroomMode = 'mandate' | 'flow'
 export default function ActionPage() {
   const router = useRouter()
   const { chainId, powers: powersAddress, actionId } = useParams<{ chainId: string; powers: string; actionId: string }>()
+  const searchParams = useSearchParams()
   const powers = usePowersStore()
   const action = useActionStore()
   const status = useStatusStore()
 
-  const [activeTab, setActiveTab] = useState<Tab>('action')
+  const VALID_TABS: Tab[] = ['action', 'timeline', 'conditions', 'votes', 'timelock', 'dependencies', 'flow', 'chat']
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const t = searchParams.get('tab') as Tab | null
+    return t && VALID_TABS.includes(t) ? t : 'action'
+  })
   const [chatroomMode, setChatroomMode] = useState<ChatroomMode>('mandate')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -75,6 +80,13 @@ export default function ActionPage() {
   const hasVoting = (mandate?.conditions?.quorum ? BigInt(mandate.conditions.quorum) : 0n) > 0n
   const hasTimelockOnly =
     !hasVoting && (mandate?.conditions?.timelock ? BigInt(mandate.conditions.timelock) : 0n) > 0n
+
+  // If the URL-supplied tab isn't valid for this mandate, fall back to 'action'
+  useEffect(() => {
+    if (!mandate) return
+    if (activeTab === 'votes'    && !hasVoting)       setActiveTab('action')
+    if (activeTab === 'timelock' && !hasTimelockOnly) setActiveTab('action')
+  }, [mandate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const allowedRole = mandate?.conditions?.allowedRole !== undefined
     ? BigInt(mandate.conditions.allowedRole) : 0n
@@ -217,60 +229,15 @@ export default function ActionPage() {
             )}
 
             {activeTab === 'conditions' && (
-              <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                <div className="flex justify-between gap-2">
-                  <span className="text-muted-foreground">Role</span>
-                  <span className="text-foreground">{bigintToRole(allowedRole, powers)}</span>
-                </div>
-                {mandate.conditions?.quorum != null && BigInt(mandate.conditions.quorum) !== 0n && (
-                  <>
-                    <div className="flex justify-between gap-2">
-                      <span className="text-muted-foreground">Quorum</span>
-                      <span className="text-foreground">{mandate.conditions.quorum.toString()}%</span>
-                    </div>
-                    <div className="flex justify-between gap-2">
-                      <span className="text-muted-foreground">Succeed At</span>
-                      <span className="text-foreground">{mandate.conditions?.succeedAt?.toString() ?? '0'}%</span>
-                    </div>
-                    <div className="flex justify-between gap-2">
-                      <span className="text-muted-foreground">Voting Period</span>
-                      <span className="text-foreground">{mandate.conditions?.votingPeriod?.toString() ?? '0'} blocks</span>
-                    </div>
-                  </>
-                )}
-                {mandate.conditions?.timelock != null && BigInt(mandate.conditions.timelock) !== 0n && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">Timelock</span>
-                    <span className="text-foreground">{mandate.conditions.timelock.toString()} blocks</span>
-                  </div>
-                )}
-                {mandate.conditions?.throttleExecution != null && BigInt(mandate.conditions.throttleExecution) !== 0n && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">Throttle</span>
-                    <span className="text-foreground">{mandate.conditions.throttleExecution.toString()} blocks</span>
-                  </div>
-                )}
-                {mandate.conditions?.needFulfilled != null && BigInt(mandate.conditions.needFulfilled) !== 0n && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">Need Fulfilled</span>
-                    <span className="text-foreground">#{mandate.conditions.needFulfilled.toString()}</span>
-                  </div>
-                )}
-                {mandate.conditions?.needNotFulfilled != null && BigInt(mandate.conditions.needNotFulfilled) !== 0n && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">Need Not Fulfilled</span>
-                    <span className="text-foreground">#{mandate.conditions.needNotFulfilled.toString()}</span>
-                  </div>
-                )}
-              </div>
+              <ConditionsTab mandate={mandate} allowedRole={allowedRole} powers={powers} chainId={chainId} />
             )}
 
             {activeTab === 'votes' && hasVoting && (
               <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-                <div className="lg:w-80 flex-shrink-0">
+                <div className="flex-1 min-w-0" data-testid="vote-section">
                   <Vote action={action} mandate={mandate} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0" data-testid="past-votes-section">
                   <PastVotes action={action} mandate={mandate} powers={powers} />
                 </div>
               </div>

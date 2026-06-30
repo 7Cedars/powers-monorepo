@@ -63,7 +63,8 @@ contract ChainlinkFunctions_Open is AsyncMandate, FunctionsClient {
         uint16 index,
         string memory nameDescription,
         bytes memory,
-        /* inputParams */ // Ignored, as we construct it from config
+        /* inputParams */
+        // Ignored, as we construct it from config
         bytes memory config
     )
         public

@@ -110,7 +110,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
     >
       {/* Vertical Navigation Buttons - always visible on the left edge of the panel */}
       <div
-        className="h-full flex-shrink-0 bg-background border-border flex flex-col items-center justify-start py-18 relative"
+        className="h-full flex-shrink-0 bg-background border-border flex flex-col items-center justify-start pt-18 relative"
         style={{
           width: '36px',
           minWidth: '36px',
@@ -145,7 +145,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
         >
           <ChevronDownIcon className={`w-3 h-3 transition-transform ${isCollapsed ? 'rotate-180' : 'rotate-0'}`} />
         </button>
-        <div className="flex flex-col items-center" style={{ gap: '88px', paddingTop: '46px' }}>
+        <div className="flex flex-col items-center flex-1 overflow-y-auto" style={{ gap: '88px', paddingTop: '46px', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
         {
         navItems.map((item) => {
           const active = isActive(item.path)
@@ -154,7 +154,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
               key={item.path}
               onClick={() => handleNavClick(item.path)}
               className={`
-                relative transition-colors font-mono text-[10px] uppercase tracking-wider border border-border
+                relative shrink-0 transition-colors font-mono text-[10px] uppercase tracking-wider border border-border
                 ${active
                   ? 'text-background bg-foreground border-foreground'
                   : 'bg-muted/50 text-muted-foreground hover:bg-foreground/20'

@@ -53,6 +53,7 @@ contract Deploy is DeployHelpers {
     uint16 constant PATCH = 8;
 
     address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+    address constant HANNAH = 0xc9ce1DC547C42F66464f5a7f0E3cd60EBf1C5Bd2;
 
     function run() external returns (Powers) {
         // step 0: setup.
@@ -102,9 +103,9 @@ contract Deploy is DeployHelpers {
         // Labels roles, assigns Council to the deployer, wires the paymaster, //
         // and revokes itself after execution.                                 //
         ////////////////////////////////////////////////////////////////////////
-        targets = new address[](9);
-        values = new uint256[](9);
-        calldatas = new bytes[](9);
+        targets = new address[](10);
+        values = new uint256[](10);
+        calldatas = new bytes[](10);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
@@ -119,6 +120,8 @@ contract Deploy is DeployHelpers {
         targets[7] = address(powersPaymaster);
         calldatas[7] = abi.encodeWithSelector(PowersPaymaster.addSponsoredTarget.selector, address(powers));
         calldatas[8] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke itself after use.
+        // adding Hannah to council
+        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, HANNAH);
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public role
@@ -138,12 +141,13 @@ contract Deploy is DeployHelpers {
         // dependency on any other mandate.                                   //
         ////////////////////////////////////////////////////////////////////////
         {
-            uint16[] memory flow1Ids = new uint16[](1);
+            uint16[] memory flow1Ids = new uint16[](2);
             flow1Ids[0] = mandateCount + 1;
+            flow1Ids[1] = mandateCount + 2;
             flows.push(
                 PowersTypes.Flow({
                     mandateIds: flow1Ids,
-                    nameDescription: "Flow 1: Membership. Anyone can self-select as a Member."
+                    nameDescription: "Flow 1: Membership. Anyone can self-select as a Member; Members can renounce their role."
                 })
             );
         }
@@ -159,6 +163,23 @@ contract Deploy is DeployHelpers {
             })
         );
         delete conditions;
+
+        // Allow current Members to voluntarily leave by renouncing their Member role.
+        {
+            uint256[] memory renounceableRoles = new uint256[](1);
+            renounceableRoles[0] = 1; // Member role
+            mandateCount++;
+            conditions.allowedRole = 1; // = Member
+            constitution.push(
+                PowersTypes.MandateInitData({
+                    nameDescription: "Leave as Member: A Member renounces their Member role in Mandate Sandbox.",
+                    targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RenounceRole"),
+                    config: abi.encode(renounceableRoles),
+                    conditions: conditions
+                })
+            );
+            delete conditions;
+        }
 
         ////////////////////////////////////////////////////////////////////////
         //                  FLOW 2: Optimistic Execution                      //

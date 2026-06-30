@@ -178,13 +178,87 @@ Follow the pattern in `solidity/governance/examples/actions/Governed721Runners.s
 ### 4d. Test File
 **Save to:** `solidity/governance/<org-name>/Test.t.sol`
 
-Follow the pattern in `solidity/governance/claude/global-environmental-movement/Test.t.sol`. Key rules:
+Use `solidity/governance/claude/global-environmental-movement/Test.t.sol` as a structural reference for test content only. The import and inheritance structure **must** follow the rules below — the reference file uses a broken pattern that is being phased out.
+
+**Structural rules (mandatory — override anything in the reference file):**
+
+- Inherit from `forge-std/Test.sol` directly. Do **not** import or inherit `TestHelperFunctions` from `TestSetup.t.sol`. That file sits deep in the monorepo's internal test infrastructure and its relative path breaks whenever an org is nested more than one level under `governance/`.
+- Declare `Configurations helperConfig;` as a local state variable (not inherited).
+- Use synthetic private key constants — never read private keys from environment variables. Real keys as env vars create unnecessary friction and security risk for users just running tests.
+- Use `SEPOLIA_RPC_URL` for the fork (consistent with `.env.example` and the generated README).
+- Call `vm.deal()` to fund all synthetic addresses and `address(this)` (needed if the deploy script seeds a paymaster).
+
+**Canonical imports and contract declaration:**
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.26;
+
+// Run with: forge test --match-contract <OrgName>_test -vvv
+
+import { Test, console2 } from "forge-std/Test.sol";
+import { Powers } from "@src/Powers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
+import { Configurations } from "@script/Configurations.s.sol";
+import { Deploy } from "./Deploy.s.sol";
+import { <OrgName>Runners } from "./Runners.s.sol";
+
+contract <OrgName>_test is Test {
+    Configurations helperConfig;
+    Deploy deploy;
+    address powers;
+    <OrgName>Runners runners;
+
+    uint256 constant ADMIN_KEY  = 1;
+    uint256 constant MEMBER_KEY = 2;
+    // Add more key constants as the org requires (3, 4, …)
+    address testAdmin;
+    address testMember;
+    uint256[] adminKeys;
+    uint256[] memberKeys;
+```
+
+**Canonical setUp:**
+```solidity
+    function setUp() public {
+        uint256 fork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
+        vm.selectFork(fork);
+        helperConfig = new Configurations();
+
+        testAdmin  = vm.addr(ADMIN_KEY);
+        testMember = vm.addr(MEMBER_KEY);
+        adminKeys  = [ADMIN_KEY];
+        memberKeys = [MEMBER_KEY];
+
+        vm.deal(testAdmin,       10 ether);
+        vm.deal(testMember,      10 ether);
+        vm.deal(address(this),    1 ether);  // covers paymaster seeding if AA is enabled
+
+        deploy = new Deploy();
+        powers = address(deploy.run());
+        runners = new <OrgName>Runners();
+        runners.runInitialSetup(powers, adminKeys, block.timestamp);
+
+        // Force-assign roles to synthetic EOAs (test setup only — bypasses governance).
+        vm.startPrank(powers);
+        IPowers(powers).assignRole(0, testAdmin);
+        // Assign other roles as the org requires.
+        vm.stopPrank();
+    }
+```
+
+**`minutesToBlocks` helper** — always define this inline; do not rely on any inherited version:
+```solidity
+    function minutesToBlocks(uint256 minutes_, uint256 blocksPerHour) internal pure returns (uint32) {
+        return uint32((minutes_ * blocksPerHour) / 60);
+    }
+```
+
+**Test content rules:**
 - Contract name: `<OrgName>_test` (e.g. `SecuredSlate_test`) — used by `--match-contract`
-- Import `Deploy` as a peer file: `import { Deploy } from "./Deploy.s.sol";`
 - Cover the happy path for each governance flow end-to-end
 - Use `vm.roll()` to advance blocks past voting periods and timelocks
 - Include at least one negative test (e.g., action blocked by veto, quorum not reached)
-- Add a comment at the top: "Run with: `forge test --match-contract <OrgName>_test -vvv`"
+- Use `vm.startPrank(powers)` + `IPowers(powers).assignRole(...)` to seed roles in test helpers (bypasses governance; fine for test setup)
 
 ### 4e. README
 **Save to:** `solidity/governance/<org-name>/README.md`
@@ -205,7 +279,7 @@ Write in plain English for a non-technical operator. Include:
   ```
 - **Metadata URI** — if the deploy script contains a `// TODO: set metadata URI` comment, replace the empty string with your IPFS or gateway URL before deploying. Upload your organisation's JSON metadata to [Pinata](https://pinata.cloud) (free tier available) and paste the resulting URL into the constructor call.
 - **Account Abstraction / Paymaster** *(include only if AA was opted in)* — explain that a `PowersPaymaster` was deployed alongside the organisation and pre-funded with `<seed_amount>` ETH. Members can now interact with the organisation without paying gas themselves. When the paymaster balance runs low, authorised members can top it up using the "Fund Paymaster" governance flow. To check the current paymaster balance: `cast call <PAYMASTER_ADDRESS> "getDeposit()(uint256)" --rpc-url $SEPOLIA_RPC_URL`. To trigger the Fund flow: `forge script governance/<org-name>/Actions.s.sol:<OrgName>Actions --sig "proposeFundPaymaster()" --rpc-url $SEPOLIA_RPC_URL --broadcast`. The deployer wallet must hold at least `<seed_amount>` ETH plus gas at deploy time.
-- **Testing** — `make test` runs the fork-based test suite; requires `SEPOLIA_RPC_URL`
+- **Testing** — `make test` runs the fork-based test suite. Only `SEPOLIA_RPC_URL` is required — no private key env vars needed; the test uses synthetic accounts internally.
 
 ### 4f. Makefile
 **Save to:** `solidity/governance/<org-name>/Makefile`
