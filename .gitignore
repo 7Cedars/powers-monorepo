@@ -13,7 +13,6 @@
 /solidity/cache/
 /solidity/out/
 /solidity/broadcast/
-/solidity/lib/
 
 # ai-agent artifacts
 /ai-agent/data/

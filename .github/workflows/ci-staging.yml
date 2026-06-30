@@ -29,6 +29,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Cache Foundry lib
+        uses: actions/cache@v4
+        with:
+          path: solidity/lib
+          key: foundry-lib-${{ hashFiles('solidity/.gitmodules') }}
+          restore-keys: foundry-lib-
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 

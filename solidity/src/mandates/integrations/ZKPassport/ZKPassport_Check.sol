@@ -6,7 +6,7 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { ZKPassport_PowersRegistry } from "../../../helpers/ZKPassport_PowersRegistry.sol";
 import {
     DisclosedData
-} from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
+} from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 
 /// @title ZKPassport Check Mandate
 /// @notice Checks if a caller has a valid ZKPassport proof registered with specific data.
