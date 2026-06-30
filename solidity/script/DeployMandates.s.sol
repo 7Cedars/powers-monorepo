@@ -116,11 +116,11 @@ contract DeployMandates is Script {
 
         address registryAddr = helperConfig.getMandateRegistry(block.chainid);
         if (registryAddr != address(0)) {
-            registry = MandateRegistry(registryAddr); 
+            registry = MandateRegistry(registryAddr);
         } else {
             console2.log("No existing MandateRegistry found for this network. Deploying new MandateRegistry...");
             vm.startBroadcast();
-            registry = new MandateRegistry{salt: keccak256("MandateRegistry1")}(msg.sender);
+            registry = new MandateRegistry{ salt: keccak256("MandateRegistry1") }(msg.sender);
             vm.stopBroadcast();
         }
         // MandateRegistry registry = MandateRegistry(registryAddr);
@@ -166,7 +166,7 @@ contract DeployMandates is Script {
             string[] memory finalNames = new string[](regCount);
             address[] memory finalAddresses = new address[](regCount);
             bytes32[] memory finalCreationCodeHashes = new bytes32[](regCount);
-            
+
             for (uint256 i = 0; i < regCount; i++) {
                 finalNames[i] = regNames[i];
                 finalAddresses[i] = regAddresses[i];

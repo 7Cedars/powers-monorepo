@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, TouchEvent } from "react";
 import {
   ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon,
   QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
@@ -22,7 +22,6 @@ const GAP = 20;
 
 export function SectionApplications() {
   const [current, setCurrent] = useState(0);
-  const [trackOffset, setTrackOffset] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(700);
   const total = powersApplications.length;
@@ -39,10 +38,9 @@ export function SectionApplications() {
 
   const cardWidth = containerWidth < 500 ? containerWidth * 0.78 : containerWidth * 0.55;
 
-  // Recompute track offset whenever current or container size changes
-  useEffect(() => {
+  const trackOffset = useMemo(() => {
     const centerOffset = (containerWidth - cardWidth) / 2;
-    setTrackOffset(-current * (cardWidth + GAP) + centerOffset);
+    return -current * (cardWidth + GAP) + centerOffset;
   }, [current, containerWidth, cardWidth]);
 
   const next = useCallback(() => setCurrent(i => (i + 1) % total), [total]);
@@ -53,7 +51,7 @@ export function SectionApplications() {
   const onTouchEnd = (e: TouchEvent) => {
     if (touchStartX.current === null) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) diff > 0 ? next() : prev();
+    if (Math.abs(diff) > 40) { if (diff > 0) next(); else prev(); }
     touchStartX.current = null;
   };
 

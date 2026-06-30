@@ -9,8 +9,6 @@ import { usePublicClient, useChains } from "wagmi";
 import { powersAbi } from "@/context/abi";
 import { wagmiConfig } from "@/context/wagmiConfig";
 import { getEnsName } from "@wagmi/core";
-import { useBlocks } from "@/hooks/useBlocks";
-import { toFullDateFormat, toEurTimeFormat } from "@/utils/toDates";
 
 interface PastVotesProps {
   action: Action;
@@ -35,7 +33,6 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
   const { chainId } = useParams<{ chainId: string }>();
   const publicClient = usePublicClient();
   const chains = useChains();
-  const { timestamps, fetchTimestamps } = useBlocks();
   
   const [votes, setVotes] = useState<VoteData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -140,11 +137,6 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
 
       setVotes(validVotes);
 
-      // Fetch timestamps for all vote blocks
-      const blockNumbers = validVotes.map((vote) => vote.blockNumber);
-      if (blockNumbers.length > 0) {
-        fetchTimestamps(blockNumbers, chainId);
-      }
     } catch (err) {
       console.error("Error fetching votes:", err);
       setError("Failed to fetch votes");
@@ -206,72 +198,36 @@ export const PastVotes: React.FC<PastVotesProps> = ({ action, mandate, powers })
                   <th className="px-3 py-2 font-normal text-muted-foreground uppercase tracking-wider">
                     Vote
                   </th>
-                  <th className="px-3 py-2 font-normal text-muted-foreground uppercase tracking-wider">
-                    Date & Time
-                  </th>
                 </tr>
               </thead>
               <tbody>
-                {votes.map((vote, index) => {
-                  const timestampData = timestamps.get(`${chainId}:${vote.blockNumber}`);
-                  const timestamp = timestampData?.timestamp;
-                  
-                  let formattedDate = "Loading...";
-                  if (timestamp && timestamp > 0n) {
-                    const timestampNumber = Number(timestamp);
-                    if (!isNaN(timestampNumber) && timestampNumber > 0) {
-                      try {
-                        formattedDate = `${toFullDateFormat(timestampNumber)}: ${toEurTimeFormat(timestampNumber)}`;
-                      } catch (error) {
-                        formattedDate = "Invalid date";
-                      }
-                    }
-                  }
-
-                  return (
-                    <tr key={index} className="group">
-                      {/* Main vote row */}
-                      <td colSpan={3} className="p-0">
-                        <div className={`${index > 0 ? "border-t-2 border-border" : ""}`}>
-                          {/* Vote info row */}
-                          <div className="flex items-center px-3 py-2 hover:bg-muted/20 transition-colors">
-                            {/* Voter */}
-                            <div className="flex-1">
-                              <span className="text-foreground font-mono">
-                                {parseAddress(vote.voter, vote.ensName)}
-                              </span>
-                            </div>
-
-                            {/* Vote type */}
-                            <div className="flex-1">
-                              <span className={`font-medium ${getVoteColor(vote.support)}`}>
-                                {getVoteLabel(vote.support)}
-                              </span>
-                            </div>
-
-                            {/* Timestamp */}
-                            <div className="flex-1">
-                              <span className="text-muted-foreground font-mono">
-                                {formattedDate}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Reason row (only shown if reason exists) */}
-                          {vote.reason && vote.reason.trim() !== "" && (
-                            <div className="px-3 pb-3 pt-1">
-                              <div className="bg-muted/30 border-l-2 border-muted-foreground/30 px-3 py-2">
-                                <p className="text-xs text-muted-foreground italic whitespace-pre-wrap break-words">
-                                  "{vote.reason}"
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                {votes.map((vote, index) => (
+                  <>
+                    <tr key={index} className={`hover:bg-muted/20 transition-colors ${index > 0 ? "border-t-2 border-border" : ""}`}>
+                      <td className="px-3 py-2">
+                        <span className="text-foreground font-mono">
+                          {parseAddress(vote.voter, vote.ensName)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={`font-medium ${getVoteColor(vote.support)}`}>
+                          {getVoteLabel(vote.support)}
+                        </span>
                       </td>
                     </tr>
-                  );
-                })}
+                    {vote.reason && vote.reason.trim() !== "" && (
+                      <tr key={`reason-${index}`}>
+                        <td colSpan={2} className="px-3 pb-3 pt-1">
+                          <div className="bg-muted/30 border-l-2 border-muted-foreground/30 px-3 py-2">
+                            <p className="text-xs text-muted-foreground italic whitespace-pre-wrap break-words">
+                              "{vote.reason}"
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
               </tbody>
             </table>
           </div>

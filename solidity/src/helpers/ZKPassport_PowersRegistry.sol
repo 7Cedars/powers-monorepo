@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { DisclosedData, ProofVerificationParams, BoundData } from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
+import {
+    DisclosedData,
+    ProofVerificationParams,
+    BoundData
+} from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "../interfaces/IZKPassport.sol";
- 
+
 // import { console } from "forge-std/console.sol"; // only for testing purposes.
 
 /// @title ZKPassport Powers Registry
@@ -72,32 +76,20 @@ contract ZKPassport_PowersRegistry is IZKPassport_PowersRegistry {
     }
 
     //////////////////////////////////////////////////////////////
-    //                        MOCK CALL                         //      
+    //                        MOCK CALL                         //
     //              !!!DELETE FOR PRODUCTION!!!                 //
     //////////////////////////////////////////////////////////////
     function mockAddDisclosedData(address account) external {
         bytes32 mockIdentifier = keccak256(abi.encodePacked(account, block.timestamp));
         accountIdentifiers[account] = mockIdentifier;
         identifierAccounts[mockIdentifier] = account;
-        DisclosedData memory data = DisclosedData(
-            "Mock Entry",
-            "GBR",
-            "GBR",
-            "Male",
-            "1990-01-01",
-            "2030-01-01",
-            "123456789",
-            "Passport"
-        );
+        DisclosedData memory data =
+            DisclosedData("Mock Entry", "GBR", "GBR", "Male", "1990-01-01", "2030-01-01", "123456789", "Passport");
 
-        identifierToDisclosedData[mockIdentifier] = Disclosed({ 
-            disclosedData: data, 
-            isFacematched: true, 
-            timestamp: block.timestamp 
-            });
+        identifierToDisclosedData[mockIdentifier] =
+            Disclosed({ disclosedData: data, isFacematched: true, timestamp: block.timestamp });
         emit IdentityRegistered(account, mockIdentifier);
     }
-
 
     //////////////////////////////////////////////////////////////
     //            VERIFICATION AND REGISTRATION                 //

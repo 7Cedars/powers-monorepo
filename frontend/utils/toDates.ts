@@ -15,7 +15,7 @@ export const toFullDateFormat = (timestamp: number): string => {
 export const toFullDateAndTimeFormat = (timestamp: number): string => {
   const date = new Date(timestamp * 1000) 
   let minutes = date.getMinutes().toString()
-  minutes.length == 1 ? minutes = `0${minutes}` : minutes
+  if (minutes.length == 1) minutes = `0${minutes}`
   return `${date.getDate()} ${nameMonths[date.getMonth()]} ${date.getFullYear()}: ${date.getHours()}:${minutes}`
 }; 
 
@@ -23,7 +23,7 @@ export const toFullDateAndTimeFormat = (timestamp: number): string => {
 export const toEurTimeFormat = (timestamp: number): string => {
   const date = new Date(timestamp * 1000) 
   let minutes = date.getMinutes().toString()
-  minutes.length == 1 ? minutes = `0${minutes}` : minutes
+  if (minutes.length == 1) minutes = `0${minutes}`
   return `${date.getHours()}:${minutes}`
 }; 
 
@@ -40,6 +40,18 @@ export const blocksToHoursAndMinutes = (timestamp: number): string | undefined =
 
   return response 
 };
+
+export const blocksToApproxDuration = (blocks: bigint, blocksPerHour: number): string => {
+  const totalMinutes = Math.round((Number(blocks) / blocksPerHour) * 60)
+  if (totalMinutes < 1) return '<1m'
+  if (totalMinutes < 60) return `appr. ${totalMinutes}m`
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours < 24) return minutes > 0 ? `appr. ${hours}h ${minutes}m` : `appr. ${hours}h`
+  const days = Math.floor(hours / 24)
+  const remainHours = hours % 24
+  return remainHours > 0 ? `appr. ${days}d ${remainHours}h` : `appr. ${days}d`
+}
 
 export const toDDMMYYYY = (timestamp: number): string => {
   const date = new Date(timestamp * 1000)

@@ -8,14 +8,14 @@ import { PowersTypes } from "../interfaces/PowersTypes.sol";
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 
 /// @title SlateRegistry
-/// @notice A contract to manage elections between slates of executable actions.   
-/// @dev IMPORTANT: the contract needs to have been assigned its own role Id in the Powers protocol. Without it, it will not bbe able to execute the results of a slate vote. If more than one address holds the role, the contract will revert. 
+/// @notice A contract to manage elections between slates of executable actions.
+/// @dev IMPORTANT: the contract needs to have been assigned its own role Id in the Powers protocol. Without it, it will not bbe able to execute the results of a slate vote. If more than one address holds the role, the contract will revert.
 /// @author 7Cedars
 contract SlateRegistry is Ownable {
     // Election storage
-    struct Election { 
-        uint8 flowIndex; 
-        uint8 maxVotes; 
+    struct Election {
+        uint8 flowIndex;
+        uint8 maxVotes;
         uint8 maxWinners;
         uint48 startBlock;
         uint48 endBlock;
@@ -27,12 +27,12 @@ contract SlateRegistry is Ownable {
     mapping(uint256 electionId => mapping(uint16 slate => bool)) public slateRegistered;
     mapping(uint256 electionId => mapping(uint16 slate => uint32)) votesCount;
     mapping(uint256 electionId => mapping(address voter => bool)) hasVoted;
-    
-    uint48 immutable public voteDuration;
-    uint48 immutable public submitSlateDuration;  
-    uint256 immutable public roleId; // roleId of the registry. Has to be unique. 
-    uint16 immutable public submissionMandateId; // the mandateId used to submit slates.
-    uint16 immutable public revokeMandateId; // the mandateId used revoke slates.
+
+    uint48 public immutable voteDuration;
+    uint48 public immutable submitSlateDuration;
+    uint256 public immutable roleId; // roleId of the registry. Has to be unique.
+    uint16 public immutable submissionMandateId; // the mandateId used to submit slates.
+    uint16 public immutable revokeMandateId; // the mandateId used revoke slates.
 
     // Events
     event SlateReceived(uint256 indexed electionId, address indexed slate);
@@ -46,7 +46,7 @@ contract SlateRegistry is Ownable {
     constructor(uint48 _submitSlateDuration, uint48 _voteDuration, uint256 _roleId) Ownable(msg.sender) {
         submitSlateDuration = _submitSlateDuration;
         voteDuration = _voteDuration;
-        roleId = _roleId; 
+        roleId = _roleId;
     }
 
     // Functions
@@ -55,33 +55,38 @@ contract SlateRegistry is Ownable {
     /// @param maxSlates Maximum number of slates allowed in the election.
     /// @param maxVotes Maximum number of votes allowed per voter.
     /// @param maxWinners Maximum number of winners allowed in the election.
-    function createElection(string memory electionTitle, uint8 maxSlates, uint8 maxVotes, uint8 maxWinners) external returns (uint256) {
+    function createElection(string memory electionTitle, uint8 maxSlates, uint8 maxVotes, uint8 maxWinners)
+        external
+        returns (uint256)
+    {
         uint256 electionId = uint256(keccak256(abi.encodePacked(msg.sender, electionTitle)));
 
         if (IPowers(owner()).getAmountRoleHolders(roleId) > 1) {
-            revert ("Multiple role holders not supported for slate registry");
-        } 
+            revert("Multiple role holders not supported for slate registry");
+        }
         if (elections[electionId].startBlock != 0) revert("vote already exists");
 
         // initialise election
-        PowersTypes.Flow memory election = PowersTypes.Flow({
-            mandateIds: new uint16[](maxSlates),
-            nameDescription: electionTitle
-        });
+        PowersTypes.Flow memory election =
+            PowersTypes.Flow({ mandateIds: new uint16[](maxSlates), nameDescription: electionTitle });
         IPowers(owner()).addFlow(election);
 
-        elections[electionId] =
-            Election({ 
-                flowIndex: uint8(IPowers(owner()).getFlowCount() - 1), 
-                startBlock: uint48(block.number) + submitSlateDuration, 
-                endBlock: uint48(block.number) + submitSlateDuration + voteDuration, 
-                electionTitle: electionTitle,
-                maxVotes: maxVotes,
-                maxWinners: maxWinners
-            });
+        elections[electionId] = Election({
+            flowIndex: uint8(IPowers(owner()).getFlowCount() - 1),
+            startBlock: uint48(block.number) + submitSlateDuration,
+            endBlock: uint48(block.number) + submitSlateDuration + voteDuration,
+            electionTitle: electionTitle,
+            maxVotes: maxVotes,
+            maxWinners: maxWinners
+        });
 
-        emit ElectionCreated(electionId, electionTitle, uint48(block.number) + submitSlateDuration, uint48(block.number) + submitSlateDuration + voteDuration);
-        
+        emit ElectionCreated(
+            electionId,
+            electionTitle,
+            uint48(block.number) + submitSlateDuration,
+            uint48(block.number) + submitSlateDuration + voteDuration
+        );
+
         return electionId;
     }
 
@@ -89,7 +94,7 @@ contract SlateRegistry is Ownable {
     /// @dev Called by Powers (owner) as part of the AddSlate mandate execution.
     /// @param electionId ID of the election.
     /// @param mandateId The mandate ID of the slate to register.
-    function registerSlate(uint256 electionId, uint16 mandateId) external onlyOwner() {
+    function registerSlate(uint256 electionId, uint16 mandateId) external onlyOwner {
         if (block.number >= elections[electionId].startBlock) revert("submission phase closed");
         if (slateRegistered[electionId][mandateId]) revert("slate already registered");
         slateRegistered[electionId][mandateId] = true;
@@ -101,7 +106,7 @@ contract SlateRegistry is Ownable {
     /// @dev Called by Powers (owner) as part of the RemoveSlate mandate execution.
     /// @param electionId ID of the election.
     /// @param mandateId The mandate ID of the slate to remove.
-    function removeSlate(uint256 electionId, uint16 mandateId) external onlyOwner() {
+    function removeSlate(uint256 electionId, uint16 mandateId) external onlyOwner {
         if (block.number >= elections[electionId].startBlock) revert("submission phase closed");
         if (!slateRegistered[electionId][mandateId]) revert("slate not registered");
         slateRegistered[electionId][mandateId] = false;
@@ -121,7 +126,7 @@ contract SlateRegistry is Ownable {
     /// Election for nominees in a vote
     /// @param electionId ID of the vote.
     /// @param caller Address of the voter.
-    function vote(uint256 electionId, address caller, uint16[] memory slateIndexes) external onlyOwner() {        
+    function vote(uint256 electionId, address caller, uint16[] memory slateIndexes) external onlyOwner {
         Election storage currentElection = elections[electionId];
         if (block.number < currentElection.startBlock || block.number > currentElection.endBlock) {
             revert("vote closed");
@@ -130,8 +135,8 @@ contract SlateRegistry is Ownable {
         if (slateIndexes.length > currentElection.maxVotes) revert("too many votes");
 
         hasVoted[electionId][caller] = true;
-        // Cast vote for a slate (by its mandate Id). 
-        // Note there is no check if the mandate Id is actually part of the election. If it is an incorrect vote, the vote will simply not be counted in the election results. 
+        // Cast vote for a slate (by its mandate Id).
+        // Note there is no check if the mandate Id is actually part of the election. If it is an incorrect vote, the vote will simply not be counted in the election results.
         for (uint256 i = 0; i < slateIndexes.length; i++) {
             uint16 slateIndex = slateIndexes[i];
             votesCount[electionId][slateIndex]++;
@@ -139,15 +144,18 @@ contract SlateRegistry is Ownable {
         }
     }
 
-    function executeResults(uint256 electionId) external onlyOwner() {
-        // retrieve election results.  
+    function executeResults(uint256 electionId) external onlyOwner {
+        // retrieve election results.
         Election storage currentElection = elections[electionId];
-        
-        (uint16[] memory rankedSlates, ) = getSlateRanking(electionId); 
+
+        (uint16[] memory rankedSlates,) = getSlateRanking(electionId);
 
         for (uint256 i = 0; i < currentElection.maxWinners; i++) {
             uint16 slateIndex = rankedSlates[i];
-            IPowers(owner()).request(slateIndex, "", i, string.concat("Execution of slate in election: ", currentElection.electionTitle));  
+            IPowers(owner())
+                .request(
+                    slateIndex, "", i, string.concat("Execution of slate in election: ", currentElection.electionTitle)
+                );
         }
     }
 
@@ -216,7 +224,7 @@ contract SlateRegistry is Ownable {
                     votes[j] = votes[j + 1];
                     votes[j + 1] = tempVotes;
 
-                    // Swap slates                    
+                    // Swap slates
                     uint16 tempSlate = rankedSlates[j];
                     rankedSlates[j] = rankedSlates[j + 1];
                     rankedSlates[j + 1] = tempSlate;

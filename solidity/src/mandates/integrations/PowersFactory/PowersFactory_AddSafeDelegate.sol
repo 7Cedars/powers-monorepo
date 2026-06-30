@@ -23,12 +23,10 @@ contract PowersFactory_AddSafeDelegate is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         // Decode the config to get the input params description string
         (,, string[] memory inputParamsDescription) = abi.decode(config, (uint16, address, string[]));
 

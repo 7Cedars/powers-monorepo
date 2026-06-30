@@ -3,11 +3,10 @@ pragma solidity ^0.8.26;
 
 // Run with: forge test --match-contract MandateSandbox_test -vvv
 
-import { console2 } from "forge-std/Test.sol";
+import { Test, console2 } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { Configurations } from "@script/Configurations.s.sol";
-import { TestHelperFunctions } from "../../test/TestSetup.t.sol";
 
 import { Deploy } from "./Deploy.s.sol";
 import { MandateSandboxRunners } from "./Runners.s.sol";
@@ -16,13 +15,15 @@ import { MandateSandboxRunners } from "./Runners.s.sol";
 /// @notice Fork-based tests for Mandate Sandbox, covering all eight `Conditions` fields.
 ///
 /// Prerequisites:
-///   export ARB_SEPOLIA_RPC_URL=<your-url>
-///   export TEST_ACCOUNT_KEY_1=<private key — Admin + Council, force-assigned after deploy>
-///   export TEST_ACCOUNT_KEY_2=<private key — Member>
-contract MandateSandbox_test is TestHelperFunctions {
+///   export SEPOLIA_RPC_URL=<your-url>
+contract MandateSandbox_test is Test {
+    Configurations helperConfig;
     Deploy deploy;
     address powers;
     MandateSandboxRunners runners;
+
+    uint256 constant ADMIN_KEY  = 1;
+    uint256 constant MEMBER_KEY = 2;
 
     address testAdmin; // also holds Council, for simplicity
     address testMember;
@@ -30,18 +31,19 @@ contract MandateSandbox_test is TestHelperFunctions {
     uint256[] councilKeys;
     uint256[] memberKeys;
 
-    uint256 fork;
-
     function setUp() public {
-        fork = vm.createFork(vm.envString("ARB_SEPOLIA_RPC_URL"));
-        vm.selectFork(fork);
+        vm.createSelectFork(vm.envString("SEPOLIA_RPC_URL"));
         helperConfig = new Configurations();
 
-        testAdmin = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_1"));
-        testMember = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_2"));
-        adminKeys = [vm.envUint("TEST_ACCOUNT_KEY_1")];
-        councilKeys = [vm.envUint("TEST_ACCOUNT_KEY_1")];
-        memberKeys = [vm.envUint("TEST_ACCOUNT_KEY_2")];
+        testAdmin  = vm.addr(ADMIN_KEY);
+        testMember = vm.addr(MEMBER_KEY);
+        adminKeys  = [ADMIN_KEY];
+        councilKeys = [ADMIN_KEY];
+        memberKeys = [MEMBER_KEY];
+
+        vm.deal(testAdmin,  10 ether);
+        vm.deal(testMember, 10 ether);
+        vm.deal(address(this), 1 ether);
 
         deploy = new Deploy();
         powers = address(deploy.run());
@@ -52,11 +54,9 @@ contract MandateSandbox_test is TestHelperFunctions {
         // assigns Admin/Council to the deployer, i.e. this test contract).
         runners.runInitialSetup(powers, memberKeys, block.timestamp);
 
-        // Force-assign Admin and Council to real EOAs so the Actions/Runners
-        // scripts (which broadcast with a private key) can exercise those roles.
-        // This bypasses governance — it's test setup only, exactly as the
-        // deploy script's automatic admin assignment would in a live deploy
-        // where the deployer wallet itself holds these roles.
+        // Force-assign Admin and Council to synthetic EOAs so the Runners
+        // (which use vm.startBroadcast(privateKey)) can exercise those roles.
+        // Bypasses governance — test setup only.
         vm.startPrank(powers);
         IPowers(powers).assignRole(0, testAdmin);
         IPowers(powers).assignRole(2, testAdmin);

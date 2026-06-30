@@ -30,12 +30,10 @@ contract SlateRegistry_ExecuteResult is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         bytes memory inputParams = abi.encode("string ElectionTitle");
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
@@ -46,7 +44,8 @@ contract SlateRegistry_ExecuteResult is Mandate {
     /// @param mandateCalldata Encoded election title
     /// @param nonce Unique nonce to build the action id
     function handleRequest(
-        address /* caller */,
+        address,
+        /* caller */
         address powers,
         uint16 mandateId,
         bytes calldata mandateCalldata,
@@ -66,7 +65,7 @@ contract SlateRegistry_ExecuteResult is Mandate {
         mem.slateRegistry = abi.decode(getConfig(powers, mandateId), (address));
 
         // Check that voting has ended
-        (, , , , mem.endBlock, ) = SlateRegistry(mem.slateRegistry).elections(mem.electionId);
+        (,,,, mem.endBlock,) = SlateRegistry(mem.slateRegistry).elections(mem.electionId);
         if (block.number <= mem.endBlock) revert("vote not yet closed");
 
         (targets, values, calldatas) = MandateUtilities.createEmptyArrays(1);

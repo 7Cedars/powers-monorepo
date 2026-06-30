@@ -24,17 +24,17 @@ git push -u origin staging
 
 ```bash
 # develop — require Vercel check + lint; no review needed
-gh api repos/7Cedars/powers-monorepo/branches/develop/protection \
+gh api repos/publius-projects/powers-monorepo/branches/develop/protection \
   --method PUT \
   --field enforce_admins=false \
   --field "required_status_checks[strict]=false" \
   --field "required_status_checks[contexts][]=Frontend Lint" \
-  --field "required_status_checks[contexts][]=<vercel-check-name>" \
+  --field "required_status_checks[contexts][]=Vercel – powers" \
   --field required_pull_request_reviews=null \
   --field restrictions=null
 
 # staging — source branch check + solidity + e2e; no review needed
-gh api repos/7Cedars/powers-monorepo/branches/staging/protection \
+gh api repos/publius-projects/powers-monorepo/branches/staging/protection \
   --method PUT \
   --field enforce_admins=false \
   --field "required_status_checks[strict]=true" \
@@ -45,7 +45,7 @@ gh api repos/7Cedars/powers-monorepo/branches/staging/protection \
   --field restrictions=null
 
 # main — source branch check + 1 reviewer; admins can bypass (overwritable)
-gh api repos/7Cedars/powers-monorepo/branches/main/protection \
+gh api repos/publius-projects/powers-monorepo/branches/main/protection \
   --method PUT \
   --field enforce_admins=false \
   --field "required_status_checks[strict]=true" \

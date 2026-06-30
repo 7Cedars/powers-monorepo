@@ -22,12 +22,10 @@ contract GovernedToken_BurnToAccess is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         // console2.log("waypoint 1");
         (string[] memory params,) = abi.decode(config, (string[], address));
         // console2.log("waypoint 2");

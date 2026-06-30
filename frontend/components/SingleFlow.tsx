@@ -22,7 +22,7 @@ import { useParams } from 'next/navigation'
 import { usePowersStore } from '@/context/store'
 import { bigintToRole } from '@/utils/bigintTo'
 import { hashAction } from '@/utils/hashAction'
-import { useBlocks } from '@/hooks/useBlocks'
+import { useBlocks, L2_TO_L1_CHAIN_MAP } from '@/hooks/useBlocks'
 import { parseChainId } from '@/utils/parsers'
 import { toFullDateFormat, toEurTimeFormat } from '@/utils/toDates'
 import { fromFutureBlockToDateTime } from '@/public/organisations/helpers'
@@ -156,7 +156,9 @@ interface MandateNodeData {
 const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
   const { mandate, powers, chainActionData, chainId, isHighlighted } = data
   const { timestamps, fetchTimestamps } = useBlocks()
-  const { data: blockNumber } = useBlockNumber()
+  const parsedChainId = parseChainId(chainId) as number
+  const blockChainId = (L2_TO_L1_CHAIN_MAP[parsedChainId] ?? parsedChainId) as number
+  const { data: blockNumber } = useBlockNumber({ chainId: blockChainId })
   const cond = mandate.conditions
 
   const mandateName = mandate.nameDescription?.split(':')[0] ?? `Mandate ${mandate.index}`
@@ -271,9 +273,8 @@ const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
       
       case 'voteEnded': {
         if (currentMandateAction && currentMandateAction.proposedAt && currentMandateAction.proposedAt != 0n && mandate.conditions?.votingPeriod && blockNumber != null) {
-          const parsedChainId = parseChainId(chainId)
           if (parsedChainId == null) return null
-          
+
           const voteEndBlock = BigInt(currentMandateAction.proposedAt) + BigInt(mandate.conditions.votingPeriod)
           return fromFutureBlockToDateTime(voteEndBlock, BigInt(blockNumber), parsedChainId)
         }
@@ -282,9 +283,8 @@ const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
 
       case 'delay': {
         if (currentMandateAction && currentMandateAction.proposedAt && currentMandateAction.proposedAt != 0n && mandate.conditions?.timelock && mandate.conditions.timelock != 0n && blockNumber != null) {
-          const parsedChainId = parseChainId(chainId)
           if (parsedChainId == null) return null
-          
+
           const delayEndBlock = BigInt(currentMandateAction.proposedAt) + BigInt(mandate.conditions.timelock)
           return fromFutureBlockToDateTime(delayEndBlock, BigInt(blockNumber), parsedChainId)
         }
@@ -299,12 +299,10 @@ const MandateNode: React.FC<NodeProps<MandateNodeData>> = ({ data }) => {
       }
       
       case 'throttle':
-        if (mandate.conditions?.throttleExecution && blockNumber != null) {  
-          const latestFulfilledAction = mandate.actions ? Math.max(...mandate.actions.map(action => Number(action.fulfilledAt)), 1) : 0
-          const parsedChainId = parseChainId(chainId)
+        if (mandate.conditions?.throttleExecution && blockNumber != null) {
           if (parsedChainId == null) return null
-
-          const throttlePassBlock = BigInt(latestFulfilledAction + Number(mandate.conditions.throttleExecution))
+          const latestFulfilledAction = mandate.actions ? Math.max(...mandate.actions.map(action => Number(action.fulfilledAt || 0n)), 0) : 0
+          const throttlePassBlock = BigInt(latestFulfilledAction) + BigInt(mandate.conditions.throttleExecution)
           return fromFutureBlockToDateTime(throttlePassBlock, BigInt(blockNumber), parsedChainId)
         }
         return null

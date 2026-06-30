@@ -36,8 +36,7 @@ contract MandateRegistryTest is TestSetupHelpers {
     function testRegisterMandateStoresEntry() public {
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(1)));
 
-        MandateRegistry.MandateEntry memory entry =
-            freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
+        MandateRegistry.MandateEntry memory entry = freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
 
         assertEq(entry.mandateAddress, openActionAddr);
         assertTrue(entry.isActive);
@@ -70,8 +69,7 @@ contract MandateRegistryTest is TestSetupHelpers {
     function testGetMandateEntryReturnsCorrectAddress() public {
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(1)));
 
-        MandateRegistry.MandateEntry memory entry =
-            freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
+        MandateRegistry.MandateEntry memory entry = freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
 
         assertEq(entry.mandateAddress, openActionAddr);
     }
@@ -89,8 +87,7 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(1)));
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
 
-        MandateRegistry.MandateEntry memory entry =
-            freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
+        MandateRegistry.MandateEntry memory entry = freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
         assertFalse(entry.isActive);
     }
 
@@ -99,8 +96,7 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
         freshRegistry.reactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
 
-        MandateRegistry.MandateEntry memory entry =
-            freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
+        MandateRegistry.MandateEntry memory entry = freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "OpenAction");
         assertTrue(entry.isActive);
     }
 
@@ -158,9 +154,7 @@ contract MandateRegistryTest is TestSetupHelpers {
 
     function testRegisterMandateRevertsInvalidInterface() public {
         // alice is an EOA — does not implement IMandate.
-        vm.expectRevert(
-            abi.encodeWithSelector(MandateRegistry.InvalidMandateInterface.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(MandateRegistry.InvalidMandateInterface.selector, alice));
         freshRegistry.registerMandate("OpenAction", alice, bytes32(uint256(1)));
     }
 
@@ -168,10 +162,7 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(1)));
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MandateRegistry.MandateAlreadyRegistered.selector,
-                MAJOR, MINOR, PATCH, "OpenAction"
-            )
+            abi.encodeWithSelector(MandateRegistry.MandateAlreadyRegistered.selector, MAJOR, MINOR, PATCH, "OpenAction")
         );
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(2)));
     }
@@ -182,30 +173,21 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MandateRegistry.MandateInactive.selector,
-                MAJOR, MINOR, PATCH, "OpenAction"
-            )
+            abi.encodeWithSelector(MandateRegistry.MandateInactive.selector, MAJOR, MINOR, PATCH, "OpenAction")
         );
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(2)));
     }
 
     function testGetMandateEntryRevertsWhenNotFound() public {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MandateRegistry.MandateNotFound.selector,
-                MAJOR, MINOR, PATCH, "Missing"
-            )
+            abi.encodeWithSelector(MandateRegistry.MandateNotFound.selector, MAJOR, MINOR, PATCH, "Missing")
         );
         freshRegistry.getMandateEntry(MAJOR, MINOR, PATCH, "Missing");
     }
 
     function testDeactivateMandateRevertsWhenNotFound() public {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MandateRegistry.MandateNotFound.selector,
-                MAJOR, MINOR, PATCH, "OpenAction"
-            )
+            abi.encodeWithSelector(MandateRegistry.MandateNotFound.selector, MAJOR, MINOR, PATCH, "OpenAction")
         );
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
     }
@@ -215,20 +197,14 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MandateRegistry.MandateInactive.selector,
-                MAJOR, MINOR, PATCH, "OpenAction"
-            )
+            abi.encodeWithSelector(MandateRegistry.MandateInactive.selector, MAJOR, MINOR, PATCH, "OpenAction")
         );
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
     }
 
     function testReactivateMandateRevertsWhenNotFound() public {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MandateRegistry.MandateNotFound.selector,
-                MAJOR, MINOR, PATCH, "OpenAction"
-            )
+            abi.encodeWithSelector(MandateRegistry.MandateNotFound.selector, MAJOR, MINOR, PATCH, "OpenAction")
         );
         freshRegistry.reactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
     }
@@ -237,10 +213,7 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(1)));
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MandateRegistry.MandateAlreadyRegistered.selector,
-                MAJOR, MINOR, PATCH, "OpenAction"
-            )
+            abi.encodeWithSelector(MandateRegistry.MandateAlreadyRegistered.selector, MAJOR, MINOR, PATCH, "OpenAction")
         );
         freshRegistry.reactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
     }
@@ -262,9 +235,7 @@ contract MandateRegistryTest is TestSetupHelpers {
 
     function testRegisterMandateRevertsNonOwner() public {
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(1)));
     }
 
@@ -272,9 +243,7 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.registerMandate("OpenAction", openActionAddr, bytes32(uint256(1)));
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
     }
 
@@ -283,9 +252,7 @@ contract MandateRegistryTest is TestSetupHelpers {
         freshRegistry.deactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         freshRegistry.reactivateMandate(MAJOR, MINOR, PATCH, "OpenAction");
     }
 
@@ -298,9 +265,7 @@ contract MandateRegistryTest is TestSetupHelpers {
         hashes[0] = bytes32(uint256(1));
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         freshRegistry.batchRegisterMandates(names, addrs, hashes);
     }
 }

@@ -670,7 +670,6 @@ contract Powers is EIP712, ERC165, IPowers, Context {
             || super.supportsInterface(interfaceId);
     }
 
-
     //////////////////////////////////////////////////////////////
     //                 VIEW / GETTER FUNCTIONS                  //
     //////////////////////////////////////////////////////////////

@@ -51,7 +51,7 @@ export const getConstants = (chainId: number): Constants => {
     }
     case 421614: // arb sepolia
       return {
-        BLOCKS_PER_HOUR: 14400, // 4 blocks per second
+        BLOCKS_PER_HOUR: 300, // block.number on Arbitrum returns L1 Sepolia block number
         MAX_BLOCKS_FETCH: 30_000,
         CHAINLINK_GAS_LIMIT: 300_000,
         CHAINLINK_FUNCTIONS_SUBSCRIPTION_ID: 384n,

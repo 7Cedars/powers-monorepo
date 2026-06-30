@@ -47,13 +47,13 @@ contract TestConstitutions is Test {
     string[] descriptions;
     string[] params;
 
-    // minimum mandate version to be used in testing. 
+    // minimum mandate version to be used in testing.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
     uint16 constant PATCH = 8;
 
     // function setUp() public {
-        // Set up any common state or variables needed for the tests
+    // Set up any common state or variables needed for the tests
     Configurations helperConfig = new Configurations();
     DeployMandates deployMandates = new DeployMandates();
     IMandateRegistry public registry = IMandateRegistry(deployMandates.run());
@@ -337,7 +337,10 @@ contract TestConstitutions is Test {
         address, /*openElection*/
         address, /*erc20DelegateElection*/
         address /*erc20Taxed*/
-    ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
+    )
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData)
+    {
         delete constitution; // restart constitution array.
 
         // Nominate - for self-nomination
@@ -462,7 +465,9 @@ contract TestConstitutions is Test {
     // 1. SelfSelect role 5, restricted to role 3  → caller-tracked actions
     // 2. StatementOfIntent, voteable by role 3    → voter-tracked actions
     // 3. RevokeInactiveAccounts monitoring role 3
-    function revokeInactiveAccountsTestConstitution(address /*daoMock*/)
+    function revokeInactiveAccountsTestConstitution(
+        address /*daoMock*/
+    )
         external
         returns (PowersTypes.MandateInitData[] memory)
     {
@@ -501,7 +506,7 @@ contract TestConstitutions is Test {
                 config: abi.encode(
                     uint256(3), // roleId to monitor
                     uint256(1), // minimumActionsNeeded
-                    uint256(5)  // numberActionsToCheck
+                    uint256(5) // numberActionsToCheck
                 ),
                 conditions: conditions
             })
@@ -518,7 +523,9 @@ contract TestConstitutions is Test {
     // 1. SelfSelect — public, assigns role 3 (lets tests populate holders)
     // 2. RevokeAccountsRoleId — public, targets role 3
     // 3. RevokeAccountsRoleId — restricted to role 1, targets role 3 (access control test)
-    function revokeAccountsRoleIdTestConstitution(address /*daoMock*/)
+    function revokeAccountsRoleIdTestConstitution(
+        address /*daoMock*/
+    )
         external
         returns (PowersTypes.MandateInitData[] memory)
     {
@@ -801,10 +808,10 @@ contract TestConstitutions is Test {
                 nameDescription: "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_OnReturnValue"),
                 config: abi.encode(
-                    bytes(""),   // paramsBefore: empty
-                    params,      // params_: ["uint256 Value"]
-                    uint16(8),   // parentMandateId = BespokeActionReturner (mandateId 8)
-                    bytes("")    // paramsAfter: empty
+                    bytes(""), // paramsBefore: empty
+                    params, // params_: ["uint256 Value"]
+                    uint16(8), // parentMandateId = BespokeActionReturner (mandateId 8)
+                    bytes("") // paramsAfter: empty
                 ),
                 conditions: conditions
             })
@@ -1231,7 +1238,12 @@ contract TestConstitutions is Test {
     //               INTEGRATION TEST: ELECTORAL                //
     //////////////////////////////////////////////////////////////
     // Delegate Token election flow
-    function delegateToken_IntegrationTestConstitution(address nominees, address, /*openElection*/ address simpleErc20Votes)
+    function delegateToken_IntegrationTestConstitution(
+        address nominees,
+        address,
+        /*openElection*/
+        address simpleErc20Votes
+    )
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
     {
@@ -1671,7 +1683,7 @@ contract TestConstitutions is Test {
         flows_ = new PowersTypes.Flow[](1);
         uint16[] memory flowMandates_ = new uint16[](1);
         flowMandates_[0] = 1;
-        flows_[0] = PowersTypes.Flow({mandateIds: flowMandates_, nameDescription: "Test Flow: governance mandates"});
+        flows_[0] = PowersTypes.Flow({ mandateIds: flowMandates_, nameDescription: "Test Flow: governance mandates" });
 
         return (constitution, flows_);
     }
@@ -1683,7 +1695,9 @@ contract TestConstitutions is Test {
     // 1. SelfSelect — public, assigns role 1 (target to revoke)
     // 2. SelfSelect — public, assigns role 2 (second target to revoke)
     // 3. Revoke_Mandates — restricted to role 1
-    function revokeMandatesTestConstitution(address /*daoMock*/)
+    function revokeMandatesTestConstitution(
+        address /*daoMock*/
+    )
         external
         returns (PowersTypes.MandateInitData[] memory)
     {
@@ -1763,7 +1777,9 @@ contract TestConstitutions is Test {
     //   1. pkg1 — contains one SelfSelect mandate (public access)
     //   2. pkg2 — empty package (public access, only self-revokes)
     //   3. pkg3 — contains one SelfSelect mandate (restricted to role 1)
-    function mandatePackageStaticTestConstitution(address /*daoMock*/)
+    function mandatePackageStaticTestConstitution(
+        address /*daoMock*/
+    )
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
     {
@@ -1901,12 +1917,13 @@ contract TestConstitutions is Test {
         // Flow 0: 3 empty slots — happy path (findEmptySlot returns index 0)
         flows_ = new PowersTypes.Flow[](2);
         uint16[] memory emptyFlow = new uint16[](3);
-        flows_[0] = PowersTypes.Flow({mandateIds: emptyFlow, nameDescription: "Slate election flow: 3 empty slots"});
+        flows_[0] = PowersTypes.Flow({ mandateIds: emptyFlow, nameDescription: "Slate election flow: 3 empty slots" });
 
         // Flow 1: 1 occupied slot (mandateId=1) — triggers "No empty slot in flow" revert
         uint16[] memory fullFlow = new uint16[](1);
         fullFlow[0] = 1;
-        flows_[1] = PowersTypes.Flow({mandateIds: fullFlow, nameDescription: "Slate election flow: all slots occupied"});
+        flows_[1] =
+            PowersTypes.Flow({ mandateIds: fullFlow, nameDescription: "Slate election flow: all slots occupied" });
 
         return (constitution, flows_);
     }

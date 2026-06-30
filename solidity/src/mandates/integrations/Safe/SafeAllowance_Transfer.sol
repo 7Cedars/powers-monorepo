@@ -37,20 +37,16 @@ contract SafeAllowance_Transfer is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         string[] memory params = new string[](3);
         params[0] = "address token";
         params[1] = "uint256 amount";
         params[2] = "address payableTo";
 
-        super.initializeMandate(
-            index, nameDescription, abi.encode(params), config
-        );
+        super.initializeMandate(index, nameDescription, abi.encode(params), config);
     }
 
     /// @notice Prepares the call to the Allowance Module

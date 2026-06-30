@@ -283,13 +283,10 @@ contract ExternalAction_FlexibleTest is TestSetupExecutive {
     function setUp() public override {
         super.setUp();
         mandateId = findMandateIdInOrg(
-            "ExternalAction_Flexible: A mandate to flexibly execute actions on another Powers instance.",
-            daoMock
+            "ExternalAction_Flexible: A mandate to flexibly execute actions on another Powers instance.", daoMock
         );
-        targetMandateId = findMandateIdInOrg(
-            "StatementOfIntent: A mandate to propose actions without execution.",
-            daoMock
-        );
+        targetMandateId =
+            findMandateIdInOrg("StatementOfIntent: A mandate to propose actions without execution.", daoMock);
     }
 
     // ─────────────────────────────────────────────
@@ -356,13 +353,10 @@ contract CheckExternalActionStateBasicTest is TestSetupExecutive {
     function setUp() public override {
         super.setUp();
         mandateId = findMandateIdInOrg(
-            "CheckExternalActionState: Checks if an action is fulfilled on a parent contract.",
-            daoMock
+            "CheckExternalActionState: Checks if an action is fulfilled on a parent contract.", daoMock
         );
-        parentMandateId = findMandateIdInOrg(
-            "StatementOfIntent: A mandate to propose actions without execution.",
-            daoMock
-        );
+        parentMandateId =
+            findMandateIdInOrg("StatementOfIntent: A mandate to propose actions without execution.", daoMock);
     }
 
     // ─────────────────────────────────────────────
@@ -412,8 +406,7 @@ contract CheckExternalActionStateRevertTest is TestSetupExecutive {
     function setUp() public override {
         super.setUp();
         mandateId = findMandateIdInOrg(
-            "CheckExternalActionState: Checks if an action is fulfilled on a parent contract.",
-            daoMock
+            "CheckExternalActionState: Checks if an action is fulfilled on a parent contract.", daoMock
         );
     }
 
@@ -541,13 +534,11 @@ contract ExternalAction_OnReturnValueBasicTest is TestSetupExecutive {
     function setUp() public override {
         super.setUp();
         mandateId = findMandateIdInOrg(
-            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
-            daoMock
+            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.", daoMock
         );
         parentMandateId = findMandateIdInOrg("BespokeActionReturner: Returns a value for testing.", daoMock);
-        targetMandateId = findMandateIdInOrg(
-            "StatementOfIntent: A mandate to propose actions without execution.", daoMock
-        );
+        targetMandateId =
+            findMandateIdInOrg("StatementOfIntent: A mandate to propose actions without execution.", daoMock);
     }
 
     function testInitializeMandatePrependsSystemParams() public view {
@@ -596,12 +587,10 @@ contract ExternalAction_OnReturnValueEdgeCaseTest is TestSetupExecutive {
     function setUp() public override {
         super.setUp();
         mandateId = findMandateIdInOrg(
-            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
-            daoMock
+            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.", daoMock
         );
-        targetMandateId = findMandateIdInOrg(
-            "StatementOfIntent: A mandate to propose actions without execution.", daoMock
-        );
+        targetMandateId =
+            findMandateIdInOrg("StatementOfIntent: A mandate to propose actions without execution.", daoMock);
     }
 
     function testHandleRequestRevertsIfCalldataMalformed() public {
@@ -629,8 +618,7 @@ contract ExternalAction_OnReturnValueAccessTest is TestSetupExecutive {
     function setUp() public override {
         super.setUp();
         mandateId = findMandateIdInOrg(
-            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
-            daoMock
+            "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.", daoMock
         );
     }
 
