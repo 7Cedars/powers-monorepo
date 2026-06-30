@@ -3,12 +3,11 @@ pragma solidity ^0.8.26;
 
 // Run with: forge test --match-contract GlobalEnvMovement_test -vvv
 
-import { console2 } from "forge-std/Test.sol";
+import { Test, console2 } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
-import { TestHelperFunctions } from "../../TestSetup.t.sol";
 
 import { Deploy } from "./Deploy.s.sol";
 import { GlobalEnvMovementActions } from "./Actions.s.sol";
@@ -18,11 +17,7 @@ import { GlobalEnvMovementActions } from "./Actions.s.sol";
 ///
 /// Prerequisites:
 ///   export SEPOLIA_RPC_URL=<your-url>
-///   export TEST_ACCOUNT_KEY_1=<private key — used as admin / first leader>
-///   export TEST_ACCOUNT_KEY_2=<private key>
-///   export TEST_ACCOUNT_KEY_3=<private key>
-///   export TEST_ACCOUNT_KEY_4=<private key>
-contract GlobalEnvMovement_test is TestHelperFunctions {
+contract GlobalEnvMovement_test is Test {
     struct Mem {
         uint256 nonce;
         uint256 electionId;
@@ -30,11 +25,17 @@ contract GlobalEnvMovement_test is TestHelperFunctions {
     }
     Mem mem;
 
+    Configurations helperConfig;
     Deploy deploy;
     address powers;
     address leaderElectionRegistry;
     address subOrgFactory;
     GlobalEnvMovementActions actions;
+
+    uint256 constant ACCOUNT_KEY_1 = 1;
+    uint256 constant ACCOUNT_KEY_2 = 2;
+    uint256 constant ACCOUNT_KEY_3 = 3;
+    uint256 constant ACCOUNT_KEY_4 = 4;
 
     address testAccount1;
     address testAccount2;
@@ -44,29 +45,30 @@ contract GlobalEnvMovement_test is TestHelperFunctions {
     uint256[] memberKeys;
     uint256[] coordinatorKeys;
 
-    uint256 fork;
-
     function setUp() public {
-        fork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
-        vm.selectFork(fork);
+        vm.createSelectFork(vm.envString("SEPOLIA_RPC_URL"));
+        helperConfig = new Configurations();
 
-        testAccount1 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_1"));
-        testAccount2 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_2"));
-        testAccount3 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_3"));
-        testAccount4 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_4"));
+        testAccount1 = vm.addr(ACCOUNT_KEY_1);
+        testAccount2 = vm.addr(ACCOUNT_KEY_2);
+        testAccount3 = vm.addr(ACCOUNT_KEY_3);
+        testAccount4 = vm.addr(ACCOUNT_KEY_4);
 
-        memberKeys      = [vm.envUint("TEST_ACCOUNT_KEY_1"), vm.envUint("TEST_ACCOUNT_KEY_2"), vm.envUint("TEST_ACCOUNT_KEY_3")];
-        coordinatorKeys = [vm.envUint("TEST_ACCOUNT_KEY_1"), vm.envUint("TEST_ACCOUNT_KEY_2")];
-        leaderKeys      = [vm.envUint("TEST_ACCOUNT_KEY_1")];
+        vm.deal(testAccount1, 10 ether);
+        vm.deal(testAccount2, 10 ether);
+        vm.deal(testAccount3, 10 ether);
+        vm.deal(testAccount4, 10 ether);
+        vm.deal(address(this), 1 ether);
+
+        memberKeys      = [ACCOUNT_KEY_1, ACCOUNT_KEY_2, ACCOUNT_KEY_3];
+        coordinatorKeys = [ACCOUNT_KEY_1, ACCOUNT_KEY_2];
+        leaderKeys      = [ACCOUNT_KEY_1];
 
         deploy = new Deploy();
         (powers, subOrgFactory, leaderElectionRegistry) = deploy.run();
 
         actions = new GlobalEnvMovementActions();
-
-        // Run initial setup
         actions.runInitialSetup(powers, memberKeys, block.timestamp);
-        helperConfig = new Configurations();
     }
 
     ///////////////////////////////////////////////////////////////////////////

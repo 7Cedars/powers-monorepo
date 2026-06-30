@@ -1615,6 +1615,8 @@ test.describe('forum action detail page', () => {
           // proposedAt + timelock (50) is behind the pinned mock block (100).
           actions: [{ actionId: ACTION_ID, state: 5, description: ACTION_DESCRIPTION, proposedAt: 30n, callData: AMOUNT_CALLDATA, nonce: ACTION_NONCE }],
         }],
+      }, {
+        roleGrants: [{ contractAddress: POWERS_101_ADDRESS, account: TEST_ADDRESS, roleId: MEMBER_ROLE, since: 1n }],
       });
       await page.goto(ACTION_PATH);
 
