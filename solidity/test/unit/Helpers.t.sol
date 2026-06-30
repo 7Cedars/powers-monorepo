@@ -1813,7 +1813,7 @@ pragma solidity ^0.8.26;
 
 //         bytes memory bytesInput = zkProof.getBytesInputs();
 
-//         vm.prank(address(daoMock)); 
+//         vm.prank(address(daoMock));
 
 //         DisclosedData memory disclosedData = ZKPassport_PowersRegistry(registryAddress).getDisclosed(cedars);
 

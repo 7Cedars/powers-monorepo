@@ -8,6 +8,7 @@ import { toFullDateFormat, toEurTimeFormat } from '@/utils/toDates';
 import { fromFutureBlockToDateTime } from '@/public/organisations/helpers';
 import { useBlockNumber } from 'wagmi';
 import { usePowersStore } from '@/context/store';
+import { hashAction } from '@/utils/hashAction';
 
 interface TimelineProps {
   action: Action;
@@ -95,38 +96,48 @@ export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) 
   const timelineItems = useMemo(() => {
     const items: Array<{ label: string; value: string; show: boolean }> = [];
 
-    // Only show needFulfilled if it exists AND has been triggered
+    // 1. needFulfilled — always show when condition is set
     if (cond?.needFulfilled != null && BigInt(cond.needFulfilled) !== 0n) {
-      // Check if dependent action has been fulfilled
       const dependentMandate = powers.mandates?.find(m => BigInt(m.index) === BigInt(cond.needFulfilled));
-      const hasFulfilledAction = dependentMandate?.actions?.some(a => a.fulfilledAt && BigInt(a.fulfilledAt) > 0n);
-      
-      if (hasFulfilledAction) {
-        items.push({
-          label: `#${cond.needFulfilled.toString()} Fulfilled`,
-          value: '✓',
-          show: true
-        });
+      let hasFulfilledAction = false;
+      if (action.callData && action.nonce) {
+        const dependentActionId = hashAction(
+          BigInt(cond.needFulfilled),
+          action.callData,
+          BigInt(action.nonce)
+        ).toString();
+        const dependentAction = dependentMandate?.actions?.find(a => a.actionId === dependentActionId);
+        hasFulfilledAction = !!dependentAction?.fulfilledAt && BigInt(dependentAction.fulfilledAt) > 0n;
       }
+      items.push({
+        label: `#${cond.needFulfilled.toString()} Fulfilled`,
+        value: hasFulfilledAction ? '✓' : '✗',
+        show: true
+      });
     }
 
-    // Only show needNotFulfilled if it exists AND has been checked
+    // 2. needNotFulfilled — always show when condition is set
     if (cond?.needNotFulfilled != null && BigInt(cond.needNotFulfilled) !== 0n) {
       const dependentMandate = powers.mandates?.find(m => BigInt(m.index) === BigInt(cond.needNotFulfilled));
-      const hasFulfilledAction = dependentMandate?.actions?.some(a => a.fulfilledAt && BigInt(a.fulfilledAt) > 0n);
-      
-      // Only show if the check has been performed (i.e., action has been proposed or later)
-      if (action.proposedAt && BigInt(action.proposedAt) > 0n) {
-        items.push({
-          label: `#${cond.needNotFulfilled.toString()} Not Fulfilled`,
-          value: hasFulfilledAction ? '✗' : '✓',
-          show: true
-        });
+      let hasFulfilledAction = false;
+      if (action.callData && action.nonce) {
+        const dependentActionId = hashAction(
+          BigInt(cond.needNotFulfilled),
+          action.callData,
+          BigInt(action.nonce)
+        ).toString();
+        const dependentAction = dependentMandate?.actions?.find(a => a.actionId === dependentActionId);
+        hasFulfilledAction = !!dependentAction?.fulfilledAt && BigInt(dependentAction.fulfilledAt) > 0n;
       }
+      items.push({
+        label: `#${cond.needNotFulfilled.toString()} Not Fulfilled`,
+        value: hasFulfilledAction ? '✗' : '✓',
+        show: true
+      });
     }
 
-    // Throttle check (only show if throttle exists and action has progressed)
-    if (cond?.throttleExecution != null && BigInt(cond.throttleExecution) !== 0n && action.proposedAt && BigInt(action.proposedAt) > 0n) {
+    // 3. Throttle check — always show when condition is set
+    if (cond?.throttleExecution != null && BigInt(cond.throttleExecution) !== 0n) {
       const latestFulfilledAction = mandate.actions ? Math.max(...mandate.actions.map(a => Number(a.fulfilledAt || 0)), 1) : 0;
       const throttlePassed = (latestFulfilledAction + Number(cond.throttleExecution)) < Number(blockNumber || 0);
       items.push({
@@ -136,7 +147,7 @@ export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) 
       });
     }
 
-    // Proposal created
+    // 4. Proposed — show when mandate requires a vote or timelock
     if ((cond?.quorum != null && BigInt(cond.quorum) > 0n) || (cond?.timelock != null && BigInt(cond.timelock) > 0n)) {
       items.push({
         label: 'Proposed',
@@ -145,38 +156,44 @@ export const Timeline: React.FC<TimelineProps> = ({ action, mandate, chainId }) 
       });
     }
 
-    // Vote ended
-    if (cond?.quorum != null && BigInt(cond.quorum) > 0n && action.proposedAt && BigInt(action.proposedAt) > 0n) {
-      const voteEndBlock = BigInt(action.proposedAt) + BigInt(cond.votingPeriod || 0);
-      const votePassed = blockNumber && voteEndBlock <= blockNumber;
-      
-      items.push({
-        label: 'Vote End',
-        value: votePassed ? formatBlockNumberOrTimestamp(voteEndBlock) : getFutureDateTime(voteEndBlock),
-        show: true
-      });
+    // 5. Vote End — always show when quorum is set, placeholder until proposed
+    if (cond?.quorum != null && BigInt(cond.quorum) > 0n) {
+      if (action.proposedAt && BigInt(action.proposedAt) > 0n) {
+        const voteEndBlock = BigInt(action.proposedAt) + BigInt(cond.votingPeriod || 0);
+        const votePassed = blockNumber && voteEndBlock <= blockNumber;
+        items.push({
+          label: 'Vote End',
+          value: votePassed ? formatBlockNumberOrTimestamp(voteEndBlock) : getFutureDateTime(voteEndBlock),
+          show: true
+        });
+      } else {
+        items.push({ label: 'Vote End', value: '-', show: true });
+      }
     }
 
-    // Delay passed
-    if (cond?.timelock != null && BigInt(cond.timelock) > 0n && action.proposedAt && BigInt(action.proposedAt) > 0n) {
-      const delayEndBlock = BigInt(action.proposedAt) + BigInt(cond.timelock || 0);
-      const delayPassed = blockNumber && delayEndBlock <= blockNumber;
-      
-      items.push({
-        label: 'Delay End',
-        value: delayPassed ? formatBlockNumberOrTimestamp(delayEndBlock) : getFutureDateTime(delayEndBlock),
-        show: true
-      });
+    // 6. Delay End — always show when timelock is set, placeholder until proposed
+    if (cond?.timelock != null && BigInt(cond.timelock) > 0n) {
+      if (action.proposedAt && BigInt(action.proposedAt) > 0n) {
+        const delayEndBlock = BigInt(action.proposedAt) + BigInt(cond.timelock || 0);
+        const delayPassed = blockNumber && delayEndBlock <= blockNumber;
+        items.push({
+          label: 'Delay End',
+          value: delayPassed ? formatBlockNumberOrTimestamp(delayEndBlock) : getFutureDateTime(delayEndBlock),
+          show: true
+        });
+      } else {
+        items.push({ label: 'Delay End', value: '-', show: true });
+      }
     }
 
-    // Requested
+    // 7. Requested
     items.push({
       label: 'Requested',
       value: formatBlockNumberOrTimestamp(action.requestedAt ? BigInt(action.requestedAt) : undefined),
       show: true
     });
 
-    // Fulfilled
+    // 8. Fulfilled
     items.push({
       label: 'Fulfilled',
       value: formatBlockNumberOrTimestamp(action.fulfilledAt ? BigInt(action.fulfilledAt) : undefined),

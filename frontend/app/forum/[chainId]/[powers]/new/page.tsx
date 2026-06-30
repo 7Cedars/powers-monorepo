@@ -343,6 +343,12 @@ export default function NewActionPage() {
                     <span className="text-foreground">{mandate.conditions.timelock.toString()} blocks</span>
                   </div>
                 )}
+                {mandate.conditions?.throttleExecution != null && BigInt(mandate.conditions.throttleExecution) !== 0n && (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">Throttle</span>
+                    <span className="text-foreground">{mandate.conditions.throttleExecution.toString()} blocks</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -45,7 +45,13 @@ interface IGoverned721 is IERC721 {
     function getArtist(uint256 tokenId) external view returns (address artist);
     function getSplit(Role role) external view returns (uint8 percentage);
     function getTransferData(uint256 actionId) external view returns (TransferData memory);
-    function safeTransferFromWithETH(address oldOwner, address newOwner, uint256 tokenId, uint256 quantity, uint256 nonce) external payable;
+    function safeTransferFromWithETH(
+        address oldOwner,
+        address newOwner,
+        uint256 tokenId,
+        uint256 quantity,
+        uint256 nonce
+    ) external payable;
 }
 
 contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
@@ -70,7 +76,7 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
     function setPaymentId(uint16 _mandateId) external onlyOwner {
         paymentMandateId = _mandateId;
     }
- 
+
     function setSplit(Role role, uint8 percentage) external onlyOwner {
         if (uint8(role) > 4) {
             revert(
@@ -185,14 +191,14 @@ contract Governed721 is ERC721URIStorage, IGoverned721, Ownable {
 
         // Handle native ETH payment
         if (msg.value < quantity) revert("Insufficient ETH sent");
-        
+
         // Transfer ETH to owner
-        (bool success,) = payable(owner()).call{value: quantity}("");
+        (bool success,) = payable(owner()).call{ value: quantity }("");
         if (!success) revert("ETH transfer failed");
-        
+
         // Refund excess ETH to sender
         if (msg.value > quantity) {
-            (bool refundSuccess,) = payable(msg.sender).call{value: msg.value - quantity}("");
+            (bool refundSuccess,) = payable(msg.sender).call{ value: msg.value - quantity }("");
             if (!refundSuccess) revert("ETH refund failed");
         }
 

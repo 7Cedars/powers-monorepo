@@ -587,12 +587,8 @@ contract MandateHandleRequestTest is TestSetupMandate {
         mandateCalldata = abi.encode(targets, values, calldatas);
 
         // act: call handleRequest
-        (
-            ,
-            address[] memory returnedTargets,
-            uint256[] memory returnedValues,
-            bytes[] memory returnedCalldatas
-        ) = testMandate.handleRequest(bob, address(daoMock), mandateId, mandateCalldata, nonce);
+        (, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas) =
+            testMandate.handleRequest(bob, address(daoMock), mandateId, mandateCalldata, nonce);
 
         // assert: verify decoded data matches input
         assertEq(returnedTargets.length, targets.length);

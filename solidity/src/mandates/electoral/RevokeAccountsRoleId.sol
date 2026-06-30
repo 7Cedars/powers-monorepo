@@ -26,12 +26,10 @@ contract RevokeAccountsRoleId is Mandate {
     }
 
     /// @notice Initialize the mandate with the given parameters
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         (, string[] memory inputParams_) = abi.decode(config, (uint256, string[]));
         super.initializeMandate(index, nameDescription, abi.encode(inputParams_), config);
     }

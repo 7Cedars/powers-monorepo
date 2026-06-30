@@ -3,6 +3,7 @@
 import React from "react";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { usePowersStore, setStatus, setError, useSavedProtocolsStore, setAction, useActionStore } from "@/context/store";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useEffectiveAddress } from "@/hooks/useEffectiveAddress";
@@ -112,10 +113,10 @@ export default function ForumLayout({ children }: Readonly<{ children: React.Rea
       <header className="hidden sm:flex w-full flex-col items-center border-b border-border px-3 sm:px-4 py-4 flex-shrink-0">
         <div className="w-full flex flex-nowrap items-center justify-between max-w-4xl gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-4">
-            <a href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider truncate hover:text-foreground/80 transition-colors">{
+            <Link href="/forum" className="font-mono text-base sm:text-lg text-foreground tracking-wider truncate hover:text-foreground/80 transition-colors">{
                 powers.name ? powers.name : "Forum"
-            } 
-            </a>
+            }
+            </Link>
           </div> 
           <div className="flex items-center gap-2 sm:gap-4">
             {ready && authenticated && walletsReady && wallets[0] &&

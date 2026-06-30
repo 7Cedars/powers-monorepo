@@ -19,13 +19,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         super.setUp();
 
         deployer = new PowersDeployer();
-        factory = new PowersFactory(
-            "https://testUri",
-            10_000,
-            10_000,
-            25,
-            address(deployer)
-        );
+        factory = new PowersFactory("https://testUri", 10_000, 10_000, 25, address(deployer));
     }
 
     // ─── BASIC BEHAVIOUR ───
@@ -96,8 +90,7 @@ contract PowersFactoryTest is TestSetupHelpers {
 
         uint16[] memory newIds = new uint16[](1);
         newIds[0] = 2;
-        PowersTypes.Flow memory replacement =
-            PowersTypes.Flow({ mandateIds: newIds, nameDescription: "Replaced flow" });
+        PowersTypes.Flow memory replacement = PowersTypes.Flow({ mandateIds: newIds, nameDescription: "Replaced flow" });
 
         factory.replaceFlow(0, replacement);
 
@@ -202,9 +195,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory initData = testConstitutions.helpersTestConstitution();
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         factory.addMandates(initData);
     }
 
@@ -213,9 +204,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         factory.addMandates(initData);
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         factory.replaceMandate(0, initData[0]);
     }
 
@@ -226,9 +215,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         flows[0] = PowersTypes.Flow({ mandateIds: ids, nameDescription: "Test flow" });
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         factory.addFlows(flows);
     }
 
@@ -240,9 +227,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         factory.addFlows(flows);
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         factory.replaceFlow(0, flows[0]);
     }
 
@@ -250,9 +235,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         factory.addMandates(testConstitutions.helpersTestConstitution());
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         factory.createPowers("Unauthorized DAO");
     }
 
@@ -260,9 +243,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         factory.addMandates(testConstitutions.helpersTestConstitution());
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         factory.createPowers("Unauthorized DAO", bob);
     }
 }

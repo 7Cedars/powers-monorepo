@@ -126,9 +126,8 @@ contract Governed721Test is TestSetupHelpers {
         g721.safeTransferFrom(alice, charlotte, TOKEN_ID_1, "");
 
         // Compute the transferId that the contract would have used
-        uint256 expectedTransferId = uint256(
-            keccak256(abi.encode(alice, charlotte, TOKEN_ID_1, address(0), uint256(0), block.number))
-        );
+        uint256 expectedTransferId =
+            uint256(keccak256(abi.encode(alice, charlotte, TOKEN_ID_1, address(0), uint256(0), block.number)));
 
         IGoverned721.TransferData memory td = g721.getTransferData(expectedTransferId);
         assertEq(td.oldOwner, alice);
@@ -164,7 +163,7 @@ contract Governed721Test is TestSetupHelpers {
 
         // alice sends 1 ETH, quantity = 0.5 ETH; excess 0.5 ETH is refunded to alice
         vm.prank(alice);
-        g721.safeTransferFromWithETH{value: 1 ether}(alice, charlotte, TOKEN_ID_1, 0.5 ether, 1);
+        g721.safeTransferFromWithETH{ value: 1 ether }(alice, charlotte, TOKEN_ID_1, 0.5 ether, 1);
 
         assertEq(g721.ownerOf(TOKEN_ID_1), charlotte);
         // Test contract (owner) received 0.5 ETH
@@ -177,7 +176,7 @@ contract Governed721Test is TestSetupHelpers {
 
         vm.prank(alice);
         vm.expectRevert("Insufficient ETH sent");
-        g721.safeTransferFromWithETH{value: 0.1 ether}(alice, charlotte, TOKEN_ID_1, 0.5 ether, 1);
+        g721.safeTransferFromWithETH{ value: 0.1 ether }(alice, charlotte, TOKEN_ID_1, 0.5 ether, 1);
     }
 
     /// @notice safeTransferFromWithETH reverts when a blacklisted account is involved
@@ -187,7 +186,7 @@ contract Governed721Test is TestSetupHelpers {
 
         vm.prank(alice);
         vm.expectRevert("Blacklisted account involved in transfer");
-        g721.safeTransferFromWithETH{value: 1 ether}(alice, charlotte, TOKEN_ID_1, 0.5 ether, 1);
+        g721.safeTransferFromWithETH{ value: 1 ether }(alice, charlotte, TOKEN_ID_1, 0.5 ether, 1);
     }
 
     // ─── EDGE CASES ───
@@ -282,5 +281,5 @@ contract Governed721Test is TestSetupHelpers {
     }
 
     // Allow the test contract to receive ETH (needed for safeTransferFromWithETH tests)
-    receive() external payable {}
+    receive() external payable { }
 }

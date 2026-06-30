@@ -21,8 +21,8 @@ contract ElectionRegistry {
     mapping(uint256 electionId => mapping(address nominee => uint256)) votesCount;
     mapping(uint256 electionId => mapping(address voter => bool)) hasVoted;
 
-    uint48 immutable public voteDuration;  
-    uint48 immutable public nominationDuration;  
+    uint48 public immutable voteDuration;
+    uint48 public immutable nominationDuration;
 
     // Events
     event NominationReceived(uint256 indexed electionId, address indexed nominee);
@@ -52,15 +52,20 @@ contract ElectionRegistry {
         if (elections[electionId].owner != address(0)) revert("election already exists");
 
         // initialise election
-        elections[electionId] =
-            Election({ 
-                owner: msg.sender, 
-                startBlock: uint48(block.number) + nominationDuration, 
-                endBlock: uint48(block.number) + nominationDuration + voteDuration, 
-                title: title });
+        elections[electionId] = Election({
+            owner: msg.sender,
+            startBlock: uint48(block.number) + nominationDuration,
+            endBlock: uint48(block.number) + nominationDuration + voteDuration,
+            title: title
+        });
 
-        emit ElectionCreated(electionId, title, uint48(block.number) + nominationDuration, uint48(block.number) + nominationDuration + voteDuration);
-        
+        emit ElectionCreated(
+            electionId,
+            title,
+            uint48(block.number) + nominationDuration,
+            uint48(block.number) + nominationDuration + voteDuration
+        );
+
         return electionId;
     }
 

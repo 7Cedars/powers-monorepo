@@ -360,7 +360,6 @@ export const formatRoleName = (roleName: string): string => {
  * Helper to create a proposal configuration for StatementOfIntent
  */
 export const createProposalConfig = (inputParams: string[]) => {
-  const { encodeAbiParameters } = require("viem");
   return encodeAbiParameters(
     [{ name: 'inputParams', type: 'string[]' }],
     [inputParams]
@@ -375,7 +374,6 @@ export const createBespokeActionConfig = (
   functionSelector: `0x${string}`,
   inputParams: string[]
 ) => {
-  const { encodeAbiParameters } = require("viem");
   return encodeAbiParameters(
     [
       { name: 'target', type: 'address' },

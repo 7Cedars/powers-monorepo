@@ -24,10 +24,7 @@ contract PowersStub {
         return _flowCount;
     }
 
-    function request(uint16 mandateId, bytes calldata, uint256, string memory)
-        external
-        returns (uint256)
-    {
+    function request(uint16 mandateId, bytes calldata, uint256, string memory) external returns (uint256) {
         lastRequestMandateId = mandateId;
         requestCallCount++;
         return requestCallCount;

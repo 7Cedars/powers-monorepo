@@ -13,7 +13,7 @@ interface IPowersFactory is PowersTypes {
     function addMandates(MandateInitData[] memory _mandateInitData) external;
     function replaceMandate(uint256 index, MandateInitData memory _mandateInitData) external;
     function getMandate(uint256 index) external view returns (MandateInitData memory);
-    function createPowers(string memory name) external returns (address); 
+    function createPowers(string memory name) external returns (address);
     function getLatestDeployment() external view returns (address);
 }
 
@@ -112,7 +112,16 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @return The address of the deployed Powers contract.
     function createPowers(string memory name) external onlyOwner returns (address) {
         address powers = PowersDeployer(deployer)
-            .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, msg.sender);
+            .deploy(
+                name,
+                uri,
+                maxCallDataLength,
+                maxReturnDataLength,
+                maxExecutionsLength,
+                mandateInitData,
+                flows,
+                msg.sender
+            );
         latestDeployment = powers;
 
         return powers;
@@ -123,7 +132,9 @@ contract PowersFactory is IPowersFactory, Ownable {
     /// @return The address of the deployed Powers contract.
     function createPowers(string memory name, address admin) external onlyOwner returns (address) {
         address powers = PowersDeployer(deployer)
-            .deploy(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, admin);
+            .deploy(
+                name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, admin
+            );
         latestDeployment = powers;
 
         return powers;

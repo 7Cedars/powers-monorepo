@@ -17,16 +17,14 @@ contract Revoke_Mandates is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         string[] memory params = new string[](1);
         params[0] = "uint16[] mandateIds";
         super.initializeMandate(index, nameDescription, abi.encode(params), config);
-    } 
+    }
 
     /// @notice Build calls to revoke the configured mandates
     /// @param mandateCalldata Unused for this mandate

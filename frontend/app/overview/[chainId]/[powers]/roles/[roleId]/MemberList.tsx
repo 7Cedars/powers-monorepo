@@ -8,18 +8,15 @@ import { powersAbi } from "@/context/abi";
 import { readContracts } from "wagmi/actions";
 import { wagmiConfig } from "@/context/wagmiConfig";
 import { LoadingBox } from "@/components/LoadingBox";
-import { useChains } from "wagmi";
+import { AddressLink } from "@/components/AddressLink";
 
 export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId: bigint}) {
   const { chainId } = useParams<{ chainId: string }>()
-  const chains = useChains();
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<Error | null>(null)
   const [members, setMembers] = useState<`0x${string}`[]>([])
 
   // console.log("@MemberList: ", {powers, roleId, status, error, chainId})
-  const blockExplorerUrl = chains.find(chain => chain.id === parseInt(chainId))?.blockExplorers?.default.url;
-
   const fetchRoleHolders = useCallback(
     async (roleId: bigint) => {
       setError(null)
@@ -114,20 +111,12 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
                       </td>
                       
                       <td className="px-4 py-3">
-                        {blockExplorerUrl ? (
-                          <a
-                            href={`${blockExplorerUrl}/address/${member}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-foreground hover:text-primary hover:underline transition-colors"
-                          >
-                            {member}
-                          </a>
-                        ) : (
-                          <span className="text-foreground">
-                            {member}
-                          </span>
-                        )}
+                        <AddressLink
+                          address={member}
+                          chainId={chainId}
+                          showFull={true}
+                          className="text-foreground hover:text-primary"
+                        />
                       </td>
                     </tr>
                   )}

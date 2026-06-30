@@ -79,6 +79,25 @@ export function useXmtpClient() {
     resetStore()
   }, [resetStore])
 
+  const clearLocalData = useCallback(async () => {
+    resetStore()
+    try {
+      const dbs = await indexedDB.databases()
+      await Promise.all(
+        dbs
+          .filter(db => /xmtp/i.test(db.name ?? ''))
+          .map(db => new Promise<void>((res, rej) => {
+            const req = indexedDB.deleteDatabase(db.name!)
+            req.onsuccess = () => res()
+            req.onerror = () => rej(req.error)
+          }))
+      )
+      console.log('XMTP local data cleared')
+    } catch (err) {
+      console.warn('Failed to clear XMTP IndexedDB (non-fatal):', err)
+    }
+  }, [resetStore])
+
   const removeAllInstallations = useCallback(async () => {
     if (!client) {
       setError('No XMTP client connected')
@@ -109,5 +128,6 @@ export function useXmtpClient() {
     initializeClient,
     disconnect,
     removeAllInstallations,
+    clearLocalData,
   }
 }

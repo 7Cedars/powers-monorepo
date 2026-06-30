@@ -25,12 +25,10 @@ contract RenounceRole is Mandate {
         emit Mandate__Deployed(configParams);
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         string[] memory params = new string[](1);
         params[0] = "uint256 RoleId";
         super.initializeMandate(index, nameDescription, abi.encode(params), config);

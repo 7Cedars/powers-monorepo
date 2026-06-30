@@ -57,7 +57,8 @@ contract SlateRegistry_RemoveSlate is Mandate {
     /// @param mandateCalldata Encoded input parameters — must be identical to the corresponding AddSlate call
     /// @param nonce Nonce — must be identical to the corresponding AddSlate call
     function handleRequest(
-        address /* caller */,
+        address,
+        /* caller */
         address powers,
         uint16 mandateId,
         bytes calldata mandateCalldata,
@@ -75,7 +76,7 @@ contract SlateRegistry_RemoveSlate is Mandate {
         // Decode input parameters (same layout as AddSlate; only electionTitle is used here)
         {
             string memory electionTitle;
-            (electionTitle, , , , ) = abi.decode(mandateCalldata, (string, string, address[], uint256[], bytes[]));
+            (electionTitle,,,,) = abi.decode(mandateCalldata, (string, string, address[], uint256[], bytes[]));
             mem.electionId = uint256(keccak256(abi.encodePacked(powers, electionTitle)));
         }
 
@@ -87,7 +88,7 @@ contract SlateRegistry_RemoveSlate is Mandate {
         mem.slatesMandateId = abi.decode(IPowers(powers).getActionReturnData(addSlateActionId, 0), (uint16));
 
         // Get election flowIndex from SlateRegistry
-        (mem.flowIndex, , , , , ) = SlateRegistry(mem.slateRegistry).elections(mem.electionId);
+        (mem.flowIndex,,,,,) = SlateRegistry(mem.slateRegistry).elections(mem.electionId);
 
         // Find which slot in the flow holds this slate's mandate
         mem.slotIndex = _findMandateSlot(powers, mem.flowIndex, mem.slatesMandateId);
@@ -101,12 +102,7 @@ contract SlateRegistry_RemoveSlate is Mandate {
 
         // Call 2: Reset the flow slot to 0, freeing it for future submissions
         targets[1] = powers;
-        calldatas[1] = abi.encodeWithSelector(
-            IPowers.editFlowByIndex.selector,
-            mem.flowIndex,
-            mem.slotIndex,
-            uint16(0)
-        );
+        calldatas[1] = abi.encodeWithSelector(IPowers.editFlowByIndex.selector, mem.flowIndex, mem.slotIndex, uint16(0));
 
         // Call 3: Unregister the slate from SlateRegistry
         targets[2] = mem.slateRegistry;

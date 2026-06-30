@@ -27,7 +27,9 @@ export function DynamicInput({dataType, varName, values, onChange, index}: Input
   useEffect(() => {
     if (action.paramValues && action.paramValues.length > 0) {
       const newValues = values instanceof Array ? values : [values ?? ""]
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInputArray(newValues)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setItemsArray([...Array(newValues.length).keys()])
     }
   }, [action.paramValues, values])

@@ -24,7 +24,9 @@ import { SlateRegistry_RemoveSlate } from "@src/mandates/integrations/SlateRegis
 import { SlateRegistry_ExecuteResult } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
-import { PowersFactory_AddSafeDelegate } from "@src/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
+import {
+    PowersFactory_AddSafeDelegate
+} from "@src/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
 
 import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol";
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
@@ -268,28 +270,37 @@ contract SafeAllowanceTest is TestSetupIntegrations {
         // Compute the tx hash and pre-approve it as daoMock (the Safe owner).
         // Using approveHash is version-agnostic: the Sepolia fork runs Safe 1.4.0 bytecode whose
         // v=1 check passes executor through a different code path than the local library expects.
-        bytes32 enableModuleTxHash = Safe(treasury).getTransactionHash(
-            treasury, 0, enableModuleCalldata,
-            Enum.Operation.Call,
-            0, 0, 0, address(0), address(0),
-            Safe(treasury).nonce()
-        );
+        bytes32 enableModuleTxHash = Safe(treasury)
+            .getTransactionHash(
+                treasury,
+                0,
+                enableModuleCalldata,
+                Enum.Operation.Call,
+                0,
+                0,
+                0,
+                address(0),
+                address(0),
+                Safe(treasury).nonce()
+            );
         vm.prank(address(daoMock));
         Safe(treasury).approveHash(enableModuleTxHash);
 
         // v=1 approved-hash signature; no prank needed since hash is pre-approved.
-        bytes memory signature = abi.encodePacked(
-            uint256(uint160(address(daoMock))),
-            uint256(0),
-            uint8(1)
-        );
-        Safe(treasury).execTransaction(
-            treasury, 0, enableModuleCalldata,
-            Enum.Operation.Call,
-            0, 0, 0,
-            address(0), payable(address(0)),
-            signature
-        );
+        bytes memory signature = abi.encodePacked(uint256(uint160(address(daoMock))), uint256(0), uint8(1));
+        Safe(treasury)
+            .execTransaction(
+                treasury,
+                0,
+                enableModuleCalldata,
+                Enum.Operation.Call,
+                0,
+                0,
+                0,
+                address(0),
+                payable(address(0)),
+                signature
+            );
 
         // Now that the treasury is set, we can constitute the child DAO.
         // This ensures the child DAO is configured with the correct treasury address.
@@ -556,7 +567,7 @@ contract ElectionRegistryIntegrationTest is TestSetupIntegrations {
         );
 
         startBlock = uint48(block.number + 300); // matches ElectionRegistry nominationDuration
-        endBlock = uint48(block.number + 600);   // matches nominationDuration + voteDuration
+        endBlock = uint48(block.number + 600); // matches nominationDuration + voteDuration
         electionParams = abi.encode(title, startBlock, endBlock);
 
         // Retrieve electionList address from mandate 9 config
@@ -687,7 +698,6 @@ contract ZKPassport_CheckTest is TestSetupIntegrations {
     }
 }
 
-
 contract MockEntryPoint is IEntryPoint {
     function depositTo(
         address /*account*/
@@ -742,7 +752,7 @@ contract MockEntryPoint is IEntryPoint {
 }
 
 contract AccountAbstractionTest is Test {
-    PowersPaymaster public paymaster; 
+    PowersPaymaster public paymaster;
 
     address public powersAddress = address(0x1234);
     MockEntryPoint public entryPoint;
@@ -750,7 +760,7 @@ contract AccountAbstractionTest is Test {
 
     function setUp() public {
         entryPoint = new MockEntryPoint();
-        paymaster = new PowersPaymaster(entryPoint, powersAddress); 
+        paymaster = new PowersPaymaster(entryPoint, powersAddress);
     }
 
     // Helper to simulate calling _validatePaymasterUserOp since it's internal and we can only call external validatePaymasterUserOp as entryPoint
@@ -876,9 +886,8 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
     function setUp() public override {
         super.setUp();
 
-        addSlateMandateId = findMandateIdInOrg(
-            "SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock
-        );
+        addSlateMandateId =
+            findMandateIdInOrg("SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock);
 
         // electionId mirrors SlateRegistry_AddSlate.handleRequest:
         //   keccak256(abi.encodePacked(powers, electionTitle))
@@ -900,8 +909,8 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
     function testInitializeMandateOverridesInputParams() public {
         // Regardless of the inputParams passed, initializeMandate must store the 5 hardcoded strings.
         bytes memory stored = SlateRegistry_AddSlate(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
-        ).getInputParams(address(daoMock), addSlateMandateId);
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
+            ).getInputParams(address(daoMock), addSlateMandateId);
 
         bytes memory expected = abi.encode(
             "string ElectionTitle",
@@ -914,9 +923,9 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
     }
 
     function testHandleRequestReturnsThreeCalls() public {
-        (, address[] memory targets_, uint256[] memory values_, bytes[] memory calldatas_) =
-            SlateRegistry_AddSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"))
-                .handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
+        (, address[] memory targets_, uint256[] memory values_, bytes[] memory calldatas_) = SlateRegistry_AddSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
+            ).handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
 
         assertEq(targets_.length, 3);
         assertEq(values_.length, 3);
@@ -924,18 +933,18 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
     }
 
     function testHandleRequestComputesCorrectActionId() public {
-        (uint256 actionId_,,,) =
-            SlateRegistry_AddSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"))
-                .handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
+        (uint256 actionId_,,,) = SlateRegistry_AddSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
+            ).handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
 
         uint256 expected = MandateUtilities.computeActionId(addSlateMandateId, addSlateCalldata, nonce);
         assertEq(actionId_, expected);
     }
 
     function testHandleRequestFirstCallIsAdoptMandate() public {
-        (, address[] memory targets_,, bytes[] memory calldatas_) =
-            SlateRegistry_AddSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"))
-                .handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
+        (, address[] memory targets_,, bytes[] memory calldatas_) = SlateRegistry_AddSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
+            ).handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
 
         assertEq(targets_[0], address(daoMock));
         bytes4 selector = bytes4(calldatas_[0]);
@@ -945,9 +954,9 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
     function testHandleRequestSecondCallIsEditFlowByIndex() public {
         uint16 expectedNewMandateId = daoMock.getMandateCounter();
 
-        (, address[] memory targets_,, bytes[] memory calldatas_) =
-            SlateRegistry_AddSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"))
-                .handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
+        (, address[] memory targets_,, bytes[] memory calldatas_) = SlateRegistry_AddSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
+            ).handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
 
         assertEq(targets_[1], address(daoMock));
         bytes4 selector = bytes4(calldatas_[1]);
@@ -956,17 +965,17 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
         // Decode and check the parameters: (flowIndex=0, emptySlotIndex=0, newMandateId)
         (uint8 flowIdx, uint8 slotIdx, uint16 newMandateId) =
             abi.decode(skipSelector(calldatas_[1]), (uint8, uint8, uint16));
-        assertEq(flowIdx, 0);   // flow[0] is the 3-empty-slot flow
-        assertEq(slotIdx, 0);   // first slot is empty
+        assertEq(flowIdx, 0); // flow[0] is the 3-empty-slot flow
+        assertEq(slotIdx, 0); // first slot is empty
         assertEq(newMandateId, expectedNewMandateId);
     }
 
     function testHandleRequestThirdCallIsRegisterSlate() public {
         uint16 expectedNewMandateId = daoMock.getMandateCounter();
 
-        (, address[] memory targets_,, bytes[] memory calldatas_) =
-            SlateRegistry_AddSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"))
-                .handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
+        (, address[] memory targets_,, bytes[] memory calldatas_) = SlateRegistry_AddSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
+            ).handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
 
         assertEq(targets_[2], address(slateRegistryMock));
         bytes4 selector = bytes4(calldatas_[2]);
@@ -980,9 +989,9 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
 
     function testHandleRequestAdoptMandateUsesRoleIdFromRegistry() public {
         // The adopted mandate's allowedRole must equal slateRegistryMock.roleId() = ROLE_TWO.
-        (, , , bytes[] memory calldatas_) =
-            SlateRegistry_AddSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"))
-                .handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
+        (,,, bytes[] memory calldatas_) = SlateRegistry_AddSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")
+            ).handleRequest(alice, address(daoMock), addSlateMandateId, addSlateCalldata, nonce);
 
         // adoptMandate(MandateInitData) — skip the 4-byte selector, decode the struct
         PowersTypes.MandateInitData memory initData =
@@ -1004,7 +1013,6 @@ contract SlateRegistry_AddSlateBasicTest is TestSetupSlateRegistry {
         // a second full Powers instance.
         assertTrue(true, "protocol bug documented: createElection cannot work with onlyPowers addFlow");
     }
-
 }
 
 // ─────────────────────────────────────────────
@@ -1015,14 +1023,13 @@ contract SlateRegistry_AddSlateEdgeCaseTest is TestSetupSlateRegistry {
 
     function setUp() public override {
         super.setUp();
-        addSlateMandateId = findMandateIdInOrg(
-            "SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock
-        );
+        addSlateMandateId =
+            findMandateIdInOrg("SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock);
     }
 
     // £TODO FIX TEST
     function testFindEmptySlotRevertsWhenFlowIsFull() public {
-        vm.skip(true); 
+        vm.skip(true);
         // Seed mock election pointing at flow[1], which has 1 occupied slot (mandateId=1) and no empties.
         uint256 fullElectionId = uint256(keccak256(abi.encodePacked(address(daoMock), "Full Election")));
         slateRegistryMock.setElection(fullElectionId, 1, uint48(block.number + 100), uint48(block.number + 200));
@@ -1057,12 +1064,10 @@ contract SlateRegistry_RemoveSlateBasicTest is TestSetupSlateRegistry {
     function setUp() public override {
         super.setUp();
 
-        addSlateMandateId = findMandateIdInOrg(
-            "SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock
-        );
-        removeSlateMandateId = findMandateIdInOrg(
-            "SlateRegistry_RemoveSlate: remove a slate from a SlateRegistry election.", daoMock
-        );
+        addSlateMandateId =
+            findMandateIdInOrg("SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock);
+        removeSlateMandateId =
+            findMandateIdInOrg("SlateRegistry_RemoveSlate: remove a slate from a SlateRegistry election.", daoMock);
 
         electionId = uint256(keccak256(abi.encodePacked(address(daoMock), "Happy Election")));
         slateRegistryMock.setElection(electionId, 0, uint48(block.number + 1000), uint48(block.number + 2000));
@@ -1082,8 +1087,8 @@ contract SlateRegistry_RemoveSlateBasicTest is TestSetupSlateRegistry {
 
     function testInitializeMandateOverridesInputParams() public {
         bytes memory stored = SlateRegistry_RemoveSlate(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate")
-        ).getInputParams(address(daoMock), removeSlateMandateId);
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate")
+            ).getInputParams(address(daoMock), removeSlateMandateId);
 
         bytes memory expected = abi.encode(
             "string ElectionTitle",
@@ -1096,9 +1101,9 @@ contract SlateRegistry_RemoveSlateBasicTest is TestSetupSlateRegistry {
     }
 
     function testHandleRequestReturnsThreeCalls() public {
-        (, address[] memory targets_, uint256[] memory values_, bytes[] memory calldatas_) =
-            SlateRegistry_RemoveSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate"))
-                .handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
+        (, address[] memory targets_, uint256[] memory values_, bytes[] memory calldatas_) = SlateRegistry_RemoveSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate")
+            ).handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
 
         assertEq(targets_.length, 3);
         assertEq(values_.length, 3);
@@ -1106,18 +1111,18 @@ contract SlateRegistry_RemoveSlateBasicTest is TestSetupSlateRegistry {
     }
 
     function testHandleRequestComputesCorrectActionId() public {
-        (uint256 actionId_,,,) =
-            SlateRegistry_RemoveSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate"))
-                .handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
+        (uint256 actionId_,,,) = SlateRegistry_RemoveSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate")
+            ).handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
 
         uint256 expected = MandateUtilities.computeActionId(removeSlateMandateId, slateCalldata, nonce);
         assertEq(actionId_, expected);
     }
 
     function testHandleRequestFirstCallIsRevokeMandate() public {
-        (, address[] memory targets_,, bytes[] memory calldatas_) =
-            SlateRegistry_RemoveSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate"))
-                .handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
+        (, address[] memory targets_,, bytes[] memory calldatas_) = SlateRegistry_RemoveSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate")
+            ).handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
 
         assertEq(targets_[0], address(daoMock));
         assertEq(bytes4(calldatas_[0]), IPowers.revokeMandate.selector);
@@ -1127,24 +1132,24 @@ contract SlateRegistry_RemoveSlateBasicTest is TestSetupSlateRegistry {
     }
 
     function testHandleRequestSecondCallClearsFlowSlot() public {
-        (, address[] memory targets_,, bytes[] memory calldatas_) =
-            SlateRegistry_RemoveSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate"))
-                .handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
+        (, address[] memory targets_,, bytes[] memory calldatas_) = SlateRegistry_RemoveSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate")
+            ).handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
 
         assertEq(targets_[1], address(daoMock));
         assertEq(bytes4(calldatas_[1]), IPowers.editFlowByIndex.selector);
 
         (uint8 flowIdx, uint8 slotIdx, uint16 newMandateId) =
             abi.decode(skipSelector(calldatas_[1]), (uint8, uint8, uint16));
-        assertEq(flowIdx, 0);      // election's flowIndex
-        assertEq(slotIdx, 0);      // slot where adoptedSlateId lives
+        assertEq(flowIdx, 0); // election's flowIndex
+        assertEq(slotIdx, 0); // slot where adoptedSlateId lives
         assertEq(newMandateId, 0); // cleared to zero
     }
 
     function testHandleRequestThirdCallIsRemoveSlate() public {
-        (, address[] memory targets_,, bytes[] memory calldatas_) =
-            SlateRegistry_RemoveSlate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate"))
-                .handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
+        (, address[] memory targets_,, bytes[] memory calldatas_) = SlateRegistry_RemoveSlate(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate")
+            ).handleRequest(alice, address(daoMock), removeSlateMandateId, slateCalldata, nonce);
 
         assertEq(targets_[2], address(slateRegistryMock));
         assertEq(bytes4(calldatas_[2]), SlateRegistryMock.removeSlate.selector);
@@ -1180,12 +1185,10 @@ contract SlateRegistry_RemoveSlateEdgeCaseTest is TestSetupSlateRegistry {
     function setUp() public override {
         super.setUp();
 
-        addSlateMandateId = findMandateIdInOrg(
-            "SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock
-        );
-        removeSlateMandateId = findMandateIdInOrg(
-            "SlateRegistry_RemoveSlate: remove a slate from a SlateRegistry election.", daoMock
-        );
+        addSlateMandateId =
+            findMandateIdInOrg("SlateRegistry_AddSlate: add a slate to a SlateRegistry election.", daoMock);
+        removeSlateMandateId =
+            findMandateIdInOrg("SlateRegistry_RemoveSlate: remove a slate from a SlateRegistry election.", daoMock);
 
         electionId = uint256(keccak256(abi.encodePacked(address(daoMock), "Happy Election")));
         slateRegistryMock.setElection(electionId, 0, uint48(block.number + 1000), uint48(block.number + 2000));
@@ -1251,16 +1254,16 @@ contract SlateRegistry_ExecuteResultBasicTest is TestSetupSlateRegistry {
 
     function testInitializeMandateSetsElectionTitleParam() public {
         bytes memory stored = SlateRegistry_ExecuteResult(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult")
-        ).getInputParams(address(daoMock), executeResultMandateId);
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult")
+            ).getInputParams(address(daoMock), executeResultMandateId);
 
         assertEq(stored, abi.encode("string ElectionTitle"));
     }
 
     function testHandleRequestReturnsOneCall() public {
-        (, address[] memory targets_, uint256[] memory values_, bytes[] memory calldatas_) =
-            SlateRegistry_ExecuteResult(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult"))
-                .handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
+        (, address[] memory targets_, uint256[] memory values_, bytes[] memory calldatas_) = SlateRegistry_ExecuteResult(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult")
+            ).handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
 
         assertEq(targets_.length, 1);
         assertEq(values_.length, 1);
@@ -1268,25 +1271,25 @@ contract SlateRegistry_ExecuteResultBasicTest is TestSetupSlateRegistry {
     }
 
     function testHandleRequestComputesCorrectActionId() public {
-        (uint256 actionId_,,,) =
-            SlateRegistry_ExecuteResult(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult"))
-                .handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
+        (uint256 actionId_,,,) = SlateRegistry_ExecuteResult(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult")
+            ).handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
 
         assertEq(actionId_, MandateUtilities.computeActionId(executeResultMandateId, executeCalldata, nonce));
     }
 
     function testHandleRequestCallTargetsSlateRegistry() public {
-        (, address[] memory targets_,,) =
-            SlateRegistry_ExecuteResult(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult"))
-                .handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
+        (, address[] memory targets_,,) = SlateRegistry_ExecuteResult(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult")
+            ).handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
 
         assertEq(targets_[0], address(slateRegistryMock));
     }
 
     function testHandleRequestCallEncodesExecuteResults() public {
-        (,,, bytes[] memory calldatas_) =
-            SlateRegistry_ExecuteResult(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult"))
-                .handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
+        (,,, bytes[] memory calldatas_) = SlateRegistry_ExecuteResult(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult")
+            ).handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
 
         assertEq(bytes4(calldatas_[0]), SlateRegistryMock.executeResults.selector);
 
@@ -1325,7 +1328,7 @@ contract SlateRegistry_ExecuteResultEdgeCaseTest is TestSetupSlateRegistry {
 
     // £TODO FIX TEST
     function testHandleRequestRevertsIfVotingNotClosed() public {
-        vm.skip(true); 
+        vm.skip(true);
         vm.expectRevert("vote not yet closed");
         SlateRegistry_ExecuteResult(registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult"))
             .handleRequest(alice, address(daoMock), executeResultMandateId, executeCalldata, nonce);
@@ -1358,9 +1361,9 @@ contract PowersFactory_AssignRoleBasicTest is TestSetupPowersFactory {
     }
 
     function testHandleRequestReturnsOneCall() public {
-        (, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas) =
-            PowersFactory_AssignRole(registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole"))
-                .handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
+        (, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas) = PowersFactory_AssignRole(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole")
+            ).handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
 
         assertEq(returnedTargets.length, 1);
         assertEq(returnedValues.length, 1);
@@ -1368,26 +1371,26 @@ contract PowersFactory_AssignRoleBasicTest is TestSetupPowersFactory {
     }
 
     function testHandleRequestComputesCorrectActionId() public {
-        (uint256 returnedActionId,,,) =
-            PowersFactory_AssignRole(registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole"))
-                .handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
+        (uint256 returnedActionId,,,) = PowersFactory_AssignRole(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole")
+            ).handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
 
         uint256 expectedActionId = MandateUtilities.computeActionId(assignRoleMandateId, emptyCalldata, nonce);
         assertEq(returnedActionId, expectedActionId);
     }
 
     function testHandleRequestTargetsIsPowers() public {
-        (, address[] memory returnedTargets,,) =
-            PowersFactory_AssignRole(registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole"))
-                .handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
+        (, address[] memory returnedTargets,,) = PowersFactory_AssignRole(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole")
+            ).handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
 
         assertEq(returnedTargets[0], address(daoMock));
     }
 
     function testHandleRequestCallIsAssignRole() public {
-        (,,, bytes[] memory returnedCalldatas) =
-            PowersFactory_AssignRole(registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole"))
-                .handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
+        (,,, bytes[] memory returnedCalldatas) = PowersFactory_AssignRole(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole")
+            ).handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
 
         bytes4 selector = bytes4(returnedCalldatas[0]);
         assertEq(selector, IPowers.assignRole.selector);
@@ -1395,12 +1398,11 @@ contract PowersFactory_AssignRoleBasicTest is TestSetupPowersFactory {
 
     function testHandleRequestDecodesAddressFromReturnData() public {
         // returnDataMock.getValue() returns uint256(42), decoded as address(42)
-        (,,, bytes[] memory returnedCalldatas) =
-            PowersFactory_AssignRole(registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole"))
-                .handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
+        (,,, bytes[] memory returnedCalldatas) = PowersFactory_AssignRole(
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole")
+            ).handleRequest(alice, address(daoMock), assignRoleMandateId, emptyCalldata, nonce);
 
-        (uint256 roleId, address assignedAddr) =
-            abi.decode(skipSelector(returnedCalldatas[0]), (uint256, address));
+        (uint256 roleId, address assignedAddr) = abi.decode(skipSelector(returnedCalldatas[0]), (uint256, address));
 
         assertEq(roleId, ROLE_TWO);
         assertEq(assignedAddr, address(42));
@@ -1455,8 +1457,7 @@ contract PowersFactory_AddSafeDelegateBasicTest is TestSetupPowersFactory {
 
         parentMandateId =
             findMandateIdInOrg("BespokeActionReturner: returns address-decodable value for testing.", daoMock);
-        addDelegateMandateId =
-            findMandateIdInOrg("PowersFactory_AddSafeDelegate: add safe delegate.", daoMock);
+        addDelegateMandateId = findMandateIdInOrg("PowersFactory_AddSafeDelegate: add safe delegate.", daoMock);
         emptyCalldata = abi.encode();
 
         // Execute the parent action so AddSafeDelegate can read its return data.
@@ -1465,8 +1466,7 @@ contract PowersFactory_AddSafeDelegateBasicTest is TestSetupPowersFactory {
     }
 
     function testHandleRequestReturnsOneCall() public {
-        (, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas) =
-            PowersFactory_AddSafeDelegate(
+        (, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas) = PowersFactory_AddSafeDelegate(
                 registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
             ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
 
@@ -1477,8 +1477,8 @@ contract PowersFactory_AddSafeDelegateBasicTest is TestSetupPowersFactory {
 
     function testHandleRequestComputesCorrectActionId() public {
         (uint256 returnedActionId,,,) = PowersFactory_AddSafeDelegate(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
-        ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
+            ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
 
         uint256 expectedActionId = MandateUtilities.computeActionId(addDelegateMandateId, emptyCalldata, nonce);
         assertEq(returnedActionId, expectedActionId);
@@ -1487,16 +1487,16 @@ contract PowersFactory_AddSafeDelegateBasicTest is TestSetupPowersFactory {
     function testHandleRequestTargetsIsTreasury() public {
         // Treasury was set to address(999) in TestSetupPowersFactory.
         (, address[] memory returnedTargets,,) = PowersFactory_AddSafeDelegate(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
-        ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
+            ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
 
         assertEq(returnedTargets[0], address(999));
     }
 
     function testHandleRequestCallIsSafeExecTransaction() public {
         (,,, bytes[] memory returnedCalldatas) = PowersFactory_AddSafeDelegate(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
-        ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
+                registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
+            ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
 
         bytes4 selector = bytes4(returnedCalldatas[0]);
         assertEq(selector, Safe.execTransaction.selector);
@@ -1516,8 +1516,7 @@ contract PowersFactory_AddSafeDelegateEdgeCaseTest is TestSetupPowersFactory {
 
         parentMandateId =
             findMandateIdInOrg("BespokeActionReturner: returns address-decodable value for testing.", daoMock);
-        addDelegateMandateId =
-            findMandateIdInOrg("PowersFactory_AddSafeDelegate: add safe delegate.", daoMock);
+        addDelegateMandateId = findMandateIdInOrg("PowersFactory_AddSafeDelegate: add safe delegate.", daoMock);
         emptyCalldata = abi.encode();
         // Parent action NOT executed — tests revert paths.
     }
@@ -1526,9 +1525,8 @@ contract PowersFactory_AddSafeDelegateEdgeCaseTest is TestSetupPowersFactory {
     function testHandleRequestRevertsWhenParentNotFulfilled() public {
         vm.skip(true);
         vm.expectRevert("Invalid parent action state");
-        PowersFactory_AddSafeDelegate(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
-        ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
+        PowersFactory_AddSafeDelegate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate"))
+            .handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
     }
 
     // £TODO: FIX TEST
@@ -1543,8 +1541,7 @@ contract PowersFactory_AddSafeDelegateEdgeCaseTest is TestSetupPowersFactory {
         daoMock.setTreasury(payable(address(0)));
 
         vm.expectRevert("Treasury not set in Powers");
-        PowersFactory_AddSafeDelegate(
-            registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate")
-        ).handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
+        PowersFactory_AddSafeDelegate(registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate"))
+            .handleRequest(alice, address(daoMock), addDelegateMandateId, emptyCalldata, nonce);
     }
 }

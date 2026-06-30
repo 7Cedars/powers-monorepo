@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Action, Mandate } from "@/context/types";
 import { DocumentTextIcon, KeyIcon, CodeBracketIcon, ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { decodeAbiParameters, parseAbiParameters } from "viem";
@@ -29,28 +29,23 @@ export const ActionOverview: React.FC<ActionOverviewProps> = ({ action, mandate,
   const { wallets, ready } = useWallets();
   const chainId = useChainId();
   const effectiveAddress = useEffectiveAddress();
-  const [decodedParams, setDecodedParams] = useState<any[]>([]);
   const [hasSimulated, setHasSimulated] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Decode input parameters from callData
-  useEffect(() => {
+  const decodedParams = useMemo(() => {
     if (!action.callData || action.callData === '0x0' || !mandate.params || mandate.params.length === 0) {
-      setDecodedParams([]);
-      return;
+      return [];
     }
-
     try {
       const dataTypes = mandate.params.map(param => param.dataType);
       const values = decodeAbiParameters(
-        parseAbiParameters(dataTypes.toString()), 
+        parseAbiParameters(dataTypes.toString()),
         action.callData as `0x${string}`
       );
-      const valuesParsed = parseParamValues(values);
-      setDecodedParams(valuesParsed);
+      return parseParamValues(values);
     } catch (error) {
       console.error("Error decoding action parameters:", error);
-      setDecodedParams([]);
+      return [];
     }
   }, [action.callData, mandate.params]);
 

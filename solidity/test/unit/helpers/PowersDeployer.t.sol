@@ -19,54 +19,30 @@ contract PowersDeployerTest is TestSetupHelpers {
     // ─── BASIC BEHAVIOUR ───
 
     function testDeployReturnsNonZeroAddress() public {
-        PowersTypes.MandateInitData[] memory mandateInitData =
-            testConstitutions.helpersTestConstitution();
+        PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            mandateInitData,
-            new PowersTypes.Flow[](0),
-            alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
         );
 
         assertTrue(powersAddr != address(0));
     }
 
     function testDeployedContractHasCorrectName() public {
-        PowersTypes.MandateInitData[] memory mandateInitData =
-            testConstitutions.helpersTestConstitution();
+        PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            mandateInitData,
-            new PowersTypes.Flow[](0),
-            alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
         );
 
         assertEq(Powers(payable(powersAddr)).name(), "Test DAO");
     }
 
     function testFinalAdminHasAdminRole() public {
-        PowersTypes.MandateInitData[] memory mandateInitData =
-            testConstitutions.helpersTestConstitution();
+        PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            mandateInitData,
-            new PowersTypes.Flow[](0),
-            alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
         );
 
         Powers newPowers = Powers(payable(powersAddr));
@@ -75,18 +51,10 @@ contract PowersDeployerTest is TestSetupHelpers {
     }
 
     function testDeployerAddressDoesNotHaveAdminRole() public {
-        PowersTypes.MandateInitData[] memory mandateInitData =
-            testConstitutions.helpersTestConstitution();
+        PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            mandateInitData,
-            new PowersTypes.Flow[](0),
-            alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
         );
 
         Powers newPowers = Powers(payable(powersAddr));
@@ -95,18 +63,10 @@ contract PowersDeployerTest is TestSetupHelpers {
     }
 
     function testDeployedContractHasMandates() public {
-        PowersTypes.MandateInitData[] memory mandateInitData =
-            testConstitutions.helpersTestConstitution();
+        PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            mandateInitData,
-            new PowersTypes.Flow[](0),
-            alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
         );
 
         Powers newPowers = Powers(payable(powersAddr));
@@ -118,8 +78,7 @@ contract PowersDeployerTest is TestSetupHelpers {
     // ─── EDGE CASES ───
 
     function testDeployWithFlowsSucceeds() public {
-        PowersTypes.MandateInitData[] memory mandateInitData =
-            testConstitutions.helpersTestConstitution();
+        PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         // Build a simple flow referencing mandate slot 1.
         uint16[] memory ids = new uint16[](1);
@@ -128,14 +87,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         flows[0] = PowersTypes.Flow({ mandateIds: ids, nameDescription: "Test flow" });
 
         address powersAddr = deployer.deploy(
-            "Test DAO with Flow",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            mandateInitData,
-            flows,
-            alice
+            "Test DAO with Flow", "https://test.uri", 10_000, 10_000, 25, mandateInitData, flows, alice
         );
 
         assertTrue(powersAddr != address(0));
@@ -145,14 +97,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory emptyMandates = new PowersTypes.MandateInitData[](0);
 
         address powersAddr = deployer.deploy(
-            "Empty DAO",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            emptyMandates,
-            new PowersTypes.Flow[](0),
-            alice
+            "Empty DAO", "https://test.uri", 10_000, 10_000, 25, emptyMandates, new PowersTypes.Flow[](0), alice
         );
 
         assertTrue(powersAddr != address(0));
@@ -166,18 +111,10 @@ contract PowersDeployerTest is TestSetupHelpers {
     function testDeployerCallerIsNotRetainedAsAdmin() public {
         // Verify the deployer contract itself never ends up holding the admin role in the
         // newly-deployed Powers instance.
-        PowersTypes.MandateInitData[] memory mandateInitData =
-            testConstitutions.helpersTestConstitution();
+        PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO",
-            "https://test.uri",
-            10_000,
-            10_000,
-            25,
-            mandateInitData,
-            new PowersTypes.Flow[](0),
-            bob
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), bob
         );
 
         Powers newPowers = Powers(payable(powersAddr));

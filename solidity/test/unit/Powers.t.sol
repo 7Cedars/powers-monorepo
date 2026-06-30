@@ -246,7 +246,15 @@ contract ProposeTest is TestSetupPowers {
 
         vm.expectEmit(true, false, false, false);
         emit ProposedActionCreated(
-            actionId, bob, mandateId, "", mandateCalldata, block.number, block.number + conditions.votingPeriod, nonce, description
+            actionId,
+            bob,
+            mandateId,
+            "",
+            mandateCalldata,
+            block.number,
+            block.number + conditions.votingPeriod,
+            nonce,
+            description
         );
         vm.prank(bob);
         daoMock.propose(mandateId, mandateCalldata, nonce, description);
@@ -878,10 +886,7 @@ contract MandateAdminTest is TestSetupPowers {
         daoMock.blacklistAddress(mandateAddress, true);
 
         PowersTypes.MandateInitData memory mandateInitData = PowersTypes.MandateInitData({
-            nameDescription: "Test mandate",
-            targetMandate: mandateAddress,
-            config: abi.encode(),
-            conditions: conditions
+            nameDescription: "Test mandate", targetMandate: mandateAddress, config: abi.encode(), conditions: conditions
         });
 
         vm.expectRevert(PowersErrors.Powers__AddressBlacklisted.selector);
@@ -1297,8 +1302,7 @@ contract TokenReceiverTest is TestSetupPowers {
     }
 
     function testOnERC1155BatchReceivedReturnsSelector() public {
-        bytes4 result =
-            daoMock.onERC1155BatchReceived(address(0), address(0), new uint256[](0), new uint256[](0), "");
+        bytes4 result = daoMock.onERC1155BatchReceived(address(0), address(0), new uint256[](0), new uint256[](0), "");
         assertEq(result, IERC1155Receiver.onERC1155BatchReceived.selector);
     }
 

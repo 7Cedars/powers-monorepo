@@ -27,8 +27,7 @@ contract DeployZKPassportPowersRegistry is Script {
         console2.log("  Scope:     ", MOCK_SCOPE);
 
         vm.startBroadcast();
-        ZKPassport_PowersRegistry registry =
-            new ZKPassport_PowersRegistry(verifier, helper, MOCK_DOMAIN, MOCK_SCOPE);
+        ZKPassport_PowersRegistry registry = new ZKPassport_PowersRegistry(verifier, helper, MOCK_DOMAIN, MOCK_SCOPE);
         vm.stopBroadcast();
 
         console2.log("ZKPassport_PowersRegistry deployed at:", address(registry));

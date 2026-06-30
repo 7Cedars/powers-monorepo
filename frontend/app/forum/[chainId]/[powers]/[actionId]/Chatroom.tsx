@@ -58,7 +58,7 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
   const effectiveAddress = useEffectiveAddress()
   const address = effectiveAddress ?? eoaAddress
   const { signMessageAsync } = useSignMessage()
-  const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations } = useXmtpClient()
+  const { client, isLoading, error, isConnected, initializeClient, removeAllInstallations, clearLocalData } = useXmtpClient()
   const [groupChat, setGroupChat] = useState<GroupChatInfo | null>(null)
   const [messages, setMessages] = useState<DecodedMessage[]>([])
   const [messageInput, setMessageInput] = useState('')
@@ -545,7 +545,16 @@ export function Chatroom({ chatroomType = 'Mandate', hasRole = true, isPublicRol
     } catch (err) {
       console.error('@handleRequestAccess: Failed to request access:', err)
       const errorMessage = err instanceof Error ? err.message : 'Failed to send request'
-      setRequestAccessError(errorMessage)
+
+      if (errorMessage.includes('GroupInactive')) {
+        // Stale XMTP local state — wipe IndexedDB and force re-login.
+        // clearLocalData() calls resetStore() which sets isConnected → false,
+        // re-rendering the component into the "Login to chat" state.
+        await clearLocalData()
+        setRequestAccessError('Your chat session had stale data and has been reset. Please log in to chat again.')
+      } else {
+        setRequestAccessError(errorMessage)
+      }
       setIsRequestingAccess(false)
     }
   }

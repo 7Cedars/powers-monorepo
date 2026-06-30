@@ -50,12 +50,10 @@ contract PauseMandates is Mandate {
         emit Mandate__Deployed("");
     }
 
-    function initializeMandate(
-        uint16 index,
-        string memory nameDescription,
-        bytes memory,
-        bytes memory config
-    ) public override {
+    function initializeMandate(uint16 index, string memory nameDescription, bytes memory, bytes memory config)
+        public
+        override
+    {
         // Validate that the config arrays have the same length
         (uint8[] memory indexFlow, uint8[] memory indexMandate) = abi.decode(config, (uint8[], uint8[]));
 

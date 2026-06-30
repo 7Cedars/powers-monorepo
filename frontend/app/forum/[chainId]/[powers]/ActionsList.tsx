@@ -27,7 +27,16 @@ const EVENT_DISPLAY: Record<ActionItem['event'], { label: string; color: string 
   fulfilled: { label: 'Fulfilled', color: 'text-green-600'  },
   cancelled: { label: 'Cancelled', color: 'text-orange-500' },
   defeated:  { label: 'Defeated',  color: 'text-red-500'    },
-  succeeded: { label: 'Succeeded', color: 'text-teal-500'   },
+  succeeded: { label: 'Passed',   color: 'text-lime-600'   },
+}
+
+function resolveTab(item: ActionItem): 'votes' | 'timelock' | null {
+  if (item.event === 'requested' || item.event === 'fulfilled') return null
+  const quorum   = item.mandate.conditions?.quorum   ? BigInt(item.mandate.conditions.quorum)   : 0n
+  const timelock = item.mandate.conditions?.timelock ? BigInt(item.mandate.conditions.timelock) : 0n
+  if (quorum > 0n)   return 'votes'
+  if (timelock > 0n) return 'timelock'
+  return null
 }
 
 interface ActionsListProps {
@@ -136,6 +145,14 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
 
   const visibleItems = useMemo(() => allItems.slice(0, visibleCount), [allItems, visibleCount])
 
+  const roleMap = useMemo(() => {
+    const map = new Map<string, string>()
+    powers.roles?.forEach((r, i) => {
+      map.set(r.roleId.toString(), r.label || `Role ${i + 1}`)
+    })
+    return map
+  }, [powers.roles])
+
   useEffect(() => {
     if (visibleItems.length === 0) return
     fetchTimestamps(visibleItems.map(i => i.blockNumber), chainId)
@@ -143,21 +160,24 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
 
   const handleItemClick = (item: ActionItem) => {
     setAction(item.action)
-    router.push(`/forum/${chainId}/${powersAddress}/${item.action.actionId}`)
+    const tab = resolveTab(item)
+    const path = `/forum/${chainId}/${powersAddress}/${item.action.actionId}`
+    router.push(tab ? `${path}?tab=${tab}` : path)
   }
 
   return (
     <div className="space-y-3">
       <button
         onClick={onNewAction}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-foreground text-background hover:bg-foreground/80 transition-colors text-xs font-mono uppercase tracking-wider cursor-pointer"
+        disabled={!userAddress}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-foreground text-background hover:bg-foreground/80 transition-colors text-xs font-mono uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <PlusIcon className="h-4 w-4" />
         New Action
       </button>
 
       {!userAddress ? (
-        <p className="font-mono text-xs text-muted-foreground px-1">Connect wallet to see your actions</p>
+        <p className="font-mono text-xs text-muted-foreground px-1 text-center">Connect wallet to see your actions</p>
       ) : allItems.length === 0 ? (
         <div className="border border-border">
           <div className="font-mono text-xs px-3 py-2 text-center text-muted-foreground">
@@ -170,6 +190,12 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
             const ts = timestamps.get(`${chainId}:${item.blockNumber}`)
             const { label, color } = EVENT_DISPLAY[item.event]
             const mandateName = item.mandate.nameDescription?.split(':')[0] ?? `Mandate #${item.mandate.index}`
+            const allowedRole = item.mandate.conditions?.allowedRole
+            const roleLabel = allowedRole === undefined
+              ? undefined
+              : allowedRole === PUBLIC_ROLE
+              ? 'Public'
+              : (roleMap.get(allowedRole.toString()) ?? `Role #${allowedRole}`)
 
             return (
               <div
@@ -183,6 +209,9 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
                     <span className="text-foreground truncate mr-2">{mandateName}</span>
                     <span className={`${color} shrink-0`}>{label}</span>
                   </div>
+                  {roleLabel && (
+                    <span className="text-muted-foreground/70 text-[10px] uppercase tracking-wider">{roleLabel}</span>
+                  )}
                   <span className="text-muted-foreground line-clamp-2">{item.action.description || '—'}</span>
                   <span className="text-muted-foreground text-right">
                     {ts ? `${toFullDateFormat(Number(ts.timestamp))} ${toEurTimeFormat(Number(ts.timestamp))}` : '···'}
@@ -192,6 +221,9 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
                 <div className="hidden sm:flex items-start gap-3">
                   <div className="shrink-0 w-32 overflow-hidden">
                     <span className="text-foreground truncate block">{mandateName}</span>
+                    {roleLabel && (
+                      <span className="text-muted-foreground truncate block">{roleLabel}</span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-muted-foreground line-clamp-3">{item.action.description || '—'}</span>

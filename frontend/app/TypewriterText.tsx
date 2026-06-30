@@ -20,7 +20,10 @@ export function TypewriterText({ text, startDelay = 0, className }: Props) {
 
   useEffect(() => {
     if (!started || displayed.length >= text.length) {
-      if (displayed.length >= text.length) setDone(true);
+      if (displayed.length >= text.length) {
+        const t = setTimeout(() => setDone(true), 0);
+        return () => clearTimeout(t);
+      }
       return;
     }
     // Random delay between 35ms (fast burst) and 130ms (hesitation)

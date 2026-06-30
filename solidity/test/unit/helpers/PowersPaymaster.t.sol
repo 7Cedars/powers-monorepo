@@ -10,26 +10,43 @@ import { IStakeManager } from "@lib/account-abstraction/contracts/interfaces/ISt
 
 // Mock entry point — needed to construct the paymaster
 contract MockEntryPoint is IEntryPoint {
-    function depositTo(address) external payable {}
-    function withdrawTo(address payable, uint256) external {}
-    function handleOps(PackedUserOperation[] calldata, address payable) external {}
-    function handleAggregatedOps(IEntryPoint.UserOpsPerAggregator[] calldata, address payable) external {}
-    function getSenderAddress(bytes memory) external {}
-    function simulateValidation(PackedUserOperation calldata) external {}
-    function simulateHandleOp(PackedUserOperation calldata, address, bytes calldata) external {}
-    function balanceOf(address) external view returns (uint256) { return 0; }
-    function deposit() external view returns (uint256) { return 0; }
+    function depositTo(address) external payable { }
+    function withdrawTo(address payable, uint256) external { }
+    function handleOps(PackedUserOperation[] calldata, address payable) external { }
+    function handleAggregatedOps(IEntryPoint.UserOpsPerAggregator[] calldata, address payable) external { }
+    function getSenderAddress(bytes memory) external { }
+    function simulateValidation(PackedUserOperation calldata) external { }
+    function simulateHandleOp(PackedUserOperation calldata, address, bytes calldata) external { }
+
+    function balanceOf(address) external view returns (uint256) {
+        return 0;
+    }
+
+    function deposit() external view returns (uint256) {
+        return 0;
+    }
+
     function getDepositInfo(address) external view returns (DepositInfo memory) {
         return DepositInfo({ deposit: 100, staked: true, stake: 100, unstakeDelaySec: 100, withdrawTime: 0 });
     }
-    function getNonce(address, uint192) external view returns (uint256) { return 0; }
-    function incrementNonce(uint192) external {}
-    function addStake(uint32) external payable {}
-    function unlockStake() external {}
-    function withdrawStake(address payable) external {}
-    function delegateAndRevert(address, bytes calldata) external {}
-    function getCurrentUserOpHash() external view returns (bytes32) { return bytes32(0); }
-    function getUserOpHash(PackedUserOperation calldata) external view returns (bytes32) { return bytes32(0); }
+
+    function getNonce(address, uint192) external view returns (uint256) {
+        return 0;
+    }
+    function incrementNonce(uint192) external { }
+    function addStake(uint32) external payable { }
+    function unlockStake() external { }
+    function withdrawStake(address payable) external { }
+    function delegateAndRevert(address, bytes calldata) external { }
+
+    function getCurrentUserOpHash() external view returns (bytes32) {
+        return bytes32(0);
+    }
+
+    function getUserOpHash(PackedUserOperation calldata) external view returns (bytes32) {
+        return bytes32(0);
+    }
+
     function supportsInterface(bytes4 interfaceId) external view returns (bool) {
         return interfaceId == type(IEntryPoint).interfaceId || interfaceId == 0x01ffc9a7;
     }
@@ -132,15 +149,15 @@ contract PowersPaymasterTest is TestSetupHelpers {
         // Kernel v3 layout: selector(4) | mode(32) | offset(32) | length(32) | to(20)+value(32)+data(...)
         bytes memory execCalldata = abi.encodePacked(
             address(daoMock), // to — 20 bytes
-            uint256(0),       // value — 32 bytes
-            bytes("")         // data — 0 bytes
+            uint256(0), // value — 32 bytes
+            bytes("") // data — 0 bytes
         );
         bytes memory cd = abi.encodePacked(
-            bytes4(0xe9ae5c53),          // EXECUTE_SELECTOR_KERNEL
-            bytes32(0),                   // mode (32 bytes)
-            uint256(64),                  // offset to executionCalldata
+            bytes4(0xe9ae5c53), // EXECUTE_SELECTOR_KERNEL
+            bytes32(0), // mode (32 bytes)
+            uint256(64), // offset to executionCalldata
             uint256(execCalldata.length), // length of executionCalldata
-            execCalldata                  // packed to+value+data
+            execCalldata // packed to+value+data
         );
         (, uint256 validationData) = callValidate(buildUserOp(cd));
         assertEq(validationData, 0);
@@ -180,7 +197,7 @@ contract PowersPaymasterTest is TestSetupHelpers {
         // but the kernel branch requires >= 120; triggers the inner InvalidCallData revert
         bytes memory cd = abi.encodePacked(
             bytes4(0xe9ae5c53), // EXECUTE_SELECTOR_KERNEL
-            new bytes(64)       // exactly 68 total
+            new bytes(64) // exactly 68 total
         );
         vm.expectRevert(PowersPaymaster.PowersPaymaster__InvalidCallData.selector);
         callValidate(buildUserOp(cd));

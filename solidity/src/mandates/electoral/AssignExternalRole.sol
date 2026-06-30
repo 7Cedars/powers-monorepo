@@ -45,7 +45,7 @@ contract AssignExternalRole is Mandate {
         string[] memory params = new string[](1);
         params[0] = "address Account";
         super.initializeMandate(index, nameDescription, abi.encode(params), config);
-    } 
+    }
 
     /// @notice Process a request to synchronize a role
     /// @param powers The Powers contract address
