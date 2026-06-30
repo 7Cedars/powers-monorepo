@@ -5,7 +5,7 @@ import {
     DisclosedData,
     ProofVerificationParams,
     BoundData
-} from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
+} from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "../interfaces/IZKPassport.sol";
 
 // import { console } from "forge-std/console.sol"; // only for testing purposes.

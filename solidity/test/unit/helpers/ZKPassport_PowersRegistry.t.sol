@@ -6,7 +6,7 @@ import { TestSetupHelpers } from "../../TestSetup.t.sol";
 import { ZKPassport_PowersRegistry, IZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
 import {
     DisclosedData
-} from "@lib/circuits/src/solidity/lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
+} from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 
 /// @notice Unit tests for ZKPassport_PowersRegistry
 /// @dev Uses the contract's mockAddDisclosedData() function to bypass real ZKPassport

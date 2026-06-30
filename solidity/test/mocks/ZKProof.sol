@@ -6,7 +6,7 @@ import {
     ProofVerificationParams,
     ProofVerificationData,
     ServiceConfig
-} from "@lib/circuits/src/solidity/src/Types.sol";
+} from "lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 
 // The following abstract contract contains an action ZKProof struct that can be used in testing.
 // The proof is linked to address 0x328735d26e5Ada93610F0006c32abE2278c46211
