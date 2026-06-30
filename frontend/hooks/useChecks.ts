@@ -63,32 +63,23 @@ export const useChecks = () => {
       }
   }, [])
 
-  const fetchLatestFulfillment = useCallback(async (mandate: Mandate) => {
-    const latestFulfillment = await readContract(wagmiConfig, {
-      abi: powersAbi,
-      address: mandate.powers as `0x${string}`,
-      functionName: 'getLatestFulfillment',
-      args: [mandate.index],
-      chainId: parseChainId(chainId)
-    })
-    return latestFulfillment as bigint
-  }, [])
+  const checkThrottledExecution = useCallback(async (mandate: Mandate): Promise<boolean> => {
+    const throttle = Number(mandate.conditions?.throttleExecution ?? 0)
+    if (throttle === 0) return true
 
-  const checkThrottledExecution = useCallback( async (mandate: Mandate) => {
-    const latestFulfillment = await fetchLatestFulfillment(mandate)
-    
-    const blockNumber = await getBlockNumber(wagmiConfig, {
-      chainId: parseChainId(chainId),
-    })
-    // console.log("checkThrottledExecution, waypoint 1", {latestFulfillment, mandate, blockNumber})
+    // Use the same data source as SingleFlow.tsx (indexed store events) to
+    // avoid stale RPC cache disagreements with the visual Flow tab.
+    const latestFulfillment = mandate.actions?.length
+      ? Math.max(...mandate.actions.map(a => Number(a.fulfilledAt || 0n)))
+      : 0
 
-    if (blockNumber) {
-      const result = Number(latestFulfillment) + Number(mandate.conditions?.throttleExecution) < Number(blockNumber)
-      return result as boolean
-    } else {
-      return true
-    }
-  }, [])
+    if (latestFulfillment === 0) return true  // never fulfilled — contract skips throttle too
+
+    const blockNumber = await getBlockNumber(wagmiConfig, { chainId: parseChainId(chainId) })
+    if (!blockNumber) return true
+
+    return latestFulfillment + throttle < Number(blockNumber)
+  }, [chainId])
 
   const checkDelayedExecution = async (mandateId: bigint, nonce: bigint, calldata: `0x${string}`, powers: Powers) => {
     // console.log("CheckDelayedExecution triggered:", {mandateId, nonce, calldata, powers})

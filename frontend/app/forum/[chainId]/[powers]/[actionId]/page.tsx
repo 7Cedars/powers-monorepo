@@ -234,10 +234,10 @@ export default function ActionPage() {
 
             {activeTab === 'votes' && hasVoting && (
               <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0" data-testid="vote-section">
                   <Vote action={action} mandate={mandate} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0" data-testid="past-votes-section">
                   <PastVotes action={action} mandate={mandate} powers={powers} />
                 </div>
               </div>

@@ -177,7 +177,7 @@ export function ActionsList({ onNewAction }: ActionsListProps) {
       </button>
 
       {!userAddress ? (
-        <p className="font-mono text-xs text-muted-foreground px-1">Connect wallet to see your actions</p>
+        <p className="font-mono text-xs text-muted-foreground px-1 text-center">Connect wallet to see your actions</p>
       ) : allItems.length === 0 ? (
         <div className="border border-border">
           <div className="font-mono text-xs px-3 py-2 text-center text-muted-foreground">

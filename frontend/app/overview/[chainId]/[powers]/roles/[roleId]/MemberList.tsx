@@ -114,6 +114,7 @@ export function MemberList({powers, roleId}: {powers: Powers | undefined, roleId
                         <AddressLink
                           address={member}
                           chainId={chainId}
+                          showFull={true}
                           className="text-foreground hover:text-primary"
                         />
                       </td>
