@@ -684,7 +684,8 @@ abstract contract TestSetupIntegrations is BaseSetup {
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid),
-            address(powersDeployer)
+            address(powersDeployer),
+            address(0) // no MandateRegistry enforcement in tests
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();

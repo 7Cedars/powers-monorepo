@@ -22,7 +22,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice, address(0)
         );
 
         assertTrue(powersAddr != address(0));
@@ -32,7 +32,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice, address(0)
         );
 
         assertEq(Powers(payable(powersAddr)).name(), "Test DAO");
@@ -42,7 +42,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice, address(0)
         );
 
         Powers newPowers = Powers(payable(powersAddr));
@@ -54,7 +54,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice, address(0)
         );
 
         Powers newPowers = Powers(payable(powersAddr));
@@ -66,7 +66,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), alice, address(0)
         );
 
         Powers newPowers = Powers(payable(powersAddr));
@@ -87,7 +87,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         flows[0] = PowersTypes.Flow({ mandateIds: ids, nameDescription: "Test flow" });
 
         address powersAddr = deployer.deploy(
-            "Test DAO with Flow", "https://test.uri", 10_000, 10_000, 25, mandateInitData, flows, alice
+            "Test DAO with Flow", "https://test.uri", 10_000, 10_000, 25, mandateInitData, flows, alice, address(0)
         );
 
         assertTrue(powersAddr != address(0));
@@ -97,7 +97,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory emptyMandates = new PowersTypes.MandateInitData[](0);
 
         address powersAddr = deployer.deploy(
-            "Empty DAO", "https://test.uri", 10_000, 10_000, 25, emptyMandates, new PowersTypes.Flow[](0), alice
+            "Empty DAO", "https://test.uri", 10_000, 10_000, 25, emptyMandates, new PowersTypes.Flow[](0), alice, address(0)
         );
 
         assertTrue(powersAddr != address(0));
@@ -114,7 +114,7 @@ contract PowersDeployerTest is TestSetupHelpers {
         PowersTypes.MandateInitData[] memory mandateInitData = testConstitutions.helpersTestConstitution();
 
         address powersAddr = deployer.deploy(
-            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), bob
+            "Test DAO", "https://test.uri", 10_000, 10_000, 25, mandateInitData, new PowersTypes.Flow[](0), bob, address(0)
         );
 
         Powers newPowers = Powers(payable(powersAddr));

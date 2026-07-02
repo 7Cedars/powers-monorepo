@@ -34,6 +34,7 @@ interface IMandateRegistry {
         view
         returns (address);
     function isMandateRegistered(bytes32 creationCodeHash) external view returns (bool);
+    function isMandateAddressActive(address mandateAddress) external view returns (bool);
     function isVersionActive(uint16 major, uint16 minor, uint16 patch, string calldata mandateName)
         external
         view
@@ -65,6 +66,20 @@ contract MandateRegistry is Ownable {
 
     /// @notice Mapping of mandate creation code hashes to registration status
     mapping(bytes32 creationCodeHash => bool) public registeredCreationCodes;
+
+    /// @notice Structure locating a mandate address's most recent registration entry
+    struct AddressKey {
+        bytes32 nameHash;
+        uint48 packedVersion;
+    }
+
+    /// @notice Mapping from a deployed mandate's address to the registry entry it was last registered under
+    /// @dev Used by isMandateAddressActive() so callers (e.g. Powers.sol) can check registration status by
+    /// address alone, without needing to know the mandate's name/version in advance.
+    /// Caveat: nothing prevents the same address from being registered under two different names — only
+    /// (name, version) pairs are checked for uniqueness. If that ever happens, this mapping reflects only the
+    /// most recent registration, so isMandateAddressActive() would not see an earlier name's deactivation.
+    mapping(address mandateAddress => AddressKey) public addressKey;
 
     //////////////////////////////////////////////////////////////
     //                        EVENTS                            //
@@ -156,6 +171,7 @@ contract MandateRegistry is Ownable {
         registry[nameHash][packedVersion] =
             MandateEntry({ mandateAddress: mandateAddress, registeredAt: uint48(block.number), isActive: true });
         registeredCreationCodes[creationCodeHash] = true;
+        addressKey[mandateAddress] = AddressKey({ nameHash: nameHash, packedVersion: packedVersion });
 
         _addVersion(nameHash, packedVersion, major, minor, patch, mandateName);
 
@@ -282,6 +298,15 @@ contract MandateRegistry is Ownable {
     /// @notice Checks if a mandate is registered
     function isMandateRegistered(bytes32 creationCodeHash) external view returns (bool) {
         return registeredCreationCodes[creationCodeHash];
+    }
+
+    /// @notice Checks if a mandate address is currently registered and active
+    /// @dev Looks up the (name, version) the address was last registered under via addressKey, then
+    /// checks the corresponding entry's isActive flag. Returns false for addresses never registered.
+    function isMandateAddressActive(address mandateAddress) external view returns (bool) {
+        AddressKey memory key = addressKey[mandateAddress];
+        MandateEntry storage entry = registry[key.nameHash][key.packedVersion];
+        return entry.registeredAt != 0 && entry.isActive;
     }
 
     /// @notice Checks if a mandate is active
