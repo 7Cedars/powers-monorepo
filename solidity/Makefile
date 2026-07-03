@@ -120,14 +120,14 @@ update-deps:
 
 install-deps:
 	@echo "Installing dependencies..."
-	forge install foundry-rs/forge-std --no-git || exit 1
-	forge install openzeppelin/openzeppelin-contracts@v5.6.1  --no-git || exit 1
-	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  --no-git || exit 1
-	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
-	forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
-	forge install safe-fndn/safe-modules --no-git || exit 1
-	forge install zkpassport/circuits@24537062043212a73f70066f2e04bc0abe97ae0e --no-git || exit 1
-	forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
+	forge install foundry-rs/forge-std || exit 1
+	forge install openzeppelin/openzeppelin-contracts@v5.6.1  || exit 1
+	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  || exit 1
+	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  || exit 1
+	forge install safe-fndn/safe-smart-account@v1.4.1 || exit 1
+	forge install safe-fndn/safe-modules || exit 1
+	forge install zkpassport/zkpassport-packages || exit 1
+	forge install eth-infinitism/account-abstraction@v0.7.0 || exit 1
 	@echo "Dependencies installed without git metadata."
 	
 
@@ -135,14 +135,14 @@ reset-deps:
 	@echo "Resetting dependencies..."
 	@rm -rf lib/
 	@mkdir -p lib
-	@forge install foundry-rs/forge-std --no-git || exit 1
-	@forge install openzeppelin/openzeppelin-contracts@v5.6.1 --no-git || exit 1
-	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 --no-git || exit 1
-	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-git || exit 1
-	@forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
-	@forge install safe-fndn/safe-modules --no-git || exit 1
-	forge install zkpassport/circuits@24537062043212a73f70066f2e04bc0abe97ae0e --no-git || exit 1
-	@forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
+	@forge install foundry-rs/forge-std || exit 1
+	@forge install openzeppelin/openzeppelin-contracts@v5.6.1 || exit 1
+	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 || exit 1
+	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 || exit 1
+	@forge install safe-fndn/safe-smart-account@v1.4.1 || exit 1
+	@forge install safe-fndn/safe-modules || exit 1
+	@forge install zkpassport/zkpassport-packages || exit 1
+	@forge install eth-infinitism/account-abstraction@v0.7.0 || exit 1
 	@echo "Dependencies reset complete. All libs installed without git metadata."
 
 # Documentation

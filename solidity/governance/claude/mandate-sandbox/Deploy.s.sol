@@ -69,7 +69,8 @@ contract Deploy is DeployHelpers {
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreicqstgxzdv2edfuaadxkz76ijtjedgmq2ovvkececchnfdkj77jeq", 
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid)
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(registry)
         );
 
         powersPaymaster = new PowersPaymaster(IEntryPoint(ENTRY_POINT), address(powers));

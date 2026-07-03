@@ -19,7 +19,7 @@ contract PowersFactoryTest is TestSetupHelpers {
         super.setUp();
 
         deployer = new PowersDeployer();
-        factory = new PowersFactory("https://testUri", 10_000, 10_000, 25, address(deployer));
+        factory = new PowersFactory("https://testUri", 10_000, 10_000, 25, address(deployer), address(0));
     }
 
     // ─── BASIC BEHAVIOUR ───

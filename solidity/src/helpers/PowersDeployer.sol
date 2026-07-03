@@ -16,9 +16,12 @@ contract PowersDeployer is PowersTypes {
         uint256 maxExecutionsLength,
         MandateInitData[] memory mandateInitData,
         Flow[] memory flows,
-        address finalAdmin
+        address finalAdmin,
+        address mandateRegistry
     ) external returns (address) {
-        Powers powers = new Powers(name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength);
+        Powers powers = new Powers(
+            name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateRegistry
+        );
 
         powers.constitute(mandateInitData);
         powers.closeConstitute(finalAdmin, flows);

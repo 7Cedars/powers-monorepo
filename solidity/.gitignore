@@ -5,10 +5,6 @@ out/
 # Ignores development broadcast logs
 /broadcast
 
-# ignore lib files
-/lib
-lib/
-
 # Docs
 docs/
 

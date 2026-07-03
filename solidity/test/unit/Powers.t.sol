@@ -22,22 +22,22 @@ import { IERC1155Receiver } from "@lib/openzeppelin-contracts/contracts/token/ER
 contract ConstructorTest is Test {
     function testConstructorRevertsWithEmptyName() public {
         vm.expectRevert(PowersErrors.Powers__InvalidName.selector);
-        new Powers("", "", 10_000, 10_000, 100_000);
+        new Powers("", "", 10_000, 10_000, 100_000, address(0));
     }
 
     function testConstructorRevertsWithZeroMaxCallDataLength() public {
         vm.expectRevert(PowersErrors.Powers__InvalidMaxCallDataLength.selector);
-        new Powers("This is a name", "", 0, 10_000, 10_000);
+        new Powers("This is a name", "", 0, 10_000, 10_000, address(0));
     }
 
     function testConstructorRevertsWithZeroMaxReturnsDataLength() public {
         vm.expectRevert(PowersErrors.Powers__InvalidReturnCallDataLength.selector);
-        new Powers("This is a name", "", 10_000, 0, 10_000);
+        new Powers("This is a name", "", 10_000, 0, 10_000, address(0));
     }
 
     function testConstructorRevertsWithZeroMaxExecutionsLength() public {
         vm.expectRevert(PowersErrors.Powers__InvalidMaxExecutionsLength.selector);
-        new Powers("This is a name", "", 10_000, 10_000, 0);
+        new Powers("This is a name", "", 10_000, 10_000, 0, address(0));
     }
 }
 

@@ -26,17 +26,24 @@ contract PowersFactory is IPowersFactory, Ownable {
     uint256 public immutable maxExecutionsLength;
     address public latestDeployment;
     address public immutable deployer;
+    /// @notice MandateRegistry every Powers instance spawned by this factory will enforce.
+    /// @dev address(0) means no registry is enforced by spawned orgs. Immutable, like on Powers itself —
+    /// a factory that wants a different registry must be redeployed.
+    address public immutable mandateRegistry;
 
     /// @notice Initializes the factory with maximum limits for Powers contracts.
     /// @param _maxCallDataLength The maximum length of call data allowed in the Powers contract.
     /// @param _maxReturnDataLength The maximum length of return data allowed in the Powers contract.
     /// @param _maxExecutionsLength The maximum number of executions allowed in a single proposal.
+    /// @param _mandateRegistry MandateRegistry address every spawned Powers instance will enforce (or
+    /// address(0) for no enforcement).
     constructor(
         string memory _uri,
         uint256 _maxCallDataLength,
         uint256 _maxReturnDataLength,
         uint256 _maxExecutionsLength,
-        address _deployer
+        address _deployer,
+        address _mandateRegistry
     ) Ownable(msg.sender) {
         // set immutable variables. note for now data not validated.
         uri = _uri;
@@ -45,6 +52,7 @@ contract PowersFactory is IPowersFactory, Ownable {
         maxReturnDataLength = _maxReturnDataLength;
         maxExecutionsLength = _maxExecutionsLength;
         deployer = _deployer;
+        mandateRegistry = _mandateRegistry;
     }
 
     ////////////////////////////////
@@ -120,7 +128,8 @@ contract PowersFactory is IPowersFactory, Ownable {
                 maxExecutionsLength,
                 mandateInitData,
                 flows,
-                msg.sender
+                msg.sender,
+                mandateRegistry
             );
         latestDeployment = powers;
 
@@ -133,7 +142,15 @@ contract PowersFactory is IPowersFactory, Ownable {
     function createPowers(string memory name, address admin) external onlyOwner returns (address) {
         address powers = PowersDeployer(deployer)
             .deploy(
-                name, uri, maxCallDataLength, maxReturnDataLength, maxExecutionsLength, mandateInitData, flows, admin
+                name,
+                uri,
+                maxCallDataLength,
+                maxReturnDataLength,
+                maxExecutionsLength,
+                mandateInitData,
+                flows,
+                admin,
+                mandateRegistry
             );
         latestDeployment = powers;
 

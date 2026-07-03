@@ -52,7 +52,8 @@ contract Deploy is DeployHelpers {
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/electionListDao.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(registry)
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));

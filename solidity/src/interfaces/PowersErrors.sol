@@ -44,6 +44,9 @@ interface PowersErrors {
     /// @notice Emitted when an incorrect interface is called.
     error Powers__IncorrectInterface(address targetMandate);
 
+    /// @notice Emitted when a mandate is not registered (or not active) in this Powers instance's MANDATE_REGISTRY.
+    error Powers__MandateNotRegistered(address targetMandate);
+
     /// @notice Emitted when a proposed action is not active.
     error Powers__ProposedActionNotActive();
 

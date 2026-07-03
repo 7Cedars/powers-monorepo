@@ -11,7 +11,8 @@ contract PowersMock is Powers {
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibd3qgeohyjeamqtfgk66lr427gpp4ify5q4civ2khcgkwyvz5hcq", // uri
             10_000, // max call data length
             10_000, // max return data length
-            25 // max executions length
+            25, // max executions length
+            address(0) // no MandateRegistry enforcement in tests
         )
     { }
 }

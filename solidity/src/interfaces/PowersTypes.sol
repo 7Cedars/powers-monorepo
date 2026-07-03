@@ -49,12 +49,11 @@ interface PowersTypes {
     /// @dev in contrast to other Governance protocols, votes are not weighted and can hence be a uint32, not a uint256.
     /// @dev votes are logged at the proposal. In on struct. This is in contrast to other governance protocols where ProposalVote is a separate struct.
     struct Action {
-        // --- Packed Slot 1 (248 bits used) ---
+        // --- Packed Slot 1 (256 bits used) ---
         uint48 proposedAt;
         uint48 requestedAt;
         uint48 fulfilledAt;
         uint48 cancelledAt;
-        uint48 failedAt;
         uint48 voteStart;
         uint16 mandateId;
         // --- Packed Slot 2 (128 bits used) ---
@@ -78,14 +77,15 @@ interface PowersTypes {
     /// This is because execution logic in {Powers} is separated from the proposal logic.
     enum ActionState {
         NonExistent, // - 0: log this
-        Proposed, // - 1: log this
+        Proposed, // - 1: NOTE: not currently returned by Powers.getActionState() — the moment an
+        // action is proposed, voteStart/voteDuration are already set, so state resolves directly to
+        // Active/Defeated/Succeeded. Kept in the enum for ABI/index stability; do not rely on this value.
         Cancelled, // - 2: log this
         Active, // - 3: calculate this
         Defeated, // - 4: calculate this
         Succeeded, // - 5: calculate this
         Requested, // - 6: log this
-        Fulfilled, // - 7: log this
-        Failed // - 8: log this
+        Fulfilled // - 7: log this
     }
 
     /// @notice Supported vote types. Matches Governor Bravo ordering.
