@@ -37,10 +37,7 @@ contract PowersMandateRegistryTest is Test {
         PowersTypes.MandateInitData[] memory constitution = new PowersTypes.MandateInitData[](1);
         PowersTypes.Conditions memory conditions; // allowedRole defaults to 0 (ADMIN_ROLE)
         constitution[0] = PowersTypes.MandateInitData({
-            nameDescription: "Test mandate",
-            targetMandate: targetMandate,
-            config: abi.encode(),
-            conditions: conditions
+            nameDescription: "Test mandate", targetMandate: targetMandate, config: abi.encode(), conditions: conditions
         });
         return constitution;
     }
