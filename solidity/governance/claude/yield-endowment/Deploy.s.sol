@@ -101,7 +101,8 @@ contract Deploy is DeployHelpers {
                  // (https://pinata.cloud) with name/description/image fields and paste the URL here.
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid)
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(registry)
         );
         powersPaymaster = new PowersPaymaster(IEntryPoint(ENTRY_POINT), address(powers));
         powersPaymaster.deposit{value: 0.05 ether}();

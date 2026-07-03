@@ -6,6 +6,7 @@ import { PowersErrors } from "../interfaces/PowersErrors.sol";
 import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
 import { IMandate } from "../interfaces/IMandate.sol";
 import { Mandate } from "../Mandate.sol";
+import { IMandateRegistry } from "../helpers/MandateRegistry.sol";
 
 /// @title Powers Utilities
 /// @notice Library with bytecode-heavy internal logic extracted from Powers to keep it under EIP-170's 24KB limit.
@@ -42,7 +43,8 @@ library PowersUtilities {
         mapping(uint16 => PowersTypes.AdoptedMandate) storage mandates,
         mapping(address => bool) storage blacklist,
         uint16 mandateId,
-        PowersTypes.MandateInitData memory mandateInitData
+        PowersTypes.MandateInitData memory mandateInitData,
+        address mandateRegistry
     ) public {
         if (!ERC165Checker.supportsInterface(mandateInitData.targetMandate, type(IMandate).interfaceId)) {
             revert PowersErrors.Powers__IncorrectInterface(mandateInitData.targetMandate);
@@ -50,6 +52,13 @@ library PowersUtilities {
         if (blacklist[mandateInitData.targetMandate]) revert PowersErrors.Powers__AddressBlacklisted();
         if (mandateInitData.conditions.allowedRole == type(uint256).max && mandateInitData.conditions.quorum > 0) {
             revert PowersErrors.Powers__VoteWithPublicRoleDisallowed();
+        }
+        // mandateRegistry == address(0) means this Powers instance does not enforce registry membership.
+        if (
+            mandateRegistry != address(0)
+                && !IMandateRegistry(mandateRegistry).isMandateAddressActive(mandateInitData.targetMandate)
+        ) {
+            revert PowersErrors.Powers__MandateNotRegistered(mandateInitData.targetMandate);
         }
 
         PowersTypes.AdoptedMandate storage mandate = mandates[mandateId];

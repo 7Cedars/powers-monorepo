@@ -78,6 +78,10 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     uint256 public immutable MAX_EXECUTIONS_LENGTH;
     /// @notice block number at which the Powers contract was deployed.
     uint256 public immutable FOUNDED_AT;
+    /// @notice Address of the MandateRegistry this org enforces mandate membership against.
+    /// @dev address(0) means no registry is enforced — any address implementing IMandate can be adopted,
+    /// as before. This value is immutable: an org that wants to use a different registry must redeploy.
+    address public immutable MANDATE_REGISTRY;
 
     /// @notice Name of the DAO
     string public name;
@@ -131,12 +135,15 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     /// @param maxCallDataLength_ maximum length of calldata for a mandate
     /// @param maxReturnDataLength_ maximum length of return data for a mandate
     /// @param maxExecutionsLength_ maximum length of executions for a mandate
+    /// @param mandateRegistry_ MandateRegistry address this org enforces mandate membership against.
+    /// Pass address(0) to adopt any address implementing IMandate, with no registry restriction.
     constructor(
         string memory name_,
         string memory uri_,
         uint256 maxCallDataLength_,
         uint256 maxReturnDataLength_,
-        uint256 maxExecutionsLength_
+        uint256 maxExecutionsLength_,
+        address mandateRegistry_
         // add here the init data for initial mandates?
     ) payable EIP712(name_, version()) {
         if (bytes(name_).length == 0) revert Powers__InvalidName();
@@ -150,6 +157,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         MAX_CALLDATA_LENGTH = maxCallDataLength_;
         MAX_RETURN_DATA_LENGTH = maxReturnDataLength_;
         MAX_EXECUTIONS_LENGTH = maxExecutionsLength_;
+        MANDATE_REGISTRY = mandateRegistry_;
         FOUNDED_AT = block.number;
 
         emit Powers__Initialized(address(this), name, uri);
@@ -367,6 +375,11 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // set action as fulfilled
         action.fulfilledAt = uint48(block.number);
 
+        // register latestFulfillment before the external calls below, so a reentrant request()
+        // for the same mandateId (triggered from one of those calls) cannot read a stale
+        // pre-fulfillment value and bypass Conditions.throttleExecution.
+        mandate.latestFulfillment = uint48(block.number);
+
         // execute targets[], values[], calldatas[] received from mandate.
         for (uint256 i = 0; i < targetsLength;) {
             if (calldatas[i].length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
@@ -374,8 +387,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
 
             (bool success, bytes memory returndata) = targets[i].call{ value: values[i] }(calldatas[i]);
             if (!success) {
-                // logging block number of failed action.
-                action.failedAt = uint48(block.number); // log time of failure.
+                // note: a failed call reverts the entire fulfill() transaction (see below), so no
+                // "failed" state is ever persisted here — the action simply stays un-fulfilled.
                 // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
                 if (returndata.length > 0) {
                     assembly {
@@ -395,12 +408,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
                 ++i;
             }
         }
-
-        // emit event. -- commented out to save gas, can be re-enabled if needed.
         emit ActionFulfilled(mandateId, actionId, targets, values, calldatas);
-
-        // register latestFulfillment at mandate.
-        mandate.latestFulfillment = uint48(block.number);
     }
 
     /// @inheritdoc IPowers
@@ -497,7 +505,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation.
     /// @dev Internal helper to store mandate data and initialize it.
     function _storeMandate(uint16 mandateId, MandateInitData memory mandateInitData) internal {
-        PowersUtilities.storeMandate(mandates, _blacklist, mandateId, mandateInitData);
+        PowersUtilities.storeMandate(mandates, _blacklist, mandateId, mandateInitData, MANDATE_REGISTRY);
         emit MandateAdopted(mandateId);
     }
 
@@ -748,9 +756,6 @@ contract Powers is EIP712, ERC165, IPowers, Context {
 
         if (action.proposedAt == 0 && action.requestedAt == 0 && action.fulfilledAt == 0 && action.cancelledAt == 0) {
             return ActionState.NonExistent;
-        }
-        if (action.failedAt > 0) {
-            return ActionState.Failed;
         }
         if (action.fulfilledAt > 0) {
             return ActionState.Fulfilled;

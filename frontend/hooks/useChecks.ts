@@ -174,7 +174,9 @@ export const useChecks = () => {
             mandateNotFulfilled: mandate.conditions.needNotFulfilled == 0n ? true : actionStateNeedNotFulfilled != 7n
           } 
           newChecks.allPassed = Object.values(newChecks).filter(item => item !== undefined).every(item => item === true)
-          newChecks.voteActive = mandate.conditions.quorum == 0n ? true : actionState == 1n
+          // ActionState.Active == 3 (Powers.sol never returns ActionState.Proposed == 1 —
+          // getActionState() resolves straight to Active/Defeated/Succeeded once proposed).
+          newChecks.voteActive = mandate.conditions.quorum == 0n ? true : actionState == 3n
           newChecks.hasVoted = hasVoted
 
           console.log("fetchChecks triggered, waypoint 2", {newChecks})
