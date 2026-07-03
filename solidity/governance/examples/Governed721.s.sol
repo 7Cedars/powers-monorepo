@@ -73,7 +73,8 @@ contract Deploy is DeployHelpers {
             string.concat(baseURI, "organisation.json"), // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(registry)
         );
         governed721 = new Governed721();
         vm.stopBroadcast();  

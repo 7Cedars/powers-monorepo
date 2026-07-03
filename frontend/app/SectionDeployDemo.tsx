@@ -172,7 +172,10 @@ export function SectionDeployDemo() {
       const powersTxHash = await deployContract(wagmiConfig, {
         abi: powersAbi,
         bytecode: bytecodePowers,
-        args: [currentOrg.metadata.title, currentOrg.metadata.uri, 10_000n, 10_000n, 25n]
+        // mandateRegistry: address(0) — the public deploy demo stays unrestricted (no MandateRegistry
+        // enforcement), matching today's permissionless-adoption behaviour. There is no per-chain
+        // MandateRegistry constant in this frontend yet; add one here if the demo should enforce one.
+        args: [currentOrg.metadata.title, currentOrg.metadata.uri, 10_000n, 10_000n, 25n, "0x0000000000000000000000000000000000000000"]
       });
 
       console.log("Powers deployment tx:", powersTxHash);

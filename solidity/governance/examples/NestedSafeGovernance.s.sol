@@ -62,7 +62,8 @@ contract Deploy is DeployHelpers {
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/nestedGovernance-parent.json",
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid) 
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(registry)
         );
         vm.stopBroadcast();
         console2.log("Powers Parent deployed at:", address(powersParent));
@@ -76,7 +77,8 @@ contract Deploy is DeployHelpers {
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid),
-            address(powersDeployer)
+            address(powersDeployer),
+            address(registry)
         );
         vm.stopBroadcast();
         console2.log("Powers Child Factory deployed at:", address(powersChildFactory));
