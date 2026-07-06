@@ -279,10 +279,7 @@ contract ChecksTest is TestSetupPowers {
     //////////////////////////////////////////////////////////////
     //                  EXECUTION WINDOW CHECKS                  //
     //////////////////////////////////////////////////////////////
-    function _adoptOpenActionWithExecutionWindow(uint32 maxExecutionDelay)
-        internal
-        returns (uint16 windowMandateId)
-    {
+    function _adoptOpenActionWithExecutionWindow(uint32 maxExecutionDelay) internal returns (uint16 windowMandateId) {
         OpenAction openAction = new OpenAction();
 
         PowersTypes.Conditions memory execConditions;

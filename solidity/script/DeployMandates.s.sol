@@ -37,7 +37,9 @@ import { PresetActions_OnOwnPowers } from "@src/addons/mandates/executive/Preset
 
 // INTEGRATION MANDATES
 // Election List
-import { ElectionRegistry_Nominate } from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_Nominate.sol";
+import {
+    ElectionRegistry_Nominate
+} from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_Nominate.sol";
 import { ElectionRegistry_Tally } from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_Tally.sol";
 import { ElectionRegistry_Vote } from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_Vote.sol";
 import {
@@ -51,17 +53,23 @@ import {
 import { ERC721_GatedAccess } from "@src/addons/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
 
 // GitHub -> Chainlink Functions
-import { ChainlinkFunctions_Open } from "@src/addons/mandates/integrations/ChainlinkFunctions/ChainlinkFunctions_Open.sol";
+import {
+    ChainlinkFunctions_Open
+} from "@src/addons/mandates/integrations/ChainlinkFunctions/ChainlinkFunctions_Open.sol";
 
 // GovernedToken
-import { GovernedToken_GatedAccess } from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
+import {
+    GovernedToken_GatedAccess
+} from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
 import {
     GovernedToken_MintEncodedToken
 } from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_MintEncodedToken.sol";
 import {
     GovernedToken_CollectSplitPayment
 } from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol";
-import { GovernedToken_BurnToAccess } from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_BurnToAccess.sol";
+import {
+    GovernedToken_BurnToAccess
+} from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_BurnToAccess.sol";
 
 // Governor
 import { Governor_CreateProposal } from "@src/addons/mandates/integrations/Governor/Governor_CreateProposal.sol";
@@ -86,7 +94,9 @@ import { SafeAllowance_Action } from "@src/core/mandates/integrations/Safe/SafeA
 // Slate Registry
 import { SlateRegistry_AddSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
 import { SlateRegistry_RemoveSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
-import { SlateRegistry_ExecuteResult } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
+import {
+    SlateRegistry_ExecuteResult
+} from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
 
 // Snapshot
 // Will be reintegrated soon.

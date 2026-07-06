@@ -3,7 +3,10 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { TestSetupHelpers } from "../../TestSetup.t.sol";
-import { ZKPassport_PowersRegistry, IZKPassport_PowersRegistry } from "@src/addons/helpers/ZKPassport_PowersRegistry.sol";
+import {
+    ZKPassport_PowersRegistry,
+    IZKPassport_PowersRegistry
+} from "@src/addons/helpers/ZKPassport_PowersRegistry.sol";
 import { DisclosedData } from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 
 /// @notice Unit tests for ZKPassport_PowersRegistry

@@ -21,7 +21,9 @@ import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { SlateRegistryMock } from "../../mocks/SlateRegistryMock.sol";
 import { SlateRegistry_AddSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
 import { SlateRegistry_RemoveSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
-import { SlateRegistry_ExecuteResult } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
+import {
+    SlateRegistry_ExecuteResult
+} from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { Checks } from "@src/libraries/Checks.sol";
 import { PowersFactory_AssignRole } from "@src/addons/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
@@ -271,8 +273,7 @@ abstract contract SafeTestBase is TestSetupIntegrations {
         IPowers(address(daoMock)).setTreasury(treasury);
 
         // Enable the allowance module on the Safe
-        bytes memory enableModuleCalldata =
-            abi.encodeWithSelector(ModuleManager.enableModule.selector, allowanceModule);
+        bytes memory enableModuleCalldata = abi.encodeWithSelector(ModuleManager.enableModule.selector, allowanceModule);
 
         // Compute the tx hash and pre-approve it as daoMock (the Safe owner).
         // Using approveHash is version-agnostic: the Sepolia fork runs Safe 1.4.0 bytecode whose
@@ -428,8 +429,12 @@ contract SafeAllowance_ActionBasicTest is SafeTestBase {
         mandateCalldata =
             abi.encode(address(daoMockChild1), address(simpleErc20Votes), uint96(5e16), uint16(0), uint32(0));
 
-        (uint256 returnedActionId, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas)
-            = Mandate(mandateAddress).handleRequest(alice, address(daoMock), setAllowanceActionId, mandateCalldata, nonce);
+        (
+            uint256 returnedActionId,
+            address[] memory returnedTargets,
+            uint256[] memory returnedValues,
+            bytes[] memory returnedCalldatas
+        ) = Mandate(mandateAddress).handleRequest(alice, address(daoMock), setAllowanceActionId, mandateCalldata, nonce);
 
         assertEq(returnedActionId, MandateUtilities.computeActionId(setAllowanceActionId, mandateCalldata, nonce));
         assertEq(returnedTargets.length, 1);
@@ -509,8 +514,9 @@ contract SafeAllowance_PresetTransferBasicTest is SafeTestBase {
         (mandateAddress,,) = daoMockChild1.getAdoptedMandate(presetTransferId);
         mandateCalldata = abi.encode(bob);
 
-        (uint256 returnedActionId, address[] memory returnedTargets,, bytes[] memory returnedCalldatas) =
-            Mandate(mandateAddress).handleRequest(alice, address(daoMockChild1), presetTransferId, mandateCalldata, nonce);
+        (uint256 returnedActionId, address[] memory returnedTargets,, bytes[] memory returnedCalldatas) = Mandate(
+                mandateAddress
+            ).handleRequest(alice, address(daoMockChild1), presetTransferId, mandateCalldata, nonce);
 
         assertEq(returnedActionId, MandateUtilities.computeActionId(presetTransferId, mandateCalldata, nonce));
         assertEq(returnedTargets.length, 1);
