@@ -13,7 +13,7 @@ import { Powers } from "@src/Powers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { PowersMock } from "../../mocks/PowersMock.sol";
-import { MandatePackage } from "@src/mandates/reform/MandatePackage.sol";
+import { MandatePackage } from "@src/core/mandates/reform/MandatePackage.sol";
 
 // ─────────────────────────────────────────────
 //               BASIC BEHAVIOUR

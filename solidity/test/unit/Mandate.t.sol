@@ -8,7 +8,7 @@ import { IMandate } from "@src/interfaces/IMandate.sol";
 import { IERC165 } from "@lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
 import { TestSetupMandate } from "../TestSetup.t.sol";
-import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+import { OpenAction } from "@src/core/mandates/executive/OpenAction.sol";
 
 /// @notice Comprehensive unit tests for Mandate.sol contract
 /// @dev Tests all functionality of the Mandate base contract including initialization, execution, and helper functions

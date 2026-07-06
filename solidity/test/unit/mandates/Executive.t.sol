@@ -630,3 +630,115 @@ contract ExternalAction_OnReturnValueAccessTest is TestSetupExecutive {
         daoMock.request(mandateId, mandateCalldata, nonce, "Unauthorized");
     }
 }
+
+/////////////////////////////////////////////////////////////////////
+//                     EXTERNAL ACTION SIMPLE                       //
+/////////////////////////////////////////////////////////////////////
+
+// ─────────────────────────────────────────────
+//               BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract ExternalAction_SimpleBasicTest is TestSetupExecutive {
+    uint16 targetMandateId;
+
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "ExternalAction_Simple: Forward calldata to a preset mandate on another Powers instance.", daoMock
+        );
+        targetMandateId =
+            findMandateIdInOrg("StatementOfIntent: A mandate to propose actions without execution.", daoMock);
+    }
+
+    function testSimpleExternalActionExecutesOnTargetPowers() public {
+        // Config bakes in (daoMock, StatementOfIntent): the request is forwarded there.
+        mandateCalldata = abi.encode(true);
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Simple external action");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        // The inner request on the target mandate must also be fulfilled.
+        uint256 innerActionId = MandateUtilities.computeActionId(targetMandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(innerActionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+
+    function testSimpleExternalActionForwardsCalldataUnchanged() public {
+        // The inner action id derives from the exact calldata + nonce passed in; if the mandate
+        // altered either, this id would not resolve to a fulfilled action.
+        mandateCalldata = abi.encode(uint256(42), alice);
+        nonce = 888;
+
+        vm.prank(bob);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Forward calldata unchanged");
+
+        uint256 innerActionId = MandateUtilities.computeActionId(targetMandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(innerActionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+}
+
+// ─────────────────────────────────────────────
+//               EDGE CASES
+// ─────────────────────────────────────────────
+contract ExternalAction_SimpleEdgeCaseTest is TestSetupExecutive {
+    uint16 targetMandateId;
+
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "ExternalAction_Simple: Forward calldata to a preset mandate on another Powers instance.", daoMock
+        );
+        targetMandateId =
+            findMandateIdInOrg("StatementOfIntent: A mandate to propose actions without execution.", daoMock);
+    }
+
+    function testInitializeMandateStoresConfiguredParams() public view {
+        // Unlike ExternalAction_Flexible, no system params are prepended: the target Powers and
+        // mandate id are baked into config, so inputParams is exactly the configured Params array.
+        (address mandateAddress,,) = daoMock.getAdoptedMandate(mandateId);
+        bytes memory rawParams = Mandate(mandateAddress).getInputParams(address(daoMock), mandateId);
+        string[] memory storedParams = abi.decode(rawParams, (string[]));
+        assertEq(storedParams.length, 1, "Only the configured params should be stored");
+        assertEq(storedParams[0], "bool Confirm");
+    }
+
+    function testSimpleExternalActionWorksWithEmptyCalldata() public {
+        // Calldata is passed through opaquely; the target StatementOfIntent accepts any payload.
+        mandateCalldata = "";
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Empty calldata passthrough");
+
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        uint256 innerActionId = MandateUtilities.computeActionId(targetMandateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(innerActionId)), uint8(PowersTypes.ActionState.Fulfilled));
+    }
+}
+
+// ─────────────────────────────────────────────
+//               ACCESS CONTROL
+// ─────────────────────────────────────────────
+contract ExternalAction_SimpleAccessTest is TestSetupExecutive {
+    function setUp() public override {
+        super.setUp();
+        mandateId = findMandateIdInOrg(
+            "ExternalAction_Simple: Forward calldata to a preset mandate on another Powers instance.", daoMock
+        );
+    }
+
+    function testSimpleExternalActionRevertsIfCallerLacksRole() public {
+        vm.prank(frank); // frank holds no role — mandate requires ROLE_ONE
+        vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
+        daoMock.request(mandateId, abi.encode(true), nonce, "Unauthorized");
+    }
+
+    function testSimpleExternalActionRevertsIfCallerHasWrongRole() public {
+        vm.prank(charlotte); // charlotte holds ROLE_TWO — mandate requires ROLE_ONE
+        vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
+        daoMock.request(mandateId, abi.encode(true), nonce, "Wrong role");
+    }
+}

@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { TestSetupHelpers } from "../../TestSetup.t.sol";
-import { SlateRegistry } from "@src/helpers/SlateRegistry.sol";
+import { SlateRegistry } from "@src/core/helpers/SlateRegistry.sol";
 import { PowersStub } from "../../mocks/PowersStub.sol";
 
 /// @notice Unit tests for SlateRegistry

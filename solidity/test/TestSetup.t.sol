@@ -8,7 +8,7 @@ import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol
 // protocol
 import { Powers } from "@src/Powers.sol";
 import { Mandate } from "@src/Mandate.sol";
-import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { MandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
@@ -26,8 +26,8 @@ import { Deploy as ElectionRegistrysDAO } from "../governance/examples/ElectionL
 // import { Deploy } from "@governance/examples/CulturalStewards/Deploy.s.sol";
 
 // helpers
-import { Nominees } from "@src/helpers/Nominees.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { Nominees } from "@src/core/helpers/Nominees.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { Erc20DelegateElection } from "./mocks/Erc20DelegateElection.sol";
 import { SimpleGovernor } from "./mocks/SimpleGovernor.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
@@ -35,11 +35,11 @@ import { Erc20Taxed } from "./mocks/Erc20Taxed.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
-import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { PowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/core/helpers/PowersDeployer.sol";
 import { Soulbound1155 } from "./mocks/Soulbound1155.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
-import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
+import { ZKPassport_PowersRegistry } from "@src/addons/helpers/ZKPassport_PowersRegistry.sol";
 import { SlateRegistryMock } from "./mocks/SlateRegistryMock.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {

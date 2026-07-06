@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { TestSetupHelpers } from "../../TestSetup.t.sol";
-import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { MandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /// @notice Unit tests for MandateRegistry

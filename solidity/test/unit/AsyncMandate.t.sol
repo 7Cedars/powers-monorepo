@@ -437,6 +437,42 @@ contract AsyncMandateFlowTest is TestSetupAsync {
         );
     }
 
+    function testCancelRecoversStuckAsyncAction() public {
+        // prep: request a direct (quorum == 0), async mandate whose oracle never calls back
+        mandateCalldata = abi.encode(address(0x5), uint256(500));
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Test Async Request");
+
+        // assert: action is stuck in Requested — the oracle never calls simulateOracleCallback()
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(ActionState.Requested));
+
+        // act: the original caller cancels the stuck action directly (no propose() ever happened)
+        vm.prank(alice);
+        daoMock.cancel(mandateId, mandateCalldata, nonce);
+
+        // assert: action is now recoverably Cancelled instead of stuck forever
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(ActionState.Cancelled));
+    }
+
+    function testLateOracleCallbackRevertsAfterCancellation() public {
+        // prep: request, then cancel before the oracle ever responds
+        mandateCalldata = abi.encode(address(0x6), uint256(600));
+        actionId = MandateUtilities.computeActionId(mandateId, mandateCalldata, nonce);
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Test Async Request");
+
+        vm.prank(alice);
+        daoMock.cancel(mandateId, mandateCalldata, nonce);
+
+        // act & assert: a late oracle callback arriving after cancellation is a clean no-op revert,
+        // not a double-execution risk — fulfill() already checks action.cancelledAt > 0.
+        vm.expectRevert(PowersErrors.Powers__ActionNotRequested.selector);
+        asyncMock.simulateOracleCallback();
+    }
+
     function testExecuteMandateDoesNotCallFulfillDirectly() public {
         // prep: adopt with alice's role access
         mandateCalldata = abi.encode(address(0x4), uint256(400));

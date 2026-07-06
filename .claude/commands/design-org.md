@@ -8,7 +8,19 @@ Work through the six phases below in order. Never skip a phase. Speak in plain l
 
 ---
 
-## Phase 0 — Environment Check (do this first, silently, before Phase 1)
+## Phase -1 — Introduction (do this first, before anything else — no tool calls yet)
+
+Before checking the environment, reading any files, or making any changes, greet the user and explain in your own words what is about to happen:
+
+- The process has a few stages: an environment check (to make sure the project is set up correctly), a conversation to understand their organisation (two rounds of questions), a written governance specification they can review and revise, code generation (deploy script, actions, runners, tests, and a README), and a final build check.
+- The technical work — filling in the questions and generating the files — can be done in 10–15 minutes. But the questions themselves deserve careful thought. A governance structure shapes who has power, how decisions get made, and what can go wrong. Rushing through the answers produces a technically valid but poorly considered organisation. Encourage them to take their time, revisit their assumptions, and treat this as a design conversation rather than a form to complete.
+- They can pause and return at any point; the spec is saved to disk and can be revised before code is generated.
+
+Only after giving this introduction should you proceed to Phase 0.
+
+---
+
+## Phase 0 — Environment Check (do this silently, after the introduction and before Phase 1)
 
 This skill runs in one of two contexts. Figure out which one applies, resolve the path variables below, and **never hardcode a path from an example elsewhere in this file** — always use the resolved variables instead.
 
@@ -46,7 +58,7 @@ The mandate catalogue and both templates (spec sheet, deploy script) that used t
    - Leave `@governance/=governance/` pointing at the **local** output folder — do not prefix this one; it must always resolve to this project's own generated organisations, never into `lib/`.
    - Do not remove or overwrite any remapping the user already has for something unrelated to powers-monorepo.
 
-Once all checks pass, greet the user briefly and move to Phase 1.
+Once all checks pass, move to Phase 1.
 
 ---
 
@@ -62,19 +74,15 @@ Once all checks pass, greet the user briefly and move to Phase 1.
 
 **Note:** The `search_governance_sources` MCP tool, if connected, retrieves relevant excerpts from a hosted governance theory library (Ostrom, Carlisle, OECD, etc.) — a separate, optional enhancement from the mandate catalogue in Appendix A. Use it during Phase 2 (between Round A and B) and Phase 3. See Phase 2 for what to do if it isn't connected.
 
-Once loading is complete, greet the user briefly and move to Phase 2.
+Once loading is complete, move to Phase 2.
 
 ---
 
 ## Phase 2 — Elicit (structured dialogue)
 
-Before asking the first question, give the user a brief orientation. Explain in your own words:
+The user has already been given an orientation to the process in Phase -1, so proceed directly to questions.
 
-- The process has a few stages: a conversation to understand their organisation (two rounds of questions), a written governance specification they can review and revise, code generation (deploy script, actions, runners, tests, and a README), and a final build check. (An environment check runs first, invisibly, to make sure the project is set up correctly.)
-- The technical work — filling in the questions and generating the files — can be done in 10–15 minutes. But the questions themselves deserve careful thought. A governance structure shapes who has power, how decisions get made, and what can go wrong. Rushing through the answers produces a technically valid but poorly considered organisation. Encourage them to take their time, revisit their assumptions, and treat this as a design conversation rather than a form to complete.
-- They can pause and return at any point; the spec is saved to disk and can be revised before code is generated.
-
-Then ask the following questions. Ask them in two rounds: Round A first, wait for the user's answers, then ask Round B. Probe for specifics if answers are vague. Take notes internally — you will need these answers for the spec.
+Ask the following questions. Ask them in two rounds: Round A first, wait for the user's answers, then ask Round B. Probe for specifics if answers are vague. Take notes internally — you will need these answers for the spec.
 
 **Round A — Purpose and Stakeholders**
 1. In two or three sentences: what does this organisation do, and what resources or decisions does it manage?
@@ -177,7 +185,7 @@ Follow the pattern in **Appendix C** and `<REF_ROOT>/governance/examples/Optimis
 **Account Abstraction (include only if the user opted in during Phase 2):** Use `<REF_ROOT>/governance/examples/AccountAbstraction.s.sol` as the exact reference. Key rules:
 - Add these imports:
   ```solidity
-  import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol";
+  import { PowersPaymaster } from "@src/addons/helpers/PowersPaymaster.sol";
   import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
   ```
 - Declare `PowersPaymaster powersPaymaster;` and `address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;` at contract level (this is the canonical ERC-4337 v0.7 EntryPoint, same on all supported networks)
@@ -868,15 +876,15 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";        // provides minutesToBlocks() — see Phase 4a for context-specific import path
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // Add external helper contracts only if needed:
-// import { Nominees } from "@src/helpers/Nominees.sol";        // for Nominate + PeerSelect
-// import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol"; // for election flows
+// import { Nominees } from "@src/core/helpers/Nominees.sol";        // for Nominate + PeerSelect
+// import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol"; // for election flows
 // import { SimpleErc20Votes } from "../../test/mocks/SimpleErc20Votes.sol"; // for token flows
 
 // ─── Contract declaration ─────────────────────────────────────────────────────

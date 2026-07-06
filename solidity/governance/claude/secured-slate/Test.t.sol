@@ -9,7 +9,7 @@ import { Powers } from "@src/Powers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Mandate } from "@src/Mandate.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
-import { SlateRegistry } from "@src/helpers/SlateRegistry.sol";
+import { SlateRegistry } from "@src/core/helpers/SlateRegistry.sol";
 import { Deploy } from "./Deploy.s.sol";
 
 contract SecuredSlate_test is Test {
