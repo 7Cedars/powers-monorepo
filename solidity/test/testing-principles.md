@@ -87,9 +87,9 @@ When writing tests, the scope is the `test/` directory only. The following are o
 - `src/Powers.sol`
 - `src/Mandate.sol`
 - `src/AsyncMandate.sol`
-- `src/mandates/**`
+- `src/core/**`
+- `src/addons/**`
 - `src/libraries/**`
-- `src/helpers/**`
 - `script/**`
 
 If a test requires behaviour that does not exist in the protocol, the test should document that gap (see rule 4) and stop there.

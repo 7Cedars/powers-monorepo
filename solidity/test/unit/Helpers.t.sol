@@ -6,20 +6,20 @@ pragma solidity ^0.8.26;
 // import { PowersMock } from "../mocks/PowersMock.sol";
 // import { SimpleErc20Votes } from "../mocks/SimpleErc20Votes.sol";
 // import { Erc20Taxed } from "../mocks/Erc20Taxed.sol";
-// import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+// import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 // import { SimpleErc1155 } from "../mocks/SimpleErc1155.sol";
-// import { Nominees } from "@src/helpers/Nominees.sol";
+// import { Nominees } from "@src/core/helpers/Nominees.sol";
 // import { SimpleGovernor } from "../mocks/SimpleGovernor.sol";
 // import { EmptyTargetsMandate } from "../mocks/MandateMocks.sol";
 // import { MockTargetsMandate } from "../mocks/MandateMocks.sol";
-// import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-// import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+// import { PowersFactory } from "@src/core/helpers/PowersFactory.sol";
+// import { PowersDeployer } from "@src/core/helpers/PowersDeployer.sol";
 // import { Powers } from "@src/Powers.sol";
 // import { Soulbound1155 } from "@src/helpers/Soulbound1155.sol";
 // import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 // import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 // import { AllowedTokens } from "@src/helpers/AllowedTokens.sol";
-// import { IZKPassport_PowersRegistry, ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
+// import { IZKPassport_PowersRegistry, ZKPassport_PowersRegistry } from "@src/addons/helpers/ZKPassport_PowersRegistry.sol";
 // import { IZKPassportVerifier, IZKPassportHelper } from "@src/interfaces/IZKPassport.sol";
 // import { ZKProof } from "../mocks/ZKProof.sol";
 // import {
@@ -31,7 +31,7 @@ pragma solidity ^0.8.26;
 //     OS,
 //     ServiceConfig
 // } from "@lib/circuits/src/solidity/src/Types.sol";
-// import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
+// import { Governed721, IGoverned721 } from "@src/addons/helpers/Governed721.sol";
 // import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // //////////////////////////////////////////////////////////////

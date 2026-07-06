@@ -9,7 +9,7 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 
 contract ActionHelpers is Script {
     Configurations helperConfig = new Configurations();

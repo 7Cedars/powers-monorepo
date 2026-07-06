@@ -5,7 +5,7 @@ import { console2 } from "forge-std/console2.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { Governed721Actions } from "./Governed721Actions.s.sol";
 
 /// @title Governed721Runners

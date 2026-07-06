@@ -7,7 +7,7 @@ import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { DeployMandates } from "@script/DeployMandates.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -15,7 +15,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { MandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 /// @title Publius Registry Deployment Script
 /// Note IMPORTANT: Following dpeloyment of this governance structure, the owner of the registry needs to transfer ownership to this powers instance. 

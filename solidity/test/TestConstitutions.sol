@@ -6,13 +6,13 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { DeployMandates } from "@script/DeployMandates.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
-import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { IPowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { ReformMandate_Static } from "@src/mandates/reform/MandatePackage_Static.sol";
+import { ReformMandate_Static } from "@src/core/mandates/reform/MandatePackage_Static.sol";
 
 contract TestConstitutions is Test {
     uint256[] milestoneDisbursements;
@@ -707,7 +707,8 @@ contract TestConstitutions is Test {
                 timelock: 0,
                 throttleExecution: 0,
                 needFulfilled: 0,
-                needNotFulfilled: 0
+                needNotFulfilled: 0,
+                maxExecutionDelay: 0
             })
         });
 
@@ -812,6 +813,26 @@ contract TestConstitutions is Test {
                     params, // params_: ["uint256 Value"]
                     uint16(8), // parentMandateId = BespokeActionReturner (mandateId 8)
                     bytes("") // paramsAfter: empty
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ExternalAction_Simple — forward calldata to a preset mandate on a preset Powers instance
+        params = new string[](1);
+        params[0] = "bool Confirm";
+
+        conditions.allowedRole = 1; // ROLE_ONE
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ExternalAction_Simple: Forward calldata to a preset mandate on another Powers instance.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
+                config: abi.encode(
+                    daoMock, // PowersTarget (self for test)
+                    uint16(1), // MandateIdTarget = StatementOfIntent (public role)
+                    "Forwarded by ExternalAction_Simple", // Description for the inner request
+                    params
                 ),
                 conditions: conditions
             })
@@ -1116,14 +1137,9 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_CleanUpVoteMandate"),
                 config: abi.encode(
-                    address(daoMock), // target contract (primaryDAO in original but here it seems we are testing on daoMock)
-                    IPowers.revokeMandate.selector, // function selector to call
-                    abi.encode(), // params before
-                    inputParams,
-                    openVoteId, // parent mandate id (the open vote mandate)
-                    abi.encode() // no params after
+                    openVoteId // mandateId of the ElectionRegistry_CreateVoteMandate that spawned the vote mandate
                 ),
                 conditions: conditions
             })
@@ -1198,10 +1214,34 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
+        // SafeAllowance_Action: set an allowance on the Allowance Module through the Safe treasury.
+        inputParams = new string[](5);
+        inputParams[0] = "address Delegate";
+        inputParams[1] = "address Token";
+        inputParams[2] = "uint96 allowanceAmount";
+        inputParams[3] = "uint16 resetTimeMin";
+        inputParams[4] = "uint32 resetBaseMin";
+
+        mandateCounter++;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SafeAllowance_Action: Set allowance for a delegate via the Allowance Module.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Action"),
+                config: abi.encode(
+                    inputParams,
+                    bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
+                    helperConfig.getSafeAllowanceModule(block.chainid)
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         return constitution;
     }
 
-    function integrationsTestConstitution2(address daoMock)
+    function integrationsTestConstitution2(address daoMock, address token)
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
     {
@@ -1217,6 +1257,38 @@ contract TestConstitutions is Test {
                 config: abi.encode(
                     helperConfig.getSafeAllowanceModule(block.chainid),
                     IPowers(daoMock).getTreasury() // This is the SafeProxyTreasury!
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Preset Allowance Transfer — token and amount are fixed at adoption, only the recipient is dynamic.
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SafeAllowance_PresetTransfer: Transfer a preset amount of a preset token from the Safe treasury.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_PresetTransfer"),
+                config: abi.encode(
+                    token,
+                    uint256(1e16), // preset amount
+                    helperConfig.getSafeAllowanceModule(block.chainid),
+                    IPowers(daoMock).getTreasury() // This is the SafeProxyTreasury!
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Recover Tokens — return any allowance-listed tokens held by this organisation to the treasury.
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Safe_RecoverTokens: Return tokens held by this organisation to the Safe treasury.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_RecoverTokens"),
+                config: abi.encode(
+                    IPowers(daoMock).getTreasury(), // safeTreasury
+                    helperConfig.getSafeAllowanceModule(block.chainid)
                 ),
                 conditions: conditions
             })
@@ -1799,7 +1871,8 @@ contract TestConstitutions is Test {
                 timelock: 0,
                 throttleExecution: 0,
                 needFulfilled: 0,
-                needNotFulfilled: 0
+                needNotFulfilled: 0,
+                maxExecutionDelay: 0
             })
         });
         ReformMandate_Static pkg1 = new ReformMandate_Static(pkg1Contents);
@@ -1844,7 +1917,8 @@ contract TestConstitutions is Test {
                 timelock: 0,
                 throttleExecution: 0,
                 needFulfilled: 0,
-                needNotFulfilled: 0
+                needNotFulfilled: 0,
+                maxExecutionDelay: 0
             })
         });
         ReformMandate_Static pkg3 = new ReformMandate_Static(pkg3Contents);

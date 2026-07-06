@@ -5,7 +5,7 @@ pragma solidity ^0.8.26;
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -13,12 +13,12 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { SlateRegistry } from "@src/helpers/SlateRegistry.sol";
+import { SlateRegistry } from "@src/core/helpers/SlateRegistry.sol";
 
 // SlateRegistry integration mandates
-import { SlateRegistry_AddSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
-import { SlateRegistry_RemoveSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
-import { SlateRegistry_ExecuteResult } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
+import { SlateRegistry_AddSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
+import { SlateRegistry_RemoveSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
+import { SlateRegistry_ExecuteResult } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
 
 /// @title Slate Voting DAO Deployment Script
 /// @notice A grants DAO where community members elect funding programs by voting on competing

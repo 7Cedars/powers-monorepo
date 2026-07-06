@@ -7,97 +7,107 @@ import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "./Configurations.s.sol";
 
 // --- Interfaces ---
-import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { MandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
 
 // ELECTORAL MANDATES
-import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
-import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
-import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
-import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
-import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol";
-import { DelegateTokenSelect } from "@src/mandates/electoral/DelegateTokenSelect.sol";
-import { Nominate } from "@src/mandates/electoral/Nominate.sol";
-import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
-import { RevokeAccountsRoleId } from "@src/mandates/electoral/RevokeAccountsRoleId.sol";
+import { PeerSelect } from "@src/core/mandates/electoral/PeerSelect.sol";
+import { RoleByRoles } from "@src/addons/mandates/electoral/RoleByRoles.sol";
+import { SelfSelect } from "@src/core/mandates/electoral/SelfSelect.sol";
+import { RenounceRole } from "@src/core/mandates/electoral/RenounceRole.sol";
+import { AssignExternalRole } from "@src/addons/mandates/electoral/AssignExternalRole.sol";
+import { DelegateTokenSelect } from "@src/core/mandates/electoral/DelegateTokenSelect.sol";
+import { Nominate } from "@src/core/mandates/electoral/Nominate.sol";
+import { RevokeInactiveAccounts } from "@src/addons/mandates/electoral/RevokeInactiveAccounts.sol";
+import { RevokeAccountsRoleId } from "@src/addons/mandates/electoral/RevokeAccountsRoleId.sol";
 
 // EXECUTIVE MANDATES
-import { PresetActions } from "@src/mandates/executive/PresetActions.sol";
-import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
-import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
+import { PresetActions } from "@src/core/mandates/executive/PresetActions.sol";
+import { OpenAction } from "@src/core/mandates/executive/OpenAction.sol";
+import { StatementOfIntent } from "@src/core/mandates/executive/StatementOfIntent.sol";
 
-import { CheckExternalActionState } from "@src/mandates/executive/CheckExternalActionState.sol";
-import { BespokeAction_OnReturnValue } from "@src/mandates/executive/BespokeAction_OnReturnValue.sol";
-import { BespokeAction_Advanced } from "@src/mandates/executive/BespokeAction_Advanced.sol";
-import { BespokeAction_Simple } from "@src/mandates/executive/BespokeAction_Simple.sol";
-import { ExternalAction_Simple } from "@src/mandates/executive/ExternalAction_Simple.sol";
-import { ExternalAction_OnReturnValue } from "@src/mandates/executive/ExternalAction_OnReturnValue.sol";
-import { ExternalAction_Flexible } from "@src/mandates/executive/ExternalAction_Flexible.sol";
-import { PresetActions_OnOwnPowers } from "@src/mandates/executive/PresetActions_OnOwnPowers.sol";
+import { CheckExternalActionState } from "@src/addons/mandates/executive/CheckExternalActionState.sol";
+import { BespokeAction_OnReturnValue } from "@src/core/mandates/executive/BespokeAction_OnReturnValue.sol";
+import { BespokeAction_Advanced } from "@src/core/mandates/executive/BespokeAction_Advanced.sol";
+import { BespokeAction_Simple } from "@src/core/mandates/executive/BespokeAction_Simple.sol";
+import { ExternalAction_Simple } from "@src/core/mandates/executive/ExternalAction_Simple.sol";
+import { ExternalAction_OnReturnValue } from "@src/addons/mandates/executive/ExternalAction_OnReturnValue.sol";
+import { ExternalAction_Flexible } from "@src/core/mandates/executive/ExternalAction_Flexible.sol";
+import { PresetActions_OnOwnPowers } from "@src/addons/mandates/executive/PresetActions_OnOwnPowers.sol";
 
 // INTEGRATION MANDATES
 // Election List
-import { ElectionRegistry_Nominate } from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_Nominate.sol";
-import { ElectionRegistry_Tally } from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_Tally.sol";
-import { ElectionRegistry_Vote } from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_Vote.sol";
+import {
+    ElectionRegistry_Nominate
+} from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_Nominate.sol";
+import { ElectionRegistry_Tally } from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_Tally.sol";
+import { ElectionRegistry_Vote } from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_Vote.sol";
 import {
     ElectionRegistry_CreateVoteMandate
-} from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_CreateVoteMandate.sol";
+} from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_CreateVoteMandate.sol";
 import {
     ElectionRegistry_CleanUpVoteMandate
-} from "@src/mandates/integrations/ElectionRegistry/ElectionRegistry_CleanUpVoteMandate.sol";
+} from "@src/core/mandates/integrations/ElectionRegistry/ElectionRegistry_CleanUpVoteMandate.sol";
 
 // ERC721
-import { ERC721_GatedAccess } from "@src/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
+import { ERC721_GatedAccess } from "@src/addons/mandates/integrations/ERC721/ERC721_GatedAccess.sol";
 
 // GitHub -> Chainlink Functions
-import { ChainlinkFunctions_Open } from "@src/mandates/integrations/ChainlinkFunctions/ChainlinkFunctions_Open.sol";
+import {
+    ChainlinkFunctions_Open
+} from "@src/addons/mandates/integrations/ChainlinkFunctions/ChainlinkFunctions_Open.sol";
 
 // GovernedToken
-import { GovernedToken_GatedAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
+import {
+    GovernedToken_GatedAccess
+} from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_GatedAccess.sol";
 import {
     GovernedToken_MintEncodedToken
-} from "@src/mandates/integrations/GovernedToken/GovernedToken_MintEncodedToken.sol";
+} from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_MintEncodedToken.sol";
 import {
     GovernedToken_CollectSplitPayment
-} from "@src/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol";
-import { GovernedToken_BurnToAccess } from "@src/mandates/integrations/GovernedToken/GovernedToken_BurnToAccess.sol";
+} from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol";
+import {
+    GovernedToken_BurnToAccess
+} from "@src/addons/mandates/integrations/GovernedToken/GovernedToken_BurnToAccess.sol";
 
 // Governor
-import { Governor_CreateProposal } from "@src/mandates/integrations/Governor/Governor_CreateProposal.sol";
-import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
+import { Governor_CreateProposal } from "@src/addons/mandates/integrations/Governor/Governor_CreateProposal.sol";
+import { Governor_ExecuteProposal } from "@src/addons/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
 
 // PowersFactory
-import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
+import { PowersFactory_AssignRole } from "@src/addons/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
 import {
     PowersFactory_AddSafeDelegate
-} from "@src/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
+} from "@src/addons/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
 
 // Safe
-import { Safe_ExecTransaction } from "@src/mandates/integrations/Safe/Safe_ExecTransaction.sol";
-import { Safe_RecoverTokens } from "@src/mandates/integrations/Safe/Safe_RecoverTokens.sol";
+import { Safe_ExecTransaction } from "@src/core/mandates/integrations/Safe/Safe_ExecTransaction.sol";
+import { Safe_RecoverTokens } from "@src/core/mandates/integrations/Safe/Safe_RecoverTokens.sol";
 import {
     Safe_ExecTransaction_OnReturnValue
-} from "@src/mandates/integrations/Safe/Safe_ExecTransaction_OnReturnValue.sol";
-import { SafeAllowance_Transfer } from "@src/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
-import { SafeAllowance_PresetTransfer } from "@src/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
-import { SafeAllowance_Action } from "@src/mandates/integrations/Safe/SafeAllowance_Action.sol";
+} from "@src/core/mandates/integrations/Safe/Safe_ExecTransaction_OnReturnValue.sol";
+import { SafeAllowance_Transfer } from "@src/core/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
+import { SafeAllowance_PresetTransfer } from "@src/core/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
+import { SafeAllowance_Action } from "@src/core/mandates/integrations/Safe/SafeAllowance_Action.sol";
 
 // Slate Registry
-import { SlateRegistry_AddSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
-import { SlateRegistry_RemoveSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
-import { SlateRegistry_ExecuteResult } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
+import { SlateRegistry_AddSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
+import { SlateRegistry_RemoveSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
+import {
+    SlateRegistry_ExecuteResult
+} from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
 
 // Snapshot
 // Will be reintegrated soon.
 
 // ZKPassport
-import { ZKPassport_Check } from "@src/mandates/integrations/ZKPassport/ZKPassport_Check.sol";
+import { ZKPassport_Check } from "@src/addons/mandates/integrations/ZKPassport/ZKPassport_Check.sol";
 
 // REFORM MANDATES
-import { Adopt_Mandates } from "@src/mandates/reform/Adopt_Mandates.sol";
-import { Revoke_Mandates } from "@src/mandates/reform/Revoke_Mandates.sol";
-import { PauseMandates } from "@src/mandates/reform/PauseMandates.sol";
+import { Adopt_Mandates } from "@src/core/mandates/reform/Adopt_Mandates.sol";
+import { Revoke_Mandates } from "@src/core/mandates/reform/Revoke_Mandates.sol";
+import { PauseMandates } from "@src/core/mandates/reform/PauseMandates.sol";
 
 /// @title DeployMandates
 /// @notice Deploys all library and mandate contracts

@@ -9,7 +9,7 @@ import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { TestSetupPowers } from "../TestSetup.t.sol";
 import { PowersMock } from "../mocks/PowersMock.sol";
-import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+import { OpenAction } from "@src/core/mandates/executive/OpenAction.sol";
 import { AlwaysRevertMock, MismatchedArraysMandate, TooManyTargetsMandate } from "../mocks/MandateMocks.sol";
 import { IERC721Receiver } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC1155Receiver } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -517,15 +517,29 @@ contract CancelTest is TestSetupPowers {
         daoMock.cancel(mandateId, mandateCalldata, nonce);
     }
 
-    function testCancelRevertsIfActionNotProposed() public {
-        // Execute mandate 1 (SelfSelect, PUBLIC_ROLE) directly via request — sets action.caller but not proposedAt
+    function testCancelRevertsIfActionNotProposedOrRequested() public {
+        // an actionId that was never propose()'d nor request()'d does not exist at all;
+        // action.caller defaults to address(0), so prank as address(0) to pass the caller check
+        // and isolate the existence check (proposedAt == 0 && requestedAt == 0).
+        mandateId = 1;
+        mandateCalldata = abi.encode(helen);
+
+        vm.expectRevert(Powers__ActionNotProposed.selector);
+        vm.prank(address(0));
+        daoMock.cancel(mandateId, mandateCalldata, nonce);
+    }
+
+    function testCancelRevertsIfDirectRequestActionAlreadyFulfilled() public {
+        // Execute mandate 1 (SelfSelect, PUBLIC_ROLE) directly via request — this sets requestedAt
+        // (not proposedAt), and since SelfSelect is synchronous, fulfilledAt is also set in the same tx.
+        // cancel() now recognizes the action via requestedAt, but rejects it as already-fulfilled
+        // rather than reporting it as never having existed.
         mandateId = 1;
         mandateCalldata = abi.encode(helen);
         vm.prank(helen);
         daoMock.request(mandateId, mandateCalldata, nonce, description);
 
-        // helen is action.caller, but proposedAt == 0 since request() was used, not propose()
-        vm.expectRevert(Powers__ActionNotProposed.selector);
+        vm.expectRevert(Powers__UnexpectedActionState.selector);
         vm.prank(helen);
         daoMock.cancel(mandateId, mandateCalldata, nonce);
     }
@@ -905,7 +919,8 @@ contract MandateAdminTest is TestSetupPowers {
             timelock: 0,
             throttleExecution: 0,
             needFulfilled: 0,
-            needNotFulfilled: 0
+            needNotFulfilled: 0,
+            maxExecutionDelay: 0
         });
 
         PowersTypes.MandateInitData memory mandateInitData = PowersTypes.MandateInitData({
