@@ -7,7 +7,7 @@ import { Test, console2 } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { Configurations } from "@script/Configurations.s.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 
 import { Deploy } from "./Deploy.s.sol";
 import { GlobalEnvMovementActions } from "./Actions.s.sol";

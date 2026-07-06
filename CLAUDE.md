@@ -64,24 +64,20 @@ pnpm build      # Build static site
 
 **`src/AsyncMandate.sol`** — Base for mandates that require asynchronous checks (e.g., waiting on external oracle data).
 
-**Mandate categories** under `src/mandates/`:
+**Mandate contracts** are split by centrality into `src/core/mandates/` (Tiers 0–3 of `solidity/governance/CORE_MANDATES.md` — the contracts most constitutions are built from) and `src/addons/mandates/` (Tier 4 — niche/advanced). Both sides use the same category folders:
 - `electoral/` — Role assignment logic (self-select, peer-select, nomination, token delegation, etc.)
 - `executive/` — Execute external calls (simple preset, flexible, return-value-conditional, bespoke, open actions)
-- `integrations/` — Protocol integrations (Chainlink, Safe, Governor, ZKPassport, ERC721, Snapshot, etc.)
-- `reform/` — Governance self-modification (adopt/revoke/pause mandates, mandate packages)
+- `integrations/` — Protocol integrations (core: ElectionRegistry, SlateRegistry, Safe; addons: Chainlink, Governor, ZKPassport, ERC721, GovernedToken, PowersFactory, Snapshot)
+- `reform/` — Governance self-modification (adopt/revoke/pause mandates, mandate packages) — all core
 
 **Libraries** under `src/libraries/`:
 - `Checks.sol` — Precondition validation used in Powers.sol
 - `MandateUtilities.sol` — Utilities for mandate encoding/decoding
 - `PowersUtilities.sol` — Utilities for Powers.sol internals
 
-**Helper contracts** under `src/helpers/`:
-- `PowersFactory.sol` / `PowersDeployer.sol` — Deploy new Powers instances
-- `PowersPaymaster.sol` — ERC-4337 paymaster
-- `MandateRegistry.sol` — Registry of available mandates
-- `ElectionRegistry.sol`, `SlateRegistry.sol`, `Nominees.sol` — Electoral support contracts
-- `Governed721.sol` — NFT-governed DAO helper
-- `ZKPassport_PowersRegistry.sol` — ZKPassport identity integration
+**Helper contracts** follow the same core/addons split:
+- `src/core/helpers/` — `MandateRegistry.sol` (registry of available mandates), `ElectionRegistry.sol`, `SlateRegistry.sol`, `Nominees.sol` (electoral support), `PowersFactory.sol` / `PowersDeployer.sol` (deploy new Powers instances)
+- `src/addons/helpers/` — `PowersPaymaster.sol` (ERC-4337 paymaster), `Governed721.sol` (NFT-governed DAO helper), `ZKPassport_PowersRegistry.sol` (ZKPassport identity integration)
 
 **`test/TestConstitutions.sol`** — Reference implementations of example governance structures; read this to understand how mandates compose.
 

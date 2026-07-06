@@ -2,8 +2,8 @@
 pragma solidity ^0.8.26;
 
 import { TestSetupHelpers } from "../../TestSetup.t.sol";
-import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { PowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/core/helpers/PowersDeployer.sol";
 import { Powers } from "@src/Powers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";

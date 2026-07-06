@@ -423,8 +423,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // check 1: is caller the caller of the proposedAction?
         if (_msgSender() != action.caller) revert Powers__NotProposerAction();
 
-        // check 2: does action exist?
-        if (action.proposedAt == 0) revert Powers__ActionNotProposed();
+        // check 2: does action exist? (either voted-on via propose(), or direct via request())
+        if (action.proposedAt == 0 && action.requestedAt == 0) revert Powers__ActionNotProposed();
 
         // check 3: is action already fulfilled or cancelled?
         if (action.fulfilledAt > 0 || action.cancelledAt > 0) {

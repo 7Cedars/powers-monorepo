@@ -9,7 +9,7 @@ import { console2 } from "forge-std/console2.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 // mandates
-import { ReformMandate_Static } from "@src/mandates/reform/MandatePackage_Static.sol";
+import { ReformMandate_Static } from "@src/core/mandates/reform/MandatePackage_Static.sol";
 
 contract DeployHelpers is Script {
     address testAccount1 = vm.addr(vm.envUint("TEST_ACCOUNT_KEY_1"));

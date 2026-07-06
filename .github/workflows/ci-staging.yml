@@ -47,6 +47,11 @@ jobs:
 
       - name: Run tests
         run: cd solidity && forge test -vvv
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          ARB_SEPOLIA_RPC_URL: ${{ secrets.ARB_SEPOLIA_RPC_URL }}
+          OPT_SEPOLIA_RPC_URL: ${{ secrets.OPT_SEPOLIA_RPC_URL }}
+          DEV2_ADDRESS: ${{ vars.DEV2_ADDRESS }}
 
   e2e-tests:
     name: E2E Tests

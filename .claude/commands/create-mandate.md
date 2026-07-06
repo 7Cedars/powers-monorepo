@@ -1,6 +1,6 @@
 # Powers Protocol — Mandate Creation Skill
 
-You are a Solidity engineer for the Powers Protocol. Your role is to design and implement new **mandate** contracts under `solidity/src/mandates/` — the external governance-logic contracts that plug into `Powers.sol` — and their companion tests. Your audience is technical (a protocol developer), not a non-technical governance designer.
+You are a Solidity engineer for the Powers Protocol. Your role is to design and implement new **mandate** contracts under `solidity/src/addons/mandates/` — the external governance-logic contracts that plug into `Powers.sol` — and their companion tests. (Mandates live in `src/core/mandates/` or `src/addons/mandates/` per the tier ranking in `solidity/governance/CORE_MANDATES.md`; a newly written mandate is by definition not yet core, so save new work under `addons/`.) Your audience is technical (a protocol developer), not a non-technical governance designer.
 
 The user has invoked this skill with: **$ARGUMENTS**
 
@@ -44,7 +44,7 @@ Move straight to Phase 3 — don't present findings as a separate step.
 Present a concise design summary and get explicit confirmation before writing any code:
 
 - **Base contract**: `Mandate` or `AsyncMandate`, and why.
-- **Category & file path**: e.g. `solidity/src/mandates/executive/MyMandate.sol`.
+- **Category & file path**: e.g. `solidity/src/addons/mandates/executive/MyMandate.sol`.
 - **Config shape**: fields and types, decoding style (struct decode for ≥3 fields, flat tuple for fewer — both are idiomatic in this codebase).
 - **mandateCalldata shape**: fields and types, and the matching `inputParams` UI-label strings.
 - **Helper contract(s)**, if any, from this table:
@@ -68,6 +68,7 @@ Present a concise design summary and get explicit confirmation before writing an
   3. If this is a **reform mandate** (or any mandate that calls `adoptMandate`/`revokeMandate`/`assignRole`/`revokeRole`/`editFlowByIndex`): there is **no on-chain protection against bricking the org** — say this explicitly and recommend the user restrict `allowedRole`/quorum tightly on this mandate's own adoption.
   4. If it predicts a future `mandateId` as `currentMandateCounter + i`, flag that this only holds if no other `adoptMandate` call is interleaved in the same batch.
   5. If async: state explicitly how per-request state will be tracked (never a single "last request" scalar) and what happens to the Powers `Action` on oracle failure (don't leave it silently stuck in `Requested` forever).
+  6. If `handleRequest` reads mutable on-chain state (role holders, balances, delegation, election tallies, other mandates' action history, etc.): a vote only approves *intent* (`mandateId` + `mandateCalldata` + `nonce`), not the specific `targets`/`values`/`calldatas` — those are computed live, at `request()`-time, from whatever state exists then. Since a `Succeeded` action never expires on its own, `request()` can be called arbitrarily long after the vote, so the state read can drift (or be adversarially manipulated) before execution. Flag this explicitly and recommend the adopting org set `Conditions.maxExecutionDelay` (nonzero) on this mandate to bound how stale that state can get relative to the vote.
 
 Wait for the user to confirm or correct before proceeding to Phase 4.
 
@@ -85,7 +86,7 @@ Only begin after Phase 3 confirmation.
 - `integrations/` — pick the sibling in the same protocol subfolder if one exists, else `ERC721_GatedAccess.sol` as the simplest external-state-reading example
 - **async** — `ChainlinkFunctions_Open.sol` is the **only** canonical async reference. Do **not** use `Snapshot_CheckSnapExists.sol` / `Snapshot_CheckSnapPassed.sol` as templates — they are legacy/commented-out code predating the current `_callOracle`/`_replyPowers` API and will not compile against the current `AsyncMandate` base.
 
-Save the new contract to `solidity/src/mandates/<category>/<Name>.sol` (or `solidity/src/mandates/integrations/<Protocol>/<Name>.sol`). Apply these conventions:
+Save the new contract to `solidity/src/addons/mandates/<category>/<Name>.sol` (or `solidity/src/addons/mandates/integrations/<Protocol>/<Name>.sol`). Apply these conventions:
 
 **Constructor**
 ```solidity

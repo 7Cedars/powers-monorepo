@@ -6,7 +6,7 @@ import { PowersErrors } from "../interfaces/PowersErrors.sol";
 import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
 import { IMandate } from "../interfaces/IMandate.sol";
 import { Mandate } from "../Mandate.sol";
-import { IMandateRegistry } from "../helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 /// @title Powers Utilities
 /// @notice Library with bytecode-heavy internal logic extracted from Powers to keep it under EIP-170's 24KB limit.

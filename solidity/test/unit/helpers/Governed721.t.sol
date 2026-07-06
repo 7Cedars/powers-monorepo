@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { TestSetupHelpers } from "../../TestSetup.t.sol";
-import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
+import { Governed721, IGoverned721 } from "@src/addons/helpers/Governed721.sol";
 
 /// @notice Unit tests for Governed721
 /// @dev The test contract is the owner of g721, so all onlyOwner calls are made directly.

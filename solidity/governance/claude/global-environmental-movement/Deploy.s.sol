@@ -7,16 +7,16 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { DeployHelpers } from "../../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
-import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
-import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
-import { Nominees } from "@src/helpers/Nominees.sol";
+import { IPowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { PowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/core/helpers/PowersDeployer.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
+import { Nominees } from "@src/core/helpers/Nominees.sol";
 
 /// @title Global Environmental Movement.  Deploy Script
 /// @notice Deploys the parent organisation and a pre-configured sub-org factory.

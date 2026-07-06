@@ -5,7 +5,7 @@ import { console2 } from "forge-std/console2.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { ActionHelpers } from "@governance/examples/actions/ActionHelpers.s.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 
 /// @title GlobalEnvMovementActions
 /// @notice One propose/execute function pair per governance flow.

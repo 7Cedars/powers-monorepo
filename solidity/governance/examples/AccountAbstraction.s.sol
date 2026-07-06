@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -14,7 +14,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // Account Abstraction Integrations
-import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol"; 
+import { PowersPaymaster } from "@src/core/helpers/PowersPaymaster.sol"; 
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
 // helpers

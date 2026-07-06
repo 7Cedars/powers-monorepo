@@ -6,9 +6,17 @@ pragma solidity ^0.8.26;
 
 interface PowersTypes {
     /// @notice struct to keep track of a mandate.
+    ///
+    /// @dev `handleRequest()` is called live at `request()`-time, not at `propose()`/vote-time, and for
+    /// mandates that read mutable on-chain state (role holders, balances, delegation, election tallies,
+    /// etc.) its output can differ from what voters implicitly approved if `request()` is called much
+    /// later than the vote, or after an adversary has manipulated the state it reads. Since a `Succeeded`
+    /// action never expires on its own, that gap is unbounded unless `maxExecutionDelay` is set. Mandate
+    /// authors and governance designers should treat "vote succeeded" as approval of *intent*
+    /// (mandateId + calldata), not of a specific, previewed execution payload.
     struct Conditions {
         uint256 allowedRole; // Takes its own slot
-        // --- All of the following can be packed into a single slot (144 bits total) ---
+        // --- All of the following can be packed into a single slot (176 bits total) ---
         uint32 votingPeriod;
         uint32 timelock;
         uint32 throttleExecution;
@@ -16,6 +24,13 @@ interface PowersTypes {
         uint16 needNotFulfilled;
         uint8 quorum;
         uint8 succeedAt;
+        // @notice for quorum-gated mandates (quorum != 0), the maximum number of blocks after a vote
+        // succeeds within which `request()` must be called; 0 disables the check (default, preserves
+        // pre-existing unbounded-wait behavior). Has no effect on quorum==0 direct actions, since those
+        // execute atomically within a single `request()` call and have no vote-to-execution gap. Opt in
+        // for mandates whose `handleRequest` reads mutable state, to bound how stale that state can be
+        // relative to the vote. See `Checks.check()` for enforcement.
+        uint32 maxExecutionDelay;
     }
 
     /// @notice struct to keep track of an adopted mandate.

@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // external protocols
 import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
@@ -17,7 +17,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { Nominees } from "@src/helpers/Nominees.sol";
+import { Nominees } from "@src/core/helpers/Nominees.sol";
 import { SimpleErc20Votes } from "../../test/mocks/SimpleErc20Votes.sol";
 
 /// @title Token Delegates Deployment Script

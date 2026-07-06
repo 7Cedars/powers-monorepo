@@ -2,11 +2,11 @@
 pragma solidity ^0.8.26;
 
 import { TestSetupHelpers } from "../../TestSetup.t.sol";
-import { Nominees } from "@src/helpers/Nominees.sol";
+import { Nominees } from "@src/core/helpers/Nominees.sol";
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 // ─── NOMINEES UNIT TESTS ────────────────────────────────────────────────────
-// Target:  src/helpers/Nominees.sol
+// Target:  src/core/helpers/Nominees.sol
 // Gap:     revokeNomination (line 55-56) — never called in existing coverage.
 // Owner:   The test contract deploys Nominees directly, so address(this) is owner.
 // ─────────────────────────────────────────────────────────────────────────────

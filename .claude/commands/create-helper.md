@@ -1,8 +1,8 @@
 # Powers Protocol — Helper Contract Creation Skill
 
-You are a Solidity engineer for the Powers Protocol. Your role is to design and implement new **helper** contracts under `solidity/src/helpers/` — the stateful support contracts (elections, rosters, governed tokens, registries, factories) that mandate contracts read from and write to — and their companion tests. Your audience is technical (a protocol developer), not a non-technical governance designer.
+You are a Solidity engineer for the Powers Protocol. Your role is to design and implement new **helper** contracts under `solidity/src/addons/helpers/` — the stateful support contracts (elections, rosters, governed tokens, registries, factories) that mandate contracts read from and write to — and their companion tests. Your audience is technical (a protocol developer), not a non-technical governance designer. (Helpers live in `src/core/helpers/` or `src/addons/helpers/` per the tier ranking in `solidity/governance/CORE_MANDATES.md`; a newly written helper is by definition not yet core, so save new work under `addons/`.)
 
-**Do not confuse `src/helpers/` (this skill's subject) with `governance/DeployHelpers.s.sol`** — the latter is an unrelated Foundry script-utility base (block-time math like `daysToBlocks`), not a helper contract. Never use it as a template here.
+**Do not confuse `src/{core,addons}/helpers/` (this skill's subject) with `governance/DeployHelpers.s.sol`** — the latter is an unrelated Foundry script-utility base (block-time math like `daysToBlocks`), not a helper contract. Never use it as a template here.
 
 The user has invoked this skill with: **$ARGUMENTS**
 
@@ -39,7 +39,7 @@ Move straight to Phase 3 — don't present findings as a separate step.
 
 ## Phase 3 — Design Summary (confirm before coding)
 
-Present a concise design summary and get explicit confirmation before writing any code. The central decision is the **ownership/sharing model** — pick one of three, based on precedent in `solidity/src/helpers/`:
+Present a concise design summary and get explicit confirmation before writing any code. The central decision is the **ownership/sharing model** — pick one of three, based on precedent in `solidity/src/{core,addons}/helpers/`:
 
 | Model | Precedent | Use when |
 |---|---|---|
@@ -64,13 +64,13 @@ Wait for the user to confirm or correct before proceeding to Phase 4.
 Only begin after Phase 3 confirmation.
 
 **Read 1–2 existing helpers matching the chosen ownership model first**, as live style templates (read fresh each time — don't rely on memory of past sessions):
-- Org-owned, simple → `solidity/src/helpers/Nominees.sol`
-- Org-owned, calls back into Powers → `solidity/src/helpers/SlateRegistry.sol`
-- Multi-org-shared → `solidity/src/helpers/ElectionRegistry.sol`
-- Permissionless self-service → `solidity/src/helpers/ZKPassport_PowersRegistry.sol`
-- Constructor-time ownership transfer to Powers → `solidity/src/helpers/PowersPaymaster.sol`
+- Org-owned, simple → `solidity/src/core/helpers/Nominees.sol`
+- Org-owned, calls back into Powers → `solidity/src/core/helpers/SlateRegistry.sol`
+- Multi-org-shared → `solidity/src/core/helpers/ElectionRegistry.sol`
+- Permissionless self-service → `solidity/src/addons/helpers/ZKPassport_PowersRegistry.sol`
+- Constructor-time ownership transfer to Powers → `solidity/src/addons/helpers/PowersPaymaster.sol`
 
-Save the new contract to `solidity/src/helpers/<Name>.sol`. Apply these conventions:
+Save the new contract to `solidity/src/addons/helpers/<Name>.sol`. Apply these conventions:
 
 **Ownable import** — use the path the majority of helpers use:
 ```solidity

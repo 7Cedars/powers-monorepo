@@ -55,12 +55,19 @@ solidity/
 │   ├── Powers.sol              # Central hub — all governance flows through here
 │   ├── Mandate.sol             # Abstract base for synchronous mandates
 │   ├── AsyncMandate.sol        # Base for mandates with async external checks
-│   ├── mandates/
-│   │   ├── electoral/          # Role assignment (self-select, peer-select, delegation, etc.)
-│   │   ├── executive/          # External calls (preset, flexible, bespoke, open actions)
-│   │   ├── integrations/       # Protocol integrations (Safe, Chainlink, Governor, ZKPassport, ERC721…)
-│   │   └── reform/             # Governance self-modification (adopt/revoke/pause mandates)
-│   ├── helpers/                # PowersFactory, PowersPaymaster, MandateRegistry, ElectionRegistry…
+│   ├── core/                   # Tier 0–3 contracts — see governance/CORE_MANDATES.md
+│   │   ├── mandates/
+│   │   │   ├── electoral/      # Role assignment (self-select, peer-select, delegation, etc.)
+│   │   │   ├── executive/      # External calls (preset, flexible, bespoke, open actions)
+│   │   │   ├── integrations/   # ElectionRegistry, SlateRegistry, Safe
+│   │   │   └── reform/         # Governance self-modification (adopt/revoke/pause mandates)
+│   │   └── helpers/            # MandateRegistry, ElectionRegistry, SlateRegistry, Nominees, PowersFactory…
+│   ├── addons/                 # Tier 4 contracts — niche / advanced / single-use
+│   │   ├── mandates/
+│   │   │   ├── electoral/      # RoleByRoles, RevokeInactiveAccounts, AssignExternalRole…
+│   │   │   ├── executive/      # CheckExternalActionState, ExternalAction_OnReturnValue…
+│   │   │   └── integrations/   # Chainlink, Governor, ZKPassport, ERC721, GovernedToken, Snapshot…
+│   │   └── helpers/            # ZKPassport_PowersRegistry, Governed721, PowersPaymaster
 │   ├── interfaces/             # IMandate, IPowers, and integration interfaces
 │   └── libraries/              # Checks.sol, MandateUtilities.sol, PowersUtilities.sol
 │
@@ -92,7 +99,9 @@ solidity/
 
 ## Mandate categories
 
-### Electoral — `src/mandates/electoral/`
+Mandates are split into `src/core/` (Tiers 0–3 of `governance/CORE_MANDATES.md` — the contracts most constitutions are built from) and `src/addons/` (Tier 4 — niche or advanced contracts). Both sides use the same category folders.
+
+### Electoral — `src/{core,addons}/mandates/electoral/`
 
 Assign and revoke governance roles.
 
@@ -106,7 +115,7 @@ Assign and revoke governance roles.
 | `RevokeInactiveAccounts` | Revokes role from accounts inactive below a threshold |
 | `RenounceRole` | Caller voluntarily gives up one of their roles |
 
-### Executive — `src/mandates/executive/`
+### Executive — `src/{core,addons}/mandates/executive/`
 
 Execute external calls with varying degrees of flexibility.
 
@@ -119,7 +128,7 @@ Execute external calls with varying degrees of flexibility.
 | `ExternalAction_Simple` | Forwards calldata to a mandate on another Powers contract |
 | `ExternalAction_Flexible` | Like Simple but target contract and mandate ID specified at call time |
 
-### Integrations — `src/mandates/integrations/`
+### Integrations — `src/{core,addons}/mandates/integrations/`
 
 Connect Powers governance to external protocols.
 
@@ -134,7 +143,7 @@ Connect Powers governance to external protocols.
 | `ElectionRegistry_*` | Full election lifecycle (nominate, vote, tally, cleanup) |
 | `SlateRegistry_*` | Competitive slate-based voting |
 
-### Reform — `src/mandates/reform/`
+### Reform — `src/core/mandates/reform/`
 
 Governance self-modification — adopt, revoke, or pause mandates from within governance itself.
 

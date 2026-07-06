@@ -25,10 +25,10 @@ Once loaded, proceed to Phase 2.
 Run the following bash command to collect all mandate source files:
 
 ```bash
-find solidity/src/mandates -name "*.sol" | sort
+find solidity/src/core/mandates solidity/src/addons/mandates -name "*.sol" | sort
 ```
 
-Then parse `solidity/lcov.info` to extract line coverage for each mandate file. For each `SF:` record whose path contains `src/mandates/`, read its `LH:` (lines hit) and `LF:` (lines total) values. Compute coverage as `LH/LF * 100` rounded to the nearest integer. If a file has no record in lcov.info, mark it as `no data`.
+Then parse `solidity/lcov.info` to extract line coverage for each mandate file. For each `SF:` record whose path contains `/mandates/` (i.e. `src/core/mandates/` or `src/addons/mandates/`), read its `LH:` (lines hit) and `LF:` (lines total) values. Compute coverage as `LH/LF * 100` rounded to the nearest integer. If a file has no record in lcov.info, mark it as `no data`.
 
 Present the results as a grouped list, one group per subfolder. For each mandate show:
 - The mandate name (filename without `.sol`)
@@ -68,7 +68,7 @@ Wait for the user's answer before proceeding. If the user names a mandate that d
 
 Once the user has named a mandate:
 
-1. **Read the mandate source file** at `solidity/src/mandates/<subfolder>/<Name>.sol`. Understand every function, every branch, every custom error, and every event it emits.
+1. **Read the mandate source file** at `solidity/src/{core,addons}/mandates/<subfolder>/<Name>.sol`. Understand every function, every branch, every custom error, and every event it emits.
 
 2. **Determine which category test file to work in** using this mapping:
    - `electoral/` → `solidity/test/unit/mandates/Electoral.t.sol`

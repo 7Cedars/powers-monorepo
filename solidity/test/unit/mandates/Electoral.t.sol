@@ -10,16 +10,16 @@ import {
 } from "../../TestSetup.t.sol";
 import { Checks } from "@src/libraries/Checks.sol";
 
-import { PeerSelect } from "@src/mandates/electoral/PeerSelect.sol";
-import { RoleByRoles } from "@src/mandates/electoral/RoleByRoles.sol";
-import { SelfSelect } from "@src/mandates/electoral/SelfSelect.sol";
-import { RenounceRole } from "@src/mandates/electoral/RenounceRole.sol";
+import { PeerSelect } from "@src/core/mandates/electoral/PeerSelect.sol";
+import { RoleByRoles } from "@src/addons/mandates/electoral/RoleByRoles.sol";
+import { SelfSelect } from "@src/core/mandates/electoral/SelfSelect.sol";
+import { RenounceRole } from "@src/core/mandates/electoral/RenounceRole.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { Nominees } from "@src/helpers/Nominees.sol";
-import { RevokeInactiveAccounts } from "@src/mandates/electoral/RevokeInactiveAccounts.sol";
+import { Nominees } from "@src/core/helpers/Nominees.sol";
+import { RevokeInactiveAccounts } from "@src/addons/mandates/electoral/RevokeInactiveAccounts.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
-import { AssignExternalRole } from "@src/mandates/electoral/AssignExternalRole.sol";
-import { RevokeAccountsRoleId } from "@src/mandates/electoral/RevokeAccountsRoleId.sol";
+import { AssignExternalRole } from "@src/addons/mandates/electoral/AssignExternalRole.sol";
+import { RevokeAccountsRoleId } from "@src/addons/mandates/electoral/RevokeAccountsRoleId.sol";
 
 /// @notice Comprehensive unit tests for all electoral mandates
 /// @dev Tests all functionality of electoral mandates including initialization, execution, and edge cases
