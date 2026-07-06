@@ -12,9 +12,9 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../../Mandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { ElectionRegistry } from "../../../helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract ElectionRegistry_Vote is Mandate {

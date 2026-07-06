@@ -2,10 +2,10 @@
 pragma solidity ^0.8.26;
 
 import { TestSetupHelpers } from "../../TestSetup.t.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 
 // ─── ELECTIONREGISTRY UNIT TESTS ────────────────────────────────────────────
-// Target:  src/helpers/ElectionRegistry.sol
+// Target:  src/core/helpers/ElectionRegistry.sol
 // Current coverage: LH:46/LF:79. Key gaps:
 //   - onlyOwner modifier body when election doesn't exist (owner == address(0))
 //   - revokeNomination function (FNDA:0)

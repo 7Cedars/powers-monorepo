@@ -376,15 +376,15 @@ deploy-allowance-module :; forge script script/DeployAllowanceModule.s.sol:Deplo
 # ElectionRegistry
 # ZKPassportPowersRegistry
 sepoliaVerifyContract :
-#	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xfF28EE3bc457bf8389E71929057a53b3f9b1c98c src/helpers/PowersPaymaster.sol:PowersPaymaster --watch
+#	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xfF28EE3bc457bf8389E71929057a53b3f9b1c98c src/addons/helpers/PowersPaymaster.sol:PowersPaymaster --watch
 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x78f9De1Fad256FA3B06ED60AF6F3aeF349155AdF src/Powers.sol:Powers --watch
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/Mandate.sol:Mandate --watch
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x1Aa34502237AD69D699A8eDcF6eab7DB454F1373 src/AsyncMandate.sol:AsyncMandate --watch 
  	
 # 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x461744992a27B746cCC27969F571Fe0db037c6fE src/helpers/Soulbound1155.sol:Soulbound1155 --watch
-# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x05A9d9FaAE1fc11C6Aa3993e55c38dB4F2B28a19 src/helpers/Governed721.sol:Governed721 --watch 
-# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xdE4188f007f4FfbD26E6dCE2cC108354a5995ed9 src/helpers/ElectionRegistry.sol:ElectionRegistry --watch
-# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xc554958CE7559eCcD08AEdbB8b72B1BE54Fde9ed src/helpers/ZKPassport_PowersRegistry.sol:ZKPassport_PowersRegistry --watch
+# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x05A9d9FaAE1fc11C6Aa3993e55c38dB4F2B28a19 src/addons/helpers/Governed721.sol:Governed721 --watch 
+# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xdE4188f007f4FfbD26E6dCE2cC108354a5995ed9 src/core/helpers/ElectionRegistry.sol:ElectionRegistry --watch
+# 	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xc554958CE7559eCcD08AEdbB8b72B1BE54Fde9ed src/addons/helpers/ZKPassport_PowersRegistry.sol:ZKPassport_PowersRegistry --watch
 
 
 optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 src/helpers/TreasuryPools.sol:TreasuryPools --watch

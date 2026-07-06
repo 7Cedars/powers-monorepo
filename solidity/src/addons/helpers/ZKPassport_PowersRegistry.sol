@@ -6,7 +6,7 @@ import {
     ProofVerificationParams,
     BoundData
 } from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
-import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "../interfaces/IZKPassport.sol";
+import { IZKPassportVerifier, IZKPassportHelper, FaceMatchMode, OS } from "@src/interfaces/IZKPassport.sol";
 
 // import { console } from "forge-std/console.sol"; // only for testing purposes.
 

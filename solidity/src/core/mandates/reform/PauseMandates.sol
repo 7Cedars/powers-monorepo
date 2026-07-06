@@ -7,11 +7,11 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../Mandate.sol";
-import { IMandate } from "../../interfaces/IMandate.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { IMandate } from "@src/interfaces/IMandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { IPowers } from "../../interfaces/IPowers.sol";
-import { PowersTypes } from "../../interfaces/PowersTypes.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 contract PauseMandates is Mandate {
     /// @notice Struct to hold mandate location information

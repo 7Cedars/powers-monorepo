@@ -5,7 +5,7 @@ import { console2 } from "forge-std/console2.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { ActionHelpers } from "@governance/examples/actions/ActionHelpers.s.sol";
-import { SlateRegistry } from "@src/helpers/SlateRegistry.sol";
+import { SlateRegistry } from "@src/core/helpers/SlateRegistry.sol";
 
 /// @notice Manual action functions for Secured Slate Governance.
 /// Each public function covers one step of a governance flow.

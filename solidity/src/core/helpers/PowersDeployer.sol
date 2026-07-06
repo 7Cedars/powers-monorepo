@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Powers } from "../Powers.sol";
-import { PowersTypes } from "../interfaces/PowersTypes.sol";
+import { Powers } from "@src/Powers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 /// @title Powers Deployer
 /// @notice Deployer contract to offload the heavy creation code of Powers from the Factory.

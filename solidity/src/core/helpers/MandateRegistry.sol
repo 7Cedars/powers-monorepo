@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
-import { IMandate } from "../interfaces/IMandate.sol";
+import { IMandate } from "@src/interfaces/IMandate.sol";
 
 /// @title MandateRegistry - Whitelist Registry for Powers Protocol Mandates
 /// @notice Maintains a version-controlled registry of approved mandate implementations

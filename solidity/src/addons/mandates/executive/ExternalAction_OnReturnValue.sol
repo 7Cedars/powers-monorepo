@@ -6,9 +6,9 @@ pragma solidity ^0.8.26;
 /// are provided at execution time; paramsBefore/paramsAfter are set in config.
 /// @author 7Cedars
 
-import { Mandate } from "../../Mandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { IPowers } from "../../interfaces/IPowers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
 contract ExternalAction_OnReturnValue is Mandate {
     constructor() {

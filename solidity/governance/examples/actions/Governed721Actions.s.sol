@@ -5,8 +5,8 @@ import { console2 } from "forge-std/console2.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { ActionHelpers } from "./ActionHelpers.s.sol";
-import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { Governed721, IGoverned721 } from "@src/addons/helpers/Governed721.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 
 /// @notice All Governed721 DAO action functions — NFT operations, governance management,
 ///         role assignment, and election flows — in a single contract. Extends ActionHelpers

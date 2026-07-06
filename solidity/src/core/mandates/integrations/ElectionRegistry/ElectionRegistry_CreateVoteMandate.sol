@@ -14,9 +14,9 @@
 
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../../Mandate.sol";
-import { IPowers } from "../../../interfaces/IPowers.sol";
-import { PowersTypes } from "../../../interfaces/PowersTypes.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 contract ElectionRegistry_CreateVoteMandate is Mandate {
@@ -86,7 +86,8 @@ contract ElectionRegistry_CreateVoteMandate is Mandate {
                 needFulfilled: 0,
                 needNotFulfilled: 0,
                 quorum: 0,
-                succeedAt: 0
+                succeedAt: 0,
+                maxExecutionDelay: 0
             })
         });
 

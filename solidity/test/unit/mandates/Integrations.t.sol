@@ -4,8 +4,8 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 import { console2 } from "forge-std/console2.sol";
 import { TestSetupIntegrations, TestSetupSlateRegistry, TestSetupPowersFactory } from "../../TestSetup.t.sol";
-import { Governor_CreateProposal } from "@src/mandates/integrations/Governor/Governor_CreateProposal.sol";
-import { Governor_ExecuteProposal } from "@src/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
+import { Governor_CreateProposal } from "@src/addons/mandates/integrations/Governor/Governor_CreateProposal.sol";
+import { Governor_ExecuteProposal } from "@src/addons/mandates/integrations/Governor/Governor_ExecuteProposal.sol";
 
 import { Mandate } from "@src/Mandate.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
@@ -17,18 +17,21 @@ import { ModuleManager } from "@lib/safe-smart-account/contracts/base/ModuleMana
 import { Enum } from "@lib/safe-smart-account/contracts/common/Enum.sol";
 
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { SlateRegistryMock } from "../../mocks/SlateRegistryMock.sol";
-import { SlateRegistry_AddSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
-import { SlateRegistry_RemoveSlate } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
-import { SlateRegistry_ExecuteResult } from "@src/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
+import { SlateRegistry_AddSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
+import { SlateRegistry_RemoveSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_RemoveSlate.sol";
+import { SlateRegistry_ExecuteResult } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_ExecuteResult.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { PowersFactory_AssignRole } from "@src/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
+import { Checks } from "@src/libraries/Checks.sol";
+import { PowersFactory_AssignRole } from "@src/addons/mandates/integrations/PowersFactory/PowersFactory_AssignRole.sol";
 import {
     PowersFactory_AddSafeDelegate
-} from "@src/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
+} from "@src/addons/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
+import { SafeAllowance_Action } from "@src/core/mandates/integrations/Safe/SafeAllowance_Action.sol";
+import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol";
+import { PowersPaymaster } from "@src/core/helpers/PowersPaymaster.sol";
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "@lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
@@ -205,40 +208,46 @@ contract GovernorIntegrationTest is TestSetupIntegrations {
 //////////////////////////////////////////////////
 //      SAFE ALLOWANCE INTEGRATION TESTS        //
 //////////////////////////////////////////////////
-contract SafeAllowanceTest is TestSetupIntegrations {
-    uint16 public safeAllowanceMandateId_ExecuteActionFromSafe;
-    uint16 public safeAllowanceMandateId_SetAllowance;
-    uint16 public safeAllowanceTransferId;
+//////////////////////////////////////////////////
+//            SAFE INTEGRATION TESTS            //
+//////////////////////////////////////////////////
+/// @notice Shared setup for the Safe mandate tests: forks Sepolia, deploys a real Safe proxy as
+/// daoMock's treasury, enables the canonical Allowance Module and constitutes daoMockChild1 with
+/// the Safe allowance mandates (SafeAllowance_Transfer, SafeAllowance_PresetTransfer, Safe_RecoverTokens).
+abstract contract SafeTestBase is TestSetupIntegrations {
     uint16 public safeAssignDelegateId;
+    uint16 public setAllowanceExecTransactionId;
+    uint16 public setAllowanceActionId;
+    uint16 public allowanceTransferId;
+    uint16 public presetTransferId;
+    uint16 public recoverTokensId;
+    address payable public treasury;
+    address public allowanceModule;
 
-    function setUp() public override {
-        uint256 sepoliaFork = vm.createFork(vm.envString("SEPOLIA_RPC_URL"));
-        vm.selectFork(sepoliaFork); // options: sepoliaFork, optSepoliaFork, arbSepoliaFork
+    function setUp() public virtual override {
+        vm.selectFork(vm.createFork(vm.envString("SEPOLIA_RPC_URL")));
 
         super.setUp();
 
         // skip these tests if allowance module is not set
-        if (helperConfig.getSafeAllowanceModule(block.chainid) == address(0)) {
+        allowanceModule = helperConfig.getSafeAllowanceModule(block.chainid);
+        if (allowanceModule == address(0)) {
             console2.log("Safe Allowance Module not set in config, skipping tests.");
             vm.skip(true);
         }
 
         safeAssignDelegateId =
             findMandateIdInOrg("Assign Delegate status: Assign delegate status at Safe treasury to a sub-DAO", daoMock);
-        safeAllowanceMandateId_SetAllowance =
+        setAllowanceExecTransactionId =
             findMandateIdInOrg("Set Allowance: Execute and set allowance for a sub-DAO.", daoMock);
-        safeAllowanceMandateId_ExecuteActionFromSafe =
-            findMandateIdInOrg("Transfer tokens from the Safe treasury.", daoMock);
-
-        // On daoMockChild1
-        safeAllowanceTransferId = 1; // First mandate in constitution2
+        setAllowanceActionId =
+            findMandateIdInOrg("SafeAllowance_Action: Set allowance for a delegate via the Allowance Module.", daoMock);
 
         // Setup Safe treasury directly (following the pattern in Deploy.s.sol)
         address[] memory owners = new address[](1);
         owners[0] = address(daoMock);
 
-        console2.log("Setting up Safe treasury for daoMock...");
-        address payable treasury = payable(address(
+        treasury = payable(address(
                 SafeProxyFactory(helperConfig.getSafeProxyFactory(block.chainid))
                     .createProxyWithNonce(
                         helperConfig.getSafeL2Canonical(block.chainid),
@@ -256,16 +265,14 @@ contract SafeAllowanceTest is TestSetupIntegrations {
                         1 // = nonce
                     )
             ));
-        console2.log("Safe Treasury deployed at:", treasury);
 
         // Set the treasury on the daoMock
         vm.prank(address(daoMock));
-        IPowers(address(daoMock)).setTreasury(payable(treasury));
+        IPowers(address(daoMock)).setTreasury(treasury);
 
         // Enable the allowance module on the Safe
-        bytes memory enableModuleCalldata = abi.encodeWithSelector(
-            ModuleManager.enableModule.selector, helperConfig.getSafeAllowanceModule(block.chainid)
-        );
+        bytes memory enableModuleCalldata =
+            abi.encodeWithSelector(ModuleManager.enableModule.selector, allowanceModule);
 
         // Compute the tx hash and pre-approve it as daoMock (the Safe owner).
         // Using approveHash is version-agnostic: the Sepolia fork runs Safe 1.4.0 bytecode whose
@@ -305,54 +312,302 @@ contract SafeAllowanceTest is TestSetupIntegrations {
         // Now that the treasury is set, we can constitute the child DAO.
         // This ensures the child DAO is configured with the correct treasury address.
         (PowersTypes.MandateInitData[] memory mandateInitData2_) =
-            testConstitutions.integrationsTestConstitution2(address(daoMock));
+            testConstitutions.integrationsTestConstitution2(address(daoMock), address(simpleErc20Votes));
         daoMockChild1.constitute(mandateInitData2_);
         daoMockChild1.closeConstitute();
-    }
 
-    // we will try to add a delegate.
-    function test_Safe_ExecTransaction_Success() public {
-        // We are trying to add a delegate (address(0x456)) to the Safe via execTransaction mandate
-        address functionTarget = helperConfig.getSafeAllowanceModule(block.chainid);
-        bytes4 functionSelector = bytes4(0xe71bdf41); // addDelegate(address)
-        bytes memory functionCalldata = abi.encode(address(0x456));
-
-        bytes memory mandateCalldata = abi.encode(
-            functionTarget,
-            uint256(0), // value
-            abi.encodeWithSelector(functionSelector, functionCalldata) // data
+        allowanceTransferId = findMandateIdInOrg(
+            "Execute Allowance Transaction: Execute a transaction from the Safe Treasury within the allowance set.",
+            daoMockChild1
         );
-
-        // Execute via DAO
-        vm.prank(alice);
-        daoMock.request(safeAssignDelegateId, mandateCalldata, nonce, "Safe Exec Transaction");
+        presetTransferId = findMandateIdInOrg(
+            "SafeAllowance_PresetTransfer: Transfer a preset amount of a preset token from the Safe treasury.",
+            daoMockChild1
+        );
+        recoverTokensId = findMandateIdInOrg(
+            "Safe_RecoverTokens: Return tokens held by this organisation to the Safe treasury.", daoMockChild1
+        );
     }
 
-    function test_SafeAllowance_Transfer_Success() public {
-        // 1. Assign Delegate Status to Child DAO
-        // Execute via DAO
+    /// @dev Registers `delegateAddress` as a delegate on the Allowance Module via the Safe_ExecTransaction mandate.
+    function assignDelegate(address delegateAddress) internal {
         vm.prank(alice);
-        daoMock.request(safeAssignDelegateId, abi.encode(address(daoMockChild1)), nonce, "Assign Delegate to Child DAO");
+        daoMock.request(safeAssignDelegateId, abi.encode(delegateAddress), nonce, "Assign delegate status");
+    }
 
-        // 2. Set Allowance
-        address token = address(simpleErc20Votes);
-        uint96 amount = 2e16;
-        console2.log("Child DAO:", address(daoMockChild1));
-
-        simpleErc20Votes.mint(daoMock.getTreasury(), 1e18); // Fund the Safe treasury
-
-        // Params: ChildPowers, Token, allowanceAmount, resetTimeMin, resetBaseMin
-        bytes memory setAllowanceData = abi.encode(address(daoMockChild1), token, amount, uint16(0), uint32(0));
+    /// @dev Sets a token allowance for `delegateAddress` via the Safe_ExecTransaction mandate.
+    function setAllowance(address delegateAddress, address token, uint96 amount) internal {
+        bytes memory setAllowanceCalldata = abi.encode(delegateAddress, token, amount, uint16(0), uint32(0));
         vm.prank(alice);
-        daoMock.request(safeAllowanceMandateId_SetAllowance, setAllowanceData, 1, "Set Allowance");
+        daoMock.request(setAllowanceExecTransactionId, setAllowanceCalldata, nonce, "Set allowance");
+    }
 
-        // 3. Execute Transfer on Child
-        address payableTo = bob;
-        // Params: Token, payableTo, amount
-        bytes memory transferData = abi.encode(token, uint96(1e16), payableTo);
+    /// @dev Reads [amount, spent, resetTimeMin, lastResetMin, nonce] for a delegate/token pair from the Allowance Module.
+    function getTokenAllowance(address delegateAddress, address token) internal view returns (uint256[5] memory) {
+        (bool success, bytes memory returnData) = allowanceModule.staticcall(
+            abi.encodeWithSignature("getTokenAllowance(address,address,address)", treasury, delegateAddress, token)
+        );
+        require(success, "getTokenAllowance staticcall failed");
+        return abi.decode(returnData, (uint256[5]));
+    }
+}
+
+// ─────────────────────────────────────────────
+//     Safe_ExecTransaction: BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract Safe_ExecTransactionBasicTest is SafeTestBase {
+    function testExecTransactionAddsDelegateToAllowanceModule() public {
+        mandateCalldata = abi.encode(address(daoMockChild1));
+        vm.prank(alice);
+        daoMock.request(safeAssignDelegateId, mandateCalldata, nonce, "Add delegate via Safe execTransaction");
+
+        actionId = MandateUtilities.computeActionId(safeAssignDelegateId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        // the delegate must be registered on the Allowance Module
+        (bool success, bytes memory returnData) = allowanceModule.staticcall(
+            abi.encodeWithSignature("getDelegates(address,uint48,uint8)", treasury, uint48(0), uint8(10))
+        );
+        assertTrue(success);
+        (address[] memory delegates,) = abi.decode(returnData, (address[], uint48));
+        bool delegateFound;
+        for (uint256 k; k < delegates.length; k++) {
+            if (delegates[k] == address(daoMockChild1)) delegateFound = true;
+        }
+        assertTrue(delegateFound);
+    }
+
+    function testExecTransactionSetsAllowanceOnModule() public {
+        assignDelegate(address(daoMockChild1));
+        setAllowance(address(daoMockChild1), address(simpleErc20Votes), uint96(2e16));
+
+        uint256[5] memory allowanceData = getTokenAllowance(address(daoMockChild1), address(simpleErc20Votes));
+        assertEq(allowanceData[0], 2e16);
+    }
+}
+
+// ─────────────────────────────────────────────
+//        Safe_ExecTransaction: EDGE CASES
+// ─────────────────────────────────────────────
+contract Safe_ExecTransactionEdgeCaseTest is TestSetupIntegrations {
+    function testHandleRequestRevertsIfTreasuryNotSet() public {
+        // daoMock's treasury is never set in the plain integrations setup.
+        assertEq(daoMock.getTreasury(), address(0));
+
+        mandateId = findMandateIdInOrg(
+            "Assign Delegate status: Assign delegate status at Safe treasury to a sub-DAO", daoMock
+        );
+        (mandateAddress,,) = daoMock.getAdoptedMandate(mandateId);
+
+        vm.expectRevert("No Safe treasury set");
+        Mandate(mandateAddress).handleRequest(alice, address(daoMock), mandateId, abi.encode(bob), nonce);
+    }
+}
+
+// ─────────────────────────────────────────────
+//     SafeAllowance_Action: BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract SafeAllowance_ActionBasicTest is SafeTestBase {
+    function testRequestSetsAllowanceViaAllowanceModule() public {
+        assignDelegate(address(daoMockChild1));
+
+        mandateCalldata =
+            abi.encode(address(daoMockChild1), address(simpleErc20Votes), uint96(5e16), uint16(0), uint32(0));
+        vm.prank(alice);
+        daoMock.request(setAllowanceActionId, mandateCalldata, nonce, "Set allowance via SafeAllowance_Action");
+
+        actionId = MandateUtilities.computeActionId(setAllowanceActionId, mandateCalldata, nonce);
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        uint256[5] memory allowanceData = getTokenAllowance(address(daoMockChild1), address(simpleErc20Votes));
+        assertEq(allowanceData[0], 5e16);
+    }
+
+    function testHandleRequestEncodesExecTransactionCall() public {
+        (mandateAddress,,) = daoMock.getAdoptedMandate(setAllowanceActionId);
+        mandateCalldata =
+            abi.encode(address(daoMockChild1), address(simpleErc20Votes), uint96(5e16), uint16(0), uint32(0));
+
+        (uint256 returnedActionId, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas)
+            = Mandate(mandateAddress).handleRequest(alice, address(daoMock), setAllowanceActionId, mandateCalldata, nonce);
+
+        assertEq(returnedActionId, MandateUtilities.computeActionId(setAllowanceActionId, mandateCalldata, nonce));
+        assertEq(returnedTargets.length, 1);
+        assertEq(returnedTargets[0], treasury);
+        assertEq(returnedValues[0], 0);
+        assertEq(bytes4(returnedCalldatas[0]), Safe.execTransaction.selector);
+    }
+
+    function testInitializeMandateStoresConfig() public {
+        (mandateAddress,,) = daoMock.getAdoptedMandate(setAllowanceActionId);
+        (bytes4 storedSelector, address storedModule) = SafeAllowance_Action(mandateAddress)
+            .mandateConfig(MandateUtilities.hashMandate(address(daoMock), setAllowanceActionId));
+
+        assertEq(storedSelector, bytes4(0xbeaeb388)); // AllowanceModule.setAllowance.selector
+        assertEq(storedModule, allowanceModule);
+    }
+}
+
+// ─────────────────────────────────────────────
+//       SafeAllowance_Action: EDGE CASES
+// ─────────────────────────────────────────────
+contract SafeAllowance_ActionEdgeCaseTest is TestSetupIntegrations {
+    function testHandleRequestRevertsIfTreasuryNotSet() public {
+        // daoMock's treasury is never set in the plain integrations setup.
+        assertEq(daoMock.getTreasury(), address(0));
+
+        mandateId =
+            findMandateIdInOrg("SafeAllowance_Action: Set allowance for a delegate via the Allowance Module.", daoMock);
+        (mandateAddress,,) = daoMock.getAdoptedMandate(mandateId);
+
+        mandateCalldata = abi.encode(bob, address(simpleErc20Votes), uint96(1e16), uint16(0), uint32(0));
+        vm.expectRevert("SafeAllowance_Action: Treasury not set in Powers");
+        Mandate(mandateAddress).handleRequest(alice, address(daoMock), mandateId, mandateCalldata, nonce);
+    }
+}
+
+// ─────────────────────────────────────────────
+//    SafeAllowance_Transfer: BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract SafeAllowance_TransferBasicTest is SafeTestBase {
+    function testAllowanceTransferSendsTokensToRecipient() public {
+        assignDelegate(address(daoMockChild1));
+        setAllowance(address(daoMockChild1), address(simpleErc20Votes), uint96(2e16));
+        simpleErc20Votes.mint(treasury, 1e18); // Fund the Safe treasury
+
+        balanceBefore = simpleErc20Votes.balanceOf(bob);
+        mandateCalldata = abi.encode(address(simpleErc20Votes), uint96(1e16), bob);
+        vm.prank(alice);
+        daoMockChild1.request(allowanceTransferId, mandateCalldata, nonce, "Transfer within allowance");
+
+        actionId = MandateUtilities.computeActionId(allowanceTransferId, mandateCalldata, nonce);
+        assertEq(uint8(daoMockChild1.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(simpleErc20Votes.balanceOf(bob) - balanceBefore, 1e16);
+    }
+}
+
+// ─────────────────────────────────────────────
+//  SafeAllowance_PresetTransfer: BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract SafeAllowance_PresetTransferBasicTest is SafeTestBase {
+    function testPresetTransferSendsPresetAmountToRecipient() public {
+        assignDelegate(address(daoMockChild1));
+        setAllowance(address(daoMockChild1), address(simpleErc20Votes), uint96(2e16));
+        simpleErc20Votes.mint(treasury, 1e18); // Fund the Safe treasury
+
+        balanceBefore = simpleErc20Votes.balanceOf(bob);
+        mandateCalldata = abi.encode(bob);
+        vm.prank(alice);
+        daoMockChild1.request(presetTransferId, mandateCalldata, nonce, "Preset transfer to bob");
+
+        actionId = MandateUtilities.computeActionId(presetTransferId, mandateCalldata, nonce);
+        assertEq(uint8(daoMockChild1.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(simpleErc20Votes.balanceOf(bob) - balanceBefore, 1e16); // the preset amount
+    }
+
+    function testHandleRequestEncodesAllowanceTransferCall() public {
+        (mandateAddress,,) = daoMockChild1.getAdoptedMandate(presetTransferId);
+        mandateCalldata = abi.encode(bob);
+
+        (uint256 returnedActionId, address[] memory returnedTargets,, bytes[] memory returnedCalldatas) =
+            Mandate(mandateAddress).handleRequest(alice, address(daoMockChild1), presetTransferId, mandateCalldata, nonce);
+
+        assertEq(returnedActionId, MandateUtilities.computeActionId(presetTransferId, mandateCalldata, nonce));
+        assertEq(returnedTargets.length, 1);
+        assertEq(returnedTargets[0], allowanceModule);
+        assertEq(
+            returnedCalldatas[0],
+            abi.encodeWithSelector(
+                bytes4(0x4515641a), // executeAllowanceTransfer(address,address,address,uint96,address,uint96,address,bytes)
+                treasury,
+                address(simpleErc20Votes),
+                bob,
+                uint96(1e16), // the preset amount
+                address(0), // paymentToken
+                uint96(0), // paymentAmount
+                address(daoMockChild1), // the delegate executing the transfer
+                abi.encodePacked(uint256(uint160(address(daoMockChild1))), uint256(0), uint8(1)) // v=1 signature
+            )
+        );
+    }
+}
+
+// ─────────────────────────────────────────────
+//   SafeAllowance_PresetTransfer: EDGE CASES
+// ─────────────────────────────────────────────
+contract SafeAllowance_PresetTransferEdgeCaseTest is SafeTestBase {
+    function testPresetTransferRevertsWhenAllowanceTooLow() public {
+        assignDelegate(address(daoMockChild1));
+        setAllowance(address(daoMockChild1), address(simpleErc20Votes), uint96(1e15)); // below the preset 1e16
+        simpleErc20Votes.mint(treasury, 1e18); // Fund the Safe treasury
 
         vm.prank(alice);
-        daoMockChild1.request(safeAllowanceTransferId, transferData, 0, "Transfer Allowance");
+        vm.expectRevert();
+        daoMockChild1.request(presetTransferId, abi.encode(bob), nonce, "Preset transfer above allowance");
+    }
+}
+
+// ─────────────────────────────────────────────
+//      Safe_RecoverTokens: BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract Safe_RecoverTokensBasicTest is SafeTestBase {
+    function testRecoverTokensTransfersFullBalanceToTreasury() public {
+        assignDelegate(address(daoMockChild1));
+        setAllowance(address(daoMockChild1), address(simpleErc20Votes), uint96(2e16)); // registers the token for the delegate
+        simpleErc20Votes.mint(address(daoMockChild1), 5e16);
+
+        balanceBefore = simpleErc20Votes.balanceOf(treasury);
+        mandateCalldata = abi.encode();
+        vm.prank(alice);
+        daoMockChild1.request(recoverTokensId, mandateCalldata, nonce, "Recover tokens to treasury");
+
+        actionId = MandateUtilities.computeActionId(recoverTokensId, mandateCalldata, nonce);
+        assertEq(uint8(daoMockChild1.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+        assertEq(simpleErc20Votes.balanceOf(address(daoMockChild1)), 0);
+        assertEq(simpleErc20Votes.balanceOf(treasury) - balanceBefore, 5e16);
+    }
+
+    function testHandleRequestSkipsZeroBalanceTokens() public {
+        assignDelegate(address(daoMockChild1));
+        setAllowance(address(daoMockChild1), address(simpleErc20Votes), uint96(2e16));
+        setAllowance(address(daoMockChild1), address(erc20Taxed), uint96(2e16)); // second token, never funded
+        simpleErc20Votes.mint(address(daoMockChild1), 5e16);
+
+        (mandateAddress,,) = daoMockChild1.getAdoptedMandate(recoverTokensId);
+        (, address[] memory returnedTargets,, bytes[] memory returnedCalldatas) =
+            Mandate(mandateAddress).handleRequest(alice, address(daoMockChild1), recoverTokensId, abi.encode(), nonce);
+
+        assertEq(returnedTargets.length, 1);
+        assertEq(returnedTargets[0], address(simpleErc20Votes));
+        assertEq(returnedCalldatas[0], abi.encodeWithSelector(IERC20.transfer.selector, treasury, 5e16));
+    }
+}
+
+// ─────────────────────────────────────────────
+//        Safe_RecoverTokens: EDGE CASES
+// ─────────────────────────────────────────────
+contract Safe_RecoverTokensEdgeCaseTest is SafeTestBase {
+    function testHandleRequestReturnsEmptyArraysWhenNoTokensRegistered() public {
+        // No delegate or allowance has been set, so the module lists no tokens for the child.
+        (mandateAddress,,) = daoMockChild1.getAdoptedMandate(recoverTokensId);
+        (, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas) =
+            Mandate(mandateAddress).handleRequest(alice, address(daoMockChild1), recoverTokensId, abi.encode(), nonce);
+
+        assertEq(returnedTargets.length, 0);
+        assertEq(returnedValues.length, 0);
+        assertEq(returnedCalldatas.length, 0);
+    }
+
+    function testHandleRequestReturnsEmptyArraysWhenAllBalancesZero() public {
+        assignDelegate(address(daoMockChild1));
+        setAllowance(address(daoMockChild1), address(simpleErc20Votes), uint96(2e16)); // token registered, but the child holds none
+
+        (mandateAddress,,) = daoMockChild1.getAdoptedMandate(recoverTokensId);
+        (, address[] memory returnedTargets,, bytes[] memory returnedCalldatas) =
+            Mandate(mandateAddress).handleRequest(alice, address(daoMockChild1), recoverTokensId, abi.encode(), nonce);
+
+        assertEq(returnedTargets.length, 0);
+        assertEq(returnedCalldatas.length, 0);
     }
 }
 
@@ -635,6 +890,160 @@ contract ElectionRegistryIntegrationTest is TestSetupIntegrations {
 
         // Verify Alice has role 2
         assertTrue(daoMock.hasRoleSince(alice, 2) > 0);
+    }
+}
+
+//////////////////////////////////////////////////
+//   ELECTION REGISTRY CLEAN UP VOTE MANDATE    //
+//////////////////////////////////////////////////
+/// @notice Shared election-flow scaffolding for ElectionRegistry_CleanUpVoteMandate tests.
+/// Runs the real governance chain (create → nominate → open vote → vote → tally) so the
+/// temporary vote mandate genuinely exists before cleanup is exercised.
+abstract contract ElectionRegistry_CleanUpVoteMandateTestBase is TestSetupIntegrations {
+    uint16 createElectionId;
+    uint16 nominateId;
+    uint16 openVoteId;
+    uint16 tallyId;
+    uint16 cleanupId;
+
+    string title = "Clean Up Test Election";
+    uint48 startBlock;
+    uint48 endBlock;
+    bytes electionParams;
+    uint16 voteMandateId;
+
+    function setUp() public virtual override {
+        super.setUp();
+
+        createElectionId =
+            findMandateIdInOrg("Create an election: an election can be initiated be any member.", daoMock);
+        nominateId = findMandateIdInOrg("Nominate for election: any member can nominate for an election.", daoMock);
+        openVoteId = findMandateIdInOrg(
+            "Open voting for election: Members can open the vote for an election. This will create a dedicated vote mandate.",
+            daoMock
+        );
+        tallyId = findMandateIdInOrg(
+            "Tally elections: After an election has finished, assign the Executive role to the winners.", daoMock
+        );
+        cleanupId = findMandateIdInOrg(
+            "Clean up election: After an election has finished, clean up related mandates.", daoMock
+        );
+
+        startBlock = uint48(block.number + 300); // matches ElectionRegistry nominationDuration
+        endBlock = uint48(block.number + 600); // matches nominationDuration + voteDuration
+        electionParams = abi.encode(title, startBlock, endBlock);
+    }
+
+    function runElectionThroughTally() internal {
+        vm.prank(alice);
+        daoMock.request(createElectionId, electionParams, nonce, "Create Election");
+
+        vm.prank(alice);
+        daoMock.request(nominateId, electionParams, nonce, "Nominate Alice");
+
+        vm.roll(startBlock + 1);
+
+        vm.prank(alice);
+        actionId = daoMock.request(openVoteId, electionParams, nonce, "Creating Vote Mandate");
+        voteMandateId = abi.decode(daoMock.getActionReturnData(actionId, 0), (uint16));
+
+        vm.prank(alice);
+        daoMock.request(voteMandateId, abi.encode(true), nonce, "Vote for Alice");
+
+        vm.roll(endBlock + 1);
+        vm.prank(alice);
+        daoMock.request(tallyId, electionParams, nonce, "Tally Election");
+    }
+}
+
+// ─────────────────────────────────────────────
+//               BASIC BEHAVIOUR
+// ─────────────────────────────────────────────
+contract ElectionRegistry_CleanUpVoteMandateBasicTest is ElectionRegistry_CleanUpVoteMandateTestBase {
+    function testCleanUpRevokesVoteMandateAfterElection() public {
+        runElectionThroughTally();
+
+        (,, active) = daoMock.getAdoptedMandate(voteMandateId);
+        assertTrue(active, "vote mandate should be active before cleanup");
+
+        // cleanup must use the exact calldata + nonce of the open-vote action,
+        // as handleRequest recomputes the creation actionId from them.
+        vm.prank(alice);
+        actionId = daoMock.request(cleanupId, electionParams, nonce, "Clean up election");
+
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(ActionState.Fulfilled));
+        (,, active) = daoMock.getAdoptedMandate(voteMandateId);
+        assertFalse(active, "vote mandate should be revoked after cleanup");
+    }
+
+    function testCleanUpInputParamsAreTitle() public {
+        (mandateAddress,,) = daoMock.getAdoptedMandate(cleanupId);
+
+        string[] memory expectedParams = new string[](1);
+        expectedParams[0] = "string Title";
+        assertEq(
+            Mandate(mandateAddress).getInputParams(address(daoMock), cleanupId),
+            abi.encode(expectedParams),
+            "input params should be (string Title)"
+        );
+
+        uint16 configuredCreateVoteMandateId =
+            abi.decode(Mandate(mandateAddress).getConfig(address(daoMock), cleanupId), (uint16));
+        assertEq(configuredCreateVoteMandateId, openVoteId, "config should hold the open-vote mandate id");
+    }
+}
+
+// ─────────────────────────────────────────────
+//                  EDGE CASES
+// ─────────────────────────────────────────────
+contract ElectionRegistry_CleanUpVoteMandateEdgeCaseTest is ElectionRegistry_CleanUpVoteMandateTestBase {
+    function testCleanUpRevertsIfCalldataDiffersFromCreation() public {
+        runElectionThroughTally();
+
+        bytes memory wrongParams = abi.encode("A different title", startBlock, endBlock);
+        vm.prank(alice);
+        vm.expectRevert(Checks.Checks__ParentMandateNotFulfilled.selector);
+        daoMock.request(cleanupId, wrongParams, nonce, "Clean up election");
+    }
+
+    function testCleanUpRevertsIfNonceDiffersFromCreation() public {
+        runElectionThroughTally();
+
+        vm.prank(alice);
+        vm.expectRevert(Checks.Checks__ParentMandateNotFulfilled.selector);
+        daoMock.request(cleanupId, electionParams, nonce + 1, "Clean up election");
+    }
+
+    function testCleanUpRevertsIfVoteMandateNotCreated() public {
+        // no election has run: the needFulfilled dependency on the open-vote mandate fails.
+        vm.prank(alice);
+        vm.expectRevert(Checks.Checks__ParentMandateNotFulfilled.selector);
+        daoMock.request(cleanupId, electionParams, nonce, "Clean up election");
+    }
+
+    function testCleanUpTwiceRevertsOnSecondRequest() public {
+        runElectionThroughTally();
+
+        vm.prank(alice);
+        daoMock.request(cleanupId, electionParams, nonce, "Clean up election");
+
+        // same calldata + nonce yields the same actionId, which is already fulfilled.
+        vm.prank(bob);
+        vm.expectRevert(Powers__ActionAlreadyInitiated.selector);
+        daoMock.request(cleanupId, electionParams, nonce, "Clean up election again");
+    }
+}
+
+// ─────────────────────────────────────────────
+//               ACCESS CONTROL
+// ─────────────────────────────────────────────
+contract ElectionRegistry_CleanUpVoteMandateAccessTest is ElectionRegistry_CleanUpVoteMandateTestBase {
+    function testCleanUpRevertsIfCallerLacksRole() public {
+        runElectionThroughTally();
+
+        vm.prank(eve); // eve holds no role in daoMock
+        vm.expectRevert(Powers__CannotCallMandate.selector);
+        daoMock.request(cleanupId, electionParams, nonce, "Clean up election");
     }
 }
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { IPowers } from "../interfaces/IPowers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { PowersTypes } from "../interfaces/PowersTypes.sol";
+import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 

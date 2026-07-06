@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../../Mandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 import { IERC1155 } from "@lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
-import { ISoulbound1155 } from "../../../../test/mocks/Soulbound1155.sol";
-import { IGoverned721 } from "../../../helpers/Governed721.sol";
+import { ISoulbound1155 } from "@mocks/Soulbound1155.sol";
+import { IGoverned721 } from "@src/addons/helpers/Governed721.sol";
 import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC165 } from "@lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";

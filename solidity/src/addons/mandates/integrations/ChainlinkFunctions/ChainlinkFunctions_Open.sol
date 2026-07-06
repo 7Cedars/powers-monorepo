@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 // Base contracts
-import { AsyncMandate } from "../../../AsyncMandate.sol";
+import { AsyncMandate } from "@src/AsyncMandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 
 // Chainlink Functions

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../../Mandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { IGoverned721 } from "../../../helpers/Governed721.sol";
+import { IGoverned721 } from "@src/addons/helpers/Governed721.sol";
 
 // import { console2 } from "forge-std/console2.sol"; // remove before deploying.
 

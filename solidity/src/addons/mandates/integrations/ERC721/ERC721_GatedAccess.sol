@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../../Mandate.sol";
-import { IPowers } from "../../../interfaces/IPowers.sol";
+import { Mandate } from "@src/Mandate.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 

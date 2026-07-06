@@ -5,7 +5,7 @@ import { console2 } from "forge-std/console2.sol";
 import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
-import { SlateRegistry } from "@src/helpers/SlateRegistry.sol";
+import { SlateRegistry } from "@src/core/helpers/SlateRegistry.sol";
 import { SecuredSlateActions } from "./Actions.s.sol";
 
 /// @title SecuredSlateRunners

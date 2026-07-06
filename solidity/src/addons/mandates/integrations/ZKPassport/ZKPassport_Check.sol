@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { Mandate } from "../../../Mandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
-import { ZKPassport_PowersRegistry } from "../../../helpers/ZKPassport_PowersRegistry.sol";
+import { ZKPassport_PowersRegistry } from "@src/addons/helpers/ZKPassport_PowersRegistry.sol";
 import { DisclosedData } from "@lib/zkpassport-packages/packages/registry-contracts/src/lib/Types.sol";
 
 /// @title ZKPassport Check Mandate

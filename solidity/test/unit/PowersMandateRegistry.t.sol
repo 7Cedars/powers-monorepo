@@ -3,11 +3,11 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { Powers } from "@src/Powers.sol";
-import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { MandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
-import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
-import { StatementOfIntent } from "@src/mandates/executive/StatementOfIntent.sol";
+import { OpenAction } from "@src/core/mandates/executive/OpenAction.sol";
+import { StatementOfIntent } from "@src/core/mandates/executive/StatementOfIntent.sol";
 
 /// @notice Unit tests for Powers.sol's MANDATE_REGISTRY enforcement.
 /// @dev Covers both constitute() (genesis) and adoptMandate() (post-genesis) — both funnel through the

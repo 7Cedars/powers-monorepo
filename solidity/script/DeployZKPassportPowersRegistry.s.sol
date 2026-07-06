@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "./Configurations.s.sol";
-import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
+import { ZKPassport_PowersRegistry } from "@src/addons/helpers/ZKPassport_PowersRegistry.sol";
 
 /// @notice Deploys a mock ZKPassport_PowersRegistry with a non-valid domain and scope.
 contract DeployZKPassportPowersRegistry is Script {

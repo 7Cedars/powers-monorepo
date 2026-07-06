@@ -6,9 +6,9 @@ import { ERC721URIStorage } from "@lib/openzeppelin-contracts/contracts/token/ER
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import { IERC721 } from "@lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { IPowers } from "../interfaces/IPowers.sol";
+import { IPowers } from "@src/interfaces/IPowers.sol";
 
-// import { PowersTypes } from "../interfaces/PowersTypes.sol";
+// import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 /**
  * @dev Governed721 is meant as an ERC 721 token where minting and transfers are managed by a Powers protocol instance.
