@@ -234,6 +234,7 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes, IERC721Receiver, I
     /// @return againstVotes - the number of votes against the action
     /// @return forVotes - the number of votes for the action
     /// @return abstainVotes - the number of abstain votes
+    /// @return voterCountSnapshot - the eligible-voter count snapshotted at voteStart (quorum/threshold denominator)
     function getActionVoteData(uint256 actionId)
         external
         view
@@ -243,7 +244,8 @@ interface IPowers is PowersErrors, PowersEvents, PowersTypes, IERC721Receiver, I
             uint256 voteEnd,
             uint32 againstVotes,
             uint32 forVotes,
-            uint32 abstainVotes
+            uint32 abstainVotes,
+            uint32 voterCountSnapshot
         );
 
     /// @notice Gets the calldata for a specific action

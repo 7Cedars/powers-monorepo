@@ -71,11 +71,14 @@ interface PowersTypes {
         uint48 cancelledAt;
         uint48 voteStart;
         uint16 mandateId;
-        // --- Packed Slot 2 (128 bits used) ---
+        // --- Packed Slot 2 (160 bits used) ---
         uint32 voteDuration;
         uint32 againstVotes;
         uint32 forVotes;
         uint32 abstainVotes;
+        // @notice Eligible member count of `allowedRole` captured at `voteStart`; used as the
+        // quorum/threshold denominator so a concluded vote cannot be flipped by later membership change.
+        uint32 voterCountSnapshot;
         // --- Separate Slots ---
         address caller;
         uint256 nonce;

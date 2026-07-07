@@ -624,6 +624,9 @@ needFulfilled    — mandateId that must have been completed for the same action
 needNotFulfilled — mandateId that must NOT have been completed for the same actionId
 quorum           — minimum % of role holders who must vote (integer, denominator = 100)
 succeedAt        — minimum % of votes that must be FOR (integer, denominator = 100)
+maxExecutionDelay — for quorum-gated mandates: max blocks after a vote succeeds within which
+                    request() must be called; 0 = disabled (unbounded wait). Set on any voted
+                    mandate whose handleRequest reads mutable state (see stale-state rule below).
 ```
 
 Block time conversion helper:
@@ -641,11 +644,31 @@ Block time conversion helper:
 
 Heuristics by organisation size:
 
-| Size | Quorum | SucceedAt | Voting Period | Timelock (treasury) |
-|------|--------|-----------|---------------|---------------------|
-| Small (< 15 members) | 50% | 66% | 3 days | 24h |
-| Medium (15–50) | 30% | 51% | 1 week | 48h |
-| Large (> 50) | 20% | 51% | 2 weeks | 1 week |
+| Size | Quorum | SucceedAt | Voting Period | Timelock (treasury) | Max Exec Delay |
+|------|--------|-----------|---------------|---------------------|----------------|
+| Small (< 15 members) | 50% | 66% | 3 days | 24h | 3 days |
+| Medium (15–50) | 30% | 51% | 1 week | 48h | 1 week |
+| Large (> 50) | 20% | 51% | 2 weeks | 1 week | 2 weeks |
+
+(Max Exec Delay ≈ the voting period — a window comparable to the vote itself. It only applies to
+state-reading, quorum-gated mandates; see the stale-state rule below.)
+
+**Stale-state rule (critical for quorum-gated, state-reading mandates):** any mandate that is both
+quorum-gated (`quorum > 0`) *and* whose target reads mutable on-chain state at execution — role
+membership, token balances/delegation, nominee lists, election tallies — must set a non-zero
+`maxExecutionDelay`. A `Succeeded` action never expires on its own, so with `maxExecutionDelay = 0`
+the gap between "voters approved" and "state read at execution" is unbounded: `handleRequest()`
+runs live at `request()`-time, so the state can drift — or be deliberately manipulated — before
+`request()` is finally called (audit finding C-02; the electoral face is C-03/C-04). Quorum==0
+direct actions execute atomically within one `request()` call and need no delay. Rule of thumb:
+`maxExecutionDelay ≈ votingPeriod`.
+
+Which catalogue mandates read mutable state (→ need `maxExecutionDelay` when voted):
+`PeerSelect`, `DelegateTokenSelect`, `ElectionRegistry_Vote` / `_Tally`, the `SlateRegistry_*`
+mandates, `SelfSelect` / `RenounceRole` when the *same* role gates the vote, and any
+`BespokeAction*` / `ExternalAction*` whose payload depends on live balances. Intent-only mandates
+(`StatementOfIntent`, `PresetActions` with fixed calls) do not read mutable state, so the delay is
+optional there.
 
 **Veto pattern (critical rule):** when using a veto mechanism, the timelock on the executor must be longer than the voting period of the veto mandate. Otherwise the action can be executed before the veto period ends.
 ```
@@ -1008,6 +1031,13 @@ contract Deploy is DeployHelpers {
         );
         conditions.quorum = 30;                               // 30% of role holders must vote
         conditions.succeedAt = 51;                            // simple majority
+        conditions.maxExecutionDelay = minutesToBlocks(
+            7 * 24 * 60,                                      // ~1 week (≈ voting period)
+            helperConfig.getBlocksPerHour(block.chainid)
+        );                                                    // stale-state rule (§A.4): bound how
+                                                              // long an approved proposal can wait
+                                                              // before request(), keeping the state
+                                                              // read at execution fresh.
         constitution.push(PowersTypes.MandateInitData({
             nameDescription: "Propose [Action]: Members propose [what] for [purpose].",
             //                ^^^ IMPORTANT: this string is used for lookup in action scripts.
@@ -1112,6 +1142,7 @@ contract Deploy is DeployHelpers {
         conditions.votingPeriod = minutesToBlocks(14 * 24 * 60, helperConfig.getBlocksPerHour(block.chainid));
         conditions.quorum = 50;
         conditions.succeedAt = 66;
+        conditions.maxExecutionDelay = minutesToBlocks(14 * 24 * 60, helperConfig.getBlocksPerHour(block.chainid)); // ≈ voting period (stale-state rule)
         constitution.push(PowersTypes.MandateInitData({
             nameDescription: "Propose Governance Reform: Council votes to adopt new mandates.",
             targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
@@ -1146,6 +1177,7 @@ contract Deploy is DeployHelpers {
 - [ ] The setup mandate's `revokeMandate` call uses the correct mandate ID (usually `mandateCount + 1` evaluated at the time of the setup mandate)
 - [ ] All flows cover the complete set of mandates used in that flow
 - [ ] Veto timelock > voting period of the proposal being vetoed
+- [ ] Every quorum-gated mandate that reads mutable state sets a non-zero `maxExecutionDelay` (stale-state rule, §A.4)
 - [ ] All external helper contracts (Nominees, ElectionRegistry, etc.) have `transferOwnership(address(powers))` called
 - [ ] `MAJOR`, `MINOR`, `PATCH` constants are set to 0, 1, 8
 

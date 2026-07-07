@@ -4,10 +4,18 @@
 ///
 /// This mandate:
 /// - Fetches nominees from a Nominees contract
-/// - Gets delegated vote amounts for each nominee from an ERC20Votes token
+/// - Gets delegated vote amounts for each nominee from an ERC20Votes token, measured at a past
+///   snapshot block (`getPastVotes`) rather than live (`getVotes`)
 /// - Ranks nominees by delegated token amount
 /// - Revokes roles from all current holders
 /// - Assigns roles to top N nominees (based on maxRoleHolders)
+///
+/// @dev Ranking uses `ERC20Votes.getPastVotes(nominee, snapshotBlock)` so voting power cannot be
+/// borrowed just-in-time (e.g. via a flash-loaned/temporarily-delegated balance in the execution
+/// block). `snapshotBlock` is the action's `proposedAt` block for quorum-gated elections; for
+/// `quorum == 0` direct actions (no proposal), it is `block.number - 1` — always strictly in the
+/// past, which defeats same-block (flash-loan) manipulation. This assumes the votes token uses a
+/// block-number clock (the OpenZeppelin default), consistent with the rest of the protocol.
 ///
 /// @author 7Cedars
 
@@ -36,6 +44,7 @@ contract DelegateTokenSelect is Mandate {
         address[] elected;
         uint256 totalOperations;
         uint256 operationIndex;
+        uint256 snapshotBlock;
         uint256 i;
         uint256 j;
     }
@@ -67,6 +76,14 @@ contract DelegateTokenSelect is Mandate {
         (mem.votesToken, mem.nomineesContract, mem.roleId, mem.maxRoleHolders) =
             abi.decode(getConfig(powers, mandateId), (address, address, uint256, uint256));
 
+        // Determine the snapshot block for reading delegated voting power. Using a past block
+        // prevents just-in-time / flash-loaned delegation from capturing seats in the execution
+        // block. For quorum-gated elections `proposedAt` (the vote-open block) is used; for
+        // quorum==0 direct actions (proposedAt == 0) fall back to the previous block, which is
+        // still strictly in the past and therefore defeats same-block manipulation.
+        (, uint48 proposedAt,,,,,) = IPowers(payable(powers)).getActionData(actionId);
+        mem.snapshotBlock = proposedAt > 0 ? uint256(proposedAt) : block.number - 1;
+
         // Step 1: Get current role holders from Powers
         mem.amountRoleHolders = IPowers(payable(powers)).getAmountRoleHolders(mem.roleId);
 
@@ -91,7 +108,8 @@ contract DelegateTokenSelect is Mandate {
             // Get delegated votes for each nominee
             for (mem.i = 0; mem.i < mem.numNominees; mem.i++) {
                 mem.rankedNominees[mem.i] = mem.nominees[mem.i];
-                mem.delegatedVotes[mem.i] = ERC20Votes(mem.votesToken).getVotes(mem.nominees[mem.i]);
+                mem.delegatedVotes[mem.i] =
+                    ERC20Votes(mem.votesToken).getPastVotes(mem.nominees[mem.i], mem.snapshotBlock);
             }
 
             // Sort nominees by delegated votes (bubble sort - descending)
