@@ -101,6 +101,9 @@ interface PowersErrors {
     /// @notice Emitted when an account cannot call a mandate.
     error Powers__CannotCallMandate();
 
+    /// @notice Emitted when an account that joined the voting role after voteStart attempts to vote.
+    error Powers__JoinedAfterVoteStart();
+
     /// @notice Emitted when the caller is not the target mandate.
     error Powers__CallerNotTargetMandate();
 

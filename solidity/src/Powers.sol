@@ -252,6 +252,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // if checks pass: propose.
         uint32 votingPeriod = mandate.conditions.votingPeriod;
         uint8 quorum = mandate.conditions.quorum;
+        uint256 allowedRole = mandate.conditions.allowedRole;
 
         actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
 
@@ -267,6 +268,10 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         action.proposedAt = uint48(block.number);
         action.mandateId = mandateId;
         action.voteStart = quorum > 0 ? uint48(block.number) : 0;
+        // Snapshot the eligible-voter count at voteStart so the quorum/threshold denominator
+        // cannot be flipped by mutating role membership before request(). Left 0 for quorum==0
+        // direct actions, which do not use a denominator (they short-circuit in the checks below).
+        action.voterCountSnapshot = quorum > 0 ? uint32(_countMembersRole(allowedRole)) : 0;
         action.voteDuration = votingPeriod;
         action.caller = _msgSender();
         action.uri = uriAction;
@@ -472,7 +477,14 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // Note that we check if account has access to the mandate targetted in the proposedAction.
         uint16 mandateId = action.mandateId;
         if (!canCallMandate(account, mandateId)) revert Powers__CannotCallMandate();
-        // check 2: has account already voted?
+        // check 2: did the account join the voting role at or before voteStart? Members who joined
+        // after voting opened are not part of the snapshotted denominator and may not vote — this
+        // pairs with voterCountSnapshot to keep forVotes+abstainVotes <= denominator (see C-01).
+        uint256 allowedRole = getConditions(mandateId).allowedRole;
+        if (allowedRole != PUBLIC_ROLE && hasRoleSince(account, allowedRole) > action.voteStart) {
+            revert Powers__JoinedAfterVoteStart();
+        }
+        // check 3: has account already voted?
         if (action.hasVoted[account]) revert Powers__AlreadyCastVote();
 
         // if all this passes: cast vote.
@@ -608,7 +620,9 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // retrieve quorum and allowedRole from mandate.
         Action storage proposedAction = _actions[actionId];
         Conditions memory conditions = getConditions(proposedAction.mandateId);
-        uint256 amountMembers = _countMembersRole(conditions.allowedRole);
+        // Use the eligible-voter count snapshotted at voteStart, not the live count, so a
+        // concluded vote cannot be flipped by membership changes before request() (see C-01).
+        uint256 amountMembers = proposedAction.voterCountSnapshot;
 
         // check if quorum is set to 0 in a Mandate, it will automatically return true. Otherwise, check if quorum has been reached.
         return (conditions.quorum == 0
@@ -623,7 +637,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // retrieve quorum and success threshold from mandate.
         Action storage proposedAction = _actions[actionId];
         Conditions memory conditions = getConditions(proposedAction.mandateId);
-        uint256 amountMembers = _countMembersRole(conditions.allowedRole);
+        // Use the eligible-voter count snapshotted at voteStart, not the live count (see C-01).
+        uint256 amountMembers = proposedAction.voterCountSnapshot;
 
         // note if quorum is set to 0 in a Mandate, it will automatically return true. Otherwise, check if success threshold has been reached.
         return conditions.quorum == 0 || amountMembers * conditions.succeedAt <= proposedAction.forVotes * DENOMINATOR;
@@ -815,7 +830,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
             uint256 voteEnd,
             uint32 againstVotes,
             uint32 forVotes,
-            uint32 abstainVotes
+            uint32 abstainVotes,
+            uint32 voterCountSnapshot
         )
     {
         Action storage action = _actions[actionId];
@@ -826,7 +842,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
             action.voteStart + action.voteDuration,
             action.againstVotes,
             action.forVotes,
-            action.abstainVotes
+            action.abstainVotes,
+            action.voterCountSnapshot
         );
     }
 
