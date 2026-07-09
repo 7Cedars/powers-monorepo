@@ -58,6 +58,12 @@ The mandate catalogue and both templates (spec sheet, deploy script) that used t
    - Leave `@governance/=governance/` pointing at the **local** output folder — do not prefix this one; it must always resolve to this project's own generated organisations, never into `lib/`.
    - Do not remove or overwrite any remapping the user already has for something unrelated to powers-monorepo.
 
+4a. **In the external-project context only, reconcile compiler settings** so core contracts compile within the EIP-170 size limit:
+   - Read `[profile.default]` in `<REF_ROOT>/foundry.toml` and ensure the host `<FOUNDRY_ROOT>/foundry.toml`'s `[profile.default]` carries matching `evm_version`, `solc_version`, `optimizer`, `optimizer_runs`, `ffi`, `always_use_create_2_factory`, and `create2_deployer` values.
+   - If the host is missing any of these — or has them set to weaker values (optimizer off, or fewer runs) — set them to match the reference. A fresh `forge init` project has **no** optimizer settings, so this step almost always adds them.
+   - Why this matters: without the optimizer, `Powers` compiles to ~31,409 bytes and every governance instance in the generated deploy trips `Error: ... is above the contract size limit (31409 > 24576)`. With `optimizer_runs = 600` it drops to ~19,289 bytes. `evm_version = "cancun"` also matters beyond size — it targets the same EVM the contracts were written and tested for.
+   - Do not touch unrelated settings the user already has.
+
 Once all checks pass, move to Phase 1.
 
 ---
@@ -185,7 +191,7 @@ Follow the pattern in **Appendix C** and `<REF_ROOT>/governance/examples/Optimis
 **Account Abstraction (include only if the user opted in during Phase 2):** Use `<REF_ROOT>/governance/examples/AccountAbstraction.s.sol` as the exact reference. Key rules:
 - Add these imports:
   ```solidity
-  import { PowersPaymaster } from "@src/addons/helpers/PowersPaymaster.sol";
+  import { PowersPaymaster } from "@src/core/helpers/PowersPaymaster.sol";
   import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
   ```
 - Declare `PowersPaymaster powersPaymaster;` and `address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;` at contract level (this is the canonical ERC-4337 v0.7 EntryPoint, same on all supported networks)
@@ -332,6 +338,7 @@ Write in plain English for a non-technical operator. Include:
 - **Metadata URI** — if the deploy script contains a `// TODO: set metadata URI` comment, replace the empty string with your IPFS or gateway URL before deploying. Upload your organisation's JSON metadata to [Pinata](https://pinata.cloud) (free tier available) and paste the resulting URL into the constructor call.
 - **Account Abstraction / Paymaster** *(include only if AA was opted in)* — explain that a `PowersPaymaster` was deployed alongside the organisation and pre-funded with `<seed_amount>` ETH. Members can now interact with the organisation without paying gas themselves. When the paymaster balance runs low, authorised members can top it up using the "Fund Paymaster" governance flow. To check the current paymaster balance: `cast call <PAYMASTER_ADDRESS> "getDeposit()(uint256)" --rpc-url $SEPOLIA_RPC_URL`. To trigger the Fund flow: `forge script governance/<org-name>/Actions.s.sol:<OrgName>Actions --sig "proposeFundPaymaster()" --rpc-url $SEPOLIA_RPC_URL --broadcast`. The deployer wallet must hold at least `<seed_amount>` ETH plus gas at deploy time.
 - **Testing** — `make test` runs the fork-based test suite. Only `SEPOLIA_RPC_URL` is required — no private key env vars needed; the test uses synthetic accounts internally.
+- **Troubleshooting a "contract size limit" error at deploy** — if deploy fails with `Error: ... is above the contract size limit (31409 > 24576)`, the host project's `foundry.toml` is missing optimizer settings (see setup step 4a), so `Powers` compiled unoptimized. Confirm `optimizer = true`, `optimizer_runs = 600`, `evm_version = "cancun"`, and `solc_version = "0.8.30"` are set under `[profile.default]`, then run `forge clean && forge build --sizes` before deploying again.
 
 ### 4f. Makefile
 **Save to:** `<FOUNDRY_ROOT>/governance/<org-name>/Makefile`
