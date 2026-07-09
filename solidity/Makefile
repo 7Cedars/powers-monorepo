@@ -4,7 +4,7 @@
 # 
 -include .env
 
-.PHONY: help build test test-verbose test-fuzz test-invariant coverage lint clean deploy-anvil deploy-sepolia deploy-mantle verify update-deps install-deps
+.PHONY: help build test test-verbose test-fuzz test-invariant coverage lint clean deploy-anvil deploy-sepolia deploy-mantle verify update-deps install-deps reset-deps
 
 # Default target
 help:
@@ -128,13 +128,23 @@ install-deps:
 	forge install safe-fndn/safe-modules || exit 1
 	forge install zkpassport/zkpassport-packages || exit 1
 	forge install eth-infinitism/account-abstraction@v0.7.0 || exit 1
-	@echo "Dependencies installed without git metadata."
-	
+	@echo "Dependencies installed as git submodules (see .gitmodules / foundry.lock)."
+
 
 reset-deps:
-	@echo "Resetting dependencies..."
-	@rm -rf lib/
-	@mkdir -p lib
+	@echo "Resetting dependencies (submodule teardown + reinstall)..."
+	@ROOT=$$(git rev-parse --show-toplevel); \
+	for d in forge-std openzeppelin-contracts chainlink-evm chainlink-ccip \
+	         safe-smart-account safe-modules account-abstraction zkpassport-packages; do \
+		echo "  removing lib/$$d"; \
+		git submodule deinit -f "solidity/lib/$$d" 2>/dev/null || true; \
+		git rm -f "solidity/lib/$$d" 2>/dev/null || true; \
+		rm -rf "solidity/lib/$$d"; \
+		rm -rf "$$ROOT/.git/modules/solidity/lib/$$d"; \
+	done; \
+	rm -rf lib foundry.lock; \
+	mkdir -p lib
+	@echo "Reinstalling dependencies (pinned = @tag, unpinned = latest)..."
 	@forge install foundry-rs/forge-std || exit 1
 	@forge install openzeppelin/openzeppelin-contracts@v5.6.1 || exit 1
 	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 || exit 1
@@ -143,7 +153,7 @@ reset-deps:
 	@forge install safe-fndn/safe-modules || exit 1
 	@forge install zkpassport/zkpassport-packages || exit 1
 	@forge install eth-infinitism/account-abstraction@v0.7.0 || exit 1
-	@echo "Dependencies reset complete. All libs installed without git metadata."
+	@echo "reset-deps complete. Review 'git status' + foundry.lock, then commit."
 
 # Documentation
 doc:
