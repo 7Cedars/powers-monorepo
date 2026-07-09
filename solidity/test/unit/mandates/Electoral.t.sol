@@ -709,7 +709,9 @@ contract DelegateTokenSelectBasicTest is TestSetupDelegateTokenFlow {
     }
 
     function testDelegateTokenSelectRanksByDelegatedVotes() public {
-        // 4 nominees > maxRoleHolders=3 → bubble sort runs, top 3 by votes elected
+        // 4 nominees > maxRoleHolders=3 → bubble sort runs, top 3 by votes elected.
+        // Nominate order (eve, frank, gary, helen) is deliberately the *reverse* of the vote order
+        // so the ranking genuinely reorders the array rather than passing on insertion order.
         vm.startPrank(address(daoMock));
         nominees.nominate(eve, true);
         nominees.nominate(frank, true);
@@ -717,6 +719,54 @@ contract DelegateTokenSelectBasicTest is TestSetupDelegateTokenFlow {
         nominees.nominate(helen, true);
         vm.stopPrank();
 
+        vm.startPrank(eve);
+        simpleErc20Votes.mint(40 ether);
+        simpleErc20Votes.delegate(eve);
+        vm.stopPrank();
+
+        vm.startPrank(frank);
+        simpleErc20Votes.mint(60 ether);
+        simpleErc20Votes.delegate(frank);
+        vm.stopPrank();
+
+        vm.startPrank(gary);
+        simpleErc20Votes.mint(80 ether);
+        simpleErc20Votes.delegate(gary);
+        vm.stopPrank();
+
+        vm.startPrank(helen);
+        simpleErc20Votes.mint(100 ether);
+        simpleErc20Votes.delegate(helen);
+        vm.stopPrank();
+
+        // Ranking reads a *past* snapshot (getPastVotes), so the delegations above must be in a
+        // block strictly before request(); advance one block. Otherwise all nominees read 0.
+        vm.roll(block.number + 1);
+
+        vm.prank(alice);
+        daoMock.request(mandateId, abi.encode(), nonce, "ranked election");
+
+        actionId = uint256(keccak256(abi.encode(mandateId, abi.encode(), nonce)));
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
+
+        // Top 3 by delegated votes: helen(100), gary(80), frank(60). eve(40) is excluded.
+        assertGt(daoMock.hasRoleSince(helen, ROLE_TWO), 0);
+        assertGt(daoMock.hasRoleSince(gary, ROLE_TWO), 0);
+        assertGt(daoMock.hasRoleSince(frank, ROLE_TWO), 0);
+        assertEq(daoMock.hasRoleSince(eve, ROLE_TWO), 0);
+    }
+
+    function testDelegateTokenSelectIgnoresSameBlockDelegation() public {
+        // C-03 regression: delegated voting power is read from a past snapshot, so a nominee cannot
+        // capture a seat by acquiring/borrowing delegation in the execution block (flash-loan style).
+        vm.startPrank(address(daoMock));
+        nominees.nominate(eve, true);
+        nominees.nominate(frank, true);
+        nominees.nominate(gary, true);
+        nominees.nominate(helen, true);
+        vm.stopPrank();
+
+        // Snapshot state: eve/frank/gary hold delegation; helen holds none.
         vm.startPrank(eve);
         simpleErc20Votes.mint(100 ether);
         simpleErc20Votes.delegate(eve);
@@ -732,17 +782,22 @@ contract DelegateTokenSelectBasicTest is TestSetupDelegateTokenFlow {
         simpleErc20Votes.delegate(gary);
         vm.stopPrank();
 
+        // Advance so the delegations above form the past snapshot the ranking reads.
+        vm.roll(block.number + 1);
+
+        // In the execution block, helen tries to just-in-time delegate a large balance to herself.
         vm.startPrank(helen);
-        simpleErc20Votes.mint(40 ether);
+        simpleErc20Votes.mint(100 ether);
         simpleErc20Votes.delegate(helen);
         vm.stopPrank();
 
         vm.prank(alice);
-        daoMock.request(mandateId, abi.encode(), nonce, "ranked election");
+        daoMock.request(mandateId, abi.encode(), nonce, "same-block delegation ignored");
 
         actionId = uint256(keccak256(abi.encode(mandateId, abi.encode(), nonce)));
         assertEq(uint8(daoMock.getActionState(actionId)), uint8(PowersTypes.ActionState.Fulfilled));
 
+        // helen's same-block delegation is ignored; the snapshot top 3 (eve/frank/gary) win.
         assertGt(daoMock.hasRoleSince(eve, ROLE_TWO), 0);
         assertGt(daoMock.hasRoleSince(frank, ROLE_TWO), 0);
         assertGt(daoMock.hasRoleSince(gary, ROLE_TWO), 0);
