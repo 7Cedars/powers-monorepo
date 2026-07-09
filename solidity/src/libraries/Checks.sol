@@ -85,7 +85,7 @@ library Checks {
             // request() being called, so handleRequest() (called live, at request()-time) cannot read
             // state that has drifted arbitrarily far from what voters saw. Opt-in; 0 disables.
             if (conditions.maxExecutionDelay != 0) {
-                (uint48 voteStart, uint32 voteDuration,,,,) =
+                (uint48 voteStart, uint32 voteDuration,,,,,) =
                     Powers(payable(powers)).getActionVoteData(computeActionId(mandateId, mandateCalldata, nonce));
 
                 if (block.number > uint256(voteStart) + voteDuration + conditions.maxExecutionDelay) {

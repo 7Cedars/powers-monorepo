@@ -268,7 +268,7 @@ contract ProposeTest is TestSetupPowers {
         vm.prank(bob);
         actionId = daoMock.propose(mandateId, mandateCalldata, nonce, description);
 
-        (,, uint256 deadline,,,) = daoMock.getActionVoteData(actionId);
+        (,, uint256 deadline,,,,) = daoMock.getActionVoteData(actionId);
         assertEq(deadline, block.number + conditions.votingPeriod);
     }
 }
@@ -408,7 +408,7 @@ contract VoteTest is TestSetupPowers {
             }
         }
 
-        (,,, uint32 againstVotes, uint32 forVotes, uint32 abstainVotes) = daoMock.getActionVoteData(actionId);
+        (,,, uint32 againstVotes, uint32 forVotes, uint32 abstainVotes,) = daoMock.getActionVoteData(actionId);
         assertEq(againstVotes, uint32(againstVote));
         assertEq(forVotes, uint32(forVote));
         assertEq(abstainVotes, uint32(abstainVote));
@@ -425,6 +425,87 @@ contract VoteTest is TestSetupPowers {
 
         assertTrue(daoMock.hasVoted(actionId, alice));
         assertFalse(daoMock.hasVoted(actionId, bob));
+    }
+
+    // C-01 regression: a concluded vote must not be flippable by mutating role membership before
+    // request(). The eligible-voter count is snapshotted at voteStart and used as the denominator.
+    function testVoteOutcomeNotDefeatedByMembershipInflation() public {
+        mandateId = 3; // StatementOfIntent — needs ROLE_ONE (alice, bob → snapshot of 2)
+        mandateCalldata = abi.encode(true);
+        vm.prank(bob);
+        actionId = daoMock.propose(mandateId, mandateCalldata, nonce, description);
+        conditions = daoMock.getConditions(mandateId);
+
+        // Both ROLE_ONE members vote FOR → passes the 66% threshold against the 2-member snapshot.
+        vm.prank(alice);
+        daoMock.castVote(actionId, FOR);
+        vm.prank(bob);
+        daoMock.castVote(actionId, FOR);
+
+        // Inflate ROLE_ONE membership after the vote (the C-01 "defeat a passing proposal" attack).
+        address[6] memory newMembers = [charlotte, david, eve, frank, gary, helen];
+        vm.startPrank(address(daoMock));
+        for (i = 0; i < newMembers.length; i++) {
+            daoMock.assignRole(ROLE_ONE, newMembers[i]);
+        }
+        vm.stopPrank();
+
+        vm.roll(block.number + conditions.votingPeriod + 1);
+
+        // Frozen denominator (2) keeps this Succeeded; a live count (8) would flip it to Defeated.
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(ActionState.Succeeded));
+    }
+
+    function testVoteOutcomeNotPassedByMembershipDeflation() public {
+        mandateId = 3;
+        mandateCalldata = abi.encode(true);
+        vm.prank(bob);
+        actionId = daoMock.propose(mandateId, mandateCalldata, nonce, description);
+        conditions = daoMock.getConditions(mandateId);
+
+        // Only a minority (1 of 2) votes FOR → fails the 66% threshold against the snapshot.
+        vm.prank(alice);
+        daoMock.castVote(actionId, FOR);
+
+        // Shrink ROLE_ONE so a live count would turn alice's single FOR into a passing majority.
+        vm.prank(address(daoMock));
+        daoMock.revokeRole(ROLE_ONE, bob);
+
+        vm.roll(block.number + conditions.votingPeriod + 1);
+
+        // Frozen denominator (2) keeps this Defeated; a live count (1) would flip it to Succeeded.
+        assertEq(uint8(daoMock.getActionState(actionId)), uint8(ActionState.Defeated));
+    }
+
+    function testVoteRevertsForMemberJoinedAfterVoteStart() public {
+        mandateId = 3;
+        mandateCalldata = abi.encode(true);
+        vm.prank(bob);
+        actionId = daoMock.propose(mandateId, mandateCalldata, nonce, description);
+
+        // helen joins ROLE_ONE one block after voteStart (vote-stuffing attempt).
+        vm.roll(block.number + 1);
+        vm.prank(address(daoMock));
+        daoMock.assignRole(ROLE_ONE, helen);
+
+        // She can call the mandate, but joined after voteStart → not part of the snapshot, cannot vote.
+        assertNotEq(daoMock.hasRoleSince(helen, ROLE_ONE), 0);
+        vm.expectRevert(Powers__JoinedAfterVoteStart.selector);
+        vm.prank(helen);
+        daoMock.castVote(actionId, FOR);
+    }
+
+    function testVoterCountSnapshotEqualsMemberCountAtVoteStart() public {
+        mandateId = 3;
+        mandateCalldata = abi.encode(true);
+        uint256 expectedCount = daoMock.getAmountRoleHolders(ROLE_ONE);
+
+        vm.prank(bob);
+        actionId = daoMock.propose(mandateId, mandateCalldata, nonce, description);
+
+        (,,,,,, uint32 voterCountSnapshot) = daoMock.getActionVoteData(actionId);
+        assertEq(uint256(voterCountSnapshot), expectedCount);
+        assertEq(uint256(voterCountSnapshot), 2);
     }
 }
 
