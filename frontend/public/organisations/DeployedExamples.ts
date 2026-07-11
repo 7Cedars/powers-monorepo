@@ -1,15 +1,15 @@
 import { sepolia, arbitrumSepolia, optimismSepolia, foundry } from "@wagmi/core/chains";
 
 export const DeployedExamples = [
-    {
-        id: "governed-721",
-        title: "Governed 721",
-        uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibcfc5dzcah2xxmvk3gjhij7t3sp5v6ppkub36jmtex2t75fcz22i/organisation.json",
-        banner: "/powered/landing%20page%20images/governed_721.png",
-        description: "Governed 721 is an example of an organisation that governs specific functionality in a Protocol. In this case: setting payment split for royalties of NFT sales. It has a policy setting (the split) and enforcement (blacklisting of addresses). This type of organisation can be used to govern specific parameters or functionalities in a larger ecosystem, such as a protocol or platform.",
-        chainId: arbitrumSepolia.id,
-        address: '0xaa3146fBa89b6e93303c397f76B2cC36545372D0'
-    }, 
+    // {
+    //     id: "governed-721",
+    //     title: "Governed 721",
+    //     uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibcfc5dzcah2xxmvk3gjhij7t3sp5v6ppkub36jmtex2t75fcz22i/organisation.json",
+    //     banner: "/powered/landing%20page%20images/governed_721.png",
+    //     description: "Governed 721 is an example of an organisation that governs specific functionality in a Protocol. In this case: setting payment split for royalties of NFT sales. It has a policy setting (the split) and enforcement (blacklisting of addresses). This type of organisation can be used to govern specific parameters or functionalities in a larger ecosystem, such as a protocol or platform.",
+    //     chainId: arbitrumSepolia.id,
+    //     address: '0xaa3146fBa89b6e93303c397f76B2cC36545372D0'
+    // }, 
     {
         id: "bicameralism",
         title: "Bicameralism",
