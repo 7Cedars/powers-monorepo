@@ -49,6 +49,7 @@ Hannah-Katharina Chabbani. Say "we" honestly throughout.
 
 ## Who I am
 
+
 - A scholar of **governance on the edge**
 - PhD **European University Institute**; Lecturer in Sociology, **Cambridge**; postdoc, **Bergen**
 - Four years of fieldwork — **Syria, Tunisia, Turkey, Jordan** · ~180 interviews · fluent Arabic
