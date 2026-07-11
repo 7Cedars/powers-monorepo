@@ -17,7 +17,7 @@ export const DeployedExamples = [
         banner: "/powered/landing%20page%20images/bimercalism.png",
         description: "In Bicameralism, the governance system is divided into two separate chambers or houses, each with its own distinct powers and responsibilities. In this example Delegates can initiate an action, but it can only be executed by Funders. A version of Bicameralism is implemented at the Optimism Collective.",
         chainId: arbitrumSepolia.id,
-        address: '0xA23d34135d285FA4efb51168fb5719405BC36a24'
+        address: '0x9b16B31FF15535F871d8017b1Cca682E65E49ee1'
     },
     {
         id: "optimistic-execution",
@@ -26,7 +26,7 @@ export const DeployedExamples = [
         banner: "/powered/landing%20page%20images/optimistic_execution.png",
         description: "In Optimistic Execution, the Powers protocol leverages optimistic mechanisms to enable faster decision-making processes by assuming proposals are valid unless challenged. This approach can improve efficiency while still allowing for dispute resolution through challenges. A similar mechanism is currently used by the Optimism Collective.",
         chainId: arbitrumSepolia.id,
-        address: '0x0133081239254Ca966B3570bd775cAEE93Cfd4E2'
+        address: '0x455810765b497519869187eCf57424611a83709E'
     },
     {
         id: "nested-governance-parent",
@@ -35,7 +35,7 @@ export const DeployedExamples = [
         banner: "/powered/landing%20page%20images/nested_governance.png",
         description: "Nested Governance demonstrates how the Powers protocol can be used to layer governance within each other to create complex decision-making hierarchies. This example is a single parent organisation that governs a child, but any type of complex structure can be created. The notion of sub-DAOs is similar to nested governance.",
         chainId: arbitrumSepolia.id,
-        address: '0x69752fE5a307e324cd508d5F6BAD0276b5716Cf3'
+        address: '0x0CE0eB29E56cead1499061991de07Cf86658740a'
     },
     {
         id: "open-elections",
@@ -44,7 +44,7 @@ export const DeployedExamples = [
         banner: "/powered/landing%20page%20images/election_lists.png",
         description: "Election lists demonstrates how, using the Powers protocol, electoral lists can be used to assign roles to accounts. (These type of approaches are becoming more popular, see for instance the elections for Arbitrum's Security council, or multiple options votes). The specific logic used for an electoral list can be customised in its mandate implementation.",
         chainId: arbitrumSepolia.id,
-        address: '0x44341f8dadB0f1C311D09145bD2fDA688Aea058c'
+        address: '0x5F44F12114d352eF191557Fb7a7202D96035d883'
     },
     {
         id: "token-delegates",
@@ -52,8 +52,8 @@ export const DeployedExamples = [
         uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/tokenDelegates.json",
         banner: "/powered/landing%20page%20images/token_delegates.png",
         description: "One-token-one-vote is the most popular approach to DAO governance today, despite its many shortcomings. This Token Delegate example demonstrates how the Powers protocol can be used to give power to accounts along the amount of  delegated tokens they hold. There is one key difference with traditional approaches: after delegates have been selected, they all hold the same amount of power (similar to democratic elections) while in classic DAO governance inequality in votes is reflected in delegates power.",
-        chainId: sepolia.id,
-        address: '0xEFaD9408876295A3B0Dd7fD8f6606dd551b82695'
+        chainId: arbitrumSepolia.id,
+        address: '0xc80A4747AA3562E23497e7E3570B10dA3A0F706D'
     }, 
     {
         id: "account-abstraction",
@@ -61,8 +61,8 @@ export const DeployedExamples = [
         uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibcfc5dzcah2xxmvk3gjhij7t3sp5v6ppkub36jmtex2t75fcz22i/organisation.json",
         banner: "/powered/landing%20page%20images/account_abstraction.png",
         description: "Account Abstraction is an example of using ERC-4337 to sponsor gas cost for users interacting with an organisation governed by the Powers protocol. This allows users to interact with the organisation without needing to hold the native token of the chain, improving accessibility and user experience.",
-        chainId: sepolia.id,
-        address: '0xf93D1775d1A734220AE6Fb751313961c0f869363'
+        chainId: arbitrumSepolia.id,
+        address: '0x2D95D1b1562a12C4220F29414837b238Dcf3430c'
     },
     {
         id: "powers101",
@@ -70,7 +70,7 @@ export const DeployedExamples = [
         uri: "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiaoyanrreocw5yvgoykf2nq2rfusjbxqq5j66ba3r4dix23llyecu/powers101.json",
         banner: "/powered/landing%20page%20images/powers_101.png",
         description: "A base example of an on-chain organisation that uses the Powers protocol to govern itself and create a simple check and balance system.",
-        chainId: sepolia.id,
-        address: '0x7EF3396E64BcdF5b58dE2A097BC5b72712059098'
+        chainId: arbitrumSepolia.id,
+        address: '0x6D5A3A936bb1e5434ad60E58E58848Bd67Afb79B'
     },
 ]
