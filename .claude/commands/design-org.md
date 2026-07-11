@@ -169,7 +169,7 @@ Generate the following files in order. After each file, briefly describe what it
 
 Follow the pattern in **Appendix C** and `<REF_ROOT>/governance/examples/OptimisticExecution.s.sol`. Also read `<REF_ROOT>/governance/claude/global-environmental-movement/Deploy.s.sol` as a concrete same-folder example. Key rules:
 - Contract name: `Deploy`
-- Use `MAJOR=0, MINOR=1, PATCH=8` for registry lookups
+- Use `MAJOR=0, MINOR=1, PATCH = 9` for registry lookups
 - **Metadata URI**: use the URI supplied by the user as the second argument to the `Powers` constructor. If no URI was provided, use an empty string with a TODO comment:
   ```solidity
   new Powers(
@@ -885,7 +885,7 @@ Draw on excerpts surfaced by the `search_governance_sources` MCP tool when expla
 - **Actions script:** `<FOUNDRY_ROOT>/governance/<org-name>/Actions.s.sol`
 - **Runners script:** `<FOUNDRY_ROOT>/governance/<org-name>/Runners.s.sol`
 - **Test file:** `<FOUNDRY_ROOT>/governance/<org-name>/Test.t.sol`
-- **Mandate version:** MAJOR=0, MINOR=1, PATCH=8
+- **Mandate version:** MAJOR=0, MINOR=1, PATCH = 9
 - **Mandate nameDescription strings must match exactly across all four files.**
 ```
 
@@ -937,7 +937,7 @@ contract Deploy is DeployHelpers {
     // Always use these constants — they select the correct version from the registry.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 8;
+    uint16 constant PATCH = 9;
 
     // ── run() ────────────────────────────────────────────────────────────────
     function run() external returns (Powers) {

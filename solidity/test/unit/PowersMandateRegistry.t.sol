@@ -19,7 +19,7 @@ contract PowersMandateRegistryTest is Test {
 
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 8;
+    uint16 constant PATCH = 9;
 
     function setUp() public {
         registry = new MandateRegistry(address(this));
