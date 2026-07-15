@@ -11,6 +11,7 @@ import { usePowers } from "@/hooks/usePowers";
 import { usePowersLive } from "@/hooks/usePowersLive";
 import { parseChainId } from "@/utils/parsers";
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ShareQrButton } from '@/components/ShareQrButton';
 import { useAddressDisplay } from "@/hooks/useAddressDisplay";
 import { ArrowRightStartOnRectangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
@@ -134,6 +135,7 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
             </Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <ShareQrButton />
             <ThemeToggle />
           </div>
         </div>

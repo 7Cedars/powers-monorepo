@@ -256,7 +256,7 @@ contract AsyncMandateVersionInterfaceTest is TestSetupAsync {
         (uint16 major, uint16 minor, uint16 patch) = asyncMock.version();
         assertEq(major, 0);
         assertEq(minor, 1);
-        assertEq(patch, 8);
+        assertEq(patch, 9);
     }
 
     function testSupportsIMandateInterface() public view {
