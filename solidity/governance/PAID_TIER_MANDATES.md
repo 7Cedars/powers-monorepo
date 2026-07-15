@@ -1,153 +1,298 @@
-# Paid Tier for Advanced Mandates — Design Proposal
+# Paid Tier for Mandates — Design Proposal
 
 > Status: proposal / plan only. No protocol code has been changed by this document.
+>
+> This supersedes an earlier draft that used a *separate* `PremiumMandateManager`
+> subscription contract. The current design **unifies the paywall with the
+> `MandateRegistry`** — one primitive — and charges a **one-time fee on adoption** rather
+> than a recurring subscription.
 
-## Context
+## Goals
 
-Powers wants to monetize its "advanced" mandates (the Tier 4 contracts under
-`src/addons/mandates/`). The question was whether a paid tier is possible given the
-current whitelisting architecture, and if so how.
+Powers wants to monetize advanced mandates **and** let third-party developers earn from
+mandates they author, under four constraints:
 
-**Feasibility answer: yes, it is possible** — but *where* the paywall lives determines
-whether it's actually enforceable.
+1. **Not predefined / organically updatable** — nothing hardcodes *which* mandates are paid;
+   pricing is per-mandate state that can change over time.
+2. **Third-party devs get paid** — a mandate can have one or more developer payees.
+3. **No ecosystem fragmentation** — a user (an org paying to use paid mandates) pays **one
+   address, once**, and never has to pay each individual developer.
+4. **Elegant** — few primitives that can be broken; the `MandateRegistry` and the paid tier
+   are **one and the same system**.
 
-Key architectural findings:
+## Key architectural findings
 
-- **The whitelist is opt-in, not a security boundary.** The `MandateRegistry` is
+- **The whitelist is currently opt-in, not a security boundary.** The `MandateRegistry` is
   consulted exactly once — at adoption time, inside `PowersUtilities.storeMandate`
   (`src/libraries/PowersUtilities.sol:56-62`) via `isMandateAddressActive(targetMandate)`.
   But a Powers instance stores its registry as an **immutable** value set at construction
   (`src/Powers.sol:84`), and `address(0)` disables enforcement entirely. Anyone can deploy
-  their own `Powers` pointing at `address(0)` and adopt any mandate. So a registry-level
-  gate only paywalls the sanctioned deployment path (factory/frontend), not the protocol.
+  their own `Powers` pointing at `address(0)` and adopt any mandate. So a registry-level gate
+  only paywalls the sanctioned deployment path (factory/frontend), not the protocol.
 - **Mandates are singletons** shared across all DAOs; per-DAO state is keyed by
-  `(powers, mandateId)` (`src/Mandate.sol:56-60`). There is no per-DAO mandate deployment
-  to attach payment to.
+  `(powers, mandateId)` (`src/Mandate.sol:56-60`). There is no per-DAO mandate deployment to
+  attach payment to.
 - **The mandate contract is the only component that always runs**, regardless of which
-  registry/Powers is used. Therefore the paywall must live *inside* the premium mandate to
-  be tamper-proof.
-- There is **no on-chain tier/price/subscription primitive today** — "advanced/Tier 4"
-  exists only in folder layout and `governance/CORE_MANDATES.md`. The reusable payment
-  building block is the `Governed721` / `GovernedToken_CollectSplitPayment` ERC20
-  `transferFrom` pattern.
+  registry/Powers is used. Therefore the paywall must live *inside* the mandate to be
+  tamper-proof.
+- **Mandates are currently registry-blind.** `Mandate`/`AsyncMandate` never learn which
+  registry (if any) whitelisted them; `initializeMandate` only records the calling org
+  (`msg.sender`). Adding a paywall requires giving the mandate base a canonical registry
+  reference.
+- The reusable payment building blocks already in the repo are the ETH-transfer + percentage
+  split patterns in `src/addons/helpers/Governed721.sol` and
+  `src/addons/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol`
+  (`amount = quantity * percentage / DENOMINATOR`, pull-based per-recipient collection).
 
-**Chosen requirements:** hard, mandate-enforced paywall · recurring subscription
-(time-bounded access) · payment in an ERC20 stablecoin to a protocol-owned recipient.
+## The core move: invert the check to **mandate → registry**
+
+Today the check flows **Powers → registry** and is bypassable. We invert it so each mandate,
+inside its own `initializeMandate`, calls back to the canonical registry to:
+
+1. Confirm it is registered/active (the whitelist gate), and
+2. If it is priced, charge the adopting org's prepaid credit balance and book the proceeds to
+   its developers (minus a protocol fee).
+
+Because `initializeMandate` always runs on adoption regardless of which Powers or registry is
+used, this paywall is **tamper-proof** — there is no `address(0)` escape at the mandate level.
+
+## Design decisions
+
+| Decision | Choice | Consequence |
+|---|---|---|
+| **Charge cadence** | **One-time on adoption.** Check lives only in `initializeMandate` (the adoption/reform path). | Execution (`executeMandate` → `handleRequest`) never touches the registry. A broken/paused/deactivated registry blocks **new adoptions & new-org creation only**; already-adopted mandates keep executing and can still be revoked/paused. |
+| **Enforcement** | **Mandatory.** Every mandate inheriting the base checks the registry on adoption; no sovereign bypass at the mandate level. | Acceptable *because* ongoing execution is unaffected — orgs keep running even if the registry is down. |
+| **Credit representation** | **Internal, non-transferable balance denominated in wei.** No ERC20, no rate oracle. Internal plumbing, not a mandatory separate user step — it can be **transient at deploy time** (bought and spent to ~zero in one tx, see "Payment at deployment") yet **persistent** for later governance-driven adoptions. | Buying credits = prepaying ETH into a ledger; ETH stays in the registry to pay devs. Fewest primitives, no secondary market, no token to break. |
+| **Registry owner** | **A Powers org.** Only that owning org can register/price mandates and set dev splits. | Governance *is* the trust vector — "registered" keeps meaning "vetted". Devs propose off-chain / via governance; the org ratifies by calling `registerMandate` with the dev list + price. Devs withdraw earnings permissionlessly. |
 
 ## Design
 
-Two new contracts + a one-word change to the two mandate base classes. No change to
-`Powers.sol` or `MandateRegistry.sol`.
+### 1. Extend `MandateRegistry` into the unified registry + credits contract
+Path: `src/core/helpers/MandateRegistry.sol` — **the same contract** (that is the
+unification). Stays `Ownable`; the owner is a Powers org.
 
-### 1. `PremiumMandateManager` (new subscription/access manager)
-Path: `src/addons/helpers/PremiumMandateManager.sol`. `Ownable`, protocol-owned.
+**New per-mandate state** (keyed by mandate **address**, matching the existing `addressKey`
+lookup that `isMandateAddressActive` already uses):
+- `mapping(address mandate => uint256 price) public mandatePrice;` — `0` = free.
+- `mapping(address mandate => address[] devs) public mandateDevs;` — 1+ payees; the paid
+  portion is split equally, with any remainder wei going to the first dev.
 
-State:
-- `IERC20 public paymentToken;` and `address public revenueRecipient;` (both owner-settable).
-- `struct Plan { uint256 pricePerPeriod; uint256 period; bool isPremium; }` and
-  `mapping(address mandate => Plan) public plans;`
-- `mapping(address dao => mapping(address mandate => uint256 expiry)) public subscriptions;`
+**New credit / earnings ledger** (all native ETH, internal):
+- `mapping(address org => uint256) public credits;` — prepaid balance per org.
+- `mapping(address dev => uint256) public earnings;` — withdrawable balance; the owning org
+  is itself a payee for the protocol fee.
+- `uint16 public feeBps;` — adjustable protocol fee in basis points (e.g. `1000` = 10%),
+  owner-settable, capped (e.g. ≤ `3000`).
 
-Functions:
-- `setPlan(address mandate, uint256 pricePerPeriod, uint256 period)` — `onlyOwner`; marks a
-  mandate premium and prices it.
-- `setPaymentToken` / `setRevenueRecipient` — `onlyOwner`.
-- `subscribe(address dao, address mandate, uint256 periods)` — anyone can pay (e.g. a DAO
-  member funds their org). Uses **`SafeERC20.safeTransferFrom`**
-  (`lib/openzeppelin-contracts/.../SafeERC20.sol`, already vendored) to pull
-  `pricePerPeriod * periods` from `msg.sender` to `revenueRecipient`; extends
-  `subscriptions[dao][mandate]` from `max(now, currentExpiry)` by `period * periods`. Emits
-  `Subscribed`.
-- `hasAccess(address dao, address mandate) view returns (bool)` — returns `true` when the
-  mandate is **not** premium (so the base class is safe for all mandates), else
-  `subscriptions[dao][mandate] > block.timestamp`.
+**New / extended functions:**
+- Extend `registerMandate` (and `batchRegisterMandates`) to also take `address[] devs` and
+  `uint256 price` — `onlyOwner`, reusing the existing validation + `addressKey` write path
+  (`MandateRegistry.sol:142-179`). Add owner-only `setMandatePricing(address mandate,
+  address[] devs, uint256 price)` and `setFeeBps(uint16)`.
+- `buyCredits(address org) external payable` — anyone can top up any org's balance (a member
+  funds their own org); `credits[org] += msg.value`. Emits `CreditsPurchased`. This is the
+  single "pay one address, once" entry point.
+- `onAdopt(address org) external` — **called by the mandate itself** during
+  `initializeMandate`. Here `msg.sender` **is the mandate** being charged (trustless
+  identity), and `org` is passed by the mandate (its own caller). Logic:
+  - `require(isMandateAddressActive(msg.sender), NotRegistered)` — the mandatory whitelist
+    gate.
+  - if `mandatePrice[msg.sender] == 0` → return (free; no charge).
+  - else: `credits[org] -= price` (reverts if insufficient); `fee = price * feeBps / 10000`;
+    `earnings[owner()] += fee`; split `price - fee` equally across `mandateDevs[msg.sender]`
+    into `earnings`. Emits `MandateCharged`.
+- `withdrawEarnings() external` — pull pattern; sends `earnings[msg.sender]` in ETH after
+  zeroing it (checks-effects-interactions), via `.call` with a success check (mirrors the ETH
+  branch in `Governed721.sol`). Guard with `nonReentrant`.
 
-Design consequence: a mandate can inherit the premium base and stay **free** until the
-owner calls `setPlan`. This makes it safe to convert every addon mandate to the premium
-base without forcing any of them to be paid.
+`onAdopt` mutates only registry ledger state and never calls back into the mandate or Powers,
+so the reentrancy surface is minimal; still apply checks-effects-interactions.
 
-### 2. Premium mandate base classes
-`Mandate` and `AsyncMandate` are independent bases (`src/Mandate.sol`,
-`src/AsyncMandate.sol`), so two thin abstracts:
-- `src/addons/PremiumMandate.sol` (`abstract PremiumMandate is Mandate`)
-- `src/addons/PremiumAsyncMandate.sol` (`abstract PremiumAsyncMandate is AsyncMandate`)
+**Deactivation semantics fall out for free:** `deactivateMandate` makes `onAdopt` revert for
+*new* adoptions, while orgs that already adopted are untouched (execution never calls the
+registry). Paid orgs are grandfathered automatically.
 
-Each:
-```solidity
-address public immutable ACCESS_MANAGER;
-constructor(address accessManager) { ACCESS_MANAGER = accessManager; }
+### 2. Add the mandate-side check in the two base classes
+Files: `src/Mandate.sol`, `src/AsyncMandate.sol` (independent bases).
+- Add `address public immutable MANDATE_REGISTRY;` and
+  `constructor(address registry_) { MANDATE_REGISTRY = registry_; }` to each base.
+- At the **top of `initializeMandate`** (`src/Mandate.sol:50-64`,
+  `src/AsyncMandate.sol:50-64`), before storing state:
+  ```solidity
+  IMandateRegistry(MANDATE_REGISTRY).onAdopt(msg.sender); // msg.sender == adopting Powers org
+  ```
+  This reverts (unregistered) or charges (priced) atomically with adoption.
+- **`executeMandate` is deliberately NOT touched** and stays non-virtual. One-time cadence
+  means there is no per-execution gate — and this is exactly what preserves "orgs keep running
+  even if the registry is down."
 
-function initializeMandate(uint16 i, string memory nd, bytes memory ip, bytes memory cfg)
-    public virtual override
-{
-    require(IPremiumMandateManager(ACCESS_MANAGER).hasAccess(msg.sender, address(this)), "no active subscription");
-    super.initializeMandate(i, nd, ip, cfg);      // msg.sender == adopting DAO
-}
+**Registry-address strategy — immutable via constructor** (recommended): test-friendly and
+chain-flexible. Every concrete mandate forwards the canonical registry address into the base
+constructor. This is a mechanical constructor change across all mandates (bounded; it applies
+to every mandate because enforcement is universal).
 
-function executeMandate(address caller, uint16 id, bytes calldata data, uint256 nonce)
-    public virtual override returns (bool)
-{
-    require(IPremiumMandateManager(ACCESS_MANAGER).hasAccess(msg.sender, address(this)), "subscription expired");
-    return super.executeMandate(caller, id, data, nonce);   // msg.sender == DAO (Powers.sol:340)
-}
-```
-- The `initializeMandate` override gates **adoption** (fail early).
-- The `executeMandate` override gates **every execution** — this is what makes the
-  subscription *recurring* (an expired sub blocks runs even after adoption). Powers calls
-  `executeMandate` at `src/Powers.sol:340`; `msg.sender` there is the DAO's Powers contract,
-  keying `hasAccess` correctly.
+_Alternative considered:_ a hardcoded `address constant` pointing at a deterministic CREATE2
+address (create2 is always enabled in `foundry.toml`) — a one-line base change with zero
+constructor churn, but awkward for unit tests (needs `vm.etch` at the constant) and requires a
+strict deploy order. We default to the immutable-constructor approach for testability.
 
-### 3. Required base change — make `executeMandate` overridable
-`executeMandate` is currently **not `virtual`** in either base (`src/Mandate.sol:72`,
-`src/AsyncMandate.sol:72`), so it cannot be overridden. Add the `virtual` keyword to both
-signatures. This is the only change to core/base files; `initializeMandate` and
-`handleRequest` are already `virtual`.
+### 3. `Powers.sol` / `PowersUtilities` — left unchanged
+No edits to `Powers.sol` (not meant to be modified) or `PowersUtilities.storeMandate`. The
+existing Powers-side `isMandateAddressActive` check (`PowersUtilities.sol:56-62`) becomes a
+harmless belt-and-suspenders for the sanctioned path; the authoritative, non-bypassable check
+now lives in the mandate base. (Removing the Powers-side check for strict single-source-of-
+truth is possible later but is out of scope, to keep Powers untouched.)
 
-_Fallback if base edits are undesirable:_ instead put a `_requirePremiumAccess(powers)`
-internal helper on the base abstracts and call it at the top of each premium mandate's
-already-`virtual` `handleRequest` — one line per mandate, no base edit, but forgettable.
+### 4. Deployment & ownership
+File: `script/DeployMandates.s.sol`.
+- Deploy the registry, then assign ownership to the protocol's Powers org (the script today
+  owns it as an EOA — switch to the Powers-org owner, matching the commented
+  `IPowers(registry.owner())` intent already present near line 130).
+- Thread the registry address into every mandate constructor.
+- Register mandates via the extended `batchRegisterMandates` with dev lists + prices
+  (free by default, so nothing becomes paid until the owning org prices it).
 
-### 4. Convert the advanced mandates
-Change each of the ~20 files under `src/addons/mandates/` from `is Mandate` →
-`is PremiumMandate` (and the one async case, `ChainlinkFunctions_Open.sol`, →
-`is PremiumAsyncMandate`), threading `accessManager` into their constructors (forwarded via
-`PremiumMandate(accessManager)`). They remain free until priced. Optionally scope the first
-cut to a chosen subset rather than all 20.
+### 5. Frontend / ABIs
+- `make update-builds` from `solidity/` to sync ABIs to `frontend/context/builds/`.
+- Ensure the registry address and any credits UI needs are reflected in
+  `frontend/context/constants.ts`.
 
-## Critical files
-- **New:** `src/addons/helpers/PremiumMandateManager.sol`, `src/addons/PremiumMandate.sol`,
-  `src/addons/PremiumAsyncMandate.sol`, interface `src/interfaces/IPremiumMandateManager.sol`.
-- **Edit (add `virtual`):** `src/Mandate.sol:72`, `src/AsyncMandate.sol:72`.
-- **Edit (change base + constructor):** the ~20 mandates under `src/addons/mandates/**`.
-- **Deploy:** extend `script/DeployMandates.s.sol` to deploy the manager and pass its
-  address into premium-mandate constructors; the deployer becomes manager owner (mirrors the
-  current registry-owner pattern at `script/DeployMandates.s.sol:133`).
-- **After deploy:** `make update-builds` (per CLAUDE.md) to sync ABIs to
-  `frontend/context/builds/`; add manager address to `frontend/context/constants.ts`.
+## Payment at deployment (one transaction)
+
+The credits ledger is what makes "pay one address, once" work across a multi-mandate
+adoption — but it does **not** have to be a separate user-facing step. The entire adoption
+call stack is non-payable (`PowersFactory.createPowers` → `PowersDeployer.deploy` →
+`new Powers` + `constitute` → `PowersUtilities.storeMandate` → `initializeMandate`, which is
+invoked with **no value**), so money can never reach a mandate through the path that adopts
+it. That non-payable stack is precisely *why* the ledger exists: it decouples "money in"
+(`buyCredits`) from "charge" (`onAdopt` debits the ledger).
+
+We deliver a **single-transaction deploy UX by making the ledger invisible**, not by removing
+it. Add a public **payable** deploy entry point that auto-buys exactly the needed credits in
+the same transaction:
+
+1. `createPowers{value: total}(...)` — the factory reads each constitution mandate's price
+   from the registry (`mandatePrice[mandate]`), sums them, and requires `msg.value >= total`.
+2. It calls `registry.buyCredits{value: total}(newPowers)` for the org being deployed.
+3. It runs `constitute`; each mandate's `initializeMandate` → `onAdopt` debits the freshly
+   bought credits down toward zero.
+4. Any excess `msg.value` is refunded to the deployer, reusing the ETH `.call{value:}` +
+   refund pattern in `Governed721.sol:196,200-203`.
+
+The user sees **one transaction, one payment**. Credits remain as internal plumbing they
+never touch.
+
+**Why the ledger stays (do not remove it):** mandates adopted *later* through governance also
+go through the non-payable `adoptMandate` path (`Powers.sol:500`). A prepaid registry balance
+is the only bridge that serves **both** deploy-time and later governance-driven paid
+adoptions. Removing the ledger would either forbid post-deploy paid adoptions or force a
+second payable path anyway.
+
+**Rejected alternative — charge at the factory, drop the ledger:** loses the tamper-proof
+mandate-side `onAdopt` (anyone deploying `Powers` directly would bypass payment, defeating the
+"invert the check to mandate → registry" premise above) and still cannot handle later
+adoptions.
+
+**Access-control note:** `createPowers` is `onlyOwner` today (`PowersFactory.sol:121,142`), so
+end users cannot self-deploy at all in the current model. A paid *public* deploy flow requires
+reconsidering that gate — presumably intended, since monetizing deployment implies letting the
+public deploy. (The `Powers` constructor is already `payable` at `Powers.sol:148`, with a
+`receive()` at `:168`, but the deployer currently does `new Powers(...)` with no value, so that
+ingress is unused today.)
+
+## Worked example
+
+1. A dev writes `FancyMandate`, deploys the singleton, and proposes it to the protocol's
+   governance org (the registry owner).
+2. Governance calls `registerMandate("FancyMandate", addr, codeHash, [devA, devB], 0.01 ETH)`.
+   The mandate is now whitelisted and priced at 0.01 ETH per adoption, split between `devA`
+   and `devB`.
+3. A DAO wants it. Any member calls `buyCredits{value: 0.05 ETH}(dao)` — the DAO now has a
+   0.05 ETH credit balance. (One address, one payment — the member never touches `devA`/`devB`.)
+4. The DAO adopts `FancyMandate`. During `initializeMandate`, the mandate calls
+   `onAdopt(dao)`: it is registered ✓, price 0.01 ETH is deducted from `credits[dao]`
+   (→ 0.04 left), a 10% fee (0.001 ETH) is booked to the owning org, and 0.0045 ETH each is
+   booked to `devA` and `devB`.
+5. `devA` and `devB` later call `withdrawEarnings()` and receive their ETH. The owning org
+   withdraws its accumulated fees the same way.
+6. If governance later `deactivateMandate`s `FancyMandate`, the DAO keeps using its already-
+   adopted copy indefinitely; only *new* adoptions are blocked.
+
+## Critical files (for the future implementation)
+- **New / edit (core):** `src/core/helpers/MandateRegistry.sol` (credits + pricing + split +
+  withdraw + `onAdopt`), plus its `IMandateRegistry` interface (`onAdopt`, `buyCredits`,
+  `withdrawEarnings`, pricing getters/setters).
+- **Edit (bases):** `src/Mandate.sol`, `src/AsyncMandate.sol` — add the registry immutable +
+  the `onAdopt` call at the top of `initializeMandate`.
+- **Edit (mechanical, all mandates):** thread `registry` into constructors under
+  `src/core/mandates/**` and `src/addons/mandates/**` (e.g. `.../electoral/*.sol`,
+  `.../executive/*.sol`, and the async
+  `.../integrations/ChainlinkFunctions/ChainlinkFunctions_Open.sol`).
+- **Edit (deploy):** `script/DeployMandates.s.sol`.
+- **Edit (payable deploy path):** `src/core/helpers/PowersFactory.sol` (add public payable
+  deploy entry point that sums mandate prices, buys credits, refunds excess; reconsider the
+  `onlyOwner` gate) and `src/core/helpers/PowersDeployer.sol` (thread the payable path
+  through). Reference the already-payable `Powers` constructor / `receive()`
+  (`src/Powers.sol:148,168`) as the ETH ingress — `Powers.sol` itself stays unmodified.
+- **Reuse:** ETH-transfer + percentage-split patterns in `src/addons/helpers/Governed721.sol`
+  and `src/addons/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol`;
+  vendored `SafeERC20` / `IERC20` under `lib/openzeppelin-contracts/...` (available but not yet
+  used by first-party code — adopt it for the new money-handling paths).
 
 ## What is deliberately NOT changed
-- `MandateRegistry.sol` — the whitelist is orthogonal; premium mandates still register
-  normally. No paid logic added there.
 - `Powers.sol` — untouched (it is not meant to be modified).
+- **No ERC20 credit token** — internal wei ledger only.
+- **No per-execution / subscription logic** — a single one-time charge on adoption.
 
-## Verification
-1. `cd solidity && forge build` — confirm the base `virtual` change and new contracts
-   compile and Powers stays under the 24KB EIP-170 limit.
-2. New Foundry test `test/unit/PremiumMandate.t.sol` (inherit `test/TestSetup.t.sol`),
-   covering:
-   - Deploy `PremiumMandateManager`, a premium test mandate, a mock ERC20; owner calls
-     `setPlan`.
-   - **Unpriced mandate** → `hasAccess` true → adoption + execution succeed (free-by-default
-     holds).
-   - **Priced, no subscription** → `constitute`/`adoptMandate` reverts "no active
-     subscription".
-   - **Subscribe then adopt** → `subscribe` pulls the correct ERC20 amount to
-     `revenueRecipient` (assert balances), adoption + execution succeed.
-   - **Expiry** → `vm.warp` past expiry → `executeMandate` reverts "subscription expired"
-     even though already adopted (proves recurring enforcement).
-   - **Re-subscribe** → access restored; `subscribe` while active extends from current
-     expiry, not `now`.
-3. `forge test --match-contract PremiumMandate -vvv`.
-4. Manual bypass check (documents the known property): a `Powers` deployed with
-   `mandateRegistry = address(0)` still cannot execute a priced premium mandate, because
-   enforcement is in the mandate itself — this is what makes it "hard".
+## Verification (for the future implementation)
+1. `cd solidity && forge build` — confirm the base changes + registry compile, and Powers
+   stays under the 24KB EIP-170 limit (Powers is untouched, so this should hold trivially).
+2. New Foundry test `test/unit/MandateRegistryCredits.t.sol` (inherit `test/TestSetup.t.sol`):
+   - **Free mandate** → owner registers with `price = 0`; adoption succeeds, no credits move.
+   - **Priced, no credits** → adoption reverts (insufficient credits).
+   - **Buy then adopt** → `buyCredits{value:X}(org)` raises `credits[org]`; adoption succeeds;
+     assert the split: `feeBps` share to `earnings[ownerOrg]`, remainder split equally across
+     multiple devs (assert exact wei, including remainder-to-first-dev rounding).
+   - **Withdraw** → `withdrawEarnings()` pays each dev the correct ETH; balance zeroes; a
+     second call pays 0.
+   - **Unregistered / deactivated** → adoption reverts `NotRegistered`, proving the mandatory
+     whitelist gate.
+   - **Registry-down invariant** → after adopting a priced mandate, `deactivateMandate` it,
+     then confirm the org can **still `executeMandate`** the already-adopted mandate (execution
+     is independent of the registry) but **cannot adopt it again**.
+3. `forge test --match-contract MandateRegistryCredits -vvv`.
+4. `make update-builds`; smoke-check the frontend picks up the new ABI.
+
+## Pricing denomination & ETH volatility (resolved)
+
+**Chosen: prices stay denominated in wei; the registry owner (a Powers org) re-prices
+periodically to track USD.** Re-pricing is already an owner-only action (`setMandatePricing`),
+so this needs **zero new contract logic** — only operational discipline. Appropriate while the
+protocol is pre-mainnet with small prices. The volatility is accepted: a 0.01 ETH price drifts
+in USD terms until governance adjusts it.
+
+**Stablecoins — rejected.** Accepting USDC/other tokens forces multi-token accounting
+(per-token earnings ledgers + per-token withdrawal), pulls in `SafeERC20` (unused in
+first-party code today — only raw `IERC20`), and introduces cross-asset conversion rates. That
+is the exact complexity we are avoiding, for a marginal UX gain over ETH.
+
+**Documented upgrade path (not built now): USD-denominated prices settled in ETH via a single
+Chainlink ETH/USD feed.** Store `mandatePriceUsd`; at charge time read `latestRoundData` and
+convert USD → wei. The treasury stays **all-ETH**, the earnings ledger stays **single-asset**,
+and devs still withdraw ETH — the only conversion is USD → ETH at one point, via one feed. This
+fits the existing failure model: the charge path is adoption-only, so a stale/down feed
+reverting *new* adoptions matches the "registry down blocks new adoptions only" property. Note:
+no price feed exists in the codebase today (the only Chainlink integration is Chainlink
+*Functions*, off-chain compute), but `AggregatorV3Interface.sol` is already vendored under
+`lib/chainlink-evm`, so a consumer needs no new dependency; per-chain feed addresses would be
+added to `frontend/context/constants.ts` and the deploy config, and Anvil would need a mock
+aggregator (there is precedent — tokens are already mocked). Graduate to this when real money /
+mainnet is in play.
+
+## Open design points to resolve at implementation time
+- **Split weighting** — equal split assumed; switch to weighted (bps per dev) only if devs
+  need unequal shares.
+- **Post-registration price control** — owner-only assumed. If devs should self-update their
+  own mandate's price, add a `mandateDevs`-gated `setMandatePricing` variant.
+- **Credit refunds / org withdrawals** — not included (prepaid, non-refundable). Add an org
+  `withdrawCredits` only if desired.
