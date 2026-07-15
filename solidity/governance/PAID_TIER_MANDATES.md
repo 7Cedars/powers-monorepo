@@ -62,7 +62,7 @@ used, this paywall is **tamper-proof** — there is no `address(0)` escape at th
 |---|---|---|
 | **Charge cadence** | **One-time on adoption.** Check lives only in `initializeMandate` (the adoption/reform path). | Execution (`executeMandate` → `handleRequest`) never touches the registry. A broken/paused/deactivated registry blocks **new adoptions & new-org creation only**; already-adopted mandates keep executing and can still be revoked/paused. |
 | **Enforcement** | **Mandatory.** Every mandate inheriting the base checks the registry on adoption; no sovereign bypass at the mandate level. | Acceptable *because* ongoing execution is unaffected — orgs keep running even if the registry is down. |
-| **Credit representation** | **Internal, non-transferable balance denominated in wei.** No ERC20, no rate oracle. | Buying credits = prepaying ETH into a ledger; ETH stays in the registry to pay devs. Fewest primitives, no secondary market, no token to break. |
+| **Credit representation** | **Internal, non-transferable balance denominated in wei.** No ERC20, no rate oracle. Internal plumbing, not a mandatory separate user step — it can be **transient at deploy time** (bought and spent to ~zero in one tx, see "Payment at deployment") yet **persistent** for later governance-driven adoptions. | Buying credits = prepaying ETH into a ledger; ETH stays in the registry to pay devs. Fewest primitives, no secondary market, no token to break. |
 | **Registry owner** | **A Powers org.** Only that owning org can register/price mandates and set dev splits. | Governance *is* the trust vector — "registered" keeps meaning "vetted". Devs propose off-chain / via governance; the org ratifies by calling `registerMandate` with the dev list + price. Devs withdraw earnings permissionlessly. |
 
 ## Design
@@ -157,6 +157,49 @@ File: `script/DeployMandates.s.sol`.
 - Ensure the registry address and any credits UI needs are reflected in
   `frontend/context/constants.ts`.
 
+## Payment at deployment (one transaction)
+
+The credits ledger is what makes "pay one address, once" work across a multi-mandate
+adoption — but it does **not** have to be a separate user-facing step. The entire adoption
+call stack is non-payable (`PowersFactory.createPowers` → `PowersDeployer.deploy` →
+`new Powers` + `constitute` → `PowersUtilities.storeMandate` → `initializeMandate`, which is
+invoked with **no value**), so money can never reach a mandate through the path that adopts
+it. That non-payable stack is precisely *why* the ledger exists: it decouples "money in"
+(`buyCredits`) from "charge" (`onAdopt` debits the ledger).
+
+We deliver a **single-transaction deploy UX by making the ledger invisible**, not by removing
+it. Add a public **payable** deploy entry point that auto-buys exactly the needed credits in
+the same transaction:
+
+1. `createPowers{value: total}(...)` — the factory reads each constitution mandate's price
+   from the registry (`mandatePrice[mandate]`), sums them, and requires `msg.value >= total`.
+2. It calls `registry.buyCredits{value: total}(newPowers)` for the org being deployed.
+3. It runs `constitute`; each mandate's `initializeMandate` → `onAdopt` debits the freshly
+   bought credits down toward zero.
+4. Any excess `msg.value` is refunded to the deployer, reusing the ETH `.call{value:}` +
+   refund pattern in `Governed721.sol:196,200-203`.
+
+The user sees **one transaction, one payment**. Credits remain as internal plumbing they
+never touch.
+
+**Why the ledger stays (do not remove it):** mandates adopted *later* through governance also
+go through the non-payable `adoptMandate` path (`Powers.sol:500`). A prepaid registry balance
+is the only bridge that serves **both** deploy-time and later governance-driven paid
+adoptions. Removing the ledger would either forbid post-deploy paid adoptions or force a
+second payable path anyway.
+
+**Rejected alternative — charge at the factory, drop the ledger:** loses the tamper-proof
+mandate-side `onAdopt` (anyone deploying `Powers` directly would bypass payment, defeating the
+"invert the check to mandate → registry" premise above) and still cannot handle later
+adoptions.
+
+**Access-control note:** `createPowers` is `onlyOwner` today (`PowersFactory.sol:121,142`), so
+end users cannot self-deploy at all in the current model. A paid *public* deploy flow requires
+reconsidering that gate — presumably intended, since monetizing deployment implies letting the
+public deploy. (The `Powers` constructor is already `payable` at `Powers.sol:148`, with a
+`receive()` at `:168`, but the deployer currently does `new Powers(...)` with no value, so that
+ingress is unused today.)
+
 ## Worked example
 
 1. A dev writes `FancyMandate`, deploys the singleton, and proposes it to the protocol's
@@ -184,8 +227,13 @@ File: `script/DeployMandates.s.sol`.
 - **Edit (mechanical, all mandates):** thread `registry` into constructors under
   `src/core/mandates/**` and `src/addons/mandates/**` (e.g. `.../electoral/*.sol`,
   `.../executive/*.sol`, and the async
-  `.../integrations/Chainlink/ChainlinkFunctions_Open.sol`).
+  `.../integrations/ChainlinkFunctions/ChainlinkFunctions_Open.sol`).
 - **Edit (deploy):** `script/DeployMandates.s.sol`.
+- **Edit (payable deploy path):** `src/core/helpers/PowersFactory.sol` (add public payable
+  deploy entry point that sums mandate prices, buys credits, refunds excess; reconsider the
+  `onlyOwner` gate) and `src/core/helpers/PowersDeployer.sol` (thread the payable path
+  through). Reference the already-payable `Powers` constructor / `receive()`
+  (`src/Powers.sol:148,168`) as the ETH ingress — `Powers.sol` itself stays unmodified.
 - **Reuse:** ETH-transfer + percentage-split patterns in `src/addons/helpers/Governed721.sol`
   and `src/addons/mandates/integrations/GovernedToken/GovernedToken_CollectSplitPayment.sol`;
   vendored `SafeERC20` / `IERC20` under `lib/openzeppelin-contracts/...` (available but not yet
@@ -214,6 +262,32 @@ File: `script/DeployMandates.s.sol`.
      is independent of the registry) but **cannot adopt it again**.
 3. `forge test --match-contract MandateRegistryCredits -vvv`.
 4. `make update-builds`; smoke-check the frontend picks up the new ABI.
+
+## Pricing denomination & ETH volatility (resolved)
+
+**Chosen: prices stay denominated in wei; the registry owner (a Powers org) re-prices
+periodically to track USD.** Re-pricing is already an owner-only action (`setMandatePricing`),
+so this needs **zero new contract logic** — only operational discipline. Appropriate while the
+protocol is pre-mainnet with small prices. The volatility is accepted: a 0.01 ETH price drifts
+in USD terms until governance adjusts it.
+
+**Stablecoins — rejected.** Accepting USDC/other tokens forces multi-token accounting
+(per-token earnings ledgers + per-token withdrawal), pulls in `SafeERC20` (unused in
+first-party code today — only raw `IERC20`), and introduces cross-asset conversion rates. That
+is the exact complexity we are avoiding, for a marginal UX gain over ETH.
+
+**Documented upgrade path (not built now): USD-denominated prices settled in ETH via a single
+Chainlink ETH/USD feed.** Store `mandatePriceUsd`; at charge time read `latestRoundData` and
+convert USD → wei. The treasury stays **all-ETH**, the earnings ledger stays **single-asset**,
+and devs still withdraw ETH — the only conversion is USD → ETH at one point, via one feed. This
+fits the existing failure model: the charge path is adoption-only, so a stale/down feed
+reverting *new* adoptions matches the "registry down blocks new adoptions only" property. Note:
+no price feed exists in the codebase today (the only Chainlink integration is Chainlink
+*Functions*, off-chain compute), but `AggregatorV3Interface.sol` is already vendored under
+`lib/chainlink-evm`, so a consumer needs no new dependency; per-chain feed addresses would be
+added to `frontend/context/constants.ts` and the deploy config, and Anvil would need a mock
+aggregator (there is precedent — tokens are already mocked). Graduate to this when real money /
+mainnet is in play.
 
 ## Open design points to resolve at implementation time
 - **Split weighting** — equal split assumed; switch to weighted (bps per dev) only if devs

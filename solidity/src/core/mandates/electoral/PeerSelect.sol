@@ -40,12 +40,7 @@ contract PeerSelect is Mandate {
     /// @dev One `bool <address>` field per nominee. Computed on read (not snapshotted at
     ///      initialization) because nominations happen after the constitution is deployed —
     ///      snapshotting at init would freeze an empty list and the UI would show no inputs.
-    function getInputParams(address powers, uint16 mandateId)
-        public
-        view
-        override
-        returns (bytes memory inputParams)
-    {
+    function getInputParams(address powers, uint16 mandateId) public view override returns (bytes memory inputParams) {
         (,, address nomineesContract) = abi.decode(getConfig(powers, mandateId), (uint8, uint256, address));
 
         address[] memory nominees = Nominees(nomineesContract).getNominees();
