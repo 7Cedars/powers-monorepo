@@ -437,7 +437,7 @@ contract MandatePackageBasicTest is TestSetupExecutive {
         address[] memory pkgAddresses = new address[](2);
         pkgAddresses[0] = findMandateAddress("OpenAction");
         pkgAddresses[1] = findMandateAddress("StatementOfIntent");
-        mandatePackage = new MandatePackage(pkgAddresses);
+        mandatePackage = MandatePackage(registerTestMandate(address(new MandatePackage(pkgAddresses, address(registry)))));
 
         pkgMandateId = daoMock.mandateCounter();
         address[] memory toAdopt = new address[](1);
@@ -523,7 +523,7 @@ contract MandatePackageEdgeCaseTest is TestSetupExecutive {
         address[] memory pkgAddresses = new address[](2);
         pkgAddresses[0] = findMandateAddress("OpenAction");
         pkgAddresses[1] = findMandateAddress("StatementOfIntent");
-        MandatePackage pkg = new MandatePackage(pkgAddresses);
+        MandatePackage pkg = MandatePackage(registerTestMandate(address(new MandatePackage(pkgAddresses, address(registry)))));
 
         uint16 adoptId = findMandateIdInOrg("Adopt_Mandates: A mandate to adopt new mandates into the DAO.", daoMock);
         uint16 pkgId = daoMock.mandateCounter();
@@ -545,7 +545,7 @@ contract MandatePackageEdgeCaseTest is TestSetupExecutive {
         address[] memory pkgAddresses = new address[](2);
         pkgAddresses[0] = findMandateAddress("OpenAction");
         pkgAddresses[1] = findMandateAddress("StatementOfIntent");
-        MandatePackage pkg = new MandatePackage(pkgAddresses);
+        MandatePackage pkg = MandatePackage(registerTestMandate(address(new MandatePackage(pkgAddresses, address(registry)))));
 
         uint16 mandateCount = 42;
         PowersTypes.MandateInitData[] memory initData = pkg.getNewMandates(pkgAddresses, address(daoMock), mandateCount);
@@ -684,7 +684,7 @@ contract MandatePackageAccessTest is TestSetupExecutive {
         address[] memory pkgAddresses = new address[](2);
         pkgAddresses[0] = findMandateAddress("OpenAction");
         pkgAddresses[1] = findMandateAddress("StatementOfIntent");
-        mandatePackage = new MandatePackage(pkgAddresses);
+        mandatePackage = MandatePackage(registerTestMandate(address(new MandatePackage(pkgAddresses, address(registry)))));
 
         pkgMandateId = daoMock.mandateCounter();
         address[] memory toAdopt = new address[](1);

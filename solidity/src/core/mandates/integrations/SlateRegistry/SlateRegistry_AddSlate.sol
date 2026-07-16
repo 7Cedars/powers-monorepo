@@ -33,7 +33,7 @@ contract SlateRegistry_AddSlate is Mandate {
     }
 
     /// @notice Constructor for SlateRegistry_AddSlate mandate
-    constructor() {
+    constructor(address registry_) Mandate(registry_) {
         bytes memory configParams = abi.encode("address SlateRegistry", "address PresetActions");
         emit Mandate__Deployed(configParams);
     }

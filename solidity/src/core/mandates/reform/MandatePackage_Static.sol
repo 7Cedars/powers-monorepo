@@ -15,7 +15,7 @@ contract ReformMandate_Static is Mandate {
     PowersTypes.MandateInitData[] smandateInitData;
 
     // in this case mandateAddresses should be [openAction, statementOfIntent] -- we only need those two mandates for this package.
-    constructor(PowersTypes.MandateInitData[] memory mandateInitData) {
+    constructor(PowersTypes.MandateInitData[] memory mandateInitData, address registry_) Mandate(registry_) {
         for (uint256 i = 0; i < mandateInitData.length; i++) {
             smandateInitData.push(mandateInitData[i]);
         }

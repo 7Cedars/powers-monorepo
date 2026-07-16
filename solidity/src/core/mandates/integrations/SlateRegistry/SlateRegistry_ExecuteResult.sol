@@ -25,7 +25,7 @@ contract SlateRegistry_ExecuteResult is Mandate {
         uint48 endBlock;
     }
 
-    constructor() {
+    constructor(address registry_) Mandate(registry_) {
         bytes memory configParams = abi.encode("address SlateRegistry");
         emit Mandate__Deployed(configParams);
     }

@@ -33,8 +33,10 @@ mandates they author, under four constraints:
   `(powers, mandateId)` (`src/Mandate.sol:56-60`). There is no per-DAO mandate deployment to
   attach payment to.
 - **The mandate contract is the only component that always runs**, regardless of which
-  registry/Powers is used. Therefore the paywall must live *inside* the mandate to be
-  tamper-proof.
+  registry/Powers is used. Therefore, to bind every adoption of the *registered* singleton
+  (not just the factory/frontend path), the paywall must live *inside* the mandate — though it
+  still only binds the canonical registered copy, not forked redeployments (see threat model
+  under "The core move").
 - **Mandates are currently registry-blind.** `Mandate`/`AsyncMandate` never learn which
   registry (if any) whitelisted them; `initializeMandate` only records the calling org
   (`msg.sender`). Adding a paywall requires giving the mandate base a canonical registry
@@ -53,15 +55,32 @@ inside its own `initializeMandate`, calls back to the canonical registry to:
 2. If it is priced, charge the adopting org's prepaid credit balance and book the proceeds to
    its developers (minus a protocol fee).
 
-Because `initializeMandate` always runs on adoption regardless of which Powers or registry is
-used, this paywall is **tamper-proof** — there is no `address(0)` escape at the mandate level.
+Because `initializeMandate` always runs on adoption, inverting the check **upgrades the
+enforcement boundary** over what exists today. The current Powers → registry check gates only
+the sanctioned factory/frontend deployment path (see "Key architectural findings" above:
+`address(0)` on a self-deployed `Powers` disables it entirely). The inverted check closes that
+`address(0)` escape **for the canonical registered singleton** — you cannot adopt *the vetted,
+registered* mandate without `onAdopt` running and charging you, no matter which `Powers` you
+point at it.
+
+**What it does not do — threat model.** This is not cryptographic un-bypassability. Mandates
+are permissionless singletons and anyone can deploy one (`initializeMandate` is
+`public virtual`, unrestricted). A party unwilling to pay can redeploy the same mandate
+bytecode with its `MANDATE_REGISTRY` immutable pointing at a registry they control (or one that
+returns price `0`), run it on a `Powers` built with `address(0)`, and adopt it for free —
+`onAdopt` only binds callers who forward to the *canonical* registry and use the *registered*
+copy. So the enforced asset is the **vetted canonical singleton**, and the economic moat is
+**governance vetting / trust, not enforcement**: you pay for the sanctioned copy; unsanctioned
+clones are free but forfeit the vetting that "registered" signals. The paywall binds within
+the sanctioned ecosystem (canonical registry + registered singletons + factory/frontend path),
+which is exactly the ecosystem the paid tier is meant to monetize.
 
 ## Design decisions
 
 | Decision | Choice | Consequence |
 |---|---|---|
 | **Charge cadence** | **One-time on adoption.** Check lives only in `initializeMandate` (the adoption/reform path). | Execution (`executeMandate` → `handleRequest`) never touches the registry. A broken/paused/deactivated registry blocks **new adoptions & new-org creation only**; already-adopted mandates keep executing and can still be revoked/paused. |
-| **Enforcement** | **Mandatory.** Every mandate inheriting the base checks the registry on adoption; no sovereign bypass at the mandate level. | Acceptable *because* ongoing execution is unaffected — orgs keep running even if the registry is down. |
+| **Enforcement** | **Mandatory.** Every mandate inheriting the base checks the registry on adoption; no bypass for the *canonical registered* singleton (a forked clone pointed at another registry escapes but forfeits vetting — see threat model above). | Acceptable *because* ongoing execution is unaffected — orgs keep running even if the registry is down. |
 | **Credit representation** | **Internal, non-transferable balance denominated in wei.** No ERC20, no rate oracle. Internal plumbing, not a mandatory separate user step — it can be **transient at deploy time** (bought and spent to ~zero in one tx, see "Payment at deployment") yet **persistent** for later governance-driven adoptions. | Buying credits = prepaying ETH into a ledger; ETH stays in the registry to pay devs. Fewest primitives, no secondary market, no token to break. |
 | **Registry owner** | **A Powers org.** Only that owning org can register/price mandates and set dev splits. | Governance *is* the trust vector — "registered" keeps meaning "vetted". Devs propose off-chain / via governance; the org ratifies by calling `registerMandate` with the dev list + price. Devs withdraw earnings permissionlessly. |
 
@@ -188,10 +207,11 @@ is the only bridge that serves **both** deploy-time and later governance-driven 
 adoptions. Removing the ledger would either forbid post-deploy paid adoptions or force a
 second payable path anyway.
 
-**Rejected alternative — charge at the factory, drop the ledger:** loses the tamper-proof
-mandate-side `onAdopt` (anyone deploying `Powers` directly would bypass payment, defeating the
-"invert the check to mandate → registry" premise above) and still cannot handle later
-adoptions.
+**Rejected alternative — charge at the factory, drop the ledger:** loses the mandate-side
+`onAdopt` that binds the *canonical registered* instance — with a factory-only charge, anyone
+adopting the sanctioned copy through a self-deployed `Powers` (bypassing the factory) would pay
+nothing, whereas `onAdopt` keeps the registered singleton priced regardless of the deployment
+path. It also still cannot handle later adoptions.
 
 **Access-control note:** `createPowers` is `onlyOwner` today (`PowersFactory.sol:121,142`), so
 end users cannot self-deploy at all in the current model. A paid *public* deploy flow requires

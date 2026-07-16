@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { Ownable } from "@lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import { ERC165Checker } from "@lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
 
@@ -44,9 +45,22 @@ interface IMandateRegistry {
         view
         returns (uint16 major, uint16 minor, uint16 patch);
     function owner() external view returns (address);
+
+    // --- Paid tier: pricing, credits, earnings ---
+    function onAdopt(address org) external;
+    function buyCredits(address org) external payable;
+    function withdrawEarnings() external;
+    function setMandatePricing(address mandate, address[] calldata devs, uint256 price) external;
+    function setFeeBps(uint16 newFeeBps) external;
+    function mandatePrice(address mandate) external view returns (uint256);
+    function mandateDevs(address mandate, uint256 index) external view returns (address);
+    function getMandateDevs(address mandate) external view returns (address[] memory);
+    function credits(address org) external view returns (uint256);
+    function earnings(address dev) external view returns (uint256);
+    function feeBps() external view returns (uint16);
 }
 
-contract MandateRegistry is Ownable {
+contract MandateRegistry is Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////
     //                        STORAGE                           //
     //////////////////////////////////////////////////////////////
@@ -82,6 +96,32 @@ contract MandateRegistry is Ownable {
     mapping(address mandateAddress => AddressKey) public addressKey;
 
     //////////////////////////////////////////////////////////////
+    //                   PAID TIER STORAGE                      //
+    //////////////////////////////////////////////////////////////
+
+    /// @notice Adoption price per mandate address, in wei. 0 = free.
+    mapping(address mandate => uint256 price) public mandatePrice;
+
+    /// @notice Developer payees per mandate address. The paid portion is split equally, with any
+    /// remainder wei going to the first dev.
+    mapping(address mandate => address[] devs) public mandateDevs;
+
+    /// @notice Prepaid credit balance per org (adopting Powers instance), in wei.
+    mapping(address org => uint256 credits) public credits;
+
+    /// @notice Withdrawable earnings per payee (devs and the owning org for the protocol fee), in wei.
+    mapping(address payee => uint256 earnings) public earnings;
+
+    /// @notice Protocol fee in basis points, taken from each charge. Owner-settable, capped at MAX_FEE_BPS.
+    uint16 public feeBps;
+
+    /// @notice Maximum allowed protocol fee (30%).
+    uint16 public constant MAX_FEE_BPS = 3000;
+
+    /// @notice Default protocol fee applied at deployment (10%).
+    uint16 internal constant DEFAULT_FEE_BPS = 1000;
+
+    //////////////////////////////////////////////////////////////
     //                        EVENTS                            //
     //////////////////////////////////////////////////////////////
 
@@ -111,6 +151,21 @@ contract MandateRegistry is Ownable {
     /// @notice Emitted when a mandate is reactivated
     event MandateReactivated(uint16 major, uint16 minor, uint16 patch, string mandateName, uint256 reactivatedAt);
 
+    /// @notice Emitted when a mandate's pricing/devs are set
+    event MandatePricingSet(address indexed mandate, uint256 price, address[] devs);
+
+    /// @notice Emitted when the protocol fee is updated
+    event FeeBpsSet(uint16 feeBps);
+
+    /// @notice Emitted when credits are purchased for an org
+    event CreditsPurchased(address indexed org, address indexed payer, uint256 amount);
+
+    /// @notice Emitted when a mandate adoption is charged
+    event MandateCharged(address indexed mandate, address indexed org, uint256 price, uint256 fee);
+
+    /// @notice Emitted when a payee withdraws earnings
+    event EarningsWithdrawn(address indexed payee, uint256 amount);
+
     //////////////////////////////////////////////////////////////
     //                        ERRORS                            //
     //////////////////////////////////////////////////////////////
@@ -122,13 +177,21 @@ contract MandateRegistry is Ownable {
     error InvalidMandateInterface(address mandateAddress);
     error InvalidNameLength();
     error InvalidVersionSequence(uint16 major, uint16 minor, uint16 patch, string mandateName);
+    error NotRegistered(address mandate);
+    error InsufficientCredits(address org, uint256 required, uint256 available);
+    error NoDevs(address mandate);
+    error FeeTooHigh(uint16 feeBps, uint16 maxFeeBps);
+    error NothingToWithdraw();
+    error EthTransferFailed();
 
     //////////////////////////////////////////////////////////////
     //                      CONSTRUCTOR                         //
     //////////////////////////////////////////////////////////////
 
     /// @notice Initializes the registry with the deployer as owner
-    constructor(address initialOwner) Ownable(initialOwner) { }
+    constructor(address initialOwner) Ownable(initialOwner) {
+        feeBps = DEFAULT_FEE_BPS;
+    }
 
     //////////////////////////////////////////////////////////////
     //                   REGISTRATION LOGIC                     //
@@ -304,6 +367,11 @@ contract MandateRegistry is Ownable {
     /// @dev Looks up the (name, version) the address was last registered under via addressKey, then
     /// checks the corresponding entry's isActive flag. Returns false for addresses never registered.
     function isMandateAddressActive(address mandateAddress) external view returns (bool) {
+        return _isMandateAddressActive(mandateAddress);
+    }
+
+    /// @dev Internal variant of isMandateAddressActive, callable from within the contract (e.g. onAdopt).
+    function _isMandateAddressActive(address mandateAddress) internal view returns (bool) {
         AddressKey memory key = addressKey[mandateAddress];
         MandateEntry storage entry = registry[key.nameHash][key.packedVersion];
         return entry.registeredAt != 0 && entry.isActive;
@@ -334,5 +402,87 @@ contract MandateRegistry is Ownable {
         major = uint16(latestPacked >> 32);
         minor = uint16((latestPacked >> 16) & 0xFFFF);
         patch = uint16(latestPacked & 0xFFFF);
+    }
+
+    //////////////////////////////////////////////////////////////
+    //                   PAID TIER LOGIC                        //
+    //////////////////////////////////////////////////////////////
+
+    /// @notice Sets the adoption price and developer payees for a registered mandate.
+    /// @dev Owner-only. A priced mandate must have at least one dev payee.
+    /// @param mandate The mandate address (must be registered and active).
+    /// @param devs The developer payees; the paid portion (after fee) is split equally, remainder to devs[0].
+    /// @param price The adoption price in wei (0 = free).
+    function setMandatePricing(address mandate, address[] calldata devs, uint256 price) external onlyOwner {
+        if (!_isMandateAddressActive(mandate)) revert NotRegistered(mandate);
+        if (price > 0 && devs.length == 0) revert NoDevs(mandate);
+
+        mandatePrice[mandate] = price;
+        mandateDevs[mandate] = devs;
+
+        emit MandatePricingSet(mandate, price, devs);
+    }
+
+    /// @notice Sets the protocol fee in basis points (capped at MAX_FEE_BPS).
+    function setFeeBps(uint16 newFeeBps) external onlyOwner {
+        if (newFeeBps > MAX_FEE_BPS) revert FeeTooHigh(newFeeBps, MAX_FEE_BPS);
+        feeBps = newFeeBps;
+        emit FeeBpsSet(newFeeBps);
+    }
+
+    /// @notice Tops up an org's prepaid credit balance. Anyone can fund any org.
+    /// @dev The single "pay one address, once" entry point. ETH stays in the registry to pay devs.
+    /// @param org The org (Powers instance) whose balance is topped up.
+    function buyCredits(address org) external payable {
+        credits[org] += msg.value;
+        emit CreditsPurchased(org, msg.sender, msg.value);
+    }
+
+    /// @notice Called by a mandate during its initializeMandate to enforce the whitelist and charge the org.
+    /// @dev msg.sender is the mandate itself (trustless identity). Mutates only ledger state; never calls back
+    /// into the mandate or Powers. Reverts for unregistered mandates (the mandatory whitelist gate).
+    /// @param org The adopting Powers org (passed by the mandate as its own caller).
+    function onAdopt(address org) external {
+        address mandate = msg.sender;
+        if (!_isMandateAddressActive(mandate)) revert NotRegistered(mandate);
+
+        uint256 price = mandatePrice[mandate];
+        if (price == 0) return; // free; no charge
+
+        uint256 available = credits[org];
+        if (available < price) revert InsufficientCredits(org, price, available);
+        credits[org] = available - price;
+
+        uint256 fee = (price * feeBps) / 10_000;
+        earnings[owner()] += fee;
+
+        address[] memory devs = mandateDevs[mandate];
+        uint256 devPortion = price - fee;
+        uint256 share = devPortion / devs.length;
+        uint256 remainder = devPortion - (share * devs.length);
+        for (uint256 i = 0; i < devs.length; i++) {
+            earnings[devs[i]] += share;
+        }
+        // Any indivisible remainder wei goes to the first dev.
+        if (remainder > 0) earnings[devs[0]] += remainder;
+
+        emit MandateCharged(mandate, org, price, fee);
+    }
+
+    /// @notice Withdraws the caller's accumulated earnings in ETH (pull pattern).
+    function withdrawEarnings() external nonReentrant {
+        uint256 amount = earnings[msg.sender];
+        if (amount == 0) revert NothingToWithdraw();
+        earnings[msg.sender] = 0;
+
+        (bool success,) = payable(msg.sender).call{ value: amount }("");
+        if (!success) revert EthTransferFailed();
+
+        emit EarningsWithdrawn(msg.sender, amount);
+    }
+
+    /// @notice Returns the full developer payee list for a mandate.
+    function getMandateDevs(address mandate) external view returns (address[] memory) {
+        return mandateDevs[mandate];
     }
 }

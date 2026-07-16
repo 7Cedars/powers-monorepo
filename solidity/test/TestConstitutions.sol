@@ -60,6 +60,15 @@ contract TestConstitutions is Test {
 
     // }
 
+    /// @notice Registers an ad-hoc (non-standard) mandate instance in the registry under a unique name so
+    /// the mandatory onAdopt whitelist check passes on adoption. The mandate must have been constructed with
+    /// `address(registry)` as its MANDATE_REGISTRY.
+    function _registerPkgMandate(address mandate) private returns (address) {
+        vm.prank(registry.owner());
+        registry.registerMandate(vm.toString(mandate), mandate, keccak256(abi.encodePacked(mandate)));
+        return mandate;
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                    CORE PROTOCOL TESTS                                          //
@@ -1875,7 +1884,7 @@ contract TestConstitutions is Test {
                 maxExecutionDelay: 0
             })
         });
-        ReformMandate_Static pkg1 = new ReformMandate_Static(pkg1Contents);
+        ReformMandate_Static pkg1 = ReformMandate_Static(_registerPkgMandate(address(new ReformMandate_Static(pkg1Contents, address(registry)))));
 
         conditions.allowedRole = type(uint256).max;
         constitution.push(
@@ -1890,7 +1899,7 @@ contract TestConstitutions is Test {
 
         // Package 2: empty (0 baked mandates) — only self-revokes on execution
         PowersTypes.MandateInitData[] memory pkg2Contents = new PowersTypes.MandateInitData[](0);
-        ReformMandate_Static pkg2 = new ReformMandate_Static(pkg2Contents);
+        ReformMandate_Static pkg2 = ReformMandate_Static(_registerPkgMandate(address(new ReformMandate_Static(pkg2Contents, address(registry)))));
 
         conditions.allowedRole = type(uint256).max;
         constitution.push(
@@ -1921,7 +1930,7 @@ contract TestConstitutions is Test {
                 maxExecutionDelay: 0
             })
         });
-        ReformMandate_Static pkg3 = new ReformMandate_Static(pkg3Contents);
+        ReformMandate_Static pkg3 = ReformMandate_Static(_registerPkgMandate(address(new ReformMandate_Static(pkg3Contents, address(registry)))));
 
         conditions.allowedRole = 1; // ROLE_ONE
         constitution.push(

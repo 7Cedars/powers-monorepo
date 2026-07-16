@@ -30,7 +30,7 @@ contract SlateRegistry_RemoveSlate is Mandate {
     }
 
     /// @notice Constructor for SlateRegistry_RemoveSlate mandate
-    constructor() {
+    constructor(address registry_) Mandate(registry_) {
         bytes memory configParams = abi.encode("address SlateRegistry", "uint16 AddSlateMandateId");
         emit Mandate__Deployed(configParams);
     }

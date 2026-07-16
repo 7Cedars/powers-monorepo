@@ -13,7 +13,7 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
 contract Adopt_Mandates is Mandate {
-    constructor() {
+    constructor(address registry_) Mandate(registry_) {
         emit Mandate__Deployed("");
     }
 

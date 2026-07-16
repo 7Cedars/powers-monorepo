@@ -100,10 +100,11 @@ contract DeployHelpers is Script {
     // deploys the mandates in ReformMandate_Static of packageSize size using create2
     // and returns the mandateInitData for those packages.
     // the packages can then be adopted in Powers but are linked sequentially through needFulfilled conditions.
-    function packageInitData(PowersTypes.MandateInitData[] memory mandateInitData, uint256 packageSize)
-        public
-        returns (PowersTypes.MandateInitData[] memory packages)
-    {
+    function packageInitData(
+        PowersTypes.MandateInitData[] memory mandateInitData,
+        uint256 packageSize,
+        address registry
+    ) public returns (PowersTypes.MandateInitData[] memory packages) {
         require(packageSize > 0, "Package size must be greater than 0");
 
         uint256 totalMandates = mandateInitData.length;
@@ -129,8 +130,8 @@ contract DeployHelpers is Script {
             }
 
             // Deploy ReformMandate_Static with the batch
-            bytes memory constructorArgs = abi.encode(batch);
-            bytes32 salt = bytes32(abi.encodePacked(constructorArgs));
+            bytes memory constructorArgs = abi.encode(batch, registry);
+            bytes32 salt = keccak256(constructorArgs);
             address deployedAddress = vm.computeCreate2Address(
                 salt,
                 keccak256(abi.encodePacked(type(ReformMandate_Static).creationCode, constructorArgs))
@@ -138,7 +139,7 @@ contract DeployHelpers is Script {
 
             if (deployedAddress.code.length == 0) {
                 vm.startBroadcast();
-                new ReformMandate_Static{salt: salt}(batch);
+                new ReformMandate_Static{salt: salt}(batch, registry);
                 vm.stopBroadcast();
             }
 

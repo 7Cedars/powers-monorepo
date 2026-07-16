@@ -374,6 +374,15 @@ abstract contract TestHelperFunctions is Test, TestVariables {
         return registry.getMandateAddress(MAJOR, MINOR, PATCH, name);
     }
 
+    /// @notice Registers a freshly deployed mandate instance in the shared test `registry` under a
+    /// unique name, so the mandatory onAdopt whitelist check passes on adoption. The mandate must have
+    /// been constructed with `address(registry)` as its MANDATE_REGISTRY. Returns the mandate address.
+    function registerTestMandate(address mandate) internal returns (address) {
+        vm.prank(registry.owner());
+        registry.registerMandate(vm.toString(mandate), mandate, keccak256(abi.encodePacked(mandate)));
+        return mandate;
+    }
+
     function findMandateIdInOrg(string memory description, Powers org) public view returns (uint16) {
         uint16 counter = org.mandateCounter();
         for (uint16 i = 1; i < counter; i++) {

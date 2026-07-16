@@ -23,7 +23,7 @@ contract MandatePackage is Mandate {
     address[] private sMandateAddresses;
 
     // in this case mandateAddresses should be [openAction, statementOfIntent] -- we only need those two mandates for this package.
-    constructor(address[] memory mandateAddresses) {
+    constructor(address[] memory mandateAddresses, address registry_) Mandate(registry_) {
         sMandateAddresses = mandateAddresses;
         emit Mandate__Deployed(abi.encode());
     }
