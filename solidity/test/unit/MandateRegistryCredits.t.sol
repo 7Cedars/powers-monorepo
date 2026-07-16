@@ -4,11 +4,33 @@ pragma solidity ^0.8.26;
 import { TestSetupPowers } from "../TestSetup.t.sol";
 import { MandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
+import { Mandate } from "@src/Mandate.sol";
 import { OpenAction } from "@src/core/mandates/executive/OpenAction.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
-/// @notice Unit tests for the paid tier added to MandateRegistry: pricing, credits, per-adoption charging,
-/// developer split, withdrawals, and the "registry-down blocks new adoptions only" invariant.
+/// @dev Minimal priced mandate for tests: declares its own price (in credits) and dev payees, the way a
+/// real paying mandate would override the base getters. Everything else is inherited from Mandate.
+contract PricedMandate is Mandate {
+    uint256 internal immutable PRICE_CREDITS;
+    address[] internal DEV_PAYEES;
+
+    constructor(address registry_, uint256 priceCredits_, address[] memory devs_) Mandate(registry_) {
+        PRICE_CREDITS = priceCredits_;
+        DEV_PAYEES = devs_;
+    }
+
+    function priceInCredits() public view override returns (uint256) {
+        return PRICE_CREDITS;
+    }
+
+    function devs() public view override returns (address[] memory) {
+        return DEV_PAYEES;
+    }
+}
+
+/// @notice Unit tests for the paid tier on MandateRegistry: developer-declared credit pricing, the
+/// owner-set credit->wei exchange rate, per-adoption charging, developer split, withdrawals, and the
+/// "registry-down blocks new adoptions only" invariant.
 contract MandateRegistryCreditsTest is TestSetupPowers {
     address internal owner_; // registry owner (a Powers org in prod, an EOA in tests)
 
@@ -16,20 +38,30 @@ contract MandateRegistryCreditsTest is TestSetupPowers {
         super.setUp();
         owner_ = registry.owner();
         vm.deal(address(this), 100 ether);
+        // Pin the exchange rate to 1 wei/credit for the shared registry, so credit prices below equal
+        // their wei cost unless a test changes the rate explicitly. (The deploy script seeds a network
+        // rate; tests set their own to stay deterministic.)
+        vm.prank(owner_);
+        registry.setWeiPerCredit(1);
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
 
-    /// @dev Deploys a fresh OpenAction against the shared registry, registers it under `name`, returns it.
+    /// @dev Deploys a fresh free OpenAction against the shared registry, registers it under `name`.
     function _deployRegistered(string memory name) internal returns (address mandate) {
         mandate = address(new OpenAction(address(registry)));
         vm.prank(owner_);
         registry.registerMandate(name, mandate, keccak256(abi.encodePacked(name)));
     }
 
-    function _price(address mandate, address[] memory devs, uint256 price) internal {
+    /// @dev Deploys a priced mandate (developer declares price/devs) against the registry, registers it.
+    function _deployPriced(string memory name, uint256 priceCredits, address[] memory devs)
+        internal
+        returns (address mandate)
+    {
+        mandate = address(new PricedMandate(address(registry), priceCredits, devs));
         vm.prank(owner_);
-        registry.setMandatePricing(mandate, devs, price);
+        registry.registerMandate(name, mandate, keccak256(abi.encodePacked(name)));
     }
 
     function _twoDevs() internal view returns (address[] memory devs) {
@@ -38,10 +70,20 @@ contract MandateRegistryCreditsTest is TestSetupPowers {
         devs[1] = bob;
     }
 
+    function _setRate(uint256 rate) internal {
+        vm.prank(owner_);
+        registry.setWeiPerCredit(rate);
+    }
+
     // ─── pricing config ──────────────────────────────────────────────────────
 
     function testDefaultFeeBpsIsTenPercent() public view {
         assertEq(registry.feeBps(), 1000);
+    }
+
+    function testConstructorDefaultWeiPerCreditIsOne() public {
+        MandateRegistry fresh = new MandateRegistry(address(this));
+        assertEq(fresh.weiPerCredit(), 1, "constructor seeds default rate of 1 wei/credit");
     }
 
     function testSetFeeBpsRevertsAboveCap() public {
@@ -50,19 +92,18 @@ contract MandateRegistryCreditsTest is TestSetupPowers {
         registry.setFeeBps(3001);
     }
 
-    function testSetMandatePricingRevertsForUnregistered() public {
-        address unregistered = address(new OpenAction(address(registry)));
+    function testSetWeiPerCredit() public {
+        vm.expectEmit(true, true, true, true);
+        emit MandateRegistry.WeiPerCreditSet(1e15);
         vm.prank(owner_);
-        vm.expectRevert(abi.encodeWithSelector(MandateRegistry.NotRegistered.selector, unregistered));
-        registry.setMandatePricing(unregistered, _twoDevs(), 1 ether);
+        registry.setWeiPerCredit(1e15);
+        assertEq(registry.weiPerCredit(), 1e15);
     }
 
-    function testSetPricedMandateRequiresDevs() public {
-        address mandate = _deployRegistered("NoDevMandate");
-        address[] memory noDevs = new address[](0);
-        vm.prank(owner_);
-        vm.expectRevert(abi.encodeWithSelector(MandateRegistry.NoDevs.selector, mandate));
-        registry.setMandatePricing(mandate, noDevs, 1 ether);
+    function testSetWeiPerCreditOnlyOwner() public {
+        vm.prank(alice);
+        vm.expectRevert();
+        registry.setWeiPerCredit(1e15);
     }
 
     // ─── charging via onAdopt ────────────────────────────────────────────────
@@ -81,12 +122,13 @@ contract MandateRegistryCreditsTest is TestSetupPowers {
     }
 
     function testPricedMandateRevertsWithoutCredits() public {
-        address mandate = _deployRegistered("PricedNoCredits");
-        _price(mandate, _twoDevs(), 1 ether);
+        address mandate = _deployPriced("PricedNoCredits", 1 ether, _twoDevs()); // 1 ether credits, rate 1
         address org = address(daoMock);
 
         vm.prank(mandate);
-        vm.expectRevert(abi.encodeWithSelector(MandateRegistry.InsufficientCredits.selector, org, uint256(1 ether), uint256(0)));
+        vm.expectRevert(
+            abi.encodeWithSelector(MandateRegistry.InsufficientCredits.selector, org, uint256(1 ether), uint256(0))
+        );
         registry.onAdopt(org);
     }
 
@@ -97,53 +139,97 @@ contract MandateRegistryCreditsTest is TestSetupPowers {
         registry.onAdopt(address(daoMock));
     }
 
+    function testOnAdoptRevertsWhenPricedMandateHasNoDevs() public {
+        address[] memory noDevs = new address[](0);
+        address mandate = _deployPriced("PricedNoDevs", 0.01 ether, noDevs);
+        address org = address(daoMock);
+        registry.buyCredits{ value: 0.05 ether }(org);
+
+        vm.prank(mandate);
+        vm.expectRevert(abi.encodeWithSelector(MandateRegistry.NoDevs.selector, mandate));
+        registry.onAdopt(org);
+    }
+
+    function testOnAdoptRevertsWhenExchangeRateUnset() public {
+        _setRate(0);
+        address mandate = _deployPriced("PricedRateUnset", 100, _twoDevs());
+        address org = address(daoMock);
+        registry.buyCredits{ value: 1 ether }(org);
+
+        vm.prank(mandate);
+        vm.expectRevert(MandateRegistry.ExchangeRateNotSet.selector);
+        registry.onAdopt(org);
+    }
+
     function testChargeSplitsFeeAndDevsEvenly() public {
-        address mandate = _deployRegistered("PricedEven");
-        _price(mandate, _twoDevs(), 0.01 ether);
+        uint256 priceCredits = 0.01 ether; // rate 1 => costWei == priceCredits
+        address mandate = _deployPriced("PricedEven", priceCredits, _twoDevs());
         address org = address(daoMock);
         registry.buyCredits{ value: 0.05 ether }(org);
 
         vm.prank(mandate);
         registry.onAdopt(org);
 
-        uint256 price = 0.01 ether;
-        uint256 fee = (price * 1000) / 10_000; // 10%
-        uint256 share = (price - fee) / 2;
+        uint256 costWei = priceCredits;
+        uint256 fee = (costWei * 1000) / 10_000; // 10%
+        uint256 share = (costWei - fee) / 2;
 
-        assertEq(registry.credits(org), 0.05 ether - price, "credits debited by price");
+        assertEq(registry.credits(org), 0.05 ether - costWei, "credits debited by cost");
         assertEq(registry.earnings(owner_), fee, "fee to owner");
         assertEq(registry.earnings(alice), share, "dev0 share");
         assertEq(registry.earnings(bob), share, "dev1 share");
-        assertEq(fee + share + share, price, "no wei lost (even case)");
+        assertEq(fee + share + share, costWei, "no wei lost (even case)");
     }
 
     function testChargeRemainderGoesToFirstDev() public {
-        // price chosen so the dev portion is odd → 1 wei remainder to devs[0]
-        uint256 price = 105; // fee = 105*1000/10000 = 10; devPortion = 95; /2 = 47 rem 1
-        address mandate = _deployRegistered("PricedOdd");
-        _price(mandate, _twoDevs(), price);
+        // credit price chosen so the dev portion is odd → 1 wei remainder to devs[0]
+        uint256 priceCredits = 105; // fee = 105*1000/10000 = 10; devPortion = 95; /2 = 47 rem 1
+        address mandate = _deployPriced("PricedOdd", priceCredits, _twoDevs());
         address org = address(daoMock);
         registry.buyCredits{ value: 1 ether }(org);
 
         vm.prank(mandate);
         registry.onAdopt(org);
 
-        uint256 fee = (price * 1000) / 10_000; // 10
-        uint256 devPortion = price - fee; // 95
+        uint256 costWei = priceCredits; // rate 1
+        uint256 fee = (costWei * 1000) / 10_000; // 10
+        uint256 devPortion = costWei - fee; // 95
         uint256 share = devPortion / 2; // 47
         uint256 remainder = devPortion - (share * 2); // 1
 
         assertEq(registry.earnings(owner_), fee);
         assertEq(registry.earnings(alice), share + remainder, "first dev gets remainder");
         assertEq(registry.earnings(bob), share);
-        assertEq(fee + registry.earnings(alice) + registry.earnings(bob), price, "no wei lost (odd case)");
+        assertEq(fee + registry.earnings(alice) + registry.earnings(bob), costWei, "no wei lost (odd case)");
+    }
+
+    function testExchangeRateMultipliesCost() public {
+        // Same developer credit price, a non-trivial rate: the wei cost scales by weiPerCredit, and the
+        // registry owner reprices via the rate alone — the mandate's price is untouched.
+        uint256 priceCredits = 100;
+        uint256 rate = 1e14; // 0.0001 ETH per credit
+        _setRate(rate);
+        address mandate = _deployPriced("PricedRate", priceCredits, _twoDevs());
+        address org = address(daoMock);
+        registry.buyCredits{ value: 1 ether }(org);
+
+        vm.prank(mandate);
+        registry.onAdopt(org);
+
+        uint256 costWei = priceCredits * rate; // 100 * 1e14 = 1e16
+        uint256 fee = (costWei * 1000) / 10_000;
+        uint256 share = (costWei - fee) / 2;
+
+        assertEq(registry.credits(org), 1 ether - costWei, "credits debited by scaled cost");
+        assertEq(registry.earnings(owner_), fee, "fee to owner");
+        assertEq(registry.earnings(alice), share, "dev0 share");
+        assertEq(registry.earnings(bob), share, "dev1 share");
     }
 
     // ─── withdrawals ─────────────────────────────────────────────────────────
 
     function testWithdrawEarningsPaysThenZeroes() public {
-        address mandate = _deployRegistered("PricedForWithdraw");
-        _price(mandate, _twoDevs(), 0.01 ether);
+        address mandate = _deployPriced("PricedForWithdraw", 0.01 ether, _twoDevs());
         address org = address(daoMock);
         registry.buyCredits{ value: 0.05 ether }(org);
         vm.prank(mandate);
@@ -168,8 +254,7 @@ contract MandateRegistryCreditsTest is TestSetupPowers {
     // ─── deactivation / registry-down invariant ──────────────────────────────
 
     function testOnAdoptRevertsAfterDeactivation() public {
-        address mandate = _deployRegistered("PricedThenDeactivated");
-        _price(mandate, _twoDevs(), 0.01 ether);
+        address mandate = _deployPriced("PricedThenDeactivated", 0.01 ether, _twoDevs());
         registry.buyCredits{ value: 0.05 ether }(address(daoMock));
 
         (uint16 maj, uint16 min, uint16 pat) = IMandate(mandate).version();

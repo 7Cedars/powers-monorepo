@@ -144,6 +144,19 @@ abstract contract Mandate is ERC165, IMandate {
         return (0, 1, 9);
     }
 
+    /// @notice Adoption price in credits. Default 0 (free); override to charge on adoption.
+    /// @dev The registry reads this on adoption and converts credits -> wei via its weiPerCredit rate.
+    ///      Declared view (not pure) so overrides may return a constant or a storage-backed value.
+    function priceInCredits() public view virtual returns (uint256 price) {
+        return 0;
+    }
+
+    /// @notice Developer payees for the paid portion of a priced adoption. Default empty (free mandates).
+    /// @dev Must be non-empty when priceInCredits() > 0, or adoption reverts in the registry.
+    function devs() public view virtual returns (address[] memory payees) {
+        return new address[](0);
+    }
+
     // can include here a getMetadata that returns a string uri from the config -- if there is one. This would be useful for frontends to easily retrieve metadata about the mandate.
     // this function would then be virtual, so that when not overridden, it returns an empty string or a default uri.
 

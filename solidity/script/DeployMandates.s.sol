@@ -132,6 +132,10 @@ contract DeployMandates is Script {
             vm.startBroadcast();
             registry = new MandateRegistry{ salt: keccak256("MandateRegistry2") }(msg.sender);
             vm.stopBroadcast();
+            // Seed the credit -> wei exchange rate so priced mandates work out of the box (owner-gated).
+            vm.startBroadcast(registry.owner());
+            registry.setWeiPerCredit(helperConfig.getWeiPerCredit(block.chainid));
+            vm.stopBroadcast();
         }
         // MandateRegistry registry = MandateRegistry(registryAddr);
         // IPowers powers = IPowers(registry.owner());
