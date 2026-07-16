@@ -19,6 +19,7 @@ export const DeployedExamples = [
         chainId: arbitrumSepolia.id,
         address: '0x1625eB24df6571Ae13ebD9Cc3bd82b5F1E38405a'
     },
+    // }, 
     {
         id: "bicameralism",
         title: "Bicameralism",
