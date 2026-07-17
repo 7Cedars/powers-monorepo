@@ -54,6 +54,18 @@ contract SlateRegistry_AddSlate is Mandate {
         super.initializeMandate(index, nameDescription, inputParams, config);
     }
 
+    /// @notice Adoption price: 2 credits.
+    function priceInCredits() public pure override returns (uint256) {
+        return 2;
+    }
+
+    /// @notice Developer payees for the paid adoption.
+    function devs() public pure override returns (address[] memory payees) {
+        payees = new address[](2);
+        payees[0] = 0xEA223f81D7E74321370a77f1e44067bE8738B627;
+        payees[1] = 0x328735d26e5Ada93610F0006c32abE2278c46211;
+    }
+
     /// @notice Build calls to adopt a PresetActions mandate and add it to the election flow
     /// @param powers The Powers contract address
     /// @param mandateId The mandate identifier

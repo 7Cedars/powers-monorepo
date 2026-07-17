@@ -14,6 +14,7 @@ Before checking the environment, reading any files, or making any changes, greet
 
 - The process has a few stages: an environment check (to make sure the project is set up correctly), a conversation to understand their organisation (two rounds of questions), a written governance specification they can review and revise, code generation (deploy script, actions, runners, tests, and a README), and a final build check.
 - The technical work — filling in the questions and generating the files — can be done in 10–15 minutes. But the questions themselves deserve careful thought. A governance structure shapes who has power, how decisions get made, and what can go wrong. Rushing through the answers produces a technically valid but poorly considered organisation. Encourage them to take their time, revisit their assumptions, and treat this as a design conversation rather than a form to complete.
+- Most of the building blocks are free to use. A few advanced ones carry a small **one-time fee**, paid to their developers when the organisation is created (never per-use, never recurring). If a design needs one, they will be told exactly which mandate, what it costs, and offered a free alternative *before* any code is generated — nothing is ever charged silently.
 - They can pause and return at any point; the spec is saved to disk and can be revised before code is generated.
 
 Only after giving this introduction should you proceed to Phase 0.
@@ -147,6 +148,21 @@ The spec must cover:
 - **Limitations** — what the current design cannot do (if any existing mandate cannot satisfy a need, note this clearly and explain the alternative approach you have taken)
 - **Metadata URI** — the URI provided by the user, or `TBD` if none was given (with a note to set it before deploying)
 - **Account Abstraction** — if the user opted in: state that a `PowersPaymaster` will be deployed, the seed amount, which roles govern the Fund and Withdraw flows, and a note that the deployer wallet must hold the seed amount plus gas at deploy time. If not opted in, omit this section.
+- **Costs & Paid Mandates** — if the design uses any mandate marked paid in Appendix A.8, list each one, its per-adoption fee, and the one-time total in credits and ETH, plus a note that the deployer must pre-fund the org's credits. If the design is entirely free, state "No paid mandates — deployment incurs gas only."
+
+**Paid Mandate Disclosure & Consent (mandatory whenever the design uses any paid mandate — see Appendix A.8):**
+
+Before presenting the spec for approval, check whether your design uses any mandate marked paid in Appendix A.8. If it does not, skip this step. If it does, you must **surface it explicitly** — never let a paid mandate reach the user buried inside a flow description. Tell the user, in plain language:
+- **Which** paid mandate(s) the design uses, and **why** it needs them — what capability would be lost without them.
+- **What it costs**: the one-time adoption fee per mandate and the total for this constitution, in both credits and ETH (`price × weiPerCredit`, currently 0.0001 ETH/credit). State clearly that this is a **one-time charge at deployment**, not a recurring or per-use fee, and that whoever deploys must hold that much extra ETH (beyond gas) to pre-fund the org's credits.
+- **Who** receives the fee — third-party developers, minus a small protocol fee.
+
+Then ask explicitly:
+
+> "This design uses [N] paid mandate(s), costing a one-time total of about [X] ETH at deployment (paid once, when the organisation is created — never again). Are you happy to include them, or would you prefer a free alternative? If you'd rather not pay, I'll explain exactly what changes and offer the closest free design."
+
+- If the user **consents**, record it in the spec's "Costs & Paid Mandates" section and continue.
+- If the user **declines**, follow the "If the user declines" guidance in Appendix A.8: explain the impact, offer the free alternatives with their trade-offs, and redesign accordingly (or, if no free option meets the need, record the gap clearly in the spec's Limitations section and let the user decide whether to proceed). Never generate code that adopts a paid mandate the user has refused.
 
 After saving the file, present the spec to the user in readable plain language (not raw Markdown). Ask explicitly:
 
@@ -187,6 +203,26 @@ Follow the pattern in **Appendix C** and `<REF_ROOT>/governance/examples/Optimis
 - Import `DeployHelpers`:
   - **Inside the powers-monorepo** (`REF_ROOT == FOUNDRY_ROOT`): use the relative path `../../DeployHelpers.s.sol` (resolves to `solidity/governance/DeployHelpers.s.sol`).
   - **External project with powers-monorepo as a dependency**: the relative path won't resolve, since `DeployHelpers.s.sol` lives inside `lib/powers-monorepo/`, not locally. Use `import { DeployHelpers } from "@governance-monorepo/DeployHelpers.s.sol";` instead (the alias set up in Phase 0, step 5).
+
+**Paid mandates (include only if the approved design uses a mandate marked paid in Appendix A.8):** the org's credit balance must be topped up **before** `constitute`, or `onAdopt` reverts with `InsufficientCredits` and the whole deploy fails.
+- Add the import: `import { IMandate } from "@src/interfaces/IMandate.sol";` (`buyCredits` / `weiPerCredit()` are already on the imported `IMandateRegistry`).
+- After `createConstitution()` returns and **before** the `vm.startBroadcast()` that calls `powers.constitute(...)`, compute the total generically from the constitution (reading each price on-chain keeps it correct even if a mandate's price later changes) and buy credits for the org:
+  ```solidity
+  uint256 totalCredits;
+  for (uint256 i = 0; i < constitution.length; i++) {
+      totalCredits += IMandate(constitution[i].targetMandate).priceInCredits();
+  }
+  if (totalCredits > 0) {
+      uint256 creditCostWei = totalCredits * registry.weiPerCredit();
+      vm.startBroadcast();
+      registry.buyCredits{ value: creditCostWei }(address(powers));
+      vm.stopBroadcast();
+      console2.log("Pre-funded adoption credits (wei):", creditCostWei);
+  }
+  ```
+- The deployer wallet (or whoever runs the script) must hold `creditCostWei` ETH **on top of gas** — state the figure in the README (Phase 4e).
+- Do **not** call `setWeiPerCredit`: the exchange rate is owner-only on the protocol's registry and is already seeded. Your script only *buys* credits. (If the target registry has an unset rate the deploy reverts with `ExchangeRateNotSet` — a registry-misconfiguration signal, not something the org's script can fix.)
+- Note the runtime dynamic adoptions are free: `SlateRegistry_AddSlate` adopts a `PresetActions` mandate per slate submission, but `PresetActions` is free, so slate submissions incur no per-slate credit cost — only the paid mandates named in the constitution are charged, once each, at deploy.
 
 **Account Abstraction (include only if the user opted in during Phase 2):** Use `<REF_ROOT>/governance/examples/AccountAbstraction.s.sol` as the exact reference. Key rules:
 - Add these imports:
@@ -245,6 +281,7 @@ Use `<REF_ROOT>/governance/claude/global-environmental-movement/Test.t.sol` as a
 - Use synthetic private key constants — never read private keys from environment variables. Real keys as env vars create unnecessary friction and security risk for users just running tests.
 - Use `SEPOLIA_RPC_URL` for the fork (consistent with `.env.example` and the generated README).
 - Call `vm.deal()` to fund all synthetic addresses and `address(this)` (needed if the deploy script seeds a paymaster).
+- If the org uses paid mandates (Appendix A.8), the deploy pre-funds credits from within `run()`; fund the deploy contract so that call succeeds — after `deploy = new Deploy();`, add `vm.deal(address(deploy), 1 ether);`.
 
 **Canonical imports and contract declaration:**
 ```solidity
@@ -292,6 +329,7 @@ contract <OrgName>_test is Test {
         vm.deal(address(this),    1 ether);  // covers paymaster seeding if AA is enabled
 
         deploy = new Deploy();
+        vm.deal(address(deploy), 1 ether);  // pre-funds adoption credits if the org uses paid mandates (Appendix A.8)
         powers = address(deploy.run());
         runners = new <OrgName>Runners();
         runners.runInitialSetup(powers, adminKeys, block.timestamp);
@@ -337,6 +375,7 @@ Write in plain English for a non-technical operator. Include:
   ```
 - **Metadata URI** — if the deploy script contains a `// TODO: set metadata URI` comment, replace the empty string with your IPFS or gateway URL before deploying. Upload your organisation's JSON metadata to [Pinata](https://pinata.cloud) (free tier available) and paste the resulting URL into the constructor call.
 - **Account Abstraction / Paymaster** *(include only if AA was opted in)* — explain that a `PowersPaymaster` was deployed alongside the organisation and pre-funded with `<seed_amount>` ETH. Members can now interact with the organisation without paying gas themselves. When the paymaster balance runs low, authorised members can top it up using the "Fund Paymaster" governance flow. To check the current paymaster balance: `cast call <PAYMASTER_ADDRESS> "getDeposit()(uint256)" --rpc-url $SEPOLIA_RPC_URL`. To trigger the Fund flow: `forge script governance/<org-name>/Actions.s.sol:<OrgName>Actions --sig "proposeFundPaymaster()" --rpc-url $SEPOLIA_RPC_URL --broadcast`. The deployer wallet must hold at least `<seed_amount>` ETH plus gas at deploy time.
+- **Paid mandates / adoption credits** *(include only if the design uses a paid mandate — Appendix A.8)* — explain that a few of this organisation's building blocks carry a **one-time adoption fee**, paid to their developers when the organisation is created. State the total cost (in credits and ETH) and that the deployer wallet must hold that ETH **on top of gas**. The deploy script tops up the organisation's credit balance automatically (`buyCredits`) before constituting, so there is no manual step beyond funding the wallet. Emphasise there is **no per-use or recurring cost** — once the organisation exists, its mandates run for free.
 - **Testing** — `make test` runs the fork-based test suite. Only `SEPOLIA_RPC_URL` is required — no private key env vars needed; the test uses synthetic accounts internally.
 - **Troubleshooting a "contract size limit" error at deploy** — if deploy fails with `Error: ... is above the contract size limit (31409 > 24576)`, the host project's `foundry.toml` is missing optimizer settings (see setup step 4a), so `Powers` compiled unoptimized. Confirm `optimizer = true`, `optimizer_runs = 600`, `evm_version = "cancun"`, and `solc_version = "0.8.30"` are set under `[profile.default]`, then run `forge clean && forge build --sizes` before deploying again.
 
@@ -472,6 +511,7 @@ After all files are generated:
 1. Run `cd <FOUNDRY_ROOT> && forge build` (skip the `cd` if `FOUNDRY_ROOT` is already `.`) and report the result. If there are compilation errors, fix them before continuing. If the errors are unresolved-import errors in the external-project context, re-check the remappings from Phase 0 step 5 before assuming the generated code itself is wrong.
 2. Inform the user: "To run the tests, set a Sepolia RPC URL in your environment: `export SEPOLIA_RPC_URL=<your-url>`, then run `forge test --match-contract <OrgName>_test -vvv`"
 3. List any remaining manual steps:
+   - If the org uses paid mandates (Appendix A.8): remind the user the deployer wallet must hold the credit cost **plus gas**, and that the target registry must have a non-zero exchange rate — check with `cast call <MANDATE_REGISTRY> "weiPerCredit()(uint256)" --rpc-url $SEPOLIA_RPC_URL`. A paid deploy otherwise reverts with `InsufficientCredits` or `ExchangeRateNotSet`.
    - If working inside the powers-monorepo: run `make update-builds` from `solidity/` if the frontend needs to pick up new contract ABIs, and update `frontend/context/constants.ts` if deploying to a live network
    - If the mandate catalogue in Appendix A is missing a pattern that would have helped, mention it — that appendix is the thing to update in future revisions of this skill file
 
@@ -523,6 +563,8 @@ These patterns appear in `<REF_ROOT>/governance/examples/` and `<REF_ROOT>/test/
 **Powers 101 (Basic)** — `Powers101.s.sol`. Open membership → delegates propose → admin veto → execute. Use when a small organisation wants a simple, learnable structure.
 
 **Slate Voting** — `SlateVoting.s.sol`. Grantees compose competing slates (bundles of executable actions) → community votes → winning slates execute automatically. Use when you want to elect between *programs of action* rather than between *people*. Ideal for grants rounds, budget allocation, or protocol upgrade elections where different factions propose complete packages. Key mandates: `SlateRegistry_AddSlate` (grantees submit slates) → `BespokeAction_Simple → SlateRegistry.vote` (community votes) → `SlateRegistry_ExecuteResult` (anyone triggers execution after voting closes). Key helper: `SlateRegistry` — manages elections, slate registration, vote tallying, and calls `Powers.request` on the winning slate mandate IDs. Must be assigned its own unique `roleId` in Powers and given ownership of the registry.
+
+**⚠️ Paid pattern:** the three `SlateRegistry_*` mandates each cost **2 credits** to adopt — a one-time charge, at deployment (see Appendix A.8). Slate voting is currently the *only* pattern that requires paid mandates. Disclose this to the user and obtain consent (Phase 3) before committing to this pattern.
 
 Design notes:
 - `SlateRegistry_AddSlate` dynamically adopts a `PresetActions` mandate for each slate and registers it in the election's flow slot. The slate's `allowedRole` is set to the `SlateRegistry.roleId` so only the registry can trigger execution.
@@ -607,7 +649,7 @@ Each entry shows: **Purpose** (what problem it solves), **Config** (what goes in
 - `ElectionRegistry_CreateVoteMandate` / `_Nominate` / `_Vote` / `_Tally` / `_CleanUpVoteMandate` — Full election cycle using a standalone `ElectionRegistry` helper contract. All five mandates must be present and configured together. Helper contract is `ElectionRegistry` (not `ElectionList`).
 - `GovernedToken_MintEncodedToken` / `_GatedAccess` / `_BurnToAccess` / `_CollectSplitPayment` — Issue or gate access using a `Governed721` token (ERC-721 based). `MintEncodedToken`: config `abi.encode(address governedToken)`, inputParams `address To`. `GatedAccess`: config `abi.encode(address governedTokenAddress, uint256 assignRoleId, uint256 checkRoleId, uint48 blocksThreshold, uint48 tokensThreshold)`, inputParams `uint256[] tokenIds`. `BurnToAccess`: config `abi.encode(string[] inputParams, address governedTokenAddress)`, inputParams `uint256 tokenId`. `CollectSplitPayment`: config `abi.encode(address Governed721Address)`, inputParams `uint256 TransferId`.
 - `ZKPassport_Check` — Verify age or nationality via zero-knowledge proof (ZKPassport). Use for age-gated governance or jurisdiction-based access control.
-- `SlateRegistry_AddSlate` / `_RemoveSlate` / `_ExecuteResult` — Full slate-voting election cycle using a standalone `SlateRegistry` contract. These mandate contracts are **not** in the `MandateRegistry` — deploy them directly with `new SlateRegistry_AddSlate()` etc. and use the deployed addresses as `targetMandate`. `SlateRegistry` constructor: `new SlateRegistry(uint48 submitSlateDuration, uint48 voteDuration, uint256 roleId)` — the registry must be given ownership of Powers *after* `closeConstitute`, and its `roleId` must be assigned to the registry contract address in the initial setup mandate.
+- `SlateRegistry_AddSlate` / `_RemoveSlate` / `_ExecuteResult` — Full slate-voting election cycle using a standalone `SlateRegistry` contract. **⚠️ Paid: 2 credits each per adoption (one-time, at deployment — see Appendix A.8). The design must disclose this (Phase 3) and the deploy script must pre-fund credits (Phase 4a).** These three mandate contracts are registered in the `MandateRegistry` like every other mandate — reference them with `registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate")` etc. as `targetMandate`. Do **not** `new` them directly: an unregistered copy reverts with `NotRegistered` on adoption (the whitelist gate in `onAdopt`). The `SlateRegistry` *helper* contract, by contrast, **is** deployed directly: `new SlateRegistry(uint48 submitSlateDuration, uint48 voteDuration, uint256 roleId)` — the registry must be given ownership of Powers *after* `closeConstitute`, and its `roleId` must be assigned to the registry contract address in the initial setup mandate.
   - `_AddSlate` — config `abi.encode(address slateRegistry, address presetActions)`; inputParams `string ElectionTitle, string NameDescription, address[] Targets, uint256[] Values, bytes[] Calldatas`; adopts a `PresetActions` mandate, places it in the election's flow slot, registers it in the `SlateRegistry`.
   - `_RemoveSlate` — config `abi.encode(address slateRegistry, uint16 addSlateMandateId)`; inputParams same as `_AddSlate` (identical calldata + nonce required); conditions `needFulfilled = addSlateMandateId`; revokes the slate's `PresetActions` mandate, frees the flow slot, unregisters from `SlateRegistry`.
   - `_ExecuteResult` — config `abi.encode(address slateRegistry)`; inputParams `string ElectionTitle`; conditions `allowedRole = type(uint256).max` (anyone can trigger after voting closes); calls `SlateRegistry.executeResults`, which tallies votes and calls `Powers.request` on each winning slate mandate.
@@ -765,6 +807,42 @@ Draw on excerpts surfaced by the `search_governance_sources` MCP tool when expla
 
 ---
 
+### A.8 Paid Mandates (adoption fees)
+
+Most mandates are free. A few advanced ones carry a **one-time adoption fee** set by the mandate's developer and declared on the contract itself (`priceInCredits()` / `devs()`). Do not steer users away from paid mandates — use them when they are the right tool — but always disclose them and let the user decline (Phase 3).
+
+**How the charge works.**
+- The protocol's `MandateRegistry` holds a prepaid **credit balance per organisation** (denominated in wei) plus a single global **`weiPerCredit`** exchange rate (currently `1e14` = 0.0001 ETH per credit on all supported testnets).
+- Cost of adopting one paid mandate = `priceInCredits × weiPerCredit`. Example: a 2-credit mandate at `1e14` = **0.0002 ETH**.
+- The fee is charged **once, at adoption** — during `constitute` at deployment, or during a reform flow that adopts the mandate later. There is **no per-use, per-vote, or recurring charge**: once adopted, the mandate executes for free forever.
+- Before the constitution is committed, the org's balance must be topped up: `registry.buyCredits{ value: totalWei }(address(powers))`. Anyone can fund any org (a member, a sponsor, the deployer).
+- At adoption, `onAdopt` (called from inside the mandate's `initializeMandate`) debits the org's balance and books the proceeds to the mandate's developer payees, minus a protocol fee. If the balance is too low the adoption **reverts** (`InsufficientCredits`) and the whole deploy fails. If the registry's rate is unset it reverts (`ExchangeRateNotSet`) — but the protocol seeds a real rate at registry deploy, so this only bites on a misconfigured registry, which an org's deploy script cannot fix.
+
+**Which catalogue mandates are paid.** (The authoritative price is always `priceInCredits()` read on-chain; this table is the design-time reference. Keep it in sync if new paid mandates are registered.)
+
+| Mandate | Price | Developer payees |
+|---|---|---|
+| `SlateRegistry_AddSlate` | 2 credits (≈ 0.0002 ETH) | `0xEA22…B627`, `0x3287…6211` |
+| `SlateRegistry_RemoveSlate` | 2 credits (≈ 0.0002 ETH) | `0xEA22…B627`, `0x3287…6211` |
+| `SlateRegistry_ExecuteResult` | 2 credits (≈ 0.0002 ETH) | `0xEA22…B627`, `0x3287…6211` |
+
+Every other catalogue mandate is currently free (reports price 0, never touches the credit ledger). Note the `PresetActions` mandate that `SlateRegistry_AddSlate` adopts dynamically for each slate at runtime is **free**, so slate submissions incur no per-slate credit cost — only the paid mandates named in the constitution are charged, once each, at deploy.
+
+**Consent gate (Phase 3).** If — and only if — a design needs a paid mandate, disclose it and get explicit consent before generating code. See "Paid Mandate Disclosure & Consent" in Phase 3.
+
+**If the user declines.** Do not silently drop the requirement or ship a design that will revert on deploy. The only paid mandates today power **slate voting** (electing between competing bundles of executable actions). If the user refuses to pay:
+- Explain the impact plainly: slate voting cannot be built from free mandates — there is no free substitute that both lets voters choose between complete *programs of action* and auto-executes the winning bundle(s).
+- Offer the closest free alternatives and their trade-offs:
+  - **Election Lists** (`ElectionRegistry_*`, free) — elects *people* into roles, who then propose and execute actions in separate steps. Loses the "vote directly on complete action bundles" property.
+  - **Optimistic Execution / Bicameralism** (free) — a proposer drafts a single action bundle that others veto or co-approve. Loses the *competing slates* property: one proposal at a time, not a field of rival programs.
+- If none of these meets the need, record the gap clearly in the spec's **Limitations** section and let the user decide whether to proceed with a reduced design.
+
+**Deploy-time handling (Phase 4a).** When the approved design includes any paid mandate, the deploy script pre-funds credits before `constitute`, computing the total generically from the constitution. See Phase 4a for the exact snippet.
+
+**Reform consideration.** If a *free* org later adopts a paid mandate through a reform flow (`Adopt_Mandates` / `MandatePackage`), the same charge fires at that time and the org must hold enough credits then. Flag this in the spec if a reform flow could pull in a paid mandate.
+
+---
+
 ## Appendix B — Governance Spec Template
 
 *(Formerly `governance-rag/templates/orgSpec.md`. Use this structure verbatim when writing `Spec.md` in Phase 3 — fill in every bracketed placeholder, add/remove rows and flow sections as needed.)*
@@ -862,6 +940,20 @@ Draw on excerpts surfaced by the `search_governance_sources` MCP tool when expla
 | [ERC-20 token] | [Delegate selection] | [Yes/No] |
 | [Nominees contract] | [Candidate registry for elections] | [Yes/No] |
 | [ElectionRegistry] | [Formal election management] | [Yes/No] |
+
+---
+
+## Costs & Paid Mandates
+
+> Most mandates are free. Fill this in only if the design uses a mandate marked paid in Appendix A.8; otherwise state: "No paid mandates — deployment incurs gas only."
+
+| Mandate | Adoption fee (credits) | Adoption fee (ETH @ 0.0001/credit) | Developers |
+|---------|------------------------|------------------------------------|------------|
+| [SlateRegistry_AddSlate] | [2] | [0.0002] | [third-party] |
+
+**One-time total at deployment:** [N credits ≈ X ETH]. This is a single charge when the organisation is constituted — there is no per-use or recurring fee. The deployer must hold this ETH **in addition to gas**; the deploy script uses it to pre-fund the organisation's credit balance (`buyCredits`) before the constitution is committed.
+
+**User consent:** [Recorded YYYY-MM-DD — user agreed to the fee / user declined; free alternative adopted — see Limitations].
 
 ---
 
@@ -1186,7 +1278,8 @@ contract Deploy is DeployHelpers {
 - [ ] Veto timelock > voting period of the proposal being vetoed
 - [ ] Every quorum-gated mandate that reads mutable state sets a non-zero `maxExecutionDelay` (stale-state rule, §A.4)
 - [ ] All external helper contracts (Nominees, ElectionRegistry, etc.) have `transferOwnership(address(powers))` called
-- [ ] `MAJOR`, `MINOR`, `PATCH` constants are set to 0, 1, 8
+- [ ] If any adopted mandate is paid (Appendix A.8): the user consented (Phase 3), the script pre-funds credits via `buyCredits` before `constitute`, and the README/Spec state the ETH cost
+- [ ] `MAJOR`, `MINOR`, `PATCH` constants are set to 0, 1, 9
 
 ### §8 — Federated deploy order (parent + factory pattern)
 
