@@ -1,139 +1,169 @@
-<p align="center">
+# Powers Protocol — Solidity
 
-<br />
-<div align="center">
-  <a href="https://github.com/7Cedars/powers"> 
-    <img src="../powers_icon_notext.svg" alt="Logo" width="300" height="300">
-  </a>
+The core smart contract implementation of the Powers governance protocol. All governance actions (propose → vote → execute) flow through `Powers.sol`; all governance logic lives in external **mandate** contracts.
 
-<h2 align="center"> Powers protocol </h2>
-  <p align="center">
-    Institutional governance for on-chain organisations. 
-    <br />
-    <br />
-    <a href="#whats-included">What's included</a> ·
-    <a href="#how-it-works">How it works</a> ·
-    <a href="#prerequisites">Prerequisites</a> ·
-    <a href="#getting-started">Getting Started</a>
-  </p>
-  <br />
-  <br />
-</div>
+- [Documentation](https://powers-docs.vercel.app/welcome) · [Full monorepo](../README.md)
 
-## What's included
-- A fully functional proof-of-concept of the Powers governance protocol (v0.4). It allows for the creation of modular and flexible rule based governance in on-chain organisations.  
-- Electoral mandates that enable different ways to assign roles to accounts. 
-- Executive mandates that enable different ways to role restrict and call external functions.
-- Example constitutions and founders documents needed to initialize organisations.
-- Example implementations of organisations building on the Powers protocol.
-- Comprehensive unit, integration, fuzz and invariant tests.
+---
 
 ## How it works
-In Powers actions need to be executed through role restricted contracts, called mandates. These mandates give role holders the power to transform pre-defined input into executable calldata. Aside from being role restricted, execution can also be conditional on the execution of another mandate. This allows for the creation of checks and balances between roles, and the creation of any type of rule based governance structure.       
 
-As such, there are several key differences between {Powers.sol} and the often used {Governor.sol}:  
-- Any action needs to be encoded in role-restricted external contracts, or mandates, that follow the {IMandate.sol} interface.
-- Proposing, voting, cancelling and executing actions are role-restricted along the target mandate that is called.
-- All actions need to run through the governance protocol. Calls to mandates that do not need a proposal vote to be executed still need to be executed through {Powers::execute}.
-- The core protocol uses a non-weighted voting mechanism: one account has one vote.
-- The core protocol is minimalistic. Any complexity (timelock, delayed execution, guardian roles, weighted votes, staking, etc.) has to be integrated through mandates.
+Every action in a Powers organisation must pass through `Powers.sol`. The protocol is intentionally minimal — it handles proposals, voting, and execution, nothing else. Complexity (timelocks, quorums, role conditions, external integrations) lives entirely in mandate contracts.
 
-Mandates are role-restricted contracts that provide the following functionalities:
-- Transforming a mandateCalldata input into an output of targets[], values[], calldatas[] to be executed by the Powers protocol
-- Adding conditions to the execution of the mandate. Any conditional logic can be added to a mandate, but the standard implementation supports the following:   
-  - A vote quorum, threshold and period in case the mandate needs a proposal vote to pass before being executed  
-  - A parent mandate that needs to be completed before the mandate can be executed
-  - A parent mandate that needs to NOT be completed before the mandate can be executed
-  - A vote delay: an amount of time in blocks that needs to have passed since the proposal vote ended before the mandate can be executed 
-  - A minimum amount of blocks that need to have passed since the previous execution before the mandate can be executed again 
+**Mandates** are role-restricted contracts that:
+1. Transform input calldata into `targets[] / values[] / calldatas[]` for execution
+2. Define conditions — vote quorum, pass threshold, voting period, parent mandate dependencies, throttle periods
 
-The combination of checks and execution logics allows for creating almost any type of governance infrastructure with a minimum number of mandates. For example implementations, see the `/test/TestConstitutions.sol` file.
+One account, one vote. No token weighting in the core protocol.
 
-## Directory Structure
+For concrete examples of how mandates compose into full governance structures, read [`test/TestConstitutions.sol`](test/TestConstitutions.sol).
+
+---
+
+## Commands
+
+```bash
+# Build
+forge build
+
+# Test
+forge test
+forge test --match-test <name> -vvv       # single test
+forge test --match-contract <name> -vvv   # all tests in a contract
+forge test --gas-report                   # with gas report
+make test-fuzz                            # fuzz tests only
+make test-fork                            # fork tests (requires SEPOLIA_RPC_URL)
+
+# Deploy
+make initialise-anvil                     # deploy all contracts to local Anvil
+make deploy-sepolia                       # deploy to Sepolia (requires .env)
+make deploy-sepolia-dry                   # simulate without broadcasting
+
+# Sync ABIs to frontend and xmtp-agent
+make update-builds
+```
+
+Copy `.env.example` to `.env` and fill in your RPC URLs before running network commands.
+
+---
+
+## Directory structure
 
 ```
 solidity/
-├── .github/                                   # GitHub configuration
-├── audits/                                    # Security audit reports
-├── broadcast/                                 # Deployment broadcast files
-├── cache/                                     # Foundry cache
-├── lib/                                       # Installed dependencies
-│    ├── forge-std/                            # Forge standard library
-│    └── openzeppelin-contracts/               # OpenZeppelin contracts
+├── src/
+│   ├── Powers.sol              # Central hub — all governance flows through here
+│   ├── Mandate.sol             # Abstract base for synchronous mandates
+│   ├── AsyncMandate.sol        # Base for mandates with async external checks
+│   ├── core/                   # Tier 0–3 contracts — see governance/CORE_MANDATES.md
+│   │   ├── mandates/
+│   │   │   ├── electoral/      # Role assignment (self-select, peer-select, delegation, etc.)
+│   │   │   ├── executive/      # External calls (preset, flexible, bespoke, open actions)
+│   │   │   ├── integrations/   # ElectionRegistry, SlateRegistry, Safe
+│   │   │   └── reform/         # Governance self-modification (adopt/revoke/pause mandates)
+│   │   └── helpers/            # MandateRegistry, ElectionRegistry, SlateRegistry, Nominees, PowersFactory…
+│   ├── addons/                 # Tier 4 contracts — niche / advanced / single-use
+│   │   ├── mandates/
+│   │   │   ├── electoral/      # RoleByRoles, RevokeInactiveAccounts, AssignExternalRole…
+│   │   │   ├── executive/      # CheckExternalActionState, ExternalAction_OnReturnValue…
+│   │   │   └── integrations/   # Chainlink, Governor, ZKPassport, ERC721, GovernedToken, Snapshot…
+│   │   └── helpers/            # ZKPassport_PowersRegistry, Governed721, PowersPaymaster
+│   ├── interfaces/             # IMandate, IPowers, and integration interfaces
+│   └── libraries/              # Checks.sol, MandateUtilities.sol, PowersUtilities.sol
 │
-├── out/                                       # Compilation output
-├── powered/                                   # Chain specific deployment addresses of protocol contracts
-├── script/                                    # Deployment scripts
-│    ├── InitialiseHelpers.s.sol                     # Deploys mock contracts
-│    ├── DeployTestOrgs.s.sol                  # Deploys a test organisation
-│    ├── FundTreasury.s.sol                    # Funds a treasury
-│    ├── Configuration.s.sol                    # Helper configuration
-│    └── DeployMandates.s.sol                # Initialises the Powers protocol
+├── governance/
+│   ├── examples/               # Standalone deploy scripts showing governance patterns
+│   ├── claude/                 # AI-generated organisations (output of /design-org skill)
+│   │   ├── secured-slate/
+│   │   ├── yield-endowment/
+│   │   └── global-environmental-movement/
+│   ├── publius/                # Publius team reference organisations
+│   └── publius-registry/       # Registry deployment scripts
 │
-├── src/                                       # Protocol resources
-│    ├── helpers/                              # Helper contracts
-│    ├── interfaces/                           # Protocol interfaces
-│    ├── mandates/                                 # Mandate implementations
-│    │    ├── async/                           # Asynchronous mandates
-│    │    ├── electoral/                       # Electoral mandates
-│    │    ├── executive/                       # Executive mandates
-│    │    ├── integrations/                    # Integration mandates
-│    │    └── metadata/                        # Metadata for mandates
-│    ├── libraries/                            # Solidity libraries
-│    ├── Mandate.sol                               # Core Mandate contract
-│    └── Powers.sol                            # Core protocol contract
+├── test/
+│   ├── TestConstitutions.sol   # Reference governance structures — read this first
+│   ├── TestSetup.t.sol         # Base test setup; inherit from this in new tests
+│   ├── unit/                   # Per-contract unit tests
+│   ├── integration/            # Governance flow tests
+│   ├── mocks/                  # Mock contracts
+│   └── fuzz/                   # Fuzz and invariant tests
 │
-├── test/                                      # Tests
-│    ├── fuzz/                                 # Fuzz tests
-│    ├── integration/                          # Integration tests
-│    ├── mocks/                                # Mock contracts for testing
-│    ├── unit/                                 # Unit tests
-│    ├── TestConstitutions.sol                 # Constitution tests
-│    └── TestSetup.t.sol                       # Test environment setup
-│
-├── .env.example                               # Environment variables template
-├── .gitignore                                 # Git ignore rules
-├── .gitmodules                                # Git submodules
-├── foundry.toml                               # Foundry configuration
-├── lcov.info                                  # Test coverage information
-├── Makefile                                   # Build and test commands
-└── README.md                                  # Project documentation
-
+├── script/                     # Deployment and initialisation scripts
+├── audits/                     # Security audit reports
+├── lib/                        # Foundry dependencies (OpenZeppelin, forge-std)
+├── foundry.toml                # Solidity 0.8.30, optimizer 600 runs, cancun EVM
+└── Makefile                    # All common commands
 ```
 
-## Prerequisites
+---
 
-Foundry<br>
+## Mandate categories
 
-## Getting Started
+Mandates are split into `src/core/` (Tiers 0–3 of `governance/CORE_MANDATES.md` — the contracts most constitutions are built from) and `src/addons/` (Tier 4 — niche or advanced contracts). Both sides use the same category folders.
 
-1. Clone this repo locally and move to the solidity folder:
+### Electoral — `src/{core,addons}/mandates/electoral/`
 
-```sh
-git clone https://github.com/7Cedars/powers
-cd powers/solidity 
-```
+Assign and revoke governance roles.
 
-2. Copy `.env.example` to `.env` and update the variables.
+| Contract | What it does |
+|---|---|
+| `SelfSelect` | Caller self-assigns the configured role |
+| `PeerSelect` | Role holders vote to select from a nominees list |
+| `Nominate` | Accounts nominate or revoke themselves from a nominees contract |
+| `DelegateTokenSelect` | Selects role holders by token delegation rank |
+| `RoleByRoles` | Assigns a role based on holding prerequisite roles |
+| `RevokeInactiveAccounts` | Revokes role from accounts inactive below a threshold |
+| `RenounceRole` | Caller voluntarily gives up one of their roles |
 
-```sh
-cp .env.example .env
-```
+### Executive — `src/{core,addons}/mandates/executive/`
 
-3. Run make. This will install all dependencies and run the tests. 
+Execute external calls with varying degrees of flexibility.
 
-```sh
-make
-```
+| Contract | What it does |
+|---|---|
+| `PresetActions` | Executes a fixed set of transactions defined at adoption time |
+| `OpenAction` | Unconstrained external call — caller specifies targets, values, calldata |
+| `BespokeAction_Simple` | Calls a specific function on a configured target; params supplied at call time |
+| `BespokeAction_Advanced` | Like Simple but splices dynamic params between static config params |
+| `ExternalAction_Simple` | Forwards calldata to a mandate on another Powers contract |
+| `ExternalAction_Flexible` | Like Simple but target contract and mandate ID specified at call time |
 
-4. Run the tests without installing packages: 
+### Integrations — `src/{core,addons}/mandates/integrations/`
 
-```sh
-forge test 
-```
+Connect Powers governance to external protocols.
 
-## Security and Liability
-All contracts are WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. They have NOT been fully audited. THESE CONTRACTS ARE ONLY MEANT FOR DEMO PURPOSES. DO NOT USE IN PRODUCTION CODE.  
+| Contract | What it integrates |
+|---|---|
+| `Safe_ExecTransaction` | Execute transactions through a Safe multisig treasury |
+| `SafeAllowance_Transfer` | Transfer tokens from Safe via the allowance module |
+| `Governor_CreateProposal` | Create proposals on an OZ Governor contract |
+| `ChainlinkFunctions_Open` | Trigger Chainlink Functions for off-chain data checks |
+| `ZKPassport_Check` | Require a valid ZKPassport proof to hold a role |
+| `ERC721_GatedAccess` | Require minimum NFT balance to join a role |
+| `ElectionRegistry_*` | Full election lifecycle (nominate, vote, tally, cleanup) |
+| `SlateRegistry_*` | Competitive slate-based voting |
 
-## Acknowledgements 
-Code is derived from OpenZeppelin's Governor.sol and AccessManager contracts, in addition to Haberdasher Labs Hats protocol. The Powers protocol (v0.4) represents a significant evolution in role-based governance systems for on-chain organ.
+### Reform — `src/core/mandates/reform/`
+
+Governance self-modification — adopt, revoke, or pause mandates from within governance itself.
+
+---
+
+## Creating a new mandate
+
+1. Inherit from `Mandate.sol` (or `AsyncMandate.sol` for async external checks).
+2. Override `handleRequest()` to encode your governance logic.
+3. Add unit tests in `test/unit/mandates/` — use existing tests in the same category as a template.
+4. Run `make update-builds` to sync the compiled ABI to the frontend and agent.
+
+---
+
+## Using `/design-org` to generate a governance structure
+
+The [`governance-rag/`](../governance-rag/) package provides a Claude Code slash command that generates a complete organisation deployment package from a plain-language conversation. The output lands in `governance/claude/<name>/`. See [`governance-rag/README.md`](../governance-rag/README.md) for setup and usage.
+
+---
+
+## Acknowledgements
+
+Derived from OpenZeppelin's `Governor.sol` and `AccessManager` contracts. Audited by Invcbull Audit Group (August 2025) and Chain Defenders (March 2026) — reports in [`audits/`](audits/).

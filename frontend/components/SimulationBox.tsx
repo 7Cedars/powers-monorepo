@@ -11,9 +11,10 @@ type SimulationBoxProps = {
   mandate: Mandate;
   simulation: MandateSimulation | undefined;
   chainId: number;
+  emptyMessage?: string;
 };
 
-export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps) => {
+export const SimulationBox = ({mandate, simulation, chainId, emptyMessage}: SimulationBoxProps) => {
   // console.log("@SimulationBox: waypoint 1", {mandate, simulation})
   const [jsxSimulation, setJsxSimulation] = useState<React.JSX.Element[][]> ([]); 
   const [hasOverflow, setHasOverflow] = useState(false);
@@ -245,6 +246,7 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
       }
     }
     const sim = [jsxElements1, jsxElements0]
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setJsxSimulation(sim)
   }, [simulation, decodedCalls])
 
@@ -260,7 +262,17 @@ export const SimulationBox = ({mandate, simulation, chainId}: SimulationBoxProps
     }
   };
 
-  if (allTargetsZero) {
+  if (!simulation && emptyMessage) {
+    return (
+      <div className="w-full flex flex-col">
+        <div className="w-full flex flex-col bg-background border border-border overflow-hidden">
+          <p className="text-xs text-muted-foreground font-mono px-3 py-2">{emptyMessage}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!simulation || allTargetsZero) {
     return null;
   }
 

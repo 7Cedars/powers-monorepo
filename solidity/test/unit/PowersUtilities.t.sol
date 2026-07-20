@@ -10,6 +10,7 @@ pragma solidity ^0.8.26;
 import { Checks } from "@src/libraries/Checks.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { TestSetupPowers } from "../TestSetup.t.sol";
+import { OpenAction } from "@src/core/mandates/executive/OpenAction.sol";
 
 contract ChecksTest is TestSetupPowers {
     //////////////////////////////////////////////////////////////
@@ -273,5 +274,114 @@ contract ChecksTest is TestSetupPowers {
 
         // Should not revert when execution gap equals throttle threshold
         Checks.check(mandateId, mandateCalldata, address(daoMock), nonce, latestExecution);
+    }
+
+    //////////////////////////////////////////////////////////////
+    //                  EXECUTION WINDOW CHECKS                  //
+    //////////////////////////////////////////////////////////////
+    function _adoptOpenActionWithExecutionWindow(uint32 maxExecutionDelay) internal returns (uint16 windowMandateId) {
+        OpenAction openAction = OpenAction(registerTestMandate(address(new OpenAction(address(registry)))));
+
+        PowersTypes.Conditions memory execConditions;
+        execConditions.allowedRole = ROLE_ONE;
+        execConditions.quorum = 50;
+        execConditions.succeedAt = 50;
+        execConditions.votingPeriod = 20;
+        execConditions.maxExecutionDelay = maxExecutionDelay;
+
+        PowersTypes.MandateInitData memory initData = PowersTypes.MandateInitData({
+            nameDescription: "OpenAction test: execution window",
+            targetMandate: address(openAction),
+            config: abi.encode(),
+            conditions: execConditions
+        });
+
+        vm.prank(address(daoMock));
+        windowMandateId = daoMock.adoptMandate(initData);
+    }
+
+    function testcheckWithMaxExecutionDelayRevertsAfterWindowExpires() public {
+        uint32 maxExecutionDelay = 15;
+        mandateId = _adoptOpenActionWithExecutionWindow(maxExecutionDelay);
+
+        targets = new address[](1);
+        targets[0] = address(daoMock);
+        values = new uint256[](1);
+        values[0] = 0;
+        calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(daoMock.labelRole.selector, ROLE_ONE, "TestMember", "");
+        mandateCalldata = abi.encode(targets, values, calldatas);
+
+        vm.prank(alice);
+        uint256 proposalActionId = daoMock.propose(mandateId, mandateCalldata, nonce, "Test proposal");
+        vm.prank(alice);
+        daoMock.castVote(proposalActionId, FOR);
+        vm.prank(bob);
+        daoMock.castVote(proposalActionId, FOR);
+
+        // roll past the voting period (vote succeeds) AND past the execution window that follows it
+        vm.roll(block.number + 20 + maxExecutionDelay + 1);
+
+        vm.prank(alice);
+        vm.expectRevert(Checks.Checks__ExecutionWindowExpired.selector);
+        daoMock.request(mandateId, mandateCalldata, nonce, "Too late");
+    }
+
+    function testcheckWithMaxExecutionDelayPassesWithinWindow() public {
+        uint32 maxExecutionDelay = 15;
+        mandateId = _adoptOpenActionWithExecutionWindow(maxExecutionDelay);
+
+        targets = new address[](1);
+        targets[0] = address(daoMock);
+        values = new uint256[](1);
+        values[0] = 0;
+        calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(daoMock.labelRole.selector, ROLE_ONE, "TestMember", "");
+        mandateCalldata = abi.encode(targets, values, calldatas);
+
+        vm.prank(alice);
+        uint256 proposalActionId = daoMock.propose(mandateId, mandateCalldata, nonce, "Test proposal");
+        vm.prank(alice);
+        daoMock.castVote(proposalActionId, FOR);
+        vm.prank(bob);
+        daoMock.castVote(proposalActionId, FOR);
+
+        // roll past the voting period (vote succeeds) but stay within the execution window
+        vm.roll(block.number + 20 + maxExecutionDelay);
+
+        vm.prank(alice);
+        uint256 requestedActionId = daoMock.request(mandateId, mandateCalldata, nonce, "Just in time");
+        assertTrue(daoMock.getActionState(requestedActionId) == ActionState.Fulfilled);
+    }
+
+    function testcheckWithZeroMaxExecutionDelayNeverExpires() public {
+        // default (maxExecutionDelay == 0) preserves pre-existing unbounded-wait behavior: a
+        // Succeeded vote never expires unless a mandate designer explicitly opts into a window.
+        mandateId = 3;
+        targets = new address[](1);
+        values = new uint256[](1);
+        calldatas = new bytes[](1);
+        targets[0] = address(daoMock);
+        values[0] = 0;
+        calldatas[0] = abi.encodeWithSelector(daoMock.labelRole.selector, ROLE_ONE, "TestMember", "");
+        mandateCalldata = abi.encode(targets, values, calldatas);
+
+        vm.prank(bob);
+        uint256 proposalActionId = daoMock.propose(mandateId, mandateCalldata, nonce, "Test proposal");
+        conditions = daoMock.getConditions(mandateId);
+        assertEq(conditions.maxExecutionDelay, 0);
+        for (i = 0; i < users.length; i++) {
+            if (daoMock.hasRoleSince(users[i], conditions.allowedRole) != 0) {
+                vm.prank(users[i]);
+                daoMock.castVote(proposalActionId, FOR);
+            }
+        }
+
+        // roll forward far beyond any reasonable delay -- should still be requestable
+        vm.roll(block.number + conditions.votingPeriod + conditions.timelock + 1_000_000);
+
+        vm.prank(alice);
+        uint256 requestedActionId = daoMock.request(mandateId, mandateCalldata, nonce, "Still works");
+        assertTrue(daoMock.getActionState(requestedActionId) == ActionState.Fulfilled);
     }
 }

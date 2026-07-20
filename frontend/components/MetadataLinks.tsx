@@ -323,7 +323,7 @@ export function MetadataLinks({
         {/* Parent Contracts */}
         {validParents.map((parent, index) => {
           const basePath = isOverviewView ? '/overview' : '/forum'
-          const suffix = isOverviewView ? '/home' : ''
+          const suffix = isOverviewView ? '/organisation' : ''
           const href = `${basePath}/${chainId ? Number(chainId) : ''}/${parent.address}${suffix}`
           
           return (
@@ -342,7 +342,7 @@ export function MetadataLinks({
         {/* Child Contracts */}
         {validChildren.map((child, index) => {
           const basePath = isOverviewView ? '/overview' : '/forum'
-          const suffix = isOverviewView ? '/home' : ''
+          const suffix = isOverviewView ? '/organisation' : ''
           const href = `${basePath}/${chainId ? Number(chainId) : ''}/${child.address}${suffix}`
           
           return (

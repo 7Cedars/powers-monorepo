@@ -1,0 +1,59 @@
+---
+title: "SlateRegistry_RemoveSlate"
+description: "SlateRegistry_RemoveSlate is an integration mandate that removes a previously submitted slate from a SlateRegistry election, revoking its mandate and freeing its flow slot."
+---
+
+SlateRegistry_RemoveSlate is an integration mandate that removes a slate from a SlateRegistry election. It must be called with the same inputs used when the slate was submitted via `SlateRegistry_AddSlate`, so that the original action ID can be recomputed and the slate's mandate ID can be retrieved.
+
+## Overview
+
+This mandate reverses a slate submission by:
+1. Revoking the slate's `PresetActions` mandate in the Powers contract.
+2. Freeing its slot in the election's action flow.
+3. Unregistering it from the SlateRegistry.
+
+It is typically configured with a `needFulfilled` condition pointing to the corresponding `SlateRegistry_AddSlate` action, ensuring only submitted slates can be removed.
+
+## Configuration
+
+When adopting a SlateRegistry_RemoveSlate instance, the following parameters are required:
+
+1.  `SlateRegistry` (address): The address of the SlateRegistry helper contract.
+2.  `AddSlateMandateId` (uint16): The mandate ID of the corresponding `SlateRegistry_AddSlate` mandate. Used to look up the return data of the original submission and retrieve the slate's mandate ID.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the inputs must be identical to those used when the slate was submitted:
+
+1.  `ElectionTitle` (string): The title of the election.
+2.  `NameDescription` (string): The name and description of the slate.
+3.  `Targets` (address[]): The slate's target addresses.
+4.  `Values` (uint256[]): ETH values for each call.
+5.  `Calldatas` (bytes[]): Encoded function calls.
+
+### Execution Flow
+
+1.  **Slate ID Retrieval**
+    *   Recomputes the original `SlateRegistry_AddSlate` action ID using the same calldata and nonce.
+    *   Retrieves the return data from that action to get the slate's mandate ID.
+
+2.  **Revocation**
+    *   Revokes the slate's `PresetActions` mandate in the Powers contract.
+
+3.  **Flow Cleanup**
+    *   Resets the slate's slot in the election's action flow to 0, making it available for new submissions.
+
+4.  **SlateRegistry Cleanup**
+    *   Calls `SlateRegistry.removeSlate` to unregister the slate.
+
+### Error Conditions
+
+*   `"Slate not found in flow"` — The slate's mandate ID is not present in the election's flow.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

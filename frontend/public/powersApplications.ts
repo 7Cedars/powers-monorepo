@@ -1,50 +1,65 @@
-export const powersApplications = [
-  {
-    title: "Pseudonymous Participation",
-    details: [
-      "Combined with ZKPassport and Account Abstraction, participants can prove eligibility without revealing identity.",
-      "Extend formal governance to sensitive contexts: journalism, activism, confidential research.",
-      "Participation rights are enforced on-chain, not dependent on a trusted intermediary."
-    ]
-  },
+export const powersApplications: { title: string; icon: string; details: string[] }[] = [
   {
     title: "Separation of Powers",
+    icon: "bars",
     details: [
-      "Proposal, deliberation, veto, and execution can be assigned to distinct roles and mandates.",
-      "Roles cannot exceed their mandate — no procedural override is possible without the required parties acting in concert.",
-      "Enforce foundational governance principles structurally, not by convention."
-    ]
-  },
-  {
-    title: "Beyond Institutional Reach",
-    details: [
-      "In contexts where conventional governance is inaccessible — across borders or for contributors without legal status.",
-      "Powers provides a governance layer that can operate independently or alongside formal structures that may follow later.",
-      "Early-stage communities can adopt rigorous governance before legal entities are established."
-    ]
-  },
-  {
-    title: "Devolved Responsibilities",
-    details: [
-      "Grants committees, working groups, and review boards need clear, enforceable boundaries.",
-      "Delegation is structural: a committee can only act within the scope defined by the parent organization.",
-      "Actions are transparently recorded and authority can be adjusted at any time."
-    ]
-  },
-  {
-    title: "Continuous Accountability",
-    details: [
-      "Foundations, governments, and industry bodies typically rely on periodic audits.",
-      "Powers adds a real-time transparency layer: any party can verify decisions followed agreed rules between audit cycles.",
-      "Reduce the cost of oversight without replacing existing reporting structures."
+      "As a governance architect, I need to assign proposal, deliberation, veto, and execution rights to distinct roles and mandates",
+      "so that no single actor can ever exceed their mandate.",
+      "Procedural overrides become structurally impossible unless every required party acts in concert. Powers enforces foundational governance principles by design, not by convention."
     ]
   },
   {
     title: "Multi-Party Coordination",
+    icon: "comment",
     details: [
-      "Joint funds, industry consortiums, and shared oversight processes are administratively expensive.",
-      "Powers acts as a coordination layer alongside existing legal agreements.",
-      "Compliance becomes continuously verifiable, reducing overhead without displacing the agreements themselves."
+      "As a consortium administrator, I need a coordination layer that works alongside our existing legal agreements",
+      "so that joint funds, shared oversight processes, and multi-party compliance no longer require expensive manual administration.",
+      "Every partner can verify in real time that the rules are being followed, without displacing the underlying agreements themselves."
+    ]
+  },
+  {
+    title: "Devolved Responsibilities",
+    icon: "puzzle",
+    details: [
+      "As a foundation director, I need to delegate authority to grants committees, working groups, and review boards within clearly enforceable boundaries",
+      "so that each body can act independently without risking overreach.",
+      "Delegation is structural, not procedural — every action is transparently recorded, and authority can be narrowed or revoked at any time."
+    ]
+  },
+  {
+    title: "Continuous Accountability",
+    icon: "magnifier",
+    details: [
+      "As an oversight stakeholder, I need a real-time transparency layer on top of our existing reporting structures",
+      "so that I no longer have to wait for the next periodic audit to know whether decisions followed the agreed rules.",
+      "Any party can verify compliance continuously, cutting the cost of oversight without replacing how we already report."
+    ]
+  },
+  {
+    title: "Beyond Institutional Reach",
+    icon: "external",
+    details: [
+      "As a cross-border community organizer, I need enforceable governance rules that don't depend on a registered legal entity",
+      "so that contributors without formal legal status can still participate on equal footing.",
+      "Powers operates independently of (or alongside) whatever formal structure may follow later, letting early-stage communities adopt rigorous governance long before incorporation."
+    ]
+  },
+  {
+    title: "Pseudonymous Participation",
+    icon: "question",
+    details: [
+      "As an activist or journalist, I need to prove my eligibility to participate without revealing my identity",
+      "so that I can engage safely in sensitive governance contexts like confidential research or whistleblowing.",
+      "Combined with ZKPassport and Account Abstraction, my participation rights are enforced directly on-chain, with no trusted intermediary able to expose who I am."
+    ]
+  },
+  {
+    title: "Beyond Token Voting",
+    icon: "scale",
+    details: [
+      "As a DAO founder, I need governance that doesn't rely on token-weighted voting",
+      "so that decisions aren't slow, gameable by whale wallets, or locked into a single voting mechanism forever.",
+      "Powers replaces single-token quorum votes with modular, role-based mandates — assign one-account-one-vote, multisig, or delegated roles, and swap the mechanism without redeploying the whole DAO."
     ]
   }
 ]

@@ -2,10 +2,11 @@ import { erc20Abi, powersAbi } from "@/context/abi";
 import { Powers, Status, Token } from "@/context/types";
 import { useCallback, useState } from "react";
 import { useBalance } from "wagmi";
-import { readContract } from "wagmi/actions";
+import { readContract, getPublicClient } from "wagmi/actions";
 import { wagmiConfig } from "@/context/wagmiConfig";
 import { useParams } from "next/navigation";
 import { parseChainId } from "@/utils/parsers";
+import { parseAbiItem } from "viem";
 
 export const useAssets = (powers: Powers | undefined) => {
   const [status, setStatus] = useState<Status>("idle");
@@ -19,6 +20,26 @@ export const useAssets = (powers: Powers | undefined) => {
   });
 
   // console.log("Native balance:", native);
+
+  const discoverErc20s = async (
+    treasuryAddress: `0x${string}`
+  ): Promise<`0x${string}`[]> => {
+    try {
+      const publicClient = getPublicClient(wagmiConfig, { chainId: parseChainId(chainId) });
+      if (!publicClient) return [];
+
+      const logs = await publicClient.getLogs({
+        event: parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)'),
+        args: { to: treasuryAddress },
+        fromBlock: 0n,
+        toBlock: 'latest',
+      });
+
+      return [...new Set(logs.map(log => log.address.toLowerCase() as `0x${string}`))];
+    } catch {
+      return [];
+    }
+  };
 
   const fetchErc20s = async (
     tokenAddresses: `0x${string}`[],
@@ -85,11 +106,25 @@ export const useAssets = (powers: Powers | undefined) => {
     setError(null);
 
     try {
-      const savedErc20s = JSON.parse(
-        localStorage.getItem("powersProtocol_savedErc20s") || "[]"
-      );
-      if (powers.treasury) {  
-        const erc20s: Token[] = await fetchErc20s(savedErc20s, powers.treasury);
+      if (powers.treasury) {
+        const savedErc20s: `0x${string}`[] = JSON.parse(
+          localStorage.getItem("powersProtocol_savedErc20s") || "[]"
+        );
+
+        const discovered = await discoverErc20s(powers.treasury);
+
+        const merged = [
+          ...new Set([
+            ...savedErc20s.map(a => a.toLowerCase() as `0x${string}`),
+            ...discovered,
+          ])
+        ] as `0x${string}`[];
+
+        if (merged.length > savedErc20s.length) {
+          localStorage.setItem("powersProtocol_savedErc20s", JSON.stringify(merged));
+        }
+
+        const erc20s: Token[] = await fetchErc20s(merged, powers.treasury);
 
         if (erc20s) {
           erc20s.sort((a: Token, b: Token) => (a.balance > b.balance ? -1 : 1));
@@ -101,7 +136,7 @@ export const useAssets = (powers: Powers | undefined) => {
       setError("Failed to fetch treasury address.");
       setStatus("error");
     }
-   
+
   }, [chainId]);
 
   const addErc20 = (erc20: `0x${string}`) => {

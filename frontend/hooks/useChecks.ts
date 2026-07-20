@@ -63,32 +63,23 @@ export const useChecks = () => {
       }
   }, [])
 
-  const fetchLatestFulfillment = useCallback(async (mandate: Mandate) => {
-    const latestFulfillment = await readContract(wagmiConfig, {
-      abi: powersAbi,
-      address: mandate.powers as `0x${string}`,
-      functionName: 'getLatestFulfillment',
-      args: [mandate.index],
-      chainId: parseChainId(chainId)
-    })
-    return latestFulfillment as bigint
-  }, [])
+  const checkThrottledExecution = useCallback(async (mandate: Mandate): Promise<boolean> => {
+    const throttle = Number(mandate.conditions?.throttleExecution ?? 0)
+    if (throttle === 0) return true
 
-  const checkThrottledExecution = useCallback( async (mandate: Mandate) => {
-    const latestFulfillment = await fetchLatestFulfillment(mandate)
-    
-    const blockNumber = await getBlockNumber(wagmiConfig, {
-      chainId: parseChainId(chainId),
-    })
-    // console.log("checkThrottledExecution, waypoint 1", {latestFulfillment, mandate, blockNumber})
+    // Use the same data source as SingleFlow.tsx (indexed store events) to
+    // avoid stale RPC cache disagreements with the visual Flow tab.
+    const latestFulfillment = mandate.actions?.length
+      ? Math.max(...mandate.actions.map(a => Number(a.fulfilledAt || 0n)))
+      : 0
 
-    if (latestFulfillment && blockNumber) {
-      const result = Number(latestFulfillment) + Number(mandate.conditions?.throttleExecution) < Number(blockNumber)
-      return result as boolean
-    } else {
-      return true
-    } 
-  }, [])
+    if (latestFulfillment === 0) return true  // never fulfilled — contract skips throttle too
+
+    const blockNumber = await getBlockNumber(wagmiConfig, { chainId: parseChainId(chainId) })
+    if (!blockNumber) return true
+
+    return latestFulfillment + throttle < Number(blockNumber)
+  }, [chainId])
 
   const checkDelayedExecution = async (mandateId: bigint, nonce: bigint, calldata: `0x${string}`, powers: Powers) => {
     // console.log("CheckDelayedExecution triggered:", {mandateId, nonce, calldata, powers})
@@ -174,7 +165,7 @@ export const useChecks = () => {
 
           const newChecks: Checks =  {
             delayPassed: mandate.conditions.timelock == 0n ? true : delayed,
-            throttlePassed: mandate.conditions.throttleExecution == 0n ? true : throttled,
+            throttlePassed: mandate.conditions.throttleExecution === 0n ? true : throttled,
             authorised,
             actionExists: mandate.conditions.quorum == 0n ? true : actionState != 0n,
             proposalPassed: mandate.conditions.quorum == 0n ? true : actionState == 5n || actionState == 6n || actionState == 7n,
@@ -183,7 +174,9 @@ export const useChecks = () => {
             mandateNotFulfilled: mandate.conditions.needNotFulfilled == 0n ? true : actionStateNeedNotFulfilled != 7n
           } 
           newChecks.allPassed = Object.values(newChecks).filter(item => item !== undefined).every(item => item === true)
-          newChecks.voteActive = mandate.conditions.quorum == 0n ? true : actionState == 1n
+          // ActionState.Active == 3 (Powers.sol never returns ActionState.Proposed == 1 —
+          // getActionState() resolves straight to Active/Defeated/Succeeded once proposed).
+          newChecks.voteActive = mandate.conditions.quorum == 0n ? true : actionState == 3n
           newChecks.hasVoted = hasVoted
 
           console.log("fetchChecks triggered, waypoint 2", {newChecks})

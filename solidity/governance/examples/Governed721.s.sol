@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // external protocols
 import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol"; 
@@ -21,8 +21,8 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers 
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
-import { Governed721, IGoverned721 } from "@src/helpers/Governed721.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
+import { Governed721, IGoverned721 } from "@src/addons/helpers/Governed721.sol";
 
 /// @title Governed721DAO Deployment Script
 contract Deploy is DeployHelpers {
@@ -58,7 +58,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 9;
 
     function run() external returns (address powersAddress, address governed721Address, address electionRegistryAddress) {
         // step 0, setup. 
@@ -73,7 +73,8 @@ contract Deploy is DeployHelpers {
             string.concat(baseURI, "organisation.json"), // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(registry)
         );
         governed721 = new Governed721();
         vm.stopBroadcast();  

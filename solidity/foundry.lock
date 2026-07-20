@@ -5,22 +5,40 @@
       "rev": "7af70c8993a6f42973f520ae0752386a5032abe7"
     }
   },
-  "lib/circuits": {
-    "rev": "fef4b9485a45bbb8238364e3366150c22e3726be"
+  "lib/chainlink-ccip": {
+    "tag": {
+      "name": "contracts-ccip-v1.6.0",
+      "rev": "e9476e9948c5f84fd4e980484a520085bcc1b9d5"
+    }
+  },
+  "lib/chainlink-evm": {
+    "tag": {
+      "name": "contracts-v1.4.0",
+      "rev": "e06cc226086ad91cfede63e96c63e5b3440c9801"
+    }
+  }, 
+  "lib/forge-std": {
+    "tag": {
+      "name": "v1.16.1",
+      "rev": "620536fa5277db4e3fd46772d5cbc1ea0696fb43"
+    }
   },
   "lib/openzeppelin-contracts": {
-    "rev": "cc94ea49301460aa6bd39edf29b2ab953d1d80b5"
+    "tag": {
+      "name": "v5.6.1",
+      "rev": "5fd1781b1454fd1ef8e722282f86f9293cacf256"
+    }
   },
-  "solidity/lib/forge-std": {
-    "rev": "60acb7aaadcce2d68e52986a0a66fe79f07d138f"
+  "lib/safe-modules": {
+    "tag": {
+      "name": "v0.1.0",
+      "rev": "1981fbc63e3850d626074d81d22a198afe64ac03"
+    }
   },
-  "solidity/lib/hats-protocol": {
-    "rev": "cccb71a061cdb9095af7d11dfdb47026993d8c4e"
-  },
-  "solidity/lib/openzeppelin-contracts": {
-    "rev": "cc94ea49301460aa6bd39edf29b2ab953d1d80b5"
-  },
-  "solidity/lib/zkpassport-packages": {
-    "rev": "3f28ada779cd9156dacd31574730ae7e2eb66a1d"
+  "lib/safe-smart-account": {
+    "tag": {
+      "name": "v1.4.1",
+      "rev": "bf943f80fec5ac647159d26161446ac5d716a294"
+    }
   }
 }

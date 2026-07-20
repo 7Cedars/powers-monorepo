@@ -1,0 +1,68 @@
+---
+title: "CheckExternalActionState"
+description: "CheckExternalActionState is an executive mandate that acts as a synchronization gate, allowing an action to proceed only if a corresponding action has already been fulfilled on a parent Powers contract."
+---
+
+CheckExternalActionState is an executive mandate that acts as a synchronization gate. It checks whether a corresponding action has already been fulfilled on an external (Parent) Powers contract before allowing the current action to proceed.
+
+## Overview
+
+This mandate does not execute any logic of its own. It is purely a validation step. If the required action on the Parent contract has been fulfilled, the mandate passes silently and returns empty execution data. If not, it reverts and blocks the action.
+
+This is useful for multi-contract governance workflows where one Powers instance should only act after another has already approved or executed something.
+
+## Configuration
+
+When adopting a CheckExternalActionState instance, the following parameters are required:
+
+1.  `parentPowers` (address): The address of the external (Parent) Powers contract to check.
+2.  `mandateId` (uint16): The mandate ID on the Parent contract that the corresponding action was submitted through.
+3.  `inputParams` (string[]): UI hints describing the input parameters. These must match the parameters used when the action was submitted on the Parent contract, so that the action ID can be correctly recomputed.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the input (`mandateCalldata`) must be identical to the calldata used for the corresponding action on the Parent contract. The mandate recomputes the parent action's ID from this calldata and the nonce, then checks its state.
+
+### Execution Flow
+
+1.  **Action ID Computation**
+    *   Recomputes the expected action ID on the Parent contract using the configured `mandateId`, the provided `mandateCalldata`, and the current `nonce`.
+
+2.  **State Check**
+    *   Queries the Parent Powers contract for the state of that action.
+    *   If the state is `Fulfilled` → passes, returns empty execution data.
+    *   If the state is anything else → reverts with `"Action not fulfilled"`.
+
+3.  **Gate**
+    *   Returns empty arrays. No contract calls are made. The mandate's sole purpose is the validation above.
+
+## Technical Specifications
+
+### Functions
+
+#### `initializeMandate`
+```solidity
+function initializeMandate(...) public override
+```
+-   Stores the parent Powers address and mandate ID.
+-   Sets input parameters from the configured `inputParams`.
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public view override returns (...)
+```
+-   Recomputes the parent action ID.
+-   Checks its state on the Parent contract.
+-   Returns empty arrays if fulfilled, reverts otherwise.
+
+### Error Conditions
+
+*   `"Action not fulfilled"` — The corresponding action on the Parent Powers contract has not yet reached the `Fulfilled` state.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

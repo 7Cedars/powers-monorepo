@@ -8,7 +8,7 @@ import { IMandate } from "@src/interfaces/IMandate.sol";
 import { IERC165 } from "@lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
 import { TestSetupMandate } from "../TestSetup.t.sol";
-import { OpenAction } from "@src/mandates/executive/OpenAction.sol";
+import { OpenAction } from "@src/core/mandates/executive/OpenAction.sol";
 
 /// @notice Comprehensive unit tests for Mandate.sol contract
 /// @dev Tests all functionality of the Mandate base contract including initialization, execution, and helper functions
@@ -23,7 +23,7 @@ contract MandateBasicTest is TestSetupMandate {
         super.setUp();
 
         vm.prank(address(daoMock));
-        testMandate = new OpenAction();
+        testMandate = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
     }
 
     function testInitializeMandateSetsCorrectState() public {
@@ -176,7 +176,7 @@ contract MandateHelperTest is TestSetupMandate {
 
     function setUp() public override {
         super.setUp();
-        testMandate = new OpenAction();
+        testMandate = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
     }
 
     function testGetNameDescription() public {
@@ -242,7 +242,7 @@ contract MandateInterfaceTest is TestSetupMandate {
 
     function setUp() public override {
         super.setUp();
-        testMandate = new OpenAction();
+        testMandate = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
     }
 
     function testSupportsIMandateInterface() public {
@@ -333,7 +333,7 @@ contract MandateEdgeCaseTest is TestSetupMandate {
 
     function setUp() public override {
         super.setUp();
-        testMandate = new OpenAction();
+        testMandate = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
     }
 
     function testInitializeMandateWithMaximumLengthName() public {
@@ -397,7 +397,7 @@ contract MandateEdgeCaseTest is TestSetupMandate {
         );
 
         // assert: verify mandate is initialized successfully
-        assertEq(testMandate.getInputParams(address(daoMock), mandateId).length, 288);
+        assertEq(testMandate.getInputParams(address(daoMock), mandateId).length, 352);
     }
 
     function testInitializeMandateWithEmptyConfig() public {
@@ -453,12 +453,14 @@ contract MandateEdgeCaseTest is TestSetupMandate {
     function testMultipleMandatesWithSamePowers() public {
         // prep: initialize multiple mandates with same Powers contract
         mandateId = daoMock.mandateCounter();
-        vm.startPrank(address(daoMock));
 
-        // Create multiple mandate instances for testing
-        Mandate testMandate1 = new OpenAction();
-        Mandate testMandate2 = new OpenAction();
-        Mandate testMandate3 = new OpenAction();
+        // Create + register mandate instances before pranking as the DAO (registration pranks the
+        // registry owner, which cannot happen inside an ongoing vm.startPrank).
+        Mandate testMandate1 = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
+        Mandate testMandate2 = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
+        Mandate testMandate3 = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
+
+        vm.startPrank(address(daoMock));
 
         // Adopt mandates using the proper pattern
         daoMock.adoptMandate(
@@ -498,8 +500,8 @@ contract MandateEdgeCaseTest is TestSetupMandate {
     function testMandateWithDifferentPowersContracts() public {
         // prep: create multiple mandate instances to test separation
         mandateId = daoMock.mandateCounter();
-        Mandate testMandate1 = new OpenAction();
-        Mandate testMandate2 = new OpenAction();
+        Mandate testMandate1 = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
+        Mandate testMandate2 = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
 
         // prep: initialize mandates with same Powers contract but different mandate instances
         vm.prank(address(daoMock));
@@ -536,7 +538,7 @@ contract MandateHandleRequestTest is TestSetupMandate {
 
     function setUp() public override {
         super.setUp();
-        testMandate = new OpenAction();
+        testMandate = Mandate(registerTestMandate(address(new OpenAction(address(registry)))));
     }
 
     function testHandleRequestReturnsCorrectActionId() public {
@@ -587,12 +589,8 @@ contract MandateHandleRequestTest is TestSetupMandate {
         mandateCalldata = abi.encode(targets, values, calldatas);
 
         // act: call handleRequest
-        (
-            ,
-            address[] memory returnedTargets,
-            uint256[] memory returnedValues,
-            bytes[] memory returnedCalldatas
-        ) = testMandate.handleRequest(bob, address(daoMock), mandateId, mandateCalldata, nonce);
+        (, address[] memory returnedTargets, uint256[] memory returnedValues, bytes[] memory returnedCalldatas) =
+            testMandate.handleRequest(bob, address(daoMock), mandateId, mandateCalldata, nonce);
 
         // assert: verify decoded data matches input
         assertEq(returnedTargets.length, targets.length);

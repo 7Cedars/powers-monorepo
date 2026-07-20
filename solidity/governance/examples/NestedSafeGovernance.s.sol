@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // external protocols
 import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
@@ -20,8 +20,8 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { PowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/core/helpers/PowersDeployer.sol";
 
 /// @title Nested Governance Deployment Script
 contract Deploy is DeployHelpers { 
@@ -49,7 +49,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 9;
 
     function run() external returns (Powers, PowersFactory) { 
         helperConfig = new Configurations();
@@ -59,10 +59,11 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         powersParent = new Powers(
             "Nested Governance Parent", 
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/nestedGovernance-parent.json",
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/nestedGovernance-parent.json",
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
-            helperConfig.getMaxExecutionsLength(block.chainid) 
+            helperConfig.getMaxExecutionsLength(block.chainid),
+            address(registry)
         );
         vm.stopBroadcast();
         console2.log("Powers Parent deployed at:", address(powersParent));
@@ -72,11 +73,12 @@ contract Deploy is DeployHelpers {
         vm.startBroadcast();
         PowersDeployer powersDeployer = new PowersDeployer();
         powersChildFactory = new PowersFactory(
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/nestedGovernance-child.json", 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/nestedGovernance-child.json", 
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid),
-            address(powersDeployer)
+            address(powersDeployer),
+            address(registry)
         );
         vm.stopBroadcast();
         console2.log("Powers Child Factory deployed at:", address(powersChildFactory));

@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // external protocols
 import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
@@ -34,7 +34,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 9;
 
     function run() external returns (Powers) {
         // step 0, setup. 
@@ -44,11 +44,12 @@ contract Deploy is DeployHelpers {
         // step 1: deploy Bicameralism Powers
         vm.startBroadcast();
         powers = new Powers(
-            "Bicameralism", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/bicameralism.json", // uri
+            "Bicameralism", // name 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/bicameralism.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(registry)
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));
@@ -84,7 +85,7 @@ contract Deploy is DeployHelpers {
         calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use.
 
         mandateCount++;
-        conditions.allowedRole = 0; // = admin.
+        conditions.allowedRole = type(uint256).max; // = public.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",

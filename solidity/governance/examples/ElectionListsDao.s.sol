@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // external protocols
 import { Create2 } from "@lib/openzeppelin-contracts/contracts/utils/Create2.sol";
@@ -17,7 +17,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // helpers
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 
 /// @title Open Elections Deployment Script
 contract Deploy is DeployHelpers {
@@ -38,7 +38,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 9;
 
     function run() external returns (Powers, ElectionRegistry) { 
         helperConfig = new Configurations(); 
@@ -49,10 +49,11 @@ contract Deploy is DeployHelpers {
         openElection = new ElectionRegistry(minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)), minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid))); // nomination duration: 1 hour, vote duration: 2 hours
         powers = new Powers(
             "Open Election", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/electionListDao.json", // uri
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeiecp4sftsohsmaqqnzojxu5qlhs44qzhfb3ym7qoyormx36v2a77q/electionListDao.json", // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(registry)
         );
         vm.stopBroadcast();
         console2.log("Powers deployed at:", address(powers));

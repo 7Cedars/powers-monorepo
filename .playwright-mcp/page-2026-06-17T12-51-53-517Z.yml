@@ -1,0 +1,126 @@
+- generic [ref=e4]:
+  - generic [ref=e6]:
+    - generic [ref=e314]:
+      - generic [ref=e315]:
+        - generic [ref=e316]: Output
+        - button "Clear output" [ref=e317] [cursor=pointer]:
+          - generic [ref=e318]: 
+        - button "Close" [ref=e319] [cursor=pointer]:
+          - generic [ref=e320]: 
+      - generic [ref=e324]:
+        - textbox "Terminal input" [ref=e325]
+        - generic [ref=e326]:
+          - generic [ref=e328]:
+            - generic [ref=e329]: ———————————————————————————————————————————————————————————————————— [13:45:38]
+            - generic [ref=e330]: "[WebServer] (node:153642) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time"
+          - generic [ref=e332]: "[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)"
+    - text:         
+  - generic [ref=e132]:
+    - generic [ref=e133]:
+      - img "Playwright logo" [ref=e134]
+      - generic [ref=e135]: Playwright
+      - button "Reload" [ref=e136] [cursor=pointer]:
+        - generic [ref=e137]: 
+      - 'button "Toggle output — Ctrl + `" [ref=e139] [cursor=pointer]':
+        - generic [ref=e140]: 
+        - generic "Output contains error" [ref=e265]
+    - generic [ref=e141]:
+      - generic [ref=e143] [cursor=pointer]:
+        - generic [ref=e144]: 
+        - searchbox "Filter (e.g. text, @tag)" [ref=e145]
+      - 'generic "Status: all Projects: chromium" [ref=e195] [cursor=pointer]': "Status: allProjects: chromium"
+    - generic [ref=e147]:
+      - generic [ref=e250]:
+        - text: 4/4 (100%) —
+        - generic [ref=e286]: 4 failed
+      - button "Run all — F5" [ref=e149] [cursor=pointer]:
+        - generic [ref=e150]: 
+      - button "Stop — Shift + F5" [disabled] [ref=e151]:
+        - generic [ref=e152]: 
+      - button "Watch all" [ref=e153] [cursor=pointer]:
+        - generic [ref=e154]: 
+      - button "Collapse all" [ref=e155] [cursor=pointer]:
+        - generic [ref=e156]: 
+      - button "Expand all" [ref=e157] [cursor=pointer]:
+        - generic [ref=e158]: 
+    - tree [ref=e196]:
+      - treeitem "[icon-error] forum.spec.ts" [expanded] [ref=e287]:
+        - generic [ref=e198] [cursor=pointer]:
+          - generic [ref=e199]: 
+          - generic "[icon-error]" [ref=e288]: 
+          - generic "forum.spec.ts" [ref=e201]:
+            - generic [ref=e202]: forum.spec.ts
+            - generic [ref=e203]:   
+        - group [ref=e204]:
+          - treeitem "[icon-error] forum index lists saved organisations 41.8s" [selected] [ref=e289]:
+            - generic [ref=e206] [cursor=pointer]:
+              - generic [ref=e207]: 
+              - generic "[icon-error]" [ref=e290]: 
+              - generic "forum index lists saved organisations 41.8s" [ref=e291]:
+                - generic [ref=e210]: forum index lists saved organisations
+                - generic [ref=e211]:
+                  - button "Run" [ref=e292]:
+                    - generic [ref=e293]: 
+                  - button "Show source" [ref=e294]:
+                    - generic [ref=e295]: 
+                  - button "Watch" [ref=e296]:
+                    - generic [ref=e297]: 
+          - treeitem "[icon-error] forum org page renders without crashing 44.3s" [ref=e298]:
+            - generic [ref=e213] [cursor=pointer]:
+              - generic [ref=e214]: 
+              - generic "[icon-error]" [ref=e299]: 
+              - generic "forum org page renders without crashing 44.3s" [ref=e300]:
+                - generic [ref=e217]: forum org page renders without crashing
+                - generic [ref=e301]: 44.3s
+                - generic [ref=e218]:   
+      - treeitem "[icon-error] landing.spec.ts" [expanded] [ref=e302]:
+        - generic [ref=e220] [cursor=pointer]:
+          - generic [ref=e221]: 
+          - generic "[icon-error]" [ref=e303]: 
+          - generic "landing.spec.ts" [ref=e223]:
+            - generic [ref=e224]: landing.spec.ts
+            - generic [ref=e225]:   
+        - group [ref=e226]:
+          - treeitem "[icon-error] landing page renders hero and footer 20.7s" [ref=e304]:
+            - generic [ref=e228] [cursor=pointer]:
+              - generic [ref=e229]: 
+              - generic "[icon-error]" [ref=e305]: 
+              - generic "landing page renders hero and footer 20.7s" [ref=e306]:
+                - generic [ref=e232]: landing page renders hero and footer
+                - generic [ref=e307]: 20.7s
+                - generic [ref=e233]:   
+      - treeitem "[icon-error] overview.spec.ts" [expanded] [ref=e308]:
+        - generic [ref=e235] [cursor=pointer]:
+          - generic [ref=e236]: 
+          - generic "[icon-error]" [ref=e309]: 
+          - generic "overview.spec.ts" [ref=e238]:
+            - generic [ref=e239]: overview.spec.ts
+            - generic [ref=e240]:   
+        - group [ref=e241]:
+          - treeitem "[icon-error] overview dashboard shell renders nav tabs 31.2s" [ref=e310]:
+            - generic [ref=e243] [cursor=pointer]:
+              - generic [ref=e244]: 
+              - generic "[icon-error]" [ref=e311]: 
+              - generic "overview dashboard shell renders nav tabs 31.2s" [ref=e312]:
+                - generic [ref=e247]: overview dashboard shell renders nav tabs
+                - generic [ref=e313]: 31.2s
+                - generic [ref=e248]:   
+    - generic [ref=e162] [cursor=pointer]:
+      - generic "Show Testing Options" [ref=e163]: 
+      - generic [ref=e164]: Testing Options
+    - generic [ref=e165] [cursor=pointer]:
+      - generic "Hide Settings" [ref=e415]: 
+      - generic [ref=e167]: Settings
+    - generic [ref=e416]:
+      - generic [ref=e417]:
+        - generic [ref=e418] [cursor=pointer]: "Theme:"
+        - combobox "Theme:" [ref=e419]:
+          - option "Dark mode"
+          - option "Light mode"
+          - option "System" [selected]
+      - generic [ref=e420]:
+        - checkbox "Merge files" [ref=e421]
+        - generic [ref=e422] [cursor=pointer]: Merge files
+      - generic "Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate." [ref=e423]:
+        - checkbox "Display canvas content" [ref=e424]
+        - generic [ref=e425] [cursor=pointer]: Display canvas content

@@ -7,8 +7,9 @@ import { getChains } from '@wagmi/core'
 import { wagmiConfig } from "@/context/wagmiConfig";
 import PowersAbi from '@/context/builds/Powers.json'
 import MandateAbi from '@/context/builds/Mandate.json'
+import ChecksAbi from '@/context/builds/Checks.json'
 
-const ERROR_ABI = [...PowersAbi.abi, ...MandateAbi.abi] as const
+const ERROR_ABI = [...PowersAbi.abi, ...MandateAbi.abi, ...ChecksAbi.abi] as const
 
 const chains = getChains(wagmiConfig);
 

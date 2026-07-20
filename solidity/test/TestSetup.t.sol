@@ -8,7 +8,7 @@ import { Strings } from "@lib/openzeppelin-contracts/contracts/utils/Strings.sol
 // protocol
 import { Powers } from "@src/Powers.sol";
 import { Mandate } from "@src/Mandate.sol";
-import { MandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { MandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 import { PowersErrors } from "@src/interfaces/PowersErrors.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { PowersEvents } from "@src/interfaces/PowersEvents.sol";
@@ -16,7 +16,7 @@ import { Configurations } from "@script/Configurations.s.sol";
 import { TestConstitutions } from "./TestConstitutions.sol";
 import { console2 } from "forge-std/console2.sol";
 
-// deploy scripts 
+// deploy scripts
 import { PowersMock } from "./mocks/PowersMock.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 
@@ -26,8 +26,8 @@ import { Deploy as ElectionRegistrysDAO } from "../governance/examples/ElectionL
 // import { Deploy } from "@governance/examples/CulturalStewards/Deploy.s.sol";
 
 // helpers
-import { Nominees } from "@src/helpers/Nominees.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { Nominees } from "@src/core/helpers/Nominees.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { Erc20DelegateElection } from "./mocks/Erc20DelegateElection.sol";
 import { SimpleGovernor } from "./mocks/SimpleGovernor.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
@@ -35,11 +35,12 @@ import { Erc20Taxed } from "./mocks/Erc20Taxed.sol";
 import { SimpleErc20Votes } from "./mocks/SimpleErc20Votes.sol";
 import { SimpleErc1155 } from "./mocks/SimpleErc1155.sol";
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
-import { PowersFactory } from "@src/helpers/PowersFactory.sol";
-import { PowersDeployer } from "@src/helpers/PowersDeployer.sol";
+import { PowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { PowersDeployer } from "@src/core/helpers/PowersDeployer.sol";
 import { Soulbound1155 } from "./mocks/Soulbound1155.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
-import { ZKPassport_PowersRegistry } from "@src/helpers/ZKPassport_PowersRegistry.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
+import { ZKPassport_PowersRegistry } from "@src/addons/helpers/ZKPassport_PowersRegistry.sol";
+import { SlateRegistryMock } from "./mocks/SlateRegistryMock.sol";
 
 abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     // protocol and mocks
@@ -49,7 +50,7 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     PowersMock daoMock;
     PowersMock daoMockChild1;
     PowersMock daoMockChild2;
-    ElectionRegistrysDAO openElections; 
+    ElectionRegistrysDAO openElections;
     string[] mandateNames;
     address[] mandateAddresses;
     TestConstitutions testConstitutions;
@@ -64,11 +65,12 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     Nominees nominees;
     ElectionRegistry openElection;
     Erc20DelegateElection erc20DelegateElection;
-    SimpleGovernor simpleGovernor; 
+    SimpleGovernor simpleGovernor;
     PowersFactory powersFactory;
     Soulbound1155 soulbound1155;
     ElectionRegistry electionList;
     ZKPassport_PowersRegistry zkPassportRegistry;
+    SlateRegistryMock slateRegistryMock;
 
     uint256 sepoliaFork;
     uint256 optSepoliaFork;
@@ -80,9 +82,9 @@ abstract contract TestVariables is PowersErrors, PowersTypes, PowersEvents {
     uint8 constant ABSTAIN = 2;
 
     // versioning
-    uint16 constant MAJOR = 0; 
+    uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 9;
 
     address[] targets;
     uint256[] values;
@@ -291,10 +293,13 @@ abstract contract TestHelperFunctions is Test, TestVariables {
                     failCount++;
                     failures = string.concat(
                         failures,
-                        "\n[", Strings.toString(failCount), "] '",
+                        "\n[",
+                        Strings.toString(failCount),
+                        "] '",
                         Mandate(mandateAddr).getNameDescription(powers, mandateId),
                         "' needs fulfilled '",
-                        Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled), "'"
+                        Mandate(parentAddr).getNameDescription(powers, conditions.needFulfilled),
+                        "'"
                     );
                 }
             }
@@ -309,18 +314,20 @@ abstract contract TestHelperFunctions is Test, TestVariables {
                     failCount++;
                     failures = string.concat(
                         failures,
-                        "\n[", Strings.toString(failCount), "] '",
+                        "\n[",
+                        Strings.toString(failCount),
+                        "] '",
                         Mandate(mandateAddr).getNameDescription(powers, mandateId),
                         "' needs not fulfilled '",
-                        Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled), "'"
+                        Mandate(parentAddr).getNameDescription(powers, conditions.needNotFulfilled),
+                        "'"
                     );
                 }
             }
         }
 
         vm.assertTrue(
-            failCount == 0,
-            string.concat("InputParams mismatches (", Strings.toString(failCount), "):", failures)
+            failCount == 0, string.concat("InputParams mismatches (", Strings.toString(failCount), "):", failures)
         );
     }
 
@@ -363,13 +370,22 @@ abstract contract TestHelperFunctions is Test, TestVariables {
         }
     }
 
+    /// @notice Resolves a mandate by name at its latest registered version.
+    /// @dev Deliberately not pinned to (MAJOR, MINOR, PATCH): mandates version independently of
+    /// each other (e.g. Adopt_Mandates is at 0.2.0 while most others remain at 0.1.9), so a pinned
+    /// lookup reverts with MandateNotFound the moment any single mandate is bumped.
     function findMandateAddress(string memory name) internal view returns (address) {
-        for (uint256 i = 0; i < mandateNames.length; i++) {
-            if (Strings.equal(mandateNames[i], name)) {
-                return mandateAddresses[i];
-            }
-        }
-        return address(0);
+        (uint16 major, uint16 minor, uint16 patch) = registry.getLatestVersion(name);
+        return registry.getMandateAddress(major, minor, patch, name);
+    }
+
+    /// @notice Registers a freshly deployed mandate instance in the shared test `registry` under a
+    /// unique name, so the mandatory onAdopt whitelist check passes on adoption. The mandate must have
+    /// been constructed with `address(registry)` as its MANDATE_REGISTRY. Returns the mandate address.
+    function registerTestMandate(address mandate) internal returns (address) {
+        vm.prank(registry.owner());
+        registry.registerMandate(vm.toString(mandate), mandate, keccak256(abi.encodePacked(mandate)));
+        return mandate;
     }
 
     function findMandateIdInOrg(string memory description, Powers org) public view returns (uint16) {
@@ -496,9 +512,10 @@ abstract contract BaseSetup is TestVariables, TestHelperFunctions {
         daoMockChild1 = new PowersMock();
         daoMockChild2 = new PowersMock();
 
-        // deploy external contracts  
+        // deploy external contracts
         helperConfig = new Configurations();
         testConstitutions = new TestConstitutions();
+        registry = MandateRegistry(address(testConstitutions.registry()));
     }
 }
 
@@ -583,6 +600,27 @@ abstract contract TestSetupAsync is BaseSetup {
     }
 }
 
+abstract contract TestSetupReform is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        // initiate reform constitution (4 mandates + 1 flow)
+        (PowersTypes.MandateInitData[] memory mandateInitData_, PowersTypes.Flow[] memory flows_) =
+            testConstitutions.pauseMandatesTestConstitution();
+
+        // constitute daoMock and close with initial flows in one step
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute(address(this), flows_);
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_ONE, alice);
+        daoMock.assignRole(ROLE_ONE, bob);
+        daoMock.assignRole(ROLE_TWO, charlotte);
+        daoMock.assignRole(ROLE_TWO, david);
+        vm.stopPrank();
+    }
+}
+
 abstract contract TestSetupElectoral is BaseSetup {
     function setUpVariables() public override {
         super.setUpVariables();
@@ -653,19 +691,25 @@ abstract contract TestSetupIntegrations is BaseSetup {
         simpleErc20Votes = new SimpleErc20Votes();
         simpleGovernor = new SimpleGovernor(address(simpleErc20Votes));
         soulbound1155 = new Soulbound1155("this is a test uri");
-        electionList = new ElectionRegistry(300,300);
+        electionList = new ElectionRegistry(300, 300);
         PowersDeployer powersDeployer = new PowersDeployer();
-        powersFactory = new PowersFactory( 
+        powersFactory = new PowersFactory(
             "https://testURI", // uri
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid),
-            address(powersDeployer)
+            address(powersDeployer),
+            address(0) // no MandateRegistry enforcement in tests
         );
         powersFactory.addMandates(testConstitutions.powersTestConstitution(address(daoMock)));
         erc20Taxed = new Erc20Taxed();
 
-        zkPassportRegistry = ZKPassport_PowersRegistry(findMandateAddress("ZKPassport_PowersRegistry"));
+        zkPassportRegistry = new ZKPassport_PowersRegistry(
+            helperConfig.getZkPassportVerifier(block.chainid),
+            helperConfig.getZkPassportHelper(block.chainid),
+            "powers.xyz",
+            "powers"
+        );
         vm.stopPrank();
 
         // initiate multi constitution
@@ -700,6 +744,107 @@ abstract contract TestSetupIntegrations is BaseSetup {
         daoMockChild1.assignRole(ROLE_TWO, charlotte);
         daoMockChild1.assignRole(ROLE_TWO, david);
         daoMockChild1.assignRole(42, alice);
+        vm.stopPrank();
+    }
+}
+
+abstract contract TestSetupRevokeInactiveAccounts is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        (PowersTypes.MandateInitData[] memory mandateInitData_) =
+            testConstitutions.revokeInactiveAccountsTestConstitution(address(daoMock));
+
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute();
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_THREE, alice);
+        daoMock.assignRole(ROLE_THREE, bob);
+        vm.stopPrank();
+    }
+}
+
+abstract contract TestSetupRevokeAccountsRoleId is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        (PowersTypes.MandateInitData[] memory mandateInitData_) =
+            testConstitutions.revokeAccountsRoleIdTestConstitution(address(daoMock));
+
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute();
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_ONE, alice);
+        daoMock.assignRole(ROLE_ONE, bob);
+        daoMock.assignRole(ROLE_TWO, charlotte);
+        daoMock.assignRole(ROLE_TWO, david);
+        vm.stopPrank();
+    }
+}
+
+abstract contract TestSetupRevokeMandates is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        (PowersTypes.MandateInitData[] memory mandateInitData_) =
+            testConstitutions.revokeMandatesTestConstitution(address(daoMock));
+
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute();
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_ONE, alice);
+        daoMock.assignRole(ROLE_ONE, bob);
+        daoMock.assignRole(ROLE_TWO, charlotte);
+        daoMock.assignRole(ROLE_TWO, david);
+        vm.stopPrank();
+    }
+}
+
+abstract contract TestSetupSlateRegistry is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        // Deploy the mock SlateRegistry owned by the test contract (not daoMock) so that
+        // tests can call setElection() without Powers involvement.  roleId = ROLE_TWO.
+        slateRegistryMock = new SlateRegistryMock(ROLE_TWO);
+
+        address presetActions = registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions");
+
+        (PowersTypes.MandateInitData[] memory mandateInitData_, PowersTypes.Flow[] memory flows_) =
+            testConstitutions.slateRegistryAddSlateTestConstitution(address(slateRegistryMock), presetActions);
+
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute(address(this), flows_);
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_ONE, alice);
+        daoMock.assignRole(ROLE_ONE, bob);
+        daoMock.assignRole(ROLE_TWO, charlotte);
+        daoMock.assignRole(ROLE_TWO, david);
+        vm.stopPrank();
+    }
+}
+
+abstract contract TestSetupPowersFactory is BaseSetup {
+    function setUpVariables() public override {
+        super.setUpVariables();
+
+        vm.startPrank(address(daoMock));
+        returnDataMock = new ReturnDataMock();
+        vm.stopPrank();
+
+        (PowersTypes.MandateInitData[] memory mandateInitData_) =
+            testConstitutions.powersFactoryTestConstitution(address(returnDataMock));
+        daoMock.constitute(mandateInitData_);
+        daoMock.closeConstitute(address(this), new PowersTypes.Flow[](0));
+
+        vm.startPrank(address(daoMock));
+        daoMock.assignRole(ROLE_ONE, alice);
+        daoMock.assignRole(ROLE_ONE, bob);
+        daoMock.setTreasury(payable(address(999)));
         vm.stopPrank();
     }
 }

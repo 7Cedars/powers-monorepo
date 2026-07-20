@@ -44,6 +44,9 @@ interface PowersErrors {
     /// @notice Emitted when an incorrect interface is called.
     error Powers__IncorrectInterface(address targetMandate);
 
+    /// @notice Emitted when a mandate is not registered (or not active) in this Powers instance's MANDATE_REGISTRY.
+    error Powers__MandateNotRegistered(address targetMandate);
+
     /// @notice Emitted when a proposed action is not active.
     error Powers__ProposedActionNotActive();
 
@@ -97,6 +100,9 @@ interface PowersErrors {
 
     /// @notice Emitted when an account cannot call a mandate.
     error Powers__CannotCallMandate();
+
+    /// @notice Emitted when an account that joined the voting role after voteStart attempts to vote.
+    error Powers__JoinedAfterVoteStart();
 
     /// @notice Emitted when the caller is not the target mandate.
     error Powers__CallerNotTargetMandate();

@@ -6,29 +6,29 @@ import ReactFlow, {
   Edge,
   Background,
   BackgroundVariant,
-  MiniMap,
+  Controls,
   useNodesState,
   useEdgesState,
-  addEdge,
-  Connection,
   ConnectionMode,
   useReactFlow,
   ReactFlowProvider,
   MarkerType,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { Mandate, Powers } from '@/context/types'
+import { Powers } from '@/context/types'
 import { useParams, usePathname, useRouter } from 'next/navigation'
-import { setAction, useActionStore, usePowersStore } from '@/context/store'
+import { setAction, useActionStore, usePowersStore, useUIStateStore } from '@/context/store'
 import {
   nodeTypes,
   NODE_WIDTH,
-  NODE_SPACING_Y,
+  NODE_HEIGHT,
+  FLOW_PADDING,
+  FLOW_HEADER_HEIGHT,
   getActionDataForChain,
-  createFlowLayout,
-} from '../../../../components/FlowNodes'
+  createAllFlowsLayout,
+  FlowGroupLayoutData,
+} from './FlowNodes'
 
-// Store for viewport state persistence using localStorage
 const VIEWPORT_STORAGE_KEY = 'powersflow-viewport'
 
 const getStoredViewport = () => {
@@ -50,413 +50,411 @@ const setStoredViewport = (viewport: { x: number; y: number; zoom: number }) => 
   }
 }
 
-// Default node color
 const DEFAULT_NODE_COLOR = 'hsl(var(--muted-foreground))'
 
 const FlowContent: React.FC = () => {
-  const { getNodes, getViewport, setViewport } = useReactFlow()
-  const { mandateId: selectedMandateId } = useParams<{mandateId: string }>()  
+  const { getNodes, getViewport, setViewport, setNodes: rfSetNodes } = useReactFlow()
+  const { mandateId: selectedMandateId } = useParams<{ mandateId: string }>()
   const router = useRouter()
   const action = useActionStore()
   const [userHasInteracted, setUserHasInteracted] = React.useState(false)
-  const reactFlowInstanceRef = React.useRef<ReturnType<typeof useReactFlow> | null>(null)
   const pathname = usePathname()
   const powers = usePowersStore()
-  
-  // Debounced layout saving
+  const { highlightMode } = useUIStateStore()
+
   const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
-  // Function to load saved layout from localStorage
   const loadSavedLayout = React.useCallback((): Record<string, { x: number; y: number }> | undefined => {
     if (typeof window === 'undefined') return undefined
     try {
       const localStore = localStorage.getItem("powersProtocols")
       if (!localStore || localStore === "undefined") return undefined
-      
+
       const saved: Powers[] = JSON.parse(localStore)
-      const existing = saved.find(item => item.contractAddress === powers?.contractAddress as `0x${string}`)
-      
-      if (existing && existing.layout) {
-        return existing.layout
-      }
-      
-      return undefined
-    } catch (error) {
-      console.error('Failed to load layout from localStorage:', error)
+      const existing = saved.find(item => item.contractAddress === powers?.contractAddress)
+      return existing?.layout ?? undefined
+    } catch {
       return undefined
     }
   }, [powers?.contractAddress])
 
-  // Function to save powers object to localStorage (similar to usePowers.ts)
   const savePowersToLocalStorage = React.useCallback((updatedPowers: Powers) => {
     if (typeof window === 'undefined') return
     try {
       const localStore = localStorage.getItem("powersProtocols")
-      const saved: Powers[] = localStore && localStore != "undefined" ? JSON.parse(localStore) : []
+      const saved: Powers[] = localStore && localStore !== "undefined" ? JSON.parse(localStore) : []
       const existing = saved.find(item => item.contractAddress === updatedPowers.contractAddress)
-      if (existing) {
-        saved.splice(saved.indexOf(existing), 1)
-      }
+      if (existing) saved.splice(saved.indexOf(existing), 1)
       saved.push(updatedPowers)
-      localStorage.setItem("powersProtocols", JSON.stringify(saved, (key, value) =>
-        typeof value === "bigint" ? value.toString() : value,
+      localStorage.setItem("powersProtocols", JSON.stringify(saved, (_, v) =>
+        typeof v === "bigint" ? v.toString() : v
       ))
     } catch (error) {
       console.error('Failed to save layout to localStorage:', error)
     }
   }, [])
 
-  // Function to extract current layout from ReactFlow nodes
   const extractCurrentLayout = React.useCallback(() => {
     const nodes = getNodes()
     const layout: Record<string, { x: number; y: number }> = {}
-    
     nodes.forEach(node => {
-      layout[node.id] = {
-        x: node.position.x,
-        y: node.position.y
-      }
+      layout[node.id] = { x: node.position.x, y: node.position.y }
     })
-    
     return layout
   }, [getNodes])
 
-  // Function to save layout to powers object and localStorage
   const saveLayout = React.useCallback(() => {
     const currentLayout = extractCurrentLayout()
-    
-    // Create updated powers object with layout data
-    const updatedPowers: Powers = {
-      ...powers as Powers,
-      layout: currentLayout
-    }
-    
-    // Save to localStorage
-    savePowersToLocalStorage(updatedPowers)
+    savePowersToLocalStorage({ ...powers as Powers, layout: currentLayout })
   }, [powers, extractCurrentLayout, savePowersToLocalStorage])
 
-  // Debounced save function
   const debouncedSaveLayout = React.useCallback(() => {
-    // Clear existing timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-    
-    // Set new timeout for 0.5 seconds
-    saveTimeoutRef.current = setTimeout(() => {
-      saveLayout()
-    }, 250)
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = setTimeout(saveLayout, 250)
   }, [saveLayout])
 
-  // Cleanup timeout on unmount
   React.useEffect(() => {
     return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
   }, [])
 
-
-  // Helper function to calculate fitView options accounting for panel width
-  const calculateFitViewOptions = useCallback(() => {
-    return {
-      padding: 0.2,
-      duration: 800,
-      includeHiddenNodes: false,
-      minZoom: 0.1,
-      maxZoom: 1.2,
-    }
-  }, [])
-
-  // Custom fitView function that accounts for the side panel
   const fitViewWithPanel = useCallback(() => {
-    const nodes = getNodes()
-    if (nodes.length === 0) return
+    // Use only top-level nodes (flow group nodes) for bounds calculation
+    const allNodes = getNodes()
+    const topLevel = allNodes.filter(n => !n.parentId)
+    if (topLevel.length === 0) return
 
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
     const expandedPanelWidth = Math.min(640, viewportWidth - 40)
     const isSmallScreen = viewportWidth <= 2 * expandedPanelWidth
-    // Calculate the available area for the flow chart (excluding panel)
     const availableWidth = isSmallScreen ? viewportWidth : viewportWidth - expandedPanelWidth
     const availableHeight = viewportHeight
 
-    // Find the bounds of all nodes
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-    nodes.forEach(node => {
-      const nodeWidth = NODE_WIDTH
-      const nodeHeight = NODE_SPACING_Y
+    topLevel.forEach(node => {
+      const w = typeof node.style?.width === 'number' ? node.style.width : NODE_WIDTH
+      const h = typeof node.style?.height === 'number' ? node.style.height : NODE_HEIGHT
       minX = Math.min(minX, node.position.x)
       minY = Math.min(minY, node.position.y)
-      maxX = Math.max(maxX, node.position.x + nodeWidth)
-      maxY = Math.max(maxY, node.position.y + nodeHeight)
+      maxX = Math.max(maxX, node.position.x + w)
+      maxY = Math.max(maxY, node.position.y + h)
     })
-    // Add padding
-    const padding = 100
+
+    const padding = 80
     const contentWidth = maxX - minX + 2 * padding
     const contentHeight = maxY - minY + 2 * padding
-    // Calculate zoom to fit content in available area
-    const zoomX = availableWidth / contentWidth
-    const zoomY = availableHeight / contentHeight
-    const zoom = Math.min(zoomX, zoomY, 1.2) // Cap at max zoom
-    // Calculate center position
+    const zoom = Math.min(availableWidth / contentWidth, availableHeight / contentHeight, 1.2)
     const contentCenterX = (minX + maxX) / 2
     const contentCenterY = (minY + maxY) / 2
-    let x, y
-    if (isSmallScreen) {
-      // Center in the middle of the viewport
-      x = -contentCenterX * zoom + viewportWidth / 2
-      y = -contentCenterY * zoom + availableHeight / 2
-    } else {
-      // Offset for the panel as before
-      const availableAreaCenterX = expandedPanelWidth + availableWidth / 2
-      x = -contentCenterX * zoom + availableAreaCenterX
-      y = -contentCenterY * zoom + availableHeight / 2
-    }
+
+    const x = isSmallScreen
+      ? -contentCenterX * zoom + viewportWidth / 2
+      : -contentCenterX * zoom + expandedPanelWidth + availableWidth / 2
+    const y = -contentCenterY * zoom + availableHeight / 2
+
     setViewport({ x, y, zoom }, { duration: 800 })
   }, [getNodes, setViewport])
 
   const handleNodeClick = useCallback((mandateId: string) => {
-    // Store current viewport before navigation
     const currentViewport = getViewport()
     setStoredViewport(currentViewport)
-    // console.log("@handleNodeClick: waypoint 0", {mandateId, action})
-    // Navigate to the mandate page within the flow layout
-    setAction({
-      ...action,
-      mandateId: BigInt(mandateId),
-      upToDate: false
-    })
+    setAction({ ...action, mandateId: BigInt(mandateId), upToDate: false })
     router.push(`/overview/${powers?.chainId}/${powers?.contractAddress}/mandates/${mandateId}`)
-    // console.log("@handleNodeClick: waypoint 1", {action})
-  }, [router, powers?.contractAddress, action, getViewport])
+  }, [router, powers?.contractAddress, powers?.chainId, action, getViewport])
 
-  // Handle ReactFlow initialization
-  const onInit = useCallback((reactFlowInstance: ReturnType<typeof useReactFlow>) => {
-    reactFlowInstanceRef.current = reactFlowInstance
-    
+  const onInit = useCallback(() => {
     const storedViewport = getStoredViewport()
-    
-    // Only fit view on initial page load (no selected mandate and no stored viewport)
     if (!action.mandateId && !selectedMandateId && !storedViewport) {
       setTimeout(() => {
         fitViewWithPanel()
-        // Save the fitted viewport
-        setTimeout(() => {
-          const currentViewport = getViewport()
-          setStoredViewport(currentViewport)
-        }, 900)
+        setTimeout(() => setStoredViewport(getViewport()), 900)
       }, 100)
     } else if (storedViewport) {
-      // Restore stored viewport
-      setTimeout(() => {
-        setViewport(storedViewport, { duration: 0 })
-      }, 100)
+      setTimeout(() => setViewport(storedViewport, { duration: 0 }), 100)
     }
   }, [setViewport, getViewport, action.mandateId, selectedMandateId, fitViewWithPanel])
 
-
-  // Reset user interaction flag when navigating to home page
   React.useEffect(() => {
     const isHomePage = !pathname.includes('/mandates/')
-    if (isHomePage) {
-      setUserHasInteracted(false)
-    }
+    if (isHomePage) setUserHasInteracted(false)
   }, [pathname])
 
-
-
-  // Create nodes and edges from mandates
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!powers?.mandates) return { initialNodes: [], initialEdges: [] }
-    const ActiveMandates = powers?.mandates.filter(mandate => {
-      if (mandate.active) return true;
-      return powers?.flows?.some(flow => flow.mandateIds.includes(mandate.index));
-    })
-    if (!ActiveMandates) return { initialNodes: [], initialEdges: [] }
-    
+
+    const activeMandates = powers.mandates.filter(mandate =>
+      mandate.active || powers.flows?.some(flow => flow.mandateIds.includes(mandate.index))
+    )
+    if (activeMandates.length === 0) return { initialNodes: [], initialEdges: [] }
+
     const nodes: Node[] = []
     const edges: Edge[] = []
-    
-    // Use hierarchical layout instead of simple grid
-    const savedLayout = loadSavedLayout()
-    const positions = createFlowLayout(ActiveMandates || [], powers?.flows || [], savedLayout)
-    
-    // Get the selected action from the store
+    const edgeColor = 'hsl(var(--muted-foreground))'
+    const flows = powers.flows ?? []
+
     const selectedAction = action.actionId !== "0" ? action : undefined
-    
-    // Get action data for all mandates in the chain
-    const chainActionData = getActionDataForChain(
-      selectedAction,
-      ActiveMandates || [],
-      powers
-    )
-    
-    // Determine which mandate should be highlighted based on the selected action
-    const highlightedMandateId = selectedAction && selectedAction.mandateId !== 0n 
-      ? selectedAction.mandateId 
-      : undefined
-    
-    ActiveMandates?.forEach((mandate) => {
-      const roleColor = DEFAULT_NODE_COLOR
+    const chainActionData = getActionDataForChain(selectedAction, activeMandates, powers)
+    const highlightedMandateId = selectedAction?.mandateId !== 0n ? selectedAction?.mandateId : undefined
+
+    // Compute which mandate IDs are highlighted (full opacity) based on highlightMode
+    const getIsDimmed = (mandate: typeof activeMandates[0]): boolean => {
+      const idStr = String(mandate.index)
+      switch (highlightMode.type) {
+        case 'none': return false
+        case 'action': return !highlightMode.mandateIds.has(idStr)
+        case 'mandate': return idStr !== highlightMode.mandateId
+        case 'flow': return !highlightMode.mandateIds.has(idStr)
+        case 'role': return mandate.conditions?.allowedRole !== highlightMode.roleId
+        default: return false
+      }
+    }
+
+    // Compute which flow group IDs are dimmed
+    const getIsGroupDimmed = (gId: string, groupMandateIds: string[]): boolean => {
+      if (highlightMode.type === 'none') return false
+      return groupMandateIds.every(mId => getIsDimmed(activeMandates.find(m => String(m.index) === mId)!))
+    }
+
+    // Build mandate → group mapping
+    const mandateToGroupId = new Map<string, string>()
+    const assignedIds = new Set<string>()
+    flows.forEach((flow, idx) => {
+      flow.mandateIds.forEach(mId => {
+        const idStr = String(mId)
+        if (activeMandates.some(m => String(m.index) === idStr)) {
+          mandateToGroupId.set(idStr, `flow-${idx}`)
+          assignedIds.add(idStr)
+        }
+      })
+    })
+    activeMandates.forEach(m => {
+      const idStr = String(m.index)
+      if (!assignedIds.has(idStr)) mandateToGroupId.set(idStr, 'flow-orphan')
+    })
+
+    const allGroupIds = [...new Set(mandateToGroupId.values())]
+
+    // Group names
+    const groupNames = new Map<string, string>()
+    flows.forEach((flow, idx) => groupNames.set(`flow-${idx}`, flow.nameDescription))
+    groupNames.set('flow-orphan', 'Other')
+
+    // Determine layout — restore from saved if complete, else compute fresh
+    const savedLayout = loadSavedLayout()
+    const hasSavedLayout = savedLayout != null &&
+      activeMandates.every(m => savedLayout[String(m.index)] != null) &&
+      allGroupIds.every(gId => savedLayout[gId] != null)
+
+    let mandatePositions: Map<string, { x: number; y: number }>
+    let groupRects: Map<string, { x: number; y: number; width: number; height: number }>
+
+    if (hasSavedLayout) {
+      // Restore mandate relative positions from saved layout
+      mandatePositions = new Map(
+        activeMandates.map(m => [String(m.index), savedLayout![String(m.index)]])
+      )
+
+      // Recompute group sizes from saved mandate positions; restore group x/y
+      groupRects = new Map()
+      allGroupIds.forEach(gId => {
+        const groupMandates = activeMandates.filter(m => mandateToGroupId.get(String(m.index)) === gId)
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+        groupMandates.forEach(m => {
+          const pos = savedLayout![String(m.index)]
+          minX = Math.min(minX, pos.x)
+          minY = Math.min(minY, pos.y)
+          maxX = Math.max(maxX, pos.x + NODE_WIDTH)
+          maxY = Math.max(maxY, pos.y + NODE_HEIGHT)
+        })
+
+        const savedGroupPos = savedLayout![gId]
+        groupRects.set(gId, {
+          x: savedGroupPos.x,
+          y: savedGroupPos.y,
+          width: (maxX - minX) + 2 * FLOW_PADDING,
+          height: (maxY - minY) + FLOW_HEADER_HEIGHT + 2 * FLOW_PADDING,
+        })
+      })
+    } else {
+      const { mandatePositions: mp, flowGroupData } = createAllFlowsLayout(activeMandates, flows)
+      mandatePositions = mp
+      groupRects = new Map(flowGroupData.map(fg => [
+        fg.id,
+        { x: fg.x, y: fg.y, width: fg.width, height: fg.height },
+      ]))
+    }
+
+    // Build a map from groupId → mandate IDs it contains (for dimming calculation)
+    const groupMandateIdsMap = new Map<string, string[]>()
+    allGroupIds.forEach(gId => {
+      groupMandateIdsMap.set(gId, activeMandates.filter(m => mandateToGroupId.get(String(m.index)) === gId).map(m => String(m.index)))
+    })
+
+    // Create flow group nodes first (ReactFlow requires parents before children)
+    allGroupIds.forEach(gId => {
+      const rect = groupRects.get(gId)
+      if (!rect) return
+      const isDimmedGroup = getIsGroupDimmed(gId, groupMandateIdsMap.get(gId) ?? [])
+      nodes.push({
+        id: gId,
+        type: 'flowGroup',
+        position: { x: rect.x, y: rect.y },
+        style: { width: rect.width, height: rect.height },
+        data: { nameDescription: groupNames.get(gId) ?? '', isDimmedGroup },
+        draggable: true,
+        selectable: false,
+        zIndex: 0,
+      })
+    })
+
+    // Create mandate nodes as children of their flow group
+    activeMandates.forEach(mandate => {
       const mandateId = String(mandate.index)
-      const position = positions.get(mandateId) || { x: 0, y: 0 }
-      
-      // Check if this mandate should be highlighted
+      const groupId = mandateToGroupId.get(mandateId)!
+      const position = mandatePositions.get(mandateId) ?? { x: FLOW_PADDING, y: FLOW_HEADER_HEIGHT + FLOW_PADDING }
       const isHighlighted = highlightedMandateId !== undefined && mandate.index === highlightedMandateId
-      
-      // Create mandate schema node
+      const isDimmed = getIsDimmed(mandate)
+
       nodes.push({
         id: mandateId,
-        type: 'mandateSchema',  
+        type: 'mandateSchema',
         position,
+        parentId: groupId,
         data: {
           powers,
           mandate,
-          roleColor,
+          roleColor: DEFAULT_NODE_COLOR,
           onNodeClick: handleNodeClick,
-          actionDataTimestamp: Date.now(),
-          selectedAction,
           chainActionData,
-          chainId: String(powers?.chainId || 0),
+          chainId: String(powers.chainId || 0),
           isHighlighted,
+          isDimmed,
         },
+        zIndex: 10,
       })
-      
-      // Create edges from dependency checks to target mandates
-      if (mandate.conditions) {
-        const sourceId = mandateId
-        
-        const edgeColor = 'hsl(var(--muted-foreground))'
-        
-        // Edge from needFulfilled check to target mandate
-        if (mandate.conditions.needFulfilled != null && mandate.conditions.needFulfilled !== 0n) {
-          const targetId = String(mandate.conditions.needFulfilled)
-          
-          edges.push({
-            id: `${sourceId}-needFulfilled-${targetId}`,
-            source: sourceId,
-            sourceHandle: 'needFulfilled-handle',
-            target: targetId,
-            targetHandle: 'fulfilled-target',
-            type: 'smoothstep',
-            label: '',
-            style: { stroke: edgeColor, strokeWidth: 1.5 },
-            labelStyle: { fontSize: '9px', fill: edgeColor },
-            labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 },
-            markerStart: {
-              type: MarkerType.ArrowClosed,
-              color: edgeColor,
-              width: 14,
-              height: 14,
-            },
-            zIndex: 10,
-          })
-        }
-        
-        // Edge from needNotFulfilled check to target mandate
-        if (mandate.conditions.needNotFulfilled != null && mandate.conditions.needNotFulfilled != 0n) {
-          const targetId = String(mandate.conditions.needNotFulfilled)
-          
-          edges.push({
-            id: `${sourceId}-needNotFulfilled-${targetId}`,
-            source: sourceId,
-            sourceHandle: 'needNotFulfilled-handle',
-            target: targetId,
-            targetHandle: 'fulfilled-target',
-            type: 'smoothstep',
-            label: '',
-            style: { stroke: edgeColor, strokeWidth: 1.5, strokeDasharray: '5,3' },
-            labelStyle: { fontSize: '9px', fill: edgeColor },
-            labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 },
-            markerStart: {
-              type: MarkerType.ArrowClosed,
-              color: edgeColor,
-              width: 14,
-              height: 14,
-            },
-            zIndex: 10,
-          })
-        }
-        
-      
+
+      if (mandate.conditions?.needFulfilled && mandate.conditions.needFulfilled !== 0n) {
+        const targetId = String(mandate.conditions.needFulfilled)
+        edges.push({
+          id: `${mandateId}-needFulfilled-${targetId}`,
+          source: mandateId,
+          sourceHandle: 'needFulfilled-handle',
+          target: targetId,
+          targetHandle: 'fulfilled-target',
+          type: 'smoothstep',
+          style: { stroke: edgeColor, strokeWidth: 1.5, opacity: isDimmed ? 0.2 : 1 },
+          labelStyle: { fontSize: '9px', fill: edgeColor },
+          labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 },
+          markerStart: { type: MarkerType.ArrowClosed, color: edgeColor, width: 14, height: 14 },
+          zIndex: 20,
+        })
+      }
+
+      if (mandate.conditions?.needNotFulfilled && mandate.conditions.needNotFulfilled !== 0n) {
+        const targetId = String(mandate.conditions.needNotFulfilled)
+        edges.push({
+          id: `${mandateId}-needNotFulfilled-${targetId}`,
+          source: mandateId,
+          sourceHandle: 'needNotFulfilled-handle',
+          target: targetId,
+          targetHandle: 'fulfilled-target',
+          type: 'smoothstep',
+          style: { stroke: edgeColor, strokeWidth: 1.5, strokeDasharray: '5,3', opacity: isDimmed ? 0.2 : 1 },
+          labelStyle: { fontSize: '9px', fill: edgeColor },
+          labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.85 },
+          markerStart: { type: MarkerType.ArrowClosed, color: edgeColor, width: 14, height: 14 },
+          zIndex: 20,
+        })
       }
     })
-    
+
     return { initialNodes: nodes, initialEdges: edges }
   }, [
     powers,
-    handleNodeClick, 
-    selectedMandateId, 
+    handleNodeClick,
+    selectedMandateId,
     action.mandateId,
     action.actionId,
-    loadSavedLayout
+    loadSavedLayout,
+    highlightMode,
   ])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
-  useEffect(() => {
-    setNodes(initialNodes)
-  }, [initialNodes, setNodes])
+  useEffect(() => { setNodes(initialNodes) }, [initialNodes, setNodes])
+  useEffect(() => { setEdges(initialEdges) }, [initialEdges, setEdges])
 
-  useEffect(() => {
-    setEdges(initialEdges)
-  }, [initialEdges, setEdges])
-
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  )
-
-  // Save viewport state when user manually pans/zooms
   const onMoveEnd = useCallback(() => {
-    const currentViewport = getViewport()
-    setStoredViewport(currentViewport)
-    // Mark that user has interacted with viewport
+    setStoredViewport(getViewport())
     setUserHasInteracted(true)
-    // Trigger debounced layout save when viewport changes
     debouncedSaveLayout()
   }, [getViewport, debouncedSaveLayout])
 
-  // Track user interactions with viewport
   const onMoveStart = useCallback(() => {
     setUserHasInteracted(true)
   }, [])
 
-  // Reset user interaction flag after a period of inactivity
   React.useEffect(() => {
     if (userHasInteracted) {
-      const timer = setTimeout(() => {
-        setUserHasInteracted(false)
-      }, 3000) // Reset after 3 seconds of no interaction
-      
+      const timer = setTimeout(() => setUserHasInteracted(false), 3000)
       return () => clearTimeout(timer)
     }
   }, [userHasInteracted])
 
-  // Node drag handlers to trigger layout saving
-  const onNodeDragStop = useCallback(() => {
-    setUserHasInteracted(true) // Mark interaction when dragging nodes
-    debouncedSaveLayout()
-  }, [debouncedSaveLayout])
+  const onNodeDragStop = useCallback((_event: React.MouseEvent, draggedNode: Node) => {
+    setUserHasInteracted(true)
 
-  const onNodesChangeWithSave = useCallback((changes: { type: string; dragging?: boolean; id?: string }[]) => {
-    onNodesChange(changes as any[])
-    // Check if any node was dragged
-    const hasDragChange = changes.some((change) => change.type === 'position' && change.dragging === false)
-    if (hasDragChange) {
-      setUserHasInteracted(true) // Mark interaction when dragging nodes
-      debouncedSaveLayout()
+    // If a mandate child was dragged, resize the parent flow group bounding box
+    if (draggedNode.parentId) {
+      setNodes(currentNodes => {
+        const parentId = draggedNode.parentId!
+        const children = currentNodes.filter(n => n.parentId === parentId)
+        if (children.length === 0) return currentNodes
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+        children.forEach(child => {
+          minX = Math.min(minX, child.position.x)
+          minY = Math.min(minY, child.position.y)
+          maxX = Math.max(maxX, child.position.x + NODE_WIDTH)
+          maxY = Math.max(maxY, child.position.y + NODE_HEIGHT)
+        })
+
+        // Delta: how far the parent origin needs to shift so minX=FLOW_PADDING, minY=FLOW_HEADER_HEIGHT+FLOW_PADDING
+        const deltaX = minX - FLOW_PADDING
+        const deltaY = minY - (FLOW_HEADER_HEIGHT + FLOW_PADDING)
+        const newWidth = (maxX - minX) + 2 * FLOW_PADDING
+        const newHeight = (maxY - minY) + FLOW_HEADER_HEIGHT + 2 * FLOW_PADDING
+
+        return currentNodes.map(node => {
+          if (node.id === parentId) {
+            return {
+              ...node,
+              position: { x: node.position.x + deltaX, y: node.position.y + deltaY },
+              style: { ...node.style, width: newWidth, height: newHeight },
+            }
+          }
+          if (node.parentId === parentId) {
+            return {
+              ...node,
+              position: { x: node.position.x - deltaX, y: node.position.y - deltaY },
+            }
+          }
+          return node
+        })
+      })
     }
-  }, [onNodesChange, debouncedSaveLayout])
-  
-  const ActiveMandates = powers?.mandates?.filter(mandate => {
-    if (mandate.active) return true;
-    return powers?.flows?.some(flow => flow.mandateIds.includes(mandate.index));
-  })
-  if (!ActiveMandates || ActiveMandates.length === 0) {
+
+    debouncedSaveLayout()
+  }, [debouncedSaveLayout, setNodes])
+
+  const activeMandates = powers?.mandates?.filter(mandate =>
+    mandate.active || powers.flows?.some(flow => flow.mandateIds.includes(mandate.index))
+  )
+  if (!activeMandates || activeMandates.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-background border border-border">
         <span className="text-xs font-mono text-muted-foreground">No active mandates found</span>
@@ -469,22 +467,21 @@ const FlowContent: React.FC = () => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChangeWithSave}
+        onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
         fitView={false}
-        fitViewOptions={calculateFitViewOptions()}
         attributionPosition="bottom-left"
         nodesDraggable={true}
         nodesConnectable={false}
-        elementsSelectable={true}
         maxZoom={2}
         minZoom={0.2}
         panOnDrag
         zoomOnScroll
         panOnScroll={false}
+        selectionOnDrag={false}
+        multiSelectionKeyCode={null}
         preventScrolling={true}
         onMoveStart={onMoveStart}
         onMoveEnd={onMoveEnd}
@@ -497,27 +494,15 @@ const FlowContent: React.FC = () => {
           size={1}
           color="hsl(var(--border))"
         />
-        {/* <MiniMap 
-          nodeColor={() => 'hsl(var(--muted-foreground))'}
-          nodeStrokeWidth={2}
-          nodeStrokeColor="hsl(var(--border))"
-          nodeBorderRadius={4}
-          maskColor="hsl(var(--background) / 0.6)"
-          position="bottom-right"
-          pannable={true}
-          zoomable={true}
-          ariaLabel="Flow diagram minimap"
-        /> */}
+        <Controls showZoom={false} showInteractive={false} position="bottom-left" />
       </ReactFlow>
     </div>
   )
 }
 
 export const AllFlows: React.FC = React.memo(() => {
-  const powers = usePowersStore();
-
+  const powers = usePowersStore()
   console.log('@AllFlows rendered with powers:', powers)
-
 
   return (
     <ReactFlowProvider>

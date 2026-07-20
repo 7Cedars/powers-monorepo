@@ -1,0 +1,52 @@
+---
+title: "Revoke_Mandates"
+description: "Revoke_Mandates is a reform mandate that permanently revokes a set of mandates from a Powers organisation in a single transaction."
+---
+
+Revoke_Mandates is a reform mandate that permanently removes a set of mandates from a Powers organisation. The caller provides the mandate IDs to revoke, and the mandate generates `revokeMandate` calls for all of them in one transaction.
+
+## Overview
+
+This mandate is the counterpart to `Adopt_Mandates`. It is used to decommission mandates that are no longer needed, deprecated, or have been replaced. Unlike `PauseMandates`, revocation is permanent — the mandate is removed from the Powers contract and cannot be restarted without re-adopting it.
+
+## Configuration
+
+This mandate requires no configuration parameters at adoption time.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, one parameter must be provided:
+
+1.  `mandateIds` (uint16[]): The IDs of the mandates to revoke.
+
+### Execution Flow
+
+1.  **Decoding**
+    *   Decodes the `mandateIds` array from the input.
+
+2.  **Revocation Calls**
+    *   For each mandate ID, generates a `revokeMandate` call targeting the Powers contract.
+    *   All revocations are batched into a single transaction.
+
+## Technical Specifications
+
+### Functions
+
+#### `handleRequest`
+```solidity
+function handleRequest(...) public pure override returns (...)
+```
+-   Decodes the mandate ID array.
+-   Returns a batch of `revokeMandate` calls.
+
+### Error Conditions
+
+This mandate has no explicit error conditions. Failures will occur at the Powers contract level if any mandate ID is invalid or already revoked.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

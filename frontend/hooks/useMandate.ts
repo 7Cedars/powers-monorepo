@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { mandateAbi, powersAbi } from "../context/abi";
 import { MandateSimulation, Mandate, Powers, Action, ActionVote, Status } from "../context/types"
-import { readContract, readContracts, simulateContract, writeContract } from "@wagmi/core";
+import { readContract, readContracts, simulateContract, writeContract, estimateFeesPerGas, getPublicClient } from "@wagmi/core";
 import { encodeFunctionData } from "viem";
 import { wagmiConfig } from "@/context/wagmiConfig";
 import { useConnection, useTransactionConfirmations } from "wagmi";
@@ -44,6 +44,7 @@ export const useMandate = () => {
  
   // NB: here the powers object is updated after a transaction is successful.
   useEffect(() => {
+    if (!transactionHash) return
     if (statusReceipt === "pending") {
       setStatus({status: "pending"})
       fetchPowers(addressPowers, parseChainId(chainId))
@@ -56,7 +57,7 @@ export const useMandate = () => {
       setStatus({status: "error"})
       setError({error: errorReceipt as Error})
     }
-  }, [statusReceipt])
+  }, [statusReceipt, transactionHash])
 
   // reset // 
   const resetStatus = () => {
@@ -65,7 +66,18 @@ export const useMandate = () => {
     setTransactionHash(undefined)
   }
 
-  // Helper to send smart wallet transaction with custom per-Powers paymaster
+  const getFeesWithBuffer = async (targetChainId: number) => {
+    const fees = await estimateFeesPerGas(wagmiConfig, { chainId: targetChainId as any })
+    return {
+      maxFeePerGas: fees.maxFeePerGas * 13n / 10n,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+    }
+  }
+
+  // Helper to send smart wallet transaction, always targeting the DAO's chain via a
+  // chain-specific bundler client. This fixes a mismatch where Privy's default client
+  // (initialized with defaultChain: sepolia) would send UserOps to chain/11155111
+  // even when the DAO lives on a different chain (e.g. Arbitrum Sepolia 421614).
   const sendSmartWalletTx = async (
     to: `0x${string}`,
     data: `0x${string}`,
@@ -75,56 +87,98 @@ export const useMandate = () => {
     console.log("@sendSmartWalletTx, waypoint 0", {to, data, powers})
     if (!currentClient) throw new Error("Smart wallet client not found");
 
-    // If no specific paymaster is set, use the default Privy client behavior
-    if (!powers.paymaster || powers.paymaster === '0x0000000000000000000000000000000000000000') {
-      return await currentClient.sendTransaction({ to, data, value: 0n });
-    }
-    console.log("@sendSmartWalletTx, waypoint 1", {to, data, powers})
-
-    const { createSmartAccountClient } = await import('permissionless');
+    const { createBundlerClient } = await import('viem/account-abstraction');
     const { http } = await import('viem');
 
-    const pimlicoUrl = process.env.NEXT_PUBLIC_PIMLICO_BUNDLER_URL || "";
-    let bundlerUrl = pimlicoUrl;
-    if (bundlerUrl.includes('11155111') && chainId.toString() !== '11155111') {
-      bundlerUrl = bundlerUrl.replace('11155111', chainId.toString());
-    }
+    const targetChainIdNum = parseChainId(chainId);
+    const zeroDevUrl = process.env.NEXT_PUBLIC_ZERODEV_BUNDLER_URL || "";
+    const bundlerUrl = zeroDevUrl.replace(/\b11155111\b/, targetChainIdNum.toString());
+    console.log("@sendSmartWalletTx, waypoint 1", {bundlerUrl})
 
-    console.log("@sendSmartWalletTx, waypoint 2", {bundlerUrl})
+    const chain = wagmiConfig.chains.find(c => c.id === targetChainIdNum);
+    console.log("@sendSmartWalletTx, waypoint 2", {chain})
 
-    const chain = wagmiConfig.chains.find(c => c.id === parseChainId(chainId));
+    const publicClient = getPublicClient(wagmiConfig, { chainId: targetChainIdNum as any });
 
-    console.log("@sendSmartWalletTx, waypoint 3", {chain})
+    // Detect deployment on the TARGET chain (not Privy's defaultChain = Sepolia).
+    // getFactory/getFactoryData on the Kernel account use its own internal client
+    // (defaultChain = Sepolia) and return factory args when the account isn't on Sepolia,
+    // even if it IS deployed on the target chain — causing AA10 at the bundler.
+    const code = await publicClient?.getCode({ address: currentClient.account.address });
+    const isDeployedOnTargetChain = code !== undefined && code !== '0x';
 
-    const customClient = createSmartAccountClient({
-      account: currentClient.account as any,
+    // toKernelSmartAccount.signUserOperation falls back to getMemoizedChainId() (the
+    // publicClient's chain — the user's EOA chain) when chainId is not in the parameters.
+    // viem's prepareUserOperation strips chainId from the request it passes to
+    // signUserOperation, so that fallback fires. We wrap the account to always inject
+    // the DAO's chainId, preventing the hash mismatch that causes AA24.
+    const accountForDaoChain = {
+      ...currentClient.account,
+      signUserOperation: (params: any) =>
+        (currentClient.account as any).signUserOperation({ ...params, chainId: targetChainIdNum }),
+      ...(isDeployedOnTargetChain && {
+        getFactory:     async () => undefined as any,
+        getFactoryData: async () => undefined as any,
+        getFactoryArgs: async () => ({} as any),
+      }),
+    };
+
+    const hasPaymaster = powers.paymaster && powers.paymaster !== '0x0000000000000000000000000000000000000000';
+
+    const bundlerClient = createBundlerClient({
+      client: publicClient,
+      account: accountForDaoChain as any,
       chain,
-      bundlerTransport: http(bundlerUrl),
-      paymaster: {
-        getPaymasterData: async () => ({
-          paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x"
-        }),
-        getPaymasterStubData: async () => ({
-          paymaster: powers.paymaster as `0x${string}`,
-          paymasterData: "0x",
-          paymasterVerificationGasLimit: 100000n,
-          paymasterPostOpGasLimit: 100000n
-        })
-      },
-      userOperation: {
-        estimateFeesPerGas: async () => {
-          const { createPimlicoClient } = await import('permissionless/clients/pimlico');
-          const pimlicoClient = createPimlicoClient({ 
-            transport: http(bundlerUrl), 
-            entryPoint: { address: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", version: "0.7" } 
-          });
-          return await pimlicoClient.getUserOperationGasPrice().then((res: any) => res.fast);
-        }
-      }
+      transport: http(bundlerUrl),
+      ...(hasPaymaster && {
+        paymaster: {
+          getPaymasterData: async () => ({
+            paymaster: powers.paymaster as `0x${string}`,
+            paymasterData: "0x" as `0x${string}`,
+          }),
+          getPaymasterStubData: async () => ({
+            paymaster: powers.paymaster as `0x${string}`,
+            paymasterData: "0x" as `0x${string}`,
+            paymasterVerificationGasLimit: 100000n,
+            paymasterPostOpGasLimit: 100000n,
+          }),
+        },
+      }),
     });
 
-    return await customClient.sendTransaction({ account: customClient.account, to, data, value: 0n });
+    const gasPriceRaw = await bundlerClient.request({
+      method: 'pimlico_getUserOperationGasPrice' as any,
+    }) as { fast: { maxFeePerGas: `0x${string}`; maxPriorityFeePerGas: `0x${string}` } };
+
+    // Fetch the nonce from the TARGET chain's EntryPoint.
+    // Privy's Kernel account calls its own getNonce() against defaultChain (Sepolia),
+    // returning a stale sequence after the first transaction on the target chain (AA25).
+    let nonceKey = 0n;
+    try {
+      const defaultNonce = await (currentClient.account as any).getNonce?.() as bigint | undefined;
+      if (defaultNonce !== undefined) nonceKey = BigInt(defaultNonce) >> 64n;
+    } catch { /* fallback: key 0 */ }
+
+    const targetChainNonce = await publicClient!.readContract({
+      address: (currentClient.account as any).entryPoint.address as `0x${string}`,
+      abi: [{ name: 'getNonce', type: 'function' as const, stateMutability: 'view' as const,
+              inputs: [{ name: 'sender', type: 'address' }, { name: 'key', type: 'uint192' }],
+              outputs: [{ type: 'uint256' }] }],
+      functionName: 'getNonce',
+      args: [currentClient.account.address, nonceKey],
+    }) as bigint;
+
+    const userOpHash = await bundlerClient.sendUserOperation({
+      calls: [{ to, data, value: 0n }],
+      maxFeePerGas: BigInt(gasPriceRaw.fast.maxFeePerGas),
+      maxPriorityFeePerGas: BigInt(gasPriceRaw.fast.maxPriorityFeePerGas),
+      nonce: targetChainNonce,
+    });
+    console.log("@sendSmartWalletTx, waypoint 3", {userOpHash})
+
+    const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
+    console.log("@sendSmartWalletTx, waypoint 4", {receipt})
+    return receipt.receipt.transactionHash;
   };
   
   // Actions //  
@@ -157,12 +211,13 @@ export const useMandate = () => {
               args: [mandateId, mandateCalldata, nonce, description],
               chainId: parseChainId(chainId)
             })
-            result = await writeContract(wagmiConfig, simulatedRequest)
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
+            result = await writeContract(wagmiConfig, Object.assign({}, simulatedRequest, feeOverride) as typeof simulatedRequest)
           }
           setTransactionHash(result)
           return true
         } catch (error) {
-            setStatus({status: "error"}) 
+            setStatus({status: "error"})
             setError({error: error as Error})
         }
         return false
@@ -189,12 +244,14 @@ export const useMandate = () => {
               powers
             );
           } else {
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
               address: powers.contractAddress,
-              functionName: 'cancel', 
+              functionName: 'cancel',
               args: [mandateId, mandateCalldata, nonce],
-              chainId: parseChainId(chainId)
+              chainId: parseChainId(chainId),
+              ...feeOverride
             })
           }
           setTransactionHash(result)
@@ -226,12 +283,14 @@ export const useMandate = () => {
               powers
             );
           } else {
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
               address: powers.contractAddress,
-              functionName: 'castVote', 
-              args: [actionId, support], 
-              chainId: parseChainId(chainId)
+              functionName: 'castVote',
+              args: [actionId, support],
+              chainId: parseChainId(chainId),
+              ...feeOverride
             })
           }
           setTransactionHash(result)
@@ -243,13 +302,14 @@ export const useMandate = () => {
       }
   }, [chainId])
 
-  const castVoteWithReason = useCallback( 
+  const castVoteWithReason = useCallback(
     async (
       actionId: bigint,
       support: bigint,
       reason: string,
       powers: Powers
     ): Promise<boolean> => {
+        console.log("@castVoteWithReason: waypoint 1", {actionId, support, reason, isSmartWallet: isSmartWalletRef.current, client: clientRef.current})
         setStatus({status: "pending"})
         try {
           let result: `0x${string}`;
@@ -264,18 +324,21 @@ export const useMandate = () => {
               powers
             );
           } else {
+            const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
             result = await writeContract(wagmiConfig, {
               abi: powersAbi,
               address: powers.contractAddress,
-              functionName: 'castVoteWithReason', 
-              args: [actionId, support, reason], 
-              chainId: parseChainId(chainId)
+              functionName: 'castVoteWithReason',
+              args: [actionId, support, reason],
+              chainId: parseChainId(chainId),
+              ...feeOverride
             })
           }
           setTransactionHash(result)
           return true
       } catch (error) {
-          setStatus({status: "error"}) 
+          console.log("@castVoteWithReason: ERROR", {error})
+          setStatus({status: "error"})
           setError({error: error as Error})
           return false
       }
@@ -286,11 +349,6 @@ export const useMandate = () => {
       actionObject: Action,
       powers: Powers
     ): Promise<ActionVote | undefined> => {
-      setError({error: null})
-      setStatus({status: "pending"})
-
-      // console.log("@fetchVoteData, waypoint 0", {actionObject, powers})
-      
       try {
         const [{ result: voteData }, { result: state }] = await readContracts(wagmiConfig, {
           contracts: [
@@ -311,8 +369,6 @@ export const useMandate = () => {
           ]
         })
 
-        // console.log("@fetchVoteData, waypoint 1", {voteData, state})
-
         const [voteStart, voteDuration, voteEnd, againstVotes, forVotes, abstainVotes] = voteData as unknown as [
           bigint, bigint, bigint, bigint, bigint, bigint
         ]
@@ -328,44 +384,30 @@ export const useMandate = () => {
           abstainVotes: abstainVotes as bigint,
         }
 
-        // console.log("@fetchVoteData, waypoint 2", {vote})
-
         setActionVote(vote)
-        setStatus({status: "success"})
         return vote
       } catch (error) {
-        // console.log("@fetchVoteData, waypoint 3", {error})
-        setStatus({status: "error"})
-        setError({error: error as Error})
         return undefined
       }
     }, [chainId])
   
-  const simulate = useCallback( 
-    async (caller: `0x${string}`, mandateCalldata: `0x${string}`, nonce: bigint, mandate: Mandate): Promise<boolean> => {
-      // console.log("@simulate: waypoint 1", {caller, mandateCalldata, nonce, mandate})
-      setError({error: null})
-      setStatus({status: "pending"})
-
+  const simulate = useCallback(
+    async (caller: `0x${string}`, mandateCalldata: `0x${string}`, nonce: bigint, mandate: Mandate, blockNumber?: bigint): Promise<boolean> => {
       try {
           const result = await readContract(wagmiConfig, {
             abi: mandateAbi,
             address: mandate.mandateAddress as `0x${string}`,
-            functionName: 'handleRequest', 
+            functionName: 'handleRequest',
             args: [caller, mandate.powers, mandate.index, mandateCalldata, nonce],
-            chainId: parseChainId(chainId)
+            chainId: parseChainId(chainId),
+            ...(blockNumber !== undefined ? { blockNumber } : {})
             })
-          // console.log("@simulate: waypoint 2a", {result})
-          // console.log("@simulate: waypoint 2b", {result: result as MandateSimulation})
           setSimulation(result as MandateSimulation)
-          setStatus({status: "success"})
           return true
         } catch (error) {
-          setStatus({status: "error"}) 
-          setError({error: error as Error})
           console.log("@simulate: ERROR", {error})
           return false
-        } 
+        }
   }, [chainId])
 
   const request = useCallback( 
@@ -404,7 +446,8 @@ export const useMandate = () => {
             
             if (simulatedRequest) {
               console.log("@execute: waypoint 3", {request})
-              result = await writeContract(wagmiConfig, simulatedRequest)
+              const feeOverride = await getFeesWithBuffer(parseChainId(chainId))
+              result = await writeContract(wagmiConfig, Object.assign({}, simulatedRequest, feeOverride) as typeof simulatedRequest)
               setTransactionHash(result)
               console.log("@execute: waypoint 4", {result})
               return true

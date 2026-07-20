@@ -192,7 +192,7 @@ export function Inbox({ userAddress }: InboxProps) {
     // page renders immediately without redirecting to the org overview first.
     setPowers(item.protocol)
     setAction(item.action)
-    router.push(`/forum/${Number(item.protocol.chainId)}/${item.protocol.contractAddress}/action/${item.action.actionId}`)
+    router.push(`/forum/${Number(item.protocol.chainId)}/${item.protocol.contractAddress}/${item.action.actionId}`)
   }
 
   return (

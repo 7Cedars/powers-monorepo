@@ -13,7 +13,15 @@
 /solidity/cache/
 /solidity/out/
 /solidity/broadcast/
-/solidity/lib/
+
+# ai-agent artifacts
+/ai-agent/data/
+/ai-agent/node_modules/
+
+
+# governance-rag artifacts
+/governance-rag/node_modules/
+
 
 # Logs
 logs
@@ -78,3 +86,12 @@ typings/
 
 # VSCode settings
 .vscode/
+
+# AI reference PDFs — distilled into ai/references/reading_guide.md
+governance-rag/references/*.pdf
+governance-rag/sources/*.pdf
+
+# RAG package artifacts
+governance-rag/node_modules/
+governance-rag/dist/
+governance-rag/.env

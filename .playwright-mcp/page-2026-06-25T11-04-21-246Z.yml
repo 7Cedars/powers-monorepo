@@ -1,0 +1,17 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Forum" [ref=e6] [cursor=pointer]:
+          - /url: /forum
+        - button "Switch to dark mode" [ref=e8] [cursor=pointer]:
+          - img [ref=e9]
+    - button "BACK TO ORGANISATION" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+      - generic [ref=e17]: BACK TO ORGANISATION
+    - main [ref=e18]:
+      - main [ref=e20]:
+        - generic [ref=e21]:
+          - heading "Loading Action..." [level=3] [ref=e23]
+          - paragraph [ref=e25]: Waiting for transaction to be indexed...
+  - alert [ref=e26]

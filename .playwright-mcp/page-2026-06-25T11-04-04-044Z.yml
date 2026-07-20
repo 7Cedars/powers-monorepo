@@ -1,0 +1,51 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Powers 101" [ref=e27] [cursor=pointer]:
+          - /url: /forum
+        - generic [ref=e7]:
+          - button "NOT CONNECTED" [ref=e28] [cursor=pointer]:
+            - img [ref=e29]
+            - generic [ref=e31]: NOT CONNECTED
+          - button "Switch to dark mode" [ref=e8] [cursor=pointer]:
+            - img [ref=e9]
+    - button "BACK TO ORGANISATION" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+      - generic [ref=e17]: BACK TO ORGANISATION
+    - main [ref=e18]:
+      - main [ref=e20]:
+        - generic [ref=e21]:
+          - generic [ref=e24]:
+            - heading "#2 Propose to Mint" [level=3] [ref=e32]
+            - paragraph [ref=e33]: Propose to mint tokens at 0x041e75aaebce8a9300a346fd1b83528e73cdfec9.
+          - generic [ref=e34]:
+            - button "Action" [ref=e35]:
+              - img [ref=e36]
+              - generic [ref=e38]: Action
+            - button "Conditions" [ref=e39]:
+              - img [ref=e40]
+              - generic [ref=e42]: Conditions
+            - button "Timeline" [ref=e43]:
+              - img [ref=e44]
+              - generic [ref=e46]: Timeline
+            - button "Execution" [active] [ref=e47]:
+              - img [ref=e48]
+              - generic [ref=e50]: Execution
+            - button "Flow" [ref=e51]:
+              - img [ref=e52]
+              - generic [ref=e54]: Flow
+            - button "Chat" [ref=e55]:
+              - img [ref=e56]
+              - generic [ref=e58]: Chat
+          - generic [ref=e100]:
+            - generic [ref=e101]:
+              - generic [ref=e102]: Mandate
+              - button "#2 Propose to Mint — Public" [ref=e104] [cursor=pointer]:
+                - generic [ref=e105]: "#2 Propose to Mint — Public"
+                - img [ref=e106]
+            - generic [ref=e108]:
+              - paragraph [ref=e109]: "Fulfilling this action will:"
+              - list
+            - paragraph [ref=e110]: Loading simulation···
+  - alert [ref=e26]

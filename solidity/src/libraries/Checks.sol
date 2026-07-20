@@ -22,11 +22,18 @@ library Checks {
     error Checks__ProposalNotSucceeded();
     error Checks__DeadlineNotPassed();
     error Checks__ProposalRequired();
+    error Checks__ExecutionWindowExpired();
 
     /////////////////////////////////////////////////////////////
     //                  CHECKS                                 //
     /////////////////////////////////////////////////////////////
     /// @notice Runs checks before executing a mandate
+    /// @dev Note that passing these checks only confirms a vote approved *intent*
+    /// (mandateId + mandateCalldata + nonce) — the actual targets/values/calldatas are computed fresh by
+    /// `handleRequest()` at `request()`-time, from whatever chain state exists at that moment. For
+    /// mandates that read mutable state, that can differ from what voters previewed when they cast their
+    /// vote; `Conditions.maxExecutionDelay` bounds (but does not eliminate) that gap for quorum-gated
+    /// mandates. See `Conditions.maxExecutionDelay` NatSpec.
     /// @param mandateId The id of the mandate
     /// @param mandateCalldata The calldata of the mandate
     /// @param powers The address of the Powers contract
@@ -72,6 +79,18 @@ library Checks {
                     != PowersTypes.ActionState.Succeeded
             ) {
                 revert Checks__ProposalNotSucceeded();
+            }
+
+            // Check execution window: bounds how many blocks may pass between a vote succeeding and
+            // request() being called, so handleRequest() (called live, at request()-time) cannot read
+            // state that has drifted arbitrarily far from what voters saw. Opt-in; 0 disables.
+            if (conditions.maxExecutionDelay != 0) {
+                (uint48 voteStart, uint32 voteDuration,,,,,) =
+                    Powers(payable(powers)).getActionVoteData(computeActionId(mandateId, mandateCalldata, nonce));
+
+                if (block.number > uint256(voteStart) + voteDuration + conditions.maxExecutionDelay) {
+                    revert Checks__ExecutionWindowExpired();
+                }
             }
         }
 

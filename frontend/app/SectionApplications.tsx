@@ -1,53 +1,175 @@
 "use client";
 
+import { useState, useEffect, useMemo, useRef, useCallback, TouchEvent } from "react";
+import {
+  ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon,
+  QuestionMarkCircleIcon, Bars3Icon, ArrowTopRightOnSquareIcon,
+  PuzzlePieceIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon, ScaleIcon,
+} from "@heroicons/react/24/outline";
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  question:  QuestionMarkCircleIcon,
+  bars:      Bars3Icon,
+  external:  ArrowTopRightOnSquareIcon,
+  puzzle:    PuzzlePieceIcon,
+  magnifier: MagnifyingGlassIcon,
+  comment:   ChatBubbleLeftIcon,
+  scale:     ScaleIcon,
+};
 import { powersApplications } from "../public/powersApplications";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
-export function SectionApplications() { 
+const GAP = 20;
+
+export function SectionApplications() {
+  const [current, setCurrent] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(700);
+  const total = powersApplications.length;
+
+  // Measure container width
+  useEffect(() => {
+    const measure = () => {
+      if (containerRef.current) setContainerWidth(containerRef.current.offsetWidth);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const cardWidth = containerWidth < 500 ? containerWidth * 0.78 : containerWidth * 0.55;
+
+  const trackOffset = useMemo(() => {
+    const centerOffset = (containerWidth - cardWidth) / 2;
+    return -current * (cardWidth + GAP) + centerOffset;
+  }, [current, containerWidth, cardWidth]);
+
+  const next = useCallback(() => setCurrent(i => (i + 1) % total), [total]);
+  const prev = useCallback(() => setCurrent(i => (i - 1 + total) % total), [total]);
+
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) { if (diff > 0) next(); else prev(); }
+    touchStartX.current = null;
+  };
+
   return (
-    <main className="w-full min-h-screen flex flex-col justify-start items-center bg-gradient-to-b from-slate-600 via-slate-500 to-slate-400 snap-start snap-always py-12 px-2"
+    <main
+      className="w-full min-h-screen flex flex-col justify-between items-center bg-background border-t border-border pt-8 pb-16 md:py-16 px-4"
       id="powersApplications"
-    >    
-      <div className="w-full flex flex-col gap-12 justify-between items-center">
-        {/* title & subtitle */}
-        <div className="w-full flex flex-col justify-center items-center pt-10">
-            <div className="w-full flex flex-col gap-1 justify-center items-center md:text-4xl text-2xl font-mono font-bold text-white max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
-                Applications
-            </div>
-            <div className="w-full flex flex-col gap-1 justify-center items-center md:text-xl text-lg text-slate-200 max-w-3xl text-center text-pretty font-mono">
-                Move beyond simple token voting and design bespoke governance systems that fit your specific needs.
-            </div>
+    >
+      <div className="w-full flex-1 flex flex-col gap-12 items-center justify-center">
+
+        {/* Title & subtitle */}
+        <div className="w-full flex flex-col justify-center items-center">
+          <div className="w-full flex flex-col gap-1 justify-center items-center md:text-4xl text-xl font-mono font-bold text-foreground max-w-4xl text-center text-pretty pb-2 uppercase tracking-wider">
+            Governance, solved.
+          </div>
+          <div className="w-full flex flex-col gap-4 justify-center items-center text-muted-foreground max-w-3xl text-center text-pretty font-mono">
+            <span className="md:text-lg text-sm">Powers Protocol solves governance in a wide range of use cases.</span>
+          </div>
         </div>
 
-        {/* info blocks */}
-        <section className="w-full flex flex-wrap gap-6 max-w-6xl justify-center items-stretch overflow-y-auto max-h-[70vh] pb-6">   
-              {powersApplications.map((useCase, index) => (
-                    <div className="w-80 flex flex-col border border-border bg-background shadow-sm hover:shadow-md transition-shadow duration-200" key={index}>  
-                      <div className="w-full font-mono font-bold text-foreground p-4 border-b border-border bg-muted/50 uppercase tracking-wider text-sm">
-                          {useCase.title}
-                      </div> 
-          
-                      <div className="w-full flex flex-col justify-start items-start px-6 py-4 gap-3">
-                        {
-                          useCase.details.map((detail, i) => (
-                            <div key={i} className="text-muted-foreground leading-relaxed text-sm font-mono">
-                              {detail}
-                            </div>
-                          ))
-                        }
+        {/* Carousel track */}
+        <div
+          ref={containerRef}
+          className="w-full max-w-4xl overflow-hidden"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <div
+            className="flex"
+            style={{
+              gap: `${GAP}px`,
+              transform: `translateX(${trackOffset}px)`,
+              transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            }}
+          >
+            {powersApplications.map((card, i) => (
+              <div
+                key={i}
+                style={{ width: `${cardWidth}px`, flexShrink: 0 }}
+                className="transition-all duration-500 h-full"
+                onClick={() => setCurrent(i)}
+              >
+                <div
+                  className="flex flex-col bg-background transition-all duration-500 h-full"
+                  style={{
+                    border: '2px solid #CD5E20',
+                    opacity: i === current ? 1 : 0.3,
+                    transform: i === current ? "scale(1)" : "scale(0.96)",
+                    cursor: i !== current ? "pointer" : "default",
+                  }}
+                >
+                  <div className="w-full flex flex-col items-center gap-1 p-3 border-b border-border bg-muted/50">
+                    {(() => { const Icon = ICON_MAP[card.icon]; return Icon ? <Icon className="w-5 h-5 text-foreground" /> : null; })()}
+                    <span className="font-mono font-bold text-foreground uppercase tracking-wider text-xs sm:text-sm text-center">{card.title}</span>
+                  </div>
+                  <div className="w-full flex flex-col justify-start items-center px-3 sm:px-6 py-3 gap-2 sm:gap-4">
+                    {card.details.map((detail, j) => (
+                      <div key={j} className="text-muted-foreground leading-relaxed text-xs sm:text-sm font-mono text-center">
+                        {detail}
                       </div>
-                    </div> 
-                )
-              )}
-        </section>
-
-        {/* arrow down */}
-        <div className="flex flex-col align-center justify-center pb-8"> 
-          <ChevronDownIcon
-            className="w-16 h-16 text-slate-300" 
-          /> 
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* Controls */}
+        <div className="w-full max-w-4xl flex items-center justify-between px-2">
+          <button
+            onClick={prev}
+            className="hidden sm:block p-2 border border-border hover:bg-muted transition-colors cursor-pointer"
+            aria-label="Previous"
+          >
+            <ChevronLeftIcon className="w-5 h-5 text-foreground" />
+          </button>
+
+          <div className="flex flex-col items-center gap-2 mx-auto sm:mx-0">
+            <div className="flex gap-2 items-center">
+              {powersApplications.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`w-2 h-2 transition-colors cursor-pointer ${
+                    i === current ? "bg-foreground" : "bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                  }`}
+                  aria-label={`Go to card ${i + 1}`}
+                />
+              ))}
+            </div>
+            <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
+              {current + 1} / {total}
+            </span>
+          </div>
+
+          <button
+            onClick={next}
+            className="hidden sm:block p-2 border border-border hover:bg-muted transition-colors cursor-pointer"
+            aria-label="Next"
+          >
+            <ChevronRightIcon className="w-5 h-5 text-foreground" />
+          </button>
+        </div>
+
+
       </div>
-    </main> 
-  )
+
+      {/* arrow down */}
+      <div className="flex flex-col items-center justify-end pt-10">
+        <button
+          onClick={() => document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="scroll-arrow"
+          aria-label="Scroll to next section"
+        >
+          <ChevronDownIcon className="w-16 h-16" />
+        </button>
+      </div>
+    </main>
+  );
 }

@@ -6,11 +6,11 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 import { Configurations } from "@script/Configurations.s.sol";
 import { DeployMandates } from "@script/DeployMandates.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 import { ReturnDataMock } from "./mocks/ReturnDataMock.sol";
-import { IPowersFactory } from "@src/helpers/PowersFactory.sol";
-import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
+import { IPowersFactory } from "@src/core/helpers/PowersFactory.sol";
+import { ElectionRegistry } from "@src/core/helpers/ElectionRegistry.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract TestConstitutions is Test {
@@ -46,16 +46,23 @@ contract TestConstitutions is Test {
     string[] descriptions;
     string[] params;
 
-    // minimum mandate version to be used in testing. 
+    // minimum mandate version to be used in testing.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 9;
 
     // function setUp() public {
-        // Set up any common state or variables needed for the tests
+    // Set up any common state or variables needed for the tests
     Configurations helperConfig = new Configurations();
     DeployMandates deployMandates = new DeployMandates();
-    IMandateRegistry registry = IMandateRegistry(deployMandates.run());
+    IMandateRegistry public registry = IMandateRegistry(deployMandates.run());
+
+    /// @notice Resolves a mandate at its latest registered version, for mandates that have moved
+    /// off the repo-wide (MAJOR, MINOR, PATCH) pin.
+    function _latestMandateAddress(string memory name) internal view returns (address) {
+        (uint16 major, uint16 minor, uint16 patch) = registry.getLatestVersion(name);
+        return registry.getMandateAddress(major, minor, patch, name);
+    }
 
     // }
 
@@ -336,7 +343,10 @@ contract TestConstitutions is Test {
         address, /*openElection*/
         address, /*erc20DelegateElection*/
         address /*erc20Taxed*/
-    ) external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
+    )
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData)
+    {
         delete constitution; // restart constitution array.
 
         // Nominate - for self-nomination
@@ -446,6 +456,117 @@ contract TestConstitutions is Test {
                     1, // minimum actions in period
                     5 // number of latest actions to check
                 ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
+    //       REVOKE INACTIVE ACCOUNTS CONSTITUTION              //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. SelfSelect role 5, restricted to role 3  → caller-tracked actions
+    // 2. StatementOfIntent, voteable by role 3    → voter-tracked actions
+    // 3. RevokeInactiveAccounts monitoring role 3
+    function revokeInactiveAccountsTestConstitution(
+        address /*daoMock*/
+    )
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        conditions.allowedRole = 3;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign role 5 (role 3 required).",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(5)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = 3;
+        conditions.votingPeriod = 100;
+        conditions.succeedAt = 51;
+        conditions.quorum = 20;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "StatementOfIntent: proposal voteable by role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "RevokeInactiveAccounts: monitor role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RevokeInactiveAccounts"),
+                config: abi.encode(
+                    uint256(3), // roleId to monitor
+                    uint256(1), // minimumActionsNeeded
+                    uint256(5) // numberActionsToCheck
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
+    //        REVOKE ACCOUNTS ROLE ID CONSTITUTION              //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. SelfSelect — public, assigns role 3 (lets tests populate holders)
+    // 2. RevokeAccountsRoleId — public, targets role 3
+    // 3. RevokeAccountsRoleId — restricted to role 1, targets role 3 (access control test)
+    function revokeAccountsRoleIdTestConstitution(
+        address /*daoMock*/
+    )
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        string[] memory emptyInputParams = new string[](0);
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(3)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "RevokeAccountsRoleId: revoke all holders of role 3.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RevokeAccountsRoleId"),
+                config: abi.encode(uint256(3), emptyInputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "RevokeAccountsRoleId: restricted to role 1.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "RevokeAccountsRoleId"),
+                config: abi.encode(uint256(3), emptyInputParams),
                 conditions: conditions
             })
         );
@@ -592,7 +713,8 @@ contract TestConstitutions is Test {
                 timelock: 0,
                 throttleExecution: 0,
                 needFulfilled: 0,
-                needNotFulfilled: 0
+                needNotFulfilled: 0,
+                maxExecutionDelay: 0
             })
         });
 
@@ -600,7 +722,7 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt_Mandates: A mandate to adopt new mandates into the DAO.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates"), // Adopt_Mandates (executive mandate)
+                targetMandate: _latestMandateAddress("Adopt_Mandates"), // Adopt_Mandates — resolved at latest version (0.2.0)
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -633,8 +755,90 @@ contract TestConstitutions is Test {
                     ReturnDataMock.consume.selector,
                     abi.encode(), // no data after
                     params,
-                    9, // mandateId of BespokeActionReturner (the one just added)
+                    uint16(constitution.length), // mandateId of BespokeActionReturner (the one just added)
                     abi.encode() // no data before
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ExternalAction_Flexible - flexible execution at another Powers instance
+        params = new string[](0); // mandate auto-prepends PowersTarget and MandateIdTarget
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ExternalAction_Flexible: A mandate to flexibly execute actions on another Powers instance.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Flexible"),
+                config: abi.encode(params),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // PresetActions_OnOwnPowers — one call baked in: labelRole(3, "Council", "")
+        bytes[] memory ownPowersCalls = new bytes[](1);
+        ownPowersCalls[0] = abi.encodeWithSelector(IPowers.labelRole.selector, uint256(3), "Council", "");
+
+        conditions.allowedRole = 1; // ROLE_ONE
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PresetActions_OnOwnPowers: A mandate to execute preset calls on the DAO itself.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                config: abi.encode(ownPowersCalls),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // PresetActions_OnOwnPowers — empty callDatas (public access, for edge case tests)
+        bytes[] memory ownPowersCallsEmpty = new bytes[](0);
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PresetActions_OnOwnPowers: empty callDatas.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                config: abi.encode(ownPowersCallsEmpty),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ExternalAction_OnReturnValue — forward parent return value to an external Powers instance
+        params = new string[](1);
+        params[0] = "uint256 Value";
+
+        conditions.allowedRole = 1; // ROLE_ONE
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ExternalAction_OnReturnValue: Forward parent return value to an external Powers instance.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_OnReturnValue"),
+                config: abi.encode(
+                    bytes(""), // paramsBefore: empty
+                    params, // params_: ["uint256 Value"]
+                    uint16(8), // parentMandateId = BespokeActionReturner (mandateId 8)
+                    bytes("") // paramsAfter: empty
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // ExternalAction_Simple — forward calldata to a preset mandate on a preset Powers instance
+        params = new string[](1);
+        params[0] = "bool Confirm";
+
+        conditions.allowedRole = 1; // ROLE_ONE
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ExternalAction_Simple: Forward calldata to a preset mandate on another Powers instance.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
+                config: abi.encode(
+                    daoMock, // PowersTarget (self for test)
+                    uint16(1), // MandateIdTarget = StatementOfIntent (public role)
+                    "Forwarded by ExternalAction_Simple", // Description for the inner request
+                    params
                 ),
                 conditions: conditions
             })
@@ -939,14 +1143,9 @@ contract TestConstitutions is Test {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Clean up election: After an election has finished, clean up related mandates.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_OnReturnValue"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_CleanUpVoteMandate"),
                 config: abi.encode(
-                    address(daoMock), // target contract (primaryDAO in original but here it seems we are testing on daoMock)
-                    IPowers.revokeMandate.selector, // function selector to call
-                    abi.encode(), // params before
-                    inputParams,
-                    openVoteId, // parent mandate id (the open vote mandate)
-                    abi.encode() // no params after
+                    openVoteId // mandateId of the ElectionRegistry_CreateVoteMandate that spawned the vote mandate
                 ),
                 conditions: conditions
             })
@@ -1021,10 +1220,34 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
+        // SafeAllowance_Action: set an allowance on the Allowance Module through the Safe treasury.
+        inputParams = new string[](5);
+        inputParams[0] = "address Delegate";
+        inputParams[1] = "address Token";
+        inputParams[2] = "uint96 allowanceAmount";
+        inputParams[3] = "uint16 resetTimeMin";
+        inputParams[4] = "uint32 resetBaseMin";
+
+        mandateCounter++;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SafeAllowance_Action: Set allowance for a delegate via the Allowance Module.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Action"),
+                config: abi.encode(
+                    inputParams,
+                    bytes4(0xbeaeb388), // == AllowanceModule.setAllowance.selector (because the contracts are compiled with different solidity versions we cannot reference the contract directly here)
+                    helperConfig.getSafeAllowanceModule(block.chainid)
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         return constitution;
     }
 
-    function integrationsTestConstitution2(address daoMock)
+    function integrationsTestConstitution2(address daoMock, address token)
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
     {
@@ -1046,6 +1269,38 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
+        // Mandate: Preset Allowance Transfer — token and amount are fixed at adoption, only the recipient is dynamic.
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SafeAllowance_PresetTransfer: Transfer a preset amount of a preset token from the Safe treasury.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_PresetTransfer"),
+                config: abi.encode(
+                    token,
+                    uint256(1e16), // preset amount
+                    helperConfig.getSafeAllowanceModule(block.chainid),
+                    IPowers(daoMock).getTreasury() // This is the SafeProxyTreasury!
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate: Recover Tokens — return any allowance-listed tokens held by this organisation to the treasury.
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Safe_RecoverTokens: Return tokens held by this organisation to the Safe treasury.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_RecoverTokens"),
+                config: abi.encode(
+                    IPowers(daoMock).getTreasury(), // safeTreasury
+                    helperConfig.getSafeAllowanceModule(block.chainid)
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         return constitution;
     }
 
@@ -1061,7 +1316,12 @@ contract TestConstitutions is Test {
     //               INTEGRATION TEST: ELECTORAL                //
     //////////////////////////////////////////////////////////////
     // Delegate Token election flow
-    function delegateToken_IntegrationTestConstitution(address nominees, address, /*openElection*/ address simpleErc20Votes)
+    function delegateToken_IntegrationTestConstitution(
+        address nominees,
+        address,
+        /*openElection*/
+        address simpleErc20Votes
+    )
         external
         returns (PowersTypes.MandateInitData[] memory mandateInitData)
     {
@@ -1429,6 +1689,135 @@ contract TestConstitutions is Test {
     }
 
     //////////////////////////////////////////////////////////////
+    //                  REFORM CONSTITUTION                     //
+    //////////////////////////////////////////////////////////////
+    function pauseMandatesTestConstitution()
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData, PowersTypes.Flow[] memory flows_)
+    {
+        delete constitution;
+
+        // Mandate 1: SelfSelect — target mandate to be paused and restarted
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign as a member.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(1), // roleId to assign
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 2: PauseMandates — valid config, targets flow[0][0]
+        uint8[] memory indexFlow1 = new uint8[](1);
+        uint8[] memory indexMandate1 = new uint8[](1);
+        indexFlow1[0] = 0;
+        indexMandate1[0] = 0;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PauseMandates: pause or restart mandates in flow.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                config: abi.encode(indexFlow1, indexMandate1),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 3: PauseMandates — invalid flow index (99), should skip silently
+        uint8[] memory indexFlow2 = new uint8[](1);
+        uint8[] memory indexMandate2 = new uint8[](1);
+        indexFlow2[0] = 99;
+        indexMandate2[0] = 0;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PauseMandates: invalid flow index.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                config: abi.encode(indexFlow2, indexMandate2),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 4: PauseMandates — valid flow[0], out-of-bounds mandate index (99)
+        uint8[] memory indexFlow3 = new uint8[](1);
+        uint8[] memory indexMandate3 = new uint8[](1);
+        indexFlow3[0] = 0;
+        indexMandate3[0] = 99;
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PauseMandates: out-of-bounds mandate index.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                config: abi.encode(indexFlow3, indexMandate3),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Flow 0: contains SelfSelect (mandateId=1) at position 0
+        flows_ = new PowersTypes.Flow[](1);
+        uint16[] memory flowMandates_ = new uint16[](1);
+        flowMandates_[0] = 1;
+        flows_[0] = PowersTypes.Flow({ mandateIds: flowMandates_, nameDescription: "Test Flow: governance mandates" });
+
+        return (constitution, flows_);
+    }
+
+    //////////////////////////////////////////////////////////////
+    //               REVOKE MANDATES CONSTITUTION               //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. SelfSelect — public, assigns role 1 (target to revoke)
+    // 2. SelfSelect — public, assigns role 2 (second target to revoke)
+    // 3. Revoke_Mandates — restricted to role 1
+    function revokeMandatesTestConstitution(
+        address /*daoMock*/
+    )
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign as member.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(1)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = type(uint256).max;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SelfSelect: self-assign as delegate.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SelfSelect"),
+                config: abi.encode(uint256(2)),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Revoke_Mandates: revoke a list of mandates.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Revoke_Mandates"),
+                config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
     //                 HELPERS CONSTITUTION                     //
     //////////////////////////////////////////////////////////////
     function helpersTestConstitution() external returns (PowersTypes.MandateInitData[] memory mandateInitData) {
@@ -1451,6 +1840,125 @@ contract TestConstitutions is Test {
                 nameDescription: "Open Action: Execute any action.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "OpenAction"), // openAction
                 config: abi.encode(),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        return constitution;
+    }
+
+    //////////////////////////////////////////////////////////////
+    //            SLATE REGISTRY ADD SLATE CONSTITUTION         //
+    //////////////////////////////////////////////////////////////
+    // Two mandates:
+    //   1. SlateRegistry_AddSlate — restricted to role 1, uses slateRegistryMock + presetActions
+    //   2. SlateRegistry_RemoveSlate — restricted to role 1, links back to mandate 1
+    // Two flows set at closeConstitute time:
+    //   flow[0] — 3 empty slots (all zero), used for the happy-path test
+    //   flow[1] — 1 occupied slot (mandateId=1), used for the no-empty-slot revert test
+    function slateRegistryAddSlateTestConstitution(address slateRegistryMock, address presetActions)
+        external
+        returns (PowersTypes.MandateInitData[] memory mandateInitData, PowersTypes.Flow[] memory flows_)
+    {
+        delete constitution;
+
+        // Mandate 1: SlateRegistry_AddSlate
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SlateRegistry_AddSlate: add a slate to a SlateRegistry election.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_AddSlate"),
+                config: abi.encode(slateRegistryMock, presetActions),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 2: SlateRegistry_RemoveSlate (links to mandate 1 as addSlateMandateId)
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SlateRegistry_RemoveSlate: remove a slate from a SlateRegistry election.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_RemoveSlate"),
+                config: abi.encode(slateRegistryMock, uint16(1)), // addSlateMandateId = 1
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 3: SlateRegistry_ExecuteResult
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "SlateRegistry_ExecuteResult: execute the results of a SlateRegistry election.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SlateRegistry_ExecuteResult"),
+                config: abi.encode(slateRegistryMock),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Flow 0: 3 empty slots — happy path (findEmptySlot returns index 0)
+        flows_ = new PowersTypes.Flow[](2);
+        uint16[] memory emptyFlow = new uint16[](3);
+        flows_[0] = PowersTypes.Flow({ mandateIds: emptyFlow, nameDescription: "Slate election flow: 3 empty slots" });
+
+        // Flow 1: 1 occupied slot (mandateId=1) — triggers "No empty slot in flow" revert
+        uint16[] memory fullFlow = new uint16[](1);
+        fullFlow[0] = 1;
+        flows_[1] =
+            PowersTypes.Flow({ mandateIds: fullFlow, nameDescription: "Slate election flow: all slots occupied" });
+
+        return (constitution, flows_);
+    }
+
+    //////////////////////////////////////////////////////////////
+    //          POWERS FACTORY TEST CONSTITUTION               //
+    //////////////////////////////////////////////////////////////
+    // Three mandates:
+    // 1. BespokeAction_Simple calling returnDataMock.getValue() (returns uint256(42))
+    // 2. PowersFactory_AssignRole — factoryMandateId=1, roleIdNewOrg=2
+    // 3. PowersFactory_AddSafeDelegate — factoryMandateId=1, allowanceModule=address(1)
+    function powersFactoryTestConstitution(address returnDataMockAddr)
+        external
+        returns (PowersTypes.MandateInitData[] memory)
+    {
+        delete constitution;
+
+        string[] memory emptyParams = new string[](0);
+
+        // Mandate 1: BespokeAction_Simple returning uint256(42), decodable as address(42)
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "BespokeActionReturner: returns address-decodable value for testing.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
+                config: abi.encode(returnDataMockAddr, ReturnDataMock.getValue.selector, emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 2: PowersFactory_AssignRole using mandate 1 as the factory action
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PowersFactory_AssignRole: assign role in new org.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AssignRole"),
+                config: abi.encode(uint16(1), uint256(2), emptyParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Mandate 3: PowersFactory_AddSafeDelegate using mandate 1 as the factory action
+        conditions.allowedRole = 1;
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "PowersFactory_AddSafeDelegate: add safe delegate.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PowersFactory_AddSafeDelegate"),
+                config: abi.encode(uint16(1), address(1), emptyParams),
                 conditions: conditions
             })
         );

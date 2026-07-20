@@ -1,0 +1,24 @@
+[submodule "solidity/lib/forge-std"]
+	path = solidity/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "solidity/lib/openzeppelin-contracts"]
+	path = solidity/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "solidity/lib/chainlink-evm"]
+	path = solidity/lib/chainlink-evm
+	url = https://github.com/smartcontractkit/chainlink-evm
+[submodule "solidity/lib/chainlink-ccip"]
+	path = solidity/lib/chainlink-ccip
+	url = https://github.com/smartcontractkit/chainlink-ccip
+[submodule "solidity/lib/safe-smart-account"]
+	path = solidity/lib/safe-smart-account
+	url = https://github.com/safe-fndn/safe-smart-account
+[submodule "solidity/lib/safe-modules"]
+	path = solidity/lib/safe-modules
+	url = https://github.com/safe-fndn/safe-modules
+[submodule "solidity/lib/account-abstraction"]
+	path = solidity/lib/account-abstraction
+	url = https://github.com/eth-infinitism/account-abstraction
+[submodule "solidity/lib/zkpassport-packages"]
+	path = solidity/lib/zkpassport-packages
+	url = https://github.com/zkpassport/zkpassport-packages

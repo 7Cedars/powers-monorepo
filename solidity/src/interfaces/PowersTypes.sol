@@ -6,9 +6,17 @@ pragma solidity ^0.8.26;
 
 interface PowersTypes {
     /// @notice struct to keep track of a mandate.
+    ///
+    /// @dev `handleRequest()` is called live at `request()`-time, not at `propose()`/vote-time, and for
+    /// mandates that read mutable on-chain state (role holders, balances, delegation, election tallies,
+    /// etc.) its output can differ from what voters implicitly approved if `request()` is called much
+    /// later than the vote, or after an adversary has manipulated the state it reads. Since a `Succeeded`
+    /// action never expires on its own, that gap is unbounded unless `maxExecutionDelay` is set. Mandate
+    /// authors and governance designers should treat "vote succeeded" as approval of *intent*
+    /// (mandateId + calldata), not of a specific, previewed execution payload.
     struct Conditions {
         uint256 allowedRole; // Takes its own slot
-        // --- All of the following can be packed into a single slot (144 bits total) ---
+        // --- All of the following can be packed into a single slot (176 bits total) ---
         uint32 votingPeriod;
         uint32 timelock;
         uint32 throttleExecution;
@@ -16,6 +24,13 @@ interface PowersTypes {
         uint16 needNotFulfilled;
         uint8 quorum;
         uint8 succeedAt;
+        // @notice for quorum-gated mandates (quorum != 0), the maximum number of blocks after a vote
+        // succeeds within which `request()` must be called; 0 disables the check (default, preserves
+        // pre-existing unbounded-wait behavior). Has no effect on quorum==0 direct actions, since those
+        // execute atomically within a single `request()` call and have no vote-to-execution gap. Opt in
+        // for mandates whose `handleRequest` reads mutable state, to bound how stale that state can be
+        // relative to the vote. See `Checks.check()` for enforcement.
+        uint32 maxExecutionDelay;
     }
 
     /// @notice struct to keep track of an adopted mandate.
@@ -49,19 +64,21 @@ interface PowersTypes {
     /// @dev in contrast to other Governance protocols, votes are not weighted and can hence be a uint32, not a uint256.
     /// @dev votes are logged at the proposal. In on struct. This is in contrast to other governance protocols where ProposalVote is a separate struct.
     struct Action {
-        // --- Packed Slot 1 (248 bits used) ---
+        // --- Packed Slot 1 (256 bits used) ---
         uint48 proposedAt;
         uint48 requestedAt;
         uint48 fulfilledAt;
         uint48 cancelledAt;
-        uint48 failedAt;
         uint48 voteStart;
         uint16 mandateId;
-        // --- Packed Slot 2 (128 bits used) ---
+        // --- Packed Slot 2 (160 bits used) ---
         uint32 voteDuration;
         uint32 againstVotes;
         uint32 forVotes;
         uint32 abstainVotes;
+        // @notice Eligible member count of `allowedRole` captured at `voteStart`; used as the
+        // quorum/threshold denominator so a concluded vote cannot be flipped by later membership change.
+        uint32 voterCountSnapshot;
         // --- Separate Slots ---
         address caller;
         uint256 nonce;
@@ -78,14 +95,15 @@ interface PowersTypes {
     /// This is because execution logic in {Powers} is separated from the proposal logic.
     enum ActionState {
         NonExistent, // - 0: log this
-        Proposed, // - 1: log this
+        Proposed, // - 1: NOTE: not currently returned by Powers.getActionState() — the moment an
+        // action is proposed, voteStart/voteDuration are already set, so state resolves directly to
+        // Active/Defeated/Succeeded. Kept in the enum for ABI/index stability; do not rely on this value.
         Cancelled, // - 2: log this
         Active, // - 3: calculate this
         Defeated, // - 4: calculate this
         Succeeded, // - 5: calculate this
         Requested, // - 6: log this
-        Fulfilled, // - 7: log this
-        Failed // - 8: log this
+        Fulfilled // - 7: log this
     }
 
     /// @notice Supported vote types. Matches Governor Bravo ordering.

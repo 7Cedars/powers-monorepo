@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { setStatus, setError, setAction, useActionStore, usePowersStore, useSavedProtocolsStore } from "@/context/store";
-import { ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
+import { setAction, setStatus, setError, useActionStore, usePowersStore, useUIStateStore } from "@/context/store";
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { AllFlows } from './AllFlows'; 
-import { useConnection, usePublicClient, useSwitchChain } from "wagmi";
 import { usePowers } from "@/hooks/usePowers";
 import { parseChainId } from "@/utils/parsers"; 
 
@@ -27,6 +26,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
     if (savedWidth) {
       const width = parseInt(savedWidth, 10)
       if (width >= 300 && width <= 1200) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPanelWidth(width)
       }
     }
@@ -76,11 +76,12 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
   
   // Navigation items
   const navItems = [
-    { label: 'Home', path: `/overview/${chainId}/${powers}/home` },
     { label: 'Actions', path: `/overview/${chainId}/${powers}/actions` },
     { label: 'Mandates', path: `/overview/${chainId}/${powers}/mandates` },
+    { label: 'Flows', path: `/overview/${chainId}/${powers}/flows` },
     { label: 'Roles', path: `/overview/${chainId}/${powers}/roles` },
     { label: 'Treasury', path: `/overview/${chainId}/${powers}/treasury` },
+    { label: 'Organisation', path: `/overview/${chainId}/${powers}/organisation` },
   ]
   
   // Check if current page matches nav item
@@ -91,18 +92,10 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
     return false
   }
   
-  // Handle navigation button click
+  // Handle navigation button click — always navigate to the overview page for that tab
   const handleNavClick = (path: string) => {
-    if (isActive(path)) {
-      // If clicking the active button, collapse the panel
-      setIsCollapsed(true)
-    } else {
-      // Navigate to the page and expand if collapsed
-      if (isCollapsed) {
-        setIsCollapsed(false)
-      }
-      router.push(path)
-    }
+    if (isCollapsed) setIsCollapsed(false)
+    router.push(path)
   }
  
   return (
@@ -116,16 +109,13 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
       help-nav-item="right-panel"
     >
       {/* Vertical Navigation Buttons - always visible on the left edge of the panel */}
-      <div 
-        className="h-full flex-shrink-0 bg-background border-border flex flex-col items-center justify-start py-6 relative"
+      <div
+        className="h-full flex-shrink-0 bg-background border-border flex flex-col items-center justify-start pt-18 relative"
         style={{
           width: '36px',
           minWidth: '36px',
-          gap: '88px'
         }}
       >
-        {/* Collapse/Expand Button */}
-
         {/* Resize Handle - positioned on the right edge of navigation bar */}
         {!isCollapsed && (
           <div
@@ -142,21 +132,20 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="relative transition-all bg-foreground/10 text-foreground hover:bg-foreground hover:text-background border border-foreground/30 hover:border-foreground flex items-center justify-center z-30"
+          className="relative transition-colors font-mono text-[10px] text-center uppercase tracking-wider border border-border bg-muted/50 text-muted-foreground hover:bg-foreground/20 flex items-center justify-center z-30"
           style={{
             width: '36px',
             height: '36px',
+            transform: 'rotate(-90deg)',
+            transformOrigin: 'center',
+            whiteSpace: 'nowrap',
             flexShrink: 0,
           }}
           title={isCollapsed ? 'Expand panel' : 'Collapse panel'}
         >
-          <ChevronDoubleRightIcon 
-            className="w-5 h-5 transition-colors font-mono text-[10px] uppercase tracking-wider border border-border transition-transform duration-300"
-            style={{
-              transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)'
-            }}
-          />
+          <ChevronDownIcon className={`w-3 h-3 transition-transform ${isCollapsed ? 'rotate-180' : 'rotate-0'}`} />
         </button>
+        <div className="flex flex-col items-center flex-1 overflow-y-auto" style={{ gap: '88px', paddingTop: '46px', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
         {
         navItems.map((item) => {
           const active = isActive(item.path)
@@ -165,9 +154,9 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
               key={item.path}
               onClick={() => handleNavClick(item.path)}
               className={`
-                relative transition-colors font-mono text-[10px] uppercase tracking-wider border border-border
-                ${active 
-                  ? 'text-background bg-foreground border-foreground' 
+                relative shrink-0 transition-colors font-mono text-[10px] uppercase tracking-wider border border-border
+                ${active
+                  ? 'text-background bg-foreground border-foreground'
                   : 'bg-muted/50 text-muted-foreground hover:bg-foreground/20'
                 }
               `}
@@ -183,6 +172,7 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
             </button>
           )
         })}
+        </div>
       </div>
 
       {/* Panel Content */}
@@ -206,11 +196,12 @@ const SidePanel = ({ children }: { children: React.ReactNode }) => {
 }
 
 export default function OverviewLayout({ children }: OverviewLayoutProps) {
-  const pathname = usePathname(); 
-  const { fetchPowers } = usePowers(); 
+  const pathname = usePathname();
+  const { fetchPowers } = usePowers();
   const action = useActionStore();
-  const powers = usePowersStore(); 
-  const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>(); 
+  const powers = usePowersStore();
+  const { powers: powersAddress, chainId } = useParams<{ chainId: string, powers: string }>();
+  const { clearHighlightMode } = useUIStateStore();
 
     // Load powers instance if not loaded yet
   useEffect(() => {
@@ -221,13 +212,16 @@ export default function OverviewLayout({ children }: OverviewLayoutProps) {
     }
   }, [powersAddress, chainId, fetchPowers])
 
-  console.log('@OverviewLayout rendered:', {powersAddress, chainId, action, powers})
-
-  // reset status, error, and action when pathname changes
+  // reset status, error; clear highlight and action when navigating to a tab overview (not a detail page)
   useEffect(() => {
     setError({error: null})
     setStatus({status: "idle"})
-  }, [pathname, action])
+    const isDetailPage = /\/(mandates|actions|roles|flows)\/[^/]+/.test(pathname)
+    if (!isDetailPage) {
+      clearHighlightMode()
+      setAction({ actionId: "0" })
+    }
+  }, [pathname])
 
   return (  
     <div className="min-h-full bg-background relative z-0">

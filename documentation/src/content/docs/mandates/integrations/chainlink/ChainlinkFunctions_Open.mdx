@@ -1,0 +1,71 @@
+---
+title: "ChainlinkFunctions_Open"
+description: "ChainlinkFunctions_Open is an async integration mandate that forwards any number of string inputs to a Chainlink Functions oracle, executing configurable off-chain JavaScript source code."
+---
+
+ChainlinkFunctions_Open is an async integration mandate that sends user-provided string inputs to a Chainlink Functions oracle for off-chain computation. The JavaScript source code to execute is fully configurable, making this a generic oracle mandate for any off-chain data verification or computation.
+
+## Overview
+
+This mandate differs from standard mandates in that it is **asynchronous** — it extends `AsyncMandate` rather than `Mandate`. When executed, it submits a Chainlink Functions request and waits for a callback. The Powers action is only completed once the oracle responds.
+
+It is useful for any governance flow that requires off-chain data verification before proceeding, such as checking API responses, verifying web2 credentials, or computing off-chain values.
+
+## Configuration
+
+When adopting a ChainlinkFunctions_Open instance, the following parameters are required:
+
+1.  `source` (string): The JavaScript source code to execute in the Chainlink Functions oracle.
+2.  `inputParams` (string[]): UI hints describing the string inputs the user must provide. All inputs must be of type `string`.
+3.  `subscriptionId` (uint64): The Chainlink Functions subscription ID funding the oracle requests.
+4.  `gasLimit` (uint32): The gas limit for the Chainlink Functions callback.
+5.  `donId` (bytes32): The Chainlink DON (Decentralized Oracle Network) ID.
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the inputs must match the configured `inputParams`. All inputs are strings and are forwarded directly to the oracle as `args`.
+
+### Execution Flow
+
+1.  **Request (`handleRequest`)**
+    *   Decodes the string inputs from `mandateCalldata`.
+    *   Passes the caller, Powers address, and inputs to the oracle callback system.
+
+2.  **Oracle Call (`_callOracle`)**
+    *   Sends a Chainlink Functions request using the configured `source` and the decoded string args.
+    *   Stores the request details (caller, Powers address, mandate ID, action ID) for use in the callback.
+
+3.  **Callback (`fulfillRequest`)**
+    *   Receives the oracle's response or error.
+    *   On success: stores the response in `chainlinkReplies` and calls `_replyPowers` to complete the action.
+    *   On error: stores the error in `chainlinkErrors`. The action is not completed.
+
+### Error Conditions
+
+*   `"All input parameters must be of type string"` — Raised during initialization if any `inputParam` does not start with `"string "`.
+*   `UnexpectedRequestID` — Raised in the callback if the Chainlink request ID does not match the last stored request.
+
+## Technical Specifications
+
+### View Functions
+
+#### `getLatestReply`
+```solidity
+function getLatestReply(bytes32 mandateHash, address caller)
+    external view returns (bytes memory errorMessage, bytes memory responseData)
+```
+Returns the latest oracle error or response for a given caller and mandate instance.
+
+#### `resetReply`
+```solidity
+function resetReply(address powers, uint16 mandateId, address caller) external returns (bool success)
+```
+Clears stored oracle results for a caller. Only callable by the Powers contract.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |

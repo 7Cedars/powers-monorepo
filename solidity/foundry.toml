@@ -8,6 +8,7 @@ create2_deployer = "0x4e59b44847b379578588920ca78fbf26c0b4956c"
 solc_version = "0.8.30"
 
 memory_limit = 1342177280
+no_match_coverage = "(script|governance|test)"
 optimizer_runs = 600
 # dynamic_test_linking = true
 # Auto-detect Solidity versions from pragma statements
@@ -24,10 +25,7 @@ fs_permissions = [
 remappings = [
     # Your project's remappings (@ prefixed - these take priority)
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
     "@forge-std/=lib/forge-std/src/",
-    "@solady/=lib/solady/src/",
-    "@solbase/=lib/solbase/src/",
     "@safe/=lib/safe-smart-account/contracts/",
     "@chainlink/contracts/=lib/chainlink-evm/contracts", 
     "@chainlink/contracts-ccip/=lib/chainlink-ccip/chains/evm/contracts",
@@ -35,9 +33,8 @@ remappings = [
     "@src/=src/",
     "@lib/=lib/",
     "@script/=script",
-    "@governance/=governance/",
-    "@zkpassport/circuits/=lib/circuits/src/solidity/"
-] 
+    "@governance/=governance/"
+]
 
 [fmt]
 bracket_spacing = true

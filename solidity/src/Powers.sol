@@ -78,6 +78,10 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     uint256 public immutable MAX_EXECUTIONS_LENGTH;
     /// @notice block number at which the Powers contract was deployed.
     uint256 public immutable FOUNDED_AT;
+    /// @notice Address of the MandateRegistry this org enforces mandate membership against.
+    /// @dev address(0) means no registry is enforced — any address implementing IMandate can be adopted,
+    /// as before. This value is immutable: an org that wants to use a different registry must redeploy.
+    address public immutable MANDATE_REGISTRY;
 
     /// @notice Name of the DAO
     string public name;
@@ -131,12 +135,15 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     /// @param maxCallDataLength_ maximum length of calldata for a mandate
     /// @param maxReturnDataLength_ maximum length of return data for a mandate
     /// @param maxExecutionsLength_ maximum length of executions for a mandate
+    /// @param mandateRegistry_ MandateRegistry address this org enforces mandate membership against.
+    /// Pass address(0) to adopt any address implementing IMandate, with no registry restriction.
     constructor(
         string memory name_,
         string memory uri_,
         uint256 maxCallDataLength_,
         uint256 maxReturnDataLength_,
-        uint256 maxExecutionsLength_
+        uint256 maxExecutionsLength_,
+        address mandateRegistry_
         // add here the init data for initial mandates?
     ) payable EIP712(name_, version()) {
         if (bytes(name_).length == 0) revert Powers__InvalidName();
@@ -150,6 +157,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         MAX_CALLDATA_LENGTH = maxCallDataLength_;
         MAX_RETURN_DATA_LENGTH = maxReturnDataLength_;
         MAX_EXECUTIONS_LENGTH = maxExecutionsLength_;
+        MANDATE_REGISTRY = mandateRegistry_;
         FOUNDED_AT = block.number;
 
         emit Powers__Initialized(address(this), name, uri);
@@ -244,6 +252,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // if checks pass: propose.
         uint32 votingPeriod = mandate.conditions.votingPeriod;
         uint8 quorum = mandate.conditions.quorum;
+        uint256 allowedRole = mandate.conditions.allowedRole;
 
         actionId = Checks.computeActionId(mandateId, mandateCalldata, nonce);
 
@@ -259,6 +268,10 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         action.proposedAt = uint48(block.number);
         action.mandateId = mandateId;
         action.voteStart = quorum > 0 ? uint48(block.number) : 0;
+        // Snapshot the eligible-voter count at voteStart so the quorum/threshold denominator
+        // cannot be flipped by mutating role membership before request(). Left 0 for quorum==0
+        // direct actions, which do not use a denominator (they short-circuit in the checks below).
+        action.voterCountSnapshot = quorum > 0 ? uint32(_countMembersRole(allowedRole)) : 0;
         action.voteDuration = votingPeriod;
         action.caller = _msgSender();
         action.uri = uriAction;
@@ -367,6 +380,11 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // set action as fulfilled
         action.fulfilledAt = uint48(block.number);
 
+        // register latestFulfillment before the external calls below, so a reentrant request()
+        // for the same mandateId (triggered from one of those calls) cannot read a stale
+        // pre-fulfillment value and bypass Conditions.throttleExecution.
+        mandate.latestFulfillment = uint48(block.number);
+
         // execute targets[], values[], calldatas[] received from mandate.
         for (uint256 i = 0; i < targetsLength;) {
             if (calldatas[i].length > MAX_CALLDATA_LENGTH) revert Powers__CalldataTooLong();
@@ -374,8 +392,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
 
             (bool success, bytes memory returndata) = targets[i].call{ value: values[i] }(calldatas[i]);
             if (!success) {
-                // logging block number of failed action.
-                action.failedAt = uint48(block.number); // log time of failure.
+                // note: a failed call reverts the entire fulfill() transaction (see below), so no
+                // "failed" state is ever persisted here — the action simply stays un-fulfilled.
                 // this bubbles up the revert reason if the call reverted with one, otherwise it reverts with a default error message.
                 if (returndata.length > 0) {
                     assembly {
@@ -395,12 +413,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
                 ++i;
             }
         }
-
-        // emit event. -- commented out to save gas, can be re-enabled if needed.
         emit ActionFulfilled(mandateId, actionId, targets, values, calldatas);
-
-        // register latestFulfillment at mandate.
-        mandate.latestFulfillment = uint48(block.number);
     }
 
     /// @inheritdoc IPowers
@@ -415,8 +428,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // check 1: is caller the caller of the proposedAction?
         if (_msgSender() != action.caller) revert Powers__NotProposerAction();
 
-        // check 2: does action exist?
-        if (action.proposedAt == 0) revert Powers__ActionNotProposed();
+        // check 2: does action exist? (either voted-on via propose(), or direct via request())
+        if (action.proposedAt == 0 && action.requestedAt == 0) revert Powers__ActionNotProposed();
 
         // check 3: is action already fulfilled or cancelled?
         if (action.fulfilledAt > 0 || action.cancelledAt > 0) {
@@ -464,7 +477,14 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // Note that we check if account has access to the mandate targetted in the proposedAction.
         uint16 mandateId = action.mandateId;
         if (!canCallMandate(account, mandateId)) revert Powers__CannotCallMandate();
-        // check 2: has account already voted?
+        // check 2: did the account join the voting role at or before voteStart? Members who joined
+        // after voting opened are not part of the snapshotted denominator and may not vote — this
+        // pairs with voterCountSnapshot to keep forVotes+abstainVotes <= denominator (see C-01).
+        uint256 allowedRole = getConditions(mandateId).allowedRole;
+        if (allowedRole != PUBLIC_ROLE && hasRoleSince(account, allowedRole) > action.voteStart) {
+            revert Powers__JoinedAfterVoteStart();
+        }
+        // check 3: has account already voted?
         if (action.hasVoted[account]) revert Powers__AlreadyCastVote();
 
         // if all this passes: cast vote.
@@ -497,7 +517,7 @@ contract Powers is EIP712, ERC165, IPowers, Context {
     /// @dev WARNING: any adopted mandate needs to be audited carefully as it will give powers to role holders over the organisation.
     /// @dev Internal helper to store mandate data and initialize it.
     function _storeMandate(uint16 mandateId, MandateInitData memory mandateInitData) internal {
-        PowersUtilities.storeMandate(mandates, _blacklist, mandateId, mandateInitData);
+        PowersUtilities.storeMandate(mandates, _blacklist, mandateId, mandateInitData, MANDATE_REGISTRY);
         emit MandateAdopted(mandateId);
     }
 
@@ -600,7 +620,9 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // retrieve quorum and allowedRole from mandate.
         Action storage proposedAction = _actions[actionId];
         Conditions memory conditions = getConditions(proposedAction.mandateId);
-        uint256 amountMembers = _countMembersRole(conditions.allowedRole);
+        // Use the eligible-voter count snapshotted at voteStart, not the live count, so a
+        // concluded vote cannot be flipped by membership changes before request() (see C-01).
+        uint256 amountMembers = proposedAction.voterCountSnapshot;
 
         // check if quorum is set to 0 in a Mandate, it will automatically return true. Otherwise, check if quorum has been reached.
         return (conditions.quorum == 0
@@ -615,7 +637,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         // retrieve quorum and success threshold from mandate.
         Action storage proposedAction = _actions[actionId];
         Conditions memory conditions = getConditions(proposedAction.mandateId);
-        uint256 amountMembers = _countMembersRole(conditions.allowedRole);
+        // Use the eligible-voter count snapshotted at voteStart, not the live count (see C-01).
+        uint256 amountMembers = proposedAction.voterCountSnapshot;
 
         // note if quorum is set to 0 in a Mandate, it will automatically return true. Otherwise, check if success threshold has been reached.
         return conditions.quorum == 0 || amountMembers * conditions.succeedAt <= proposedAction.forVotes * DENOMINATOR;
@@ -669,7 +692,6 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         return interfaceId == type(IERC721Receiver).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
             || super.supportsInterface(interfaceId);
     }
-
 
     //////////////////////////////////////////////////////////////
     //                 VIEW / GETTER FUNCTIONS                  //
@@ -750,9 +772,6 @@ contract Powers is EIP712, ERC165, IPowers, Context {
         if (action.proposedAt == 0 && action.requestedAt == 0 && action.fulfilledAt == 0 && action.cancelledAt == 0) {
             return ActionState.NonExistent;
         }
-        if (action.failedAt > 0) {
-            return ActionState.Failed;
-        }
         if (action.fulfilledAt > 0) {
             return ActionState.Fulfilled;
         }
@@ -811,7 +830,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
             uint256 voteEnd,
             uint32 againstVotes,
             uint32 forVotes,
-            uint32 abstainVotes
+            uint32 abstainVotes,
+            uint32 voterCountSnapshot
         )
     {
         Action storage action = _actions[actionId];
@@ -822,7 +842,8 @@ contract Powers is EIP712, ERC165, IPowers, Context {
             action.voteStart + action.voteDuration,
             action.againstVotes,
             action.forVotes,
-            action.abstainVotes
+            action.abstainVotes,
+            action.voterCountSnapshot
         );
     }
 

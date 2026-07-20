@@ -6,7 +6,7 @@ import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Configurations } from "@script/Configurations.s.sol"; 
 import { DeployHelpers } from "../DeployHelpers.s.sol";
-import { IMandateRegistry } from "@src/helpers/MandateRegistry.sol";
+import { IMandateRegistry } from "@src/core/helpers/MandateRegistry.sol";
 
 // powers contracts
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
@@ -14,7 +14,7 @@ import { Powers } from "@src/Powers.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 
 // Account Abstraction Integrations
-import { PowersPaymaster } from "@src/helpers/PowersPaymaster.sol"; 
+import { PowersPaymaster } from "@src/core/helpers/PowersPaymaster.sol"; 
 import { IEntryPoint } from "@lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
 // helpers
@@ -43,7 +43,7 @@ contract Deploy is DeployHelpers {
     // Select version mandates to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 9;
 
     address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
     address public cedars = 0x328735d26e5Ada93610F0006c32abE2278c46211; 
@@ -59,16 +59,18 @@ contract Deploy is DeployHelpers {
 
         powers = new Powers(
             "Account Abstracted Powers", // name
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicqhl4mo4b5dep3fzheijqnkdrviiqlf23wlasfqznrpqhd3z3qfy/bicameralism.json",  // Using the bicameralism example as dummy for now. 
+            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreibt7jfbckh7pudo32u5n3fje2defkafopiw2np55zij7u3vrtyxqy",  
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
-            helperConfig.getMaxExecutionsLength(block.chainid) // max executions length
+            helperConfig.getMaxExecutionsLength(block.chainid), // max executions length
+            address(registry)
         );
 
         powersPaymaster = new PowersPaymaster(
             IEntryPoint(ENTRY_POINT),
             address(powers)
         );
+        powersPaymaster.deposit{value: 0.05 ether}();
         vm.stopBroadcast();
         
         console2.log("Powers deployed at:", address(powers));
@@ -95,19 +97,21 @@ contract Deploy is DeployHelpers {
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
-        targets = new address[](7);
-        values = new uint256[](7);
-        calldatas = new bytes[](7);
+        targets = new address[](8);
+        values = new uint256[](8);
+        calldatas = new bytes[](8);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = address(powers);
         }
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");  
-        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
-        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", ""); 
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Admin", "");
+        calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "");
+        calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Delegate", "");
         calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[4] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
         calldatas[5] = abi.encodeWithSelector(IPowers.setPaymaster.selector, address(powersPaymaster));
-        calldatas[6] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
+        targets[6] = address(powersPaymaster);
+        calldatas[6] = abi.encodeWithSelector(PowersPaymaster.addSponsoredTarget.selector, address(powers));
+        calldatas[7] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate after use.
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public role

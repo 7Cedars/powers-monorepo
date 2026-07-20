@@ -1,0 +1,58 @@
+---
+title: "SlateRegistry_AddSlate"
+description: "SlateRegistry_AddSlate is an integration mandate that submits a slate (a set of proposed actions) to a SlateRegistry election."
+---
+
+SlateRegistry_AddSlate is an integration mandate that allows a participant to submit a slate — a named proposal consisting of a set of on-chain actions — to an active SlateRegistry election. Each slate is adopted as a `PresetActions` mandate and registered in the election's voting flow.
+
+## Overview
+
+In the SlateRegistry election system, participants compete by proposing slates of actions. Voters then vote on which slate to execute. This mandate handles the submission of a new slate by:
+1. Adopting a new `PresetActions` mandate configured with the slate's proposed actions.
+2. Adding it to the election's action flow.
+3. Registering it in the SlateRegistry so it can receive votes.
+
+## Configuration
+
+When adopting a SlateRegistry_AddSlate instance, the following parameters are required:
+
+1.  `SlateRegistry` (address): The address of the SlateRegistry helper contract managing the election.
+2.  `PresetActions` (address): The address of the `PresetActions` mandate implementation (used as a template).
+
+## Usage
+
+### Proposing an Action
+
+When calling the mandate, the following inputs must be provided:
+
+1.  `ElectionTitle` (string): The title of the election to submit the slate to.
+2.  `NameDescription` (string): A name and description for this slate.
+3.  `Targets` (address[]): The target contract addresses for the slate's proposed actions.
+4.  `Values` (uint256[]): ETH values for each call in the slate.
+5.  `Calldatas` (bytes[]): Encoded function calls for each action in the slate.
+
+### Execution Flow
+
+1.  **Election Lookup**
+    *   Computes the `electionId` as `keccak256(powers + ElectionTitle)`.
+    *   Retrieves the election's `flowIndex` and `roleId` from the SlateRegistry.
+
+2.  **Mandate Adoption**
+    *   Adopts a new `PresetActions` mandate configured with the slate's targets, values, and calldatas.
+    *   Restricted to the election's `roleId`.
+
+3.  **Flow Registration**
+    *   Inserts the new mandate ID into the first empty slot in the election's action flow.
+
+4.  **Slate Registration**
+    *   Calls `SlateRegistry.registerSlate` to record the new mandate ID so it can receive votes.
+
+### Error Conditions
+
+*   `"No empty slot in flow"` — The election's action flow has no available slots for new slates.
+
+## Current Deployments
+
+| Chain ID | Chain Name | Address |
+| :--- | :--- | :--- |
+| | | |
