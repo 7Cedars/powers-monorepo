@@ -814,7 +814,8 @@ contract FulfillTest is TestSetupPowers {
 
     function testFulfillRevertsIfMismatchedArrays() public {
         // Adopt a mandate whose handleRequest returns mismatched arrays
-        MismatchedArraysMandate mismatchMandate = MismatchedArraysMandate(registerTestMandate(address(new MismatchedArraysMandate(address(registry)))));
+        MismatchedArraysMandate mismatchMandate =
+            MismatchedArraysMandate(registerTestMandate(address(new MismatchedArraysMandate(address(registry)))));
         PowersTypes.MandateInitData memory initData = PowersTypes.MandateInitData({
             nameDescription: "Test mismatched: triggers Powers__InvalidCallData",
             targetMandate: address(mismatchMandate),
@@ -831,7 +832,8 @@ contract FulfillTest is TestSetupPowers {
 
     function testFulfillRevertsIfExecutionArrayTooLong() public {
         // Adopt a mandate whose handleRequest returns 26 targets (> MAX_EXECUTIONS_LENGTH=25)
-        TooManyTargetsMandate tooManyMandate = TooManyTargetsMandate(registerTestMandate(address(new TooManyTargetsMandate(address(registry)))));
+        TooManyTargetsMandate tooManyMandate =
+            TooManyTargetsMandate(registerTestMandate(address(new TooManyTargetsMandate(address(registry)))));
         PowersTypes.MandateInitData memory initData = PowersTypes.MandateInitData({
             nameDescription: "Test too many: triggers Powers__ExecutionArrayTooLong",
             targetMandate: address(tooManyMandate),

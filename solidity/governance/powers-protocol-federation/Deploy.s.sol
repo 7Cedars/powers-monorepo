@@ -274,7 +274,12 @@ contract Deploy is DeployHelpers {
 
         // ── FLOW E5: Governance Reform (investors self-govern) ────────────────
         _flow2(mandateCount + 1, mandateCount + 2, "Endowment E5 - Reform: Propose and adopt new mandates.");
-        inputParams = _p2("address[] Mandates", "uint256[] RoleIds");
+        // Must match Adopt_Mandates v0.2.0's declared input exactly: the propose (and veto)
+        // steps are matched to the execute step by hashing the *same* mandateCalldata, so a
+        // frontend rendering the wrong shape here produces a proposal that cannot be executed.
+        inputParams = _p1(
+            "(string,address,bytes,(uint256,uint32,uint32,uint32,uint16,uint16,uint8,uint8,uint32))[] mandateInitData"
+        );
         mandateCount++;
         conditions.allowedRole = 1;
         conditions.votingPeriod = _mins(7);
@@ -445,7 +450,12 @@ contract Deploy is DeployHelpers {
 
         // ── FLOW 8 (C7): Governance Reform (Security Council veto) ────────────
         _flow3(mandateCount + 1, mandateCount + 2, mandateCount + 3, "Core C7 - Reform: Propose, allow a Council veto, then adopt new mandates.", true);
-        inputParams = _p2("address[] Mandates", "uint256[] RoleIds");
+        // Must match Adopt_Mandates v0.2.0's declared input exactly: the propose (and veto)
+        // steps are matched to the execute step by hashing the *same* mandateCalldata, so a
+        // frontend rendering the wrong shape here produces a proposal that cannot be executed.
+        inputParams = _p1(
+            "(string,address,bytes,(uint256,uint32,uint32,uint32,uint16,uint16,uint8,uint8,uint32))[] mandateInitData"
+        );
         mandateCount++;
         conditions.allowedRole = 1;
         conditions.votingPeriod = _mins(7);
@@ -645,7 +655,12 @@ contract Deploy is DeployHelpers {
 
         // ── FLOW 8 (M7): Governance Reform (Council veto) ─────────────────────
         _flow3(mandateCount + 1, mandateCount + 2, mandateCount + 3, "Mandates M7 - Reform: Propose, allow a Council veto, then adopt new mandates.", true);
-        inputParams = _p2("address[] Mandates", "uint256[] RoleIds");
+        // Must match Adopt_Mandates v0.2.0's declared input exactly: the propose (and veto)
+        // steps are matched to the execute step by hashing the *same* mandateCalldata, so a
+        // frontend rendering the wrong shape here produces a proposal that cannot be executed.
+        inputParams = _p1(
+            "(string,address,bytes,(uint256,uint32,uint32,uint32,uint16,uint16,uint8,uint8,uint32))[] mandateInitData"
+        );
         mandateCount++;
         conditions.allowedRole = 1;
         conditions.votingPeriod = _mins(7);
