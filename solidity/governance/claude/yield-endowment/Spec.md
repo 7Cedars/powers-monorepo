@@ -129,13 +129,13 @@ A yield-distributing endowment that receives funds at undefined intervals and al
 
 | Step | Mandate type | Who can call | Conditions |
 |------|-------------|--------------|------------|
-| 1 | `PauseMandates` (`bool paused`) | Founding Members (role 1) | No vote; immediate |
+| 1 | `Pause_Mandates` (`bool paused`) | Founding Members (role 1) | No vote; immediate |
 
 **Targeted mandates:** Cast Vote (Flow A), Execute Results (Flow A), Add Slate (Flow B). Pausing these three freezes the election machinery entirely. Membership management and reform flows are not paused — the organisation can still admit members and propose structural fixes while elections are frozen.
 
 **`paused = false` restarts** all targeted mandates from their original configuration — no parameter changes are possible during a pause cycle.
 
-**Rationale:** Emergency powers without a restart mechanism create a governance trap. The `PauseMandates` mandate guarantees that whatever is frozen can be unfrozen, and the original configuration is preserved during the pause. Assigning this to Founding Members (not a single Admin) means any one of the five can act in an emergency without needing to reach consensus first — speed is the priority here.
+**Rationale:** Emergency powers without a restart mechanism create a governance trap. The `Pause_Mandates` mandate guarantees that whatever is frozen can be unfrozen, and the original configuration is preserved during the pause. Assigning this to Founding Members (not a single Admin) means any one of the five can act in an emergency without needing to reach consensus first — speed is the priority here.
 
 ---
 

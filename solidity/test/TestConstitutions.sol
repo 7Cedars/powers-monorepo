@@ -1709,7 +1709,7 @@ contract TestConstitutions is Test {
         );
         delete conditions;
 
-        // Mandate 2: PauseMandates — valid config, targets flow[0][0]
+        // Mandate 2: Pause_Mandates — valid config, targets flow[0][0]
         uint8[] memory indexFlow1 = new uint8[](1);
         uint8[] memory indexMandate1 = new uint8[](1);
         indexFlow1[0] = 0;
@@ -1717,15 +1717,15 @@ contract TestConstitutions is Test {
         conditions.allowedRole = 1;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PauseMandates: pause or restart mandates in flow.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                nameDescription: "Pause_Mandates: pause or restart mandates in flow.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Pause_Mandates"),
                 config: abi.encode(indexFlow1, indexMandate1),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 3: PauseMandates — invalid flow index (99), should skip silently
+        // Mandate 3: Pause_Mandates — invalid flow index (99), should skip silently
         uint8[] memory indexFlow2 = new uint8[](1);
         uint8[] memory indexMandate2 = new uint8[](1);
         indexFlow2[0] = 99;
@@ -1733,15 +1733,15 @@ contract TestConstitutions is Test {
         conditions.allowedRole = 1;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PauseMandates: invalid flow index.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                nameDescription: "Pause_Mandates: invalid flow index.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Pause_Mandates"),
                 config: abi.encode(indexFlow2, indexMandate2),
                 conditions: conditions
             })
         );
         delete conditions;
 
-        // Mandate 4: PauseMandates — valid flow[0], out-of-bounds mandate index (99)
+        // Mandate 4: Pause_Mandates — valid flow[0], out-of-bounds mandate index (99)
         uint8[] memory indexFlow3 = new uint8[](1);
         uint8[] memory indexMandate3 = new uint8[](1);
         indexFlow3[0] = 0;
@@ -1749,8 +1749,8 @@ contract TestConstitutions is Test {
         conditions.allowedRole = 1;
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "PauseMandates: out-of-bounds mandate index.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                nameDescription: "Pause_Mandates: out-of-bounds mandate index.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Pause_Mandates"),
                 config: abi.encode(indexFlow3, indexMandate3),
                 conditions: conditions
             })

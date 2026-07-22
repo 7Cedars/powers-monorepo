@@ -31,7 +31,7 @@
     "Nominees": "0x071266D9657DFF8533F9B4bD1910054f194a2A7c",
     "OnchainIdRegistryMock": "0xD2bcb7d23Ffb3977513081fb27a2D4C27e8C91eB",
     "OpenAction": "0x778eA78928a717AfB641eaaa6f74517c456451B1",
-    "PauseMandates": "0x6C39c9629e0a10f589DAdBc3Fd31D1BA3CcfC246",
+    "Pause_Mandates": "0x6C39c9629e0a10f589DAdBc3Fd31D1BA3CcfC246",
     "PeerSelect": "0xBAEf4575b40C2e864eeac148F74Df901F67e8986",
     "PowersFactory_AddSafeDelegate": "0x7166228949d89Df72B1e0a1d54B3030207db5Aaf",
     "PowersFactory_AssignRole": "0x624102cB74379b62De3019D80dE6e7Eb3A0Ccf4E",

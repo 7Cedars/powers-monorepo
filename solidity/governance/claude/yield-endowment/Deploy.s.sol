@@ -528,7 +528,7 @@ contract Deploy is DeployHelpers {
             nameDescription: "Emergency: A founding member pauses or restarts critical election mandates instantly."
         }));
 
-        // PauseMandates targets (0-based within the flows array):
+        // Pause_Mandates targets (0-based within the flows array):
         //   flows[0] (Flow A) position 1 → Cast Vote        (mandateId 3)
         //   flows[0] (Flow A) position 3 → Execute Results  (mandateId 5)
         //   flows[1] (Flow B) position 0 → Add Slate        (mandateId 6)
@@ -542,7 +542,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = 1; // Any Founding Member — speed is the priority
         constitution.push(PowersTypes.MandateInitData({
             nameDescription: "Pause or Restart Critical Mandates: A founding member pauses or restarts election and voting mandates in an emergency.",
-            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Pause_Mandates"),
             config: abi.encode(indexFlow, indexMandate),
             conditions: conditions
         }));

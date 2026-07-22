@@ -59,14 +59,14 @@ solidity/
 │   │   ├── mandates/
 │   │   │   ├── electoral/      # Role assignment (self-select, peer-select, delegation, etc.)
 │   │   │   ├── executive/      # External calls (preset, flexible, bespoke, open actions)
-│   │   │   ├── integrations/   # ElectionRegistry, SlateRegistry, Safe
+│   │   │   ├── integrations/   # ElectionRegistry, SlateRegistry
 │   │   │   └── reform/         # Governance self-modification (adopt/revoke/pause mandates)
 │   │   └── helpers/            # MandateRegistry, ElectionRegistry, SlateRegistry, Nominees, PowersFactory…
 │   ├── addons/                 # Tier 4 contracts — niche / advanced / single-use
 │   │   ├── mandates/
 │   │   │   ├── electoral/      # RoleByRoles, RevokeInactiveAccounts, AssignExternalRole…
 │   │   │   ├── executive/      # CheckExternalActionState, ExternalAction_OnReturnValue…
-│   │   │   └── integrations/   # Chainlink, Governor, ZKPassport, ERC721, GovernedToken, Snapshot…
+│   │   │   └── integrations/   # Safe, Chainlink, Governor, ZKPassport, ERC721, GovernedToken, Snapshot…
 │   │   └── helpers/            # ZKPassport_PowersRegistry, Governed721, PowersPaymaster
 │   ├── interfaces/             # IMandate, IPowers, and integration interfaces
 │   └── libraries/              # Checks.sol, MandateUtilities.sol, PowersUtilities.sol

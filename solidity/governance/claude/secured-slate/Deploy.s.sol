@@ -404,7 +404,7 @@ contract Deploy is DeployHelpers {
             nameDescription: "Emergency Controls: Security Council pauses or restarts critical election mandates."
         }));
 
-        // PauseMandates targets:
+        // Pause_Mandates targets:
         //   Flow 0 (Slate Elections) position 1 → Cast Vote        (mandateId 3)
         //   Flow 0 (Slate Elections) position 2 → Execute Results   (mandateId 4)
         //   Flow 1 (Slate Submission) position 0 → Add Slate        (mandateId 5)
@@ -418,7 +418,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = 2; // Security Council
         constitution.push(PowersTypes.MandateInitData({
             nameDescription: "Pause or Restart Critical Mandates: Security Council pauses or restarts voting and execution mandates in an emergency.",
-            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Pause_Mandates"),
             config: abi.encode(indexFlow, indexMandate),
             conditions: conditions
         }));

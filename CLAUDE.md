@@ -67,7 +67,7 @@ pnpm build      # Build static site
 **Mandate contracts** are split by centrality into `src/core/mandates/` (Tiers 0–3 of `solidity/governance/CORE_MANDATES.md` — the contracts most constitutions are built from) and `src/addons/mandates/` (Tier 4 — niche/advanced). Both sides use the same category folders:
 - `electoral/` — Role assignment logic (self-select, peer-select, nomination, token delegation, etc.)
 - `executive/` — Execute external calls (simple preset, flexible, return-value-conditional, bespoke, open actions)
-- `integrations/` — Protocol integrations (core: ElectionRegistry, SlateRegistry, Safe; addons: Chainlink, Governor, ZKPassport, ERC721, GovernedToken, PowersFactory, Snapshot)
+- `integrations/` — Protocol integrations (core: ElectionRegistry, SlateRegistry; addons: Safe, Chainlink, Governor, ZKPassport, ERC721, GovernedToken, PowersFactory, Snapshot)
 - `reform/` — Governance self-modification (adopt/revoke/pause mandates, mandate packages) — all core
 
 **Libraries** under `src/libraries/`:

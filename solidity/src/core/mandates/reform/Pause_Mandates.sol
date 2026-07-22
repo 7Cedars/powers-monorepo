@@ -13,7 +13,7 @@ import { MandateUtilities } from "@src/libraries/MandateUtilities.sol";
 import { IPowers } from "@src/interfaces/IPowers.sol";
 import { PowersTypes } from "@src/interfaces/PowersTypes.sol";
 
-contract PauseMandates is Mandate {
+contract Pause_Mandates is Mandate {
     /// @notice Struct to hold mandate location information
     struct MandateLocation {
         uint8 flowIndex;

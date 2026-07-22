@@ -14,13 +14,13 @@ import { Adopt_Mandates } from "@src/core/mandates/reform/Adopt_Mandates.sol";
 // ─────────────────────────────────────────────
 //               BASIC BEHAVIOUR
 // ─────────────────────────────────────────────
-contract PauseMandatesBasicTest is TestSetupReform {
+contract Pause_MandatesBasicTest is TestSetupReform {
     function setUp() public override {
         super.setUp();
-        mandateId = findMandateIdInOrg("PauseMandates: pause or restart mandates in flow.", daoMock);
+        mandateId = findMandateIdInOrg("Pause_Mandates: pause or restart mandates in flow.", daoMock);
     }
 
-    function testPauseMandatesWorks() public {
+    function testPause_MandatesWorks() public {
         // Verify SelfSelect (mandateId=1) is active before pause
         (,, bool activeBefore) = daoMock.getAdoptedMandate(1);
         assertTrue(activeBefore);
@@ -82,8 +82,8 @@ contract PauseMandatesBasicTest is TestSetupReform {
 
         PowersTypes.MandateInitData[] memory initData = new PowersTypes.MandateInitData[](1);
         initData[0] = PowersTypes.MandateInitData({
-            nameDescription: "PauseMandates: mismatched arrays",
-            targetMandate: findMandateAddress("PauseMandates"),
+            nameDescription: "Pause_Mandates: mismatched arrays",
+            targetMandate: findMandateAddress("Pause_Mandates"),
             config: abi.encode(indexFlow_, indexMandate_),
             conditions: cond
         });
@@ -96,10 +96,10 @@ contract PauseMandatesBasicTest is TestSetupReform {
 // ─────────────────────────────────────────────
 //               EDGE CASES
 // ─────────────────────────────────────────────
-contract PauseMandatesEdgeCaseTest is TestSetupReform {
+contract Pause_MandatesEdgeCaseTest is TestSetupReform {
     function testRestartAlreadyActiveMandateSkipsWithNoEffect() public {
         // Calling restart (paused=false) when the mandate is already active should produce 0 calls
-        mandateId = findMandateIdInOrg("PauseMandates: pause or restart mandates in flow.", daoMock);
+        mandateId = findMandateIdInOrg("Pause_Mandates: pause or restart mandates in flow.", daoMock);
         mandateCalldata = abi.encode(false); // paused=false on an already-active mandate
 
         vm.prank(alice);
@@ -118,8 +118,8 @@ contract PauseMandatesEdgeCaseTest is TestSetupReform {
     }
 
     function testPauseWithInvalidFlowIndexSkipsGracefully() public {
-        // PauseMandates configured with flow index 99 (does not exist) skips via try/catch
-        mandateId = findMandateIdInOrg("PauseMandates: invalid flow index.", daoMock);
+        // Pause_Mandates configured with flow index 99 (does not exist) skips via try/catch
+        mandateId = findMandateIdInOrg("Pause_Mandates: invalid flow index.", daoMock);
         mandateCalldata = abi.encode(true); // paused=true
 
         vm.prank(alice);
@@ -134,8 +134,8 @@ contract PauseMandatesEdgeCaseTest is TestSetupReform {
     }
 
     function testPauseWithOutOfBoundsMandateIndexSkipsGracefully() public {
-        // PauseMandates configured with valid flow[0] but mandate index 99 (flow has only 1 entry)
-        mandateId = findMandateIdInOrg("PauseMandates: out-of-bounds mandate index.", daoMock);
+        // Pause_Mandates configured with valid flow[0] but mandate index 99 (flow has only 1 entry)
+        mandateId = findMandateIdInOrg("Pause_Mandates: out-of-bounds mandate index.", daoMock);
         mandateCalldata = abi.encode(true); // paused=true
 
         vm.prank(alice);
@@ -153,21 +153,21 @@ contract PauseMandatesEdgeCaseTest is TestSetupReform {
 // ─────────────────────────────────────────────
 //               ACCESS CONTROL
 // ─────────────────────────────────────────────
-contract PauseMandatesAccessTest is TestSetupReform {
+contract Pause_MandatesAccessTest is TestSetupReform {
     function setUp() public override {
         super.setUp();
-        mandateId = findMandateIdInOrg("PauseMandates: pause or restart mandates in flow.", daoMock);
+        mandateId = findMandateIdInOrg("Pause_Mandates: pause or restart mandates in flow.", daoMock);
         mandateCalldata = abi.encode(true);
     }
 
-    function testPauseMandatesRevertsForCallerWithWrongRole() public {
+    function testPause_MandatesRevertsForCallerWithWrongRole() public {
         // charlotte has ROLE_TWO; mandate requires ROLE_ONE
         vm.prank(charlotte);
         vm.expectRevert(Powers__CannotCallMandate.selector);
         daoMock.request(mandateId, mandateCalldata, nonce, "Charlotte attempts pause");
     }
 
-    function testPauseMandatesRevertsForCallerWithNoRole() public {
+    function testPause_MandatesRevertsForCallerWithNoRole() public {
         // eve has no roles at all
         vm.prank(eve);
         vm.expectRevert(Powers__CannotCallMandate.selector);

@@ -436,7 +436,7 @@ contract Deploy is DeployHelpers {
         pauseFlows[2] = 5; pauseMandates[2] = 1; // C4 transfer
         mandateCount++;
         conditions.allowedRole = 2; // Security Council, instant
-        _push("Pause Core Funding: The Security Council pauses (or restarts) the C1/C3/C4 execute mandates.", "PauseMandates", abi.encode(pauseFlows, pauseMandates));
+        _push("Pause Core Funding: The Security Council pauses (or restarts) the C1/C3/C4 execute mandates.", "Pause_Mandates", abi.encode(pauseFlows, pauseMandates));
 
         // ── FLOW 7 (C6): Treasury Transfer / Recover Tokens ───────────────────
         _flow1(mandateCount + 1, "Core C6 - Recover: Governed transfer of any token the treasury holds.");

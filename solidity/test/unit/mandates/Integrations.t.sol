@@ -30,7 +30,7 @@ import { PowersFactory_AssignRole } from "@src/addons/mandates/integrations/Powe
 import {
     PowersFactory_AddSafeDelegate
 } from "@src/addons/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
-import { SafeAllowance_Action } from "@src/core/mandates/integrations/Safe/SafeAllowance_Action.sol";
+import { SafeAllowance_Action } from "@src/addons/mandates/integrations/Safe/SafeAllowance_Action.sol";
 import { IERC20 } from "@lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import { PowersPaymaster } from "@src/core/helpers/PowersPaymaster.sol";

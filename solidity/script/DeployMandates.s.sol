@@ -82,14 +82,14 @@ import {
 } from "@src/addons/mandates/integrations/PowersFactory/PowersFactory_AddSafeDelegate.sol";
 
 // Safe
-import { Safe_ExecTransaction } from "@src/core/mandates/integrations/Safe/Safe_ExecTransaction.sol";
-import { Safe_RecoverTokens } from "@src/core/mandates/integrations/Safe/Safe_RecoverTokens.sol";
+import { Safe_ExecTransaction } from "@src/addons/mandates/integrations/Safe/Safe_ExecTransaction.sol";
+import { Safe_RecoverTokens } from "@src/addons/mandates/integrations/Safe/Safe_RecoverTokens.sol";
 import {
     Safe_ExecTransaction_OnReturnValue
-} from "@src/core/mandates/integrations/Safe/Safe_ExecTransaction_OnReturnValue.sol";
-import { SafeAllowance_Transfer } from "@src/core/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
-import { SafeAllowance_PresetTransfer } from "@src/core/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
-import { SafeAllowance_Action } from "@src/core/mandates/integrations/Safe/SafeAllowance_Action.sol";
+} from "@src/addons/mandates/integrations/Safe/Safe_ExecTransaction_OnReturnValue.sol";
+import { SafeAllowance_Transfer } from "@src/addons/mandates/integrations/Safe/SafeAllowance_Transfer.sol";
+import { SafeAllowance_PresetTransfer } from "@src/addons/mandates/integrations/Safe/SafeAllowance_PresetTransfer.sol";
+import { SafeAllowance_Action } from "@src/addons/mandates/integrations/Safe/SafeAllowance_Action.sol";
 
 // Slate Registry
 import { SlateRegistry_AddSlate } from "@src/core/mandates/integrations/SlateRegistry/SlateRegistry_AddSlate.sol";
@@ -107,7 +107,7 @@ import { ZKPassport_Check } from "@src/addons/mandates/integrations/ZKPassport/Z
 // REFORM MANDATES
 import { Adopt_Mandates } from "@src/core/mandates/reform/Adopt_Mandates.sol";
 import { Revoke_Mandates } from "@src/core/mandates/reform/Revoke_Mandates.sol";
-import { PauseMandates } from "@src/core/mandates/reform/PauseMandates.sol";
+import { Pause_Mandates } from "@src/core/mandates/reform/Pause_Mandates.sol";
 
 /// @title DeployMandates
 /// @notice Deploys all library and mandate contracts
@@ -427,8 +427,8 @@ contract DeployMandates is Script {
         creationCodes.push(type(Adopt_Mandates).creationCode);
         constructorArgs.push(abi.encode(address(registry)));
 
-        names.push("PauseMandates");
-        creationCodes.push(type(PauseMandates).creationCode);
+        names.push("Pause_Mandates");
+        creationCodes.push(type(Pause_Mandates).creationCode);
         constructorArgs.push(abi.encode(address(registry)));
 
         names.push("Revoke_Mandates");

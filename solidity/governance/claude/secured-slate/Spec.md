@@ -127,7 +127,7 @@ must go through the normal member onboarding vote (Flow C).
 
 | Step | Mandate type | Who can call | Conditions |
 |------|-------------|--------------|------------|
-| 1 | PauseMandates | Security Council (role 2) | `paused=true` to pause; `paused=false` to restart |
+| 1 | Pause_Mandates | Security Council (role 2) | `paused=true` to pause; `paused=false` to restart |
 
 **Mandates that can be paused:**
 - Cast Vote (Flow A, position 1)
@@ -135,7 +135,7 @@ must go through the normal member onboarding vote (Flow C).
 - Add Slate (Flow B, position 0)
 
 Pausing these freezes the election machinery without touching member management or the blacklist
-flows. `PauseMandates` also provides a guaranteed restart path — restarting re-adopts mandates
+flows. `Pause_Mandates` also provides a guaranteed restart path — restarting re-adopts mandates
 with their original configs, so the Security Council cannot quietly modify governance parameters
 during a pause.
 
@@ -225,4 +225,4 @@ sufficient to block malicious reforms without requiring admin supremacy.
 - **Test file:** `solidity/test/governance/SecuredSlate.t.sol`
 - **Mandate version:** MAJOR=0, MINOR=1, PATCH = 9
 - **nameDescription strings must match exactly across all four files.**
-- **PauseMandates targets:** Flow 0 positions 1 and 2 (Cast Vote, Execute Results); Flow 1 position 0 (Add Slate).
+- **Pause_Mandates targets:** Flow 0 positions 1 and 2 (Cast Vote, Execute Results); Flow 1 position 0 (Add Slate).

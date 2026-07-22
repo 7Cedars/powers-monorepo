@@ -1,9 +1,9 @@
 ---
-title: "PauseMandates"
-description: "PauseMandates is a reform mandate that pauses or restarts mandates at specific positions in governance flows."
+title: "Pause_Mandates"
+description: "Pause_Mandates is a reform mandate that pauses or restarts mandates at specific positions in governance flows."
 ---
 
-PauseMandates is a reform mandate that can temporarily disable (pause) or re-enable (restart) mandates at specific positions within governance flows. It is configured with a fixed set of flow and mandate positions to manage.
+Pause_Mandates is a reform mandate that can temporarily disable (pause) or re-enable (restart) mandates at specific positions within governance flows. It is configured with a fixed set of flow and mandate positions to manage.
 
 ## Overview
 
@@ -11,7 +11,7 @@ This mandate is useful for emergency governance — pausing a compromised or mal
 
 ## Configuration
 
-When adopting a PauseMandates instance, the following parameters are required:
+When adopting a Pause_Mandates instance, the following parameters are required:
 
 1.  `indexFlow` (uint8[]): The flow indices of the mandates to manage.
 2.  `indexMandate` (uint8[]): The position within each flow of the mandate to manage. `indexMandate[i]` corresponds to `indexFlow[i]`.

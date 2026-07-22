@@ -738,7 +738,7 @@ contract Deploy is DeployHelpers {
         conditions.allowedRole = 1; // Leaders only.  no voting, no timelock
         constitution.push(PowersTypes.MandateInitData({
             nameDescription: "Emergency Pause Restart: Leaders instantly pause or restart the funding and spawn execution mandates.",
-            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+            targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Pause_Mandates"),
             config: abi.encode(pauseFlowIndexes, pauseMandateIndexes),
             conditions: conditions
         }));

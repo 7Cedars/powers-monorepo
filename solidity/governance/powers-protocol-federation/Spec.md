@@ -110,7 +110,7 @@ Because a Powers contract *is* an account, assigning it a role in another Powers
 **Flow C5 — Emergency Pause / Restart Core Flows**
 | Step | Mandate | Who | Voting | Conditions |
 |------|---------|-----|--------|------------|
-| 1 | PauseMandates (targets the C1/C3/C4 funding mandates; `bool paused`) | Security Council (2) | No | Instant (no voting, no timelock) |
+| 1 | Pause_Mandates (targets the C1/C3/C4 funding mandates; `bool paused`) | Security Council (2) | No | Instant (no voting, no timelock) |
 
 **Flow C6 — Treasury Transfer / Recover Tokens**
 | Step | Mandate | Who | Voting | Conditions |

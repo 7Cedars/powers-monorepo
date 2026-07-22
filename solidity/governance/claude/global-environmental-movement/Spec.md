@@ -212,15 +212,15 @@ them when conditions normalise. This is the sole flow without a voting period.
 
 | Step | Mandate type | Who can call | Voting? | Conditions |
 |------|-------------|--------------|---------|------------|
-| 1 | `PauseMandates` — Pause or Restart | Leaders | No | `bool paused`: true = suspend, false = restart |
+| 1 | `Pause_Mandates` — Pause or Restart | Leaders | No | `bool paused`: true = suspend, false = restart |
 
 **Config:** Pre-configured at deployment with specific flow/mandate position indices to
 target. Typical targets: the funding flow executor (mandate 4 of Flow 2) and the spawn
-executor (mandate 4 of Flow 3). Multiple `PauseMandates` mandates can be deployed targeting
+executor (mandate 4 of Flow 3). Multiple `Pause_Mandates` mandates can be deployed targeting
 different flows.
 
 **Rationale:** Podger (2020, Ch 2) notes that emergency authority is legitimate when its
-scope is pre-defined and its exercise is visible. `PauseMandates` satisfies both conditions:
+scope is pre-defined and its exercise is visible. `Pause_Mandates` satisfies both conditions:
 the flow positions it can affect are fixed at deploy time (limited scope), and every
 pause/restart is recorded on-chain (visible). The restart function (`bool paused = false`)
 re-adopts the original mandate with its original config — no parameters can be changed
@@ -314,7 +314,7 @@ correctly computed and linked.
 - Sub-org coordinators have significant spending discretion locally. The parent's allowance
   mechanism (rather than direct treasury access) contains the blast radius of coordinator
   misbehaviour.
-- The `PauseMandates` power assigned to leaders is scoped to specific flow positions at
+- The `Pause_Mandates` power assigned to leaders is scoped to specific flow positions at
   deploy time. It cannot be used to pause the leader election or the vote of no confidence.
 
 ---
@@ -380,9 +380,9 @@ create reputation transparency (Ostrom 2011, p. 16) without exposing identity.
   movement's social norms and the ZK-passport uniqueness check (which prevents leaders from
   holding multiple accounts, but does not reveal identity on-chain).
 
-- **`PauseMandates` scope is fixed at deploy time.** The emergency pause targets specific
+- **`Pause_Mandates` scope is fixed at deploy time.** The emergency pause targets specific
   flow positions. If new execution mandates are added via governance reform, they are not
-  automatically within scope of the existing pause mandate — a new `PauseMandates` mandate
+  automatically within scope of the existing pause mandate — a new `Pause_Mandates` mandate
   covering the new positions must be adopted.
 
 ---

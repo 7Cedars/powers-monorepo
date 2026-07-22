@@ -241,7 +241,7 @@ worth considering later; it is out of scope here.
   "vetted". This design works within it rather than around it.
 - **`Powers.adoptMandate`.** It already accepts the full struct; the defect was entirely in the
   caller.
-- **`Revoke_Mandates` and `PauseMandates`.** Both work as intended.
+- **`Revoke_Mandates` and `Pause_Mandates`.** Both work as intended.
 - **`OpenAction`.** Stays in the codebase for advanced hand-written use.
 
 ## Verification
