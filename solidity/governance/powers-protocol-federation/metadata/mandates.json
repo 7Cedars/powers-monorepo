@@ -1,0 +1,37 @@
+{
+  "icon": "",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeid2joysqhtkv47toqhdlsf4mbcst2phh7q4d2h24qpb4n5kdxclby/Gemini_Mandates.resized.png",
+  "description":
+    "Mandates Governance is the federation organisation that sustains the Powers mandate ecosystem. It funds development and audits of individual mandates and governs which mandates are listed in the canonical MandateRegistry, including the registry's paid-tier settings (credit-to-wei exchange rate, protocol fee, and earnings withdrawal). It holds its own treasury (the Powers contract itself, in test USDC) and requests its operating budget from Core Governance through a cross-organisation funding request that both organisations must approve. Elected Mandate Assessors govern funding, audits, and registry listings; an elected Security Council vetoes registry additions and reform.",
+  "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",
+  "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md",
+  "disputeResolution": "",
+  "xmtpAgentAddress": "0xe65d5d40c878339596423b929058a13147f925e1",
+  "communicationChannels": {
+      "discord": "https://discordapp.com/users/1006928106487021638",
+      "telegram": "https://t.me/thd83",
+      "x": "https://x.com/7__Cedars",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo",
+      "forum": "",
+      "documentation": "https://powers-docs.vercel.app/"
+  },
+  "parentContracts": [ ],
+  "childContracts": [ ],
+  "attributes": [
+    { "trait_type": "Federation", "value": "Powers Protocol Federation (2 of 3 — Mandates Governance)" },
+    { "trait_type": "Governance Model", "value": "Role-based, one-account-one-vote; nested enterprises (Ostrom DP8)" },
+    { "trait_type": "Roles", "value": "Admin, Public, Mandate Assessor, Security Council, Whitelisted Auditor" },
+    { "trait_type": "Treasury", "value": "The Mandates Powers contract itself — no external multisig (test USDC)" },
+    { "trait_type": "Governed Protocol", "value": "MandateRegistry (canonical, from config — ownership transferred to Mandates out-of-band)" },
+    { "trait_type": "Cross-org Links", "value": "Requests operating budget from Core (M5, both orgs consent)" },
+    { "trait_type": "Cross-org Seat Held", "value": "Funded Sub-org (role 4) in Core Governance" },
+    { "trait_type": "Key Checks", "value": "Security Council veto on registry additions and reform, propose-vote-timelock, cross-org double consent" },
+    { "trait_type": "Paymaster", "value": "Sponsored target of the Core-owned central ERC-4337 PowersPaymaster" },
+    { "trait_type": "Flows", "value": "Elect Assessors, Elect Council, Pay Invoice, Commission Audit, Add to Registry, Remove from Registry, Request Funding, Recover Tokens, Reform, Set Exchange Rate, Set Protocol Fee, Withdraw Registry Earnings" },
+    { "trait_type": "Network", "value": "Ethereum Sepolia (11155111) — test deployment" },
+    { "trait_type": "Status", "value": "Draft reference deployment — tune founding cohort before live use" }
+  ]
+}

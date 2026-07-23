@@ -216,7 +216,7 @@ Follow the pattern in **Appendix C** and `<REF_ROOT>/governance/examples/Optimis
   ```
 - Every mandate needs a unique, descriptive `nameDescription` string — these strings are used for lookup in action scripts, so they must be exact and consistent across all files
 - Add a comment above each mandate explaining what it does in plain English
-- Include an initial setup mandate (`PresetActions`) that labels all roles and revokes itself after use
+- Include an initial setup mandate (`PresetActions`) that labels all roles. `PresetActions` **self-revokes automatically** after it executes, so it is inherently single-use — do **not** add a manual `revokeMandate` call to its config (a second revoke of the now-inactive mandate would revert and fail the whole execution)
 - Group mandates into `Flow` structs that reflect the governance flows in the spec
 - Import `DeployHelpers`:
   - **Inside the powers-monorepo** (`REF_ROOT == FOUNDRY_ROOT`): use the relative path `../../DeployHelpers.s.sol` (resolves to `solidity/governance/DeployHelpers.s.sol`).
@@ -588,7 +588,8 @@ Any pattern may include paid mandates. The ⚠️ markers below flag the ones kn
 
 Design notes:
 - `SlateRegistry_AddSlate` dynamically adopts a `PresetActions` mandate for each slate and registers it in the election's flow slot. The slate's `allowedRole` is set to the `SlateRegistry.roleId` so only the registry can trigger execution.
-- `SlateRegistry_RemoveSlate` uses `needFulfilled = addSlateMandateId` so the *same calldata and nonce* used to submit a slate must be re-submitted to withdraw it — this uniquely identifies the original action.
+  - Because `PresetActions` self-revokes, a slate is inherently **one-shot**: when `SlateRegistry.executeResults` requests a winning slate, that slate's `PresetActions` runs its calls and immediately self-revokes. This is the intended semantics (a slate executes at most once) and needs no extra cleanup for winners. Losing slates are never executed, so they stay active until explicitly withdrawn via `RemoveSlate`.
+- `SlateRegistry_RemoveSlate` uses `needFulfilled = addSlateMandateId` so the *same calldata and nonce* used to submit a slate must be re-submitted to withdraw it — this uniquely identifies the original action. **Only withdraw a slate that has not been executed** — a slate that already won and executed has self-revoked, and `RemoveSlate`'s `revokeMandate` call would revert on the already-inactive mandate.
 - Voting is handled via `BespokeAction_Simple → SlateRegistry.vote`; voters pass their own address as the `caller` argument so the registry can prevent double-voting.
 - `SlateRegistry_ExecuteResult` reverts if `block.number <= endBlock`, so timing enforcement is in-contract rather than relying on governance conditions.
 
@@ -645,8 +646,8 @@ This catalogue does **not** record prices. It is prose maintained by hand and wi
 - `StatementOfIntent` — Record a proposal without executing any on-chain calls; pure voting/signalling step. Config: `abi.encode(string[] inputParams)`. inputParams: defined by config. `StatementOfIntent` with `needFulfilled` pointing to itself creates a veto pattern.
 - `OpenAction` — Execute any arbitrary on-chain call; caller provides targets, values, and calldatas at runtime. Config: `abi.encode(string[] inputParams)`. inputParams: `address[] targets, uint256[] values, bytes[] calldatas`.
   **⚠️ This grants its role unrestricted power over the organisation — functionally equivalent to full admin.** A holder can adopt or revoke any mandate, retarget any flow, reassign any role, and move any asset the organisation controls. No condition on the mandate limits *what* it may do, only who may call it and after what vote. Do not include it in a design unless the user explicitly asks for it and understands this. For governance self-modification, prefer a configured `PresetActions_OnOwnPowers` (A.2), which is bounded to a fixed call list decided at adoption and reviewable before the vote.
-- `PresetActions` — Execute a fixed set of pre-configured calls that cannot be changed at runtime. Config: `abi.encode(address[] targets, uint256[] values, bytes[] calldatas)`. inputParams: none. Use for one-time setup (label roles, set treasury, revoke setup mandate). Always include one of these in any constitution.
-- `PresetActions_OnOwnPowers` — Like `PresetActions` but the target is always the Powers contract itself. Config: `abi.encode(address[] targets, uint256[] values, bytes[] calldatas)`. Use for governance self-modification that runs automatically without caller input.
+- `PresetActions` — Execute a fixed set of pre-configured calls that cannot be changed at runtime, then **self-revoke**. Config: `abi.encode(address[] targets, uint256[] values, bytes[] calldatas)`. inputParams: none. **Single-use by design:** after running the configured calls it appends `revokeMandate(itself)` automatically, so it can only ever execute once. Do **not** put a `revokeMandate` call in the config — that would double-revoke and revert. Use for one-time setup (label roles, set treasury). Always include one of these in any constitution.
+- `PresetActions_OnOwnPowers` — Like `PresetActions` but the target is always the Powers contract itself. Config: `abi.encode(address[] targets, uint256[] values, bytes[] calldatas)`. Use for governance self-modification that runs automatically without caller input. **Note:** unlike `PresetActions`, this variant does **not** self-revoke — it stays active and re-runnable unless you revoke it explicitly (include a `revokeMandate` call in its config, or revoke it in a later step, if a one-shot is intended).
 - `BespokeAction_Simple` — Execute a specific function on a specific contract; caller provides only the function's arguments. Config: `abi.encode(address targetContract, bytes4 selector, string[] inputParams)`. inputParams: defined by config.
   ```solidity
   config: abi.encode(
@@ -812,7 +813,7 @@ config: abi.encode(address(allowanceModule), address(safeProxy))
 Every deploy script follows this structure:
 ```
 SETUP MANDATE (mandateCount 0)
-└─ PresetActions: label roles, set treasury, revoke itself (mandateCount+1)
+└─ PresetActions: label roles, set treasury (self-revokes automatically after execution)
 
 FLOW 1: [first governance process]
 ├─ Mandate A: proposal step
@@ -1128,10 +1129,12 @@ contract Deploy is DeployHelpers {
         ////////////////////////////////////////////////////////////////////////
         //                           SETUP (mandateId = 0)                    //
         ////////////////////////////////////////////////////////////////////////
-        // This mandate runs once at deployment, labels all roles, and revokes itself.
+        // This mandate runs once at deployment and labels all roles.
         // It uses PresetActions so no user input is needed — the calls are pre-encoded.
+        // PresetActions self-revokes automatically after executing, so do NOT add a
+        // revokeMandate call here — a second revoke of the (now inactive) mandate would revert.
 
-        targets = new address[](N);    // N = number of setup calls
+        targets = new address[](N);    // N = number of setup calls (labels/treasury only — no revoke)
         values  = new uint256[](N);
         calldatas = new bytes[](N);
         for (uint256 i = 0; i < N; i++) targets[i] = address(powers);
@@ -1141,10 +1144,7 @@ contract Deploy is DeployHelpers {
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", "");
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Members", "");
         // calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Council", "");
-        // calldatas[N-2] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
-        calldatas[N-1] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
-        //                                                                              ^^^
-        //                                  This revokes itself — change to correct ID if needed.
+        // calldatas[N-1] = abi.encodeWithSelector(IPowers.setTreasury.selector, address(powers));
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // Anyone can trigger setup
@@ -1329,7 +1329,7 @@ contract Deploy is DeployHelpers {
 - [ ] Every mandate has a unique `nameDescription` (exact strings carried over to actions + runner files)
 - [ ] `mandateCount` increments before every `constitution.push()`
 - [ ] `delete conditions;` after every `constitution.push()`
-- [ ] The setup mandate's `revokeMandate` call uses the correct mandate ID (usually `mandateCount + 1` evaluated at the time of the setup mandate)
+- [ ] The setup `PresetActions` mandate contains **no** manual `revokeMandate` call — it self-revokes automatically (a manual revoke would double-revoke and fail the deploy)
 - [ ] All flows cover the complete set of mandates used in that flow
 - [ ] Veto timelock > voting period of the proposal being vetoed
 - [ ] Every quorum-gated mandate that reads mutable state sets a non-zero `maxExecutionDelay` (stale-state rule, §A.4)

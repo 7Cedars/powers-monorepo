@@ -1,0 +1,37 @@
+{
+  "icon": "",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeid2joysqhtkv47toqhdlsf4mbcst2phh7q4d2h24qpb4n5kdxclby/Gemini_Endowment.resized.png",
+  "description":
+    "Endowment Governance is the federation organisation that invests the endowment corpus and funds Core through a recurring income stream. It supplies and withdraws test USDC and WETH to and from the Aave v3 pool on Ethereum Sepolia, holding the resulting interest-bearing aTokens in its own treasury (the Powers contract itself). New investments pass a Core organisational veto window; divestment stays fast and cannot be vetoed, so the endowment can always retreat to safety. A throttled, rules-based income stream pays a fixed per-period amount of USDC upward to Core, following the horizontal fiscal equalisation pattern. Elected Endowment Investors govern investment strategy and self-govern reform.",
+  "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",
+  "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md",
+  "disputeResolution": "",
+  "xmtpAgentAddress": "0xe65d5d40c878339596423b929058a13147f925e1",
+  "communicationChannels": {
+      "discord": "https://discordapp.com/users/1006928106487021638",
+      "telegram": "https://t.me/thd83",
+      "x": "https://x.com/7__Cedars",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo",
+      "forum": "",
+      "documentation": "https://powers-docs.vercel.app/"
+  },
+  "parentContracts": [ ],
+  "childContracts": [ ],
+  "attributes": [
+    { "trait_type": "Federation", "value": "Powers Protocol Federation (3 of 3 — Endowment Governance)" },
+    { "trait_type": "Governance Model", "value": "Role-based, one-account-one-vote; nested enterprises (Ostrom DP8)" },
+    { "trait_type": "Roles", "value": "Admin, Public, Endowment Investor, Core Beneficiary (Core contract)" },
+    { "trait_type": "Treasury", "value": "The Endowment Powers contract itself — no external multisig (test USDC, WETH, aTokens)" },
+    { "trait_type": "Investment Venue", "value": "Aave v3 Pool on Ethereum Sepolia (standing max approval on USDC/WETH)" },
+    { "trait_type": "Cross-org Links", "value": "Pays income stream to Core (E3); investments subject to Core veto (E1)" },
+    { "trait_type": "Cross-org Seat Held", "value": "None — hosts the Core Beneficiary (role 2) seat for Core" },
+    { "trait_type": "Key Checks", "value": "Core investment veto (window, not permanent hold), long 15-min invest timelock, fast un-vetoable divest, throttled income stream" },
+    { "trait_type": "Paymaster", "value": "Sponsored target of the Core-owned central ERC-4337 PowersPaymaster" },
+    { "trait_type": "Flows", "value": "Elect Investors, Invest (Aave supply), Divest (Aave withdraw), Income Stream to Core, Recover Tokens, Reform" },
+    { "trait_type": "Network", "value": "Ethereum Sepolia (11155111) — test deployment" },
+    { "trait_type": "Status", "value": "Draft reference deployment — tune founding cohort before live use" }
+  ]
+}

@@ -234,6 +234,37 @@ contract PresetActionsTest is TestSetupExecutive {
         vm.expectRevert(PowersErrors.Powers__CannotCallMandate.selector);
         daoMock.request(mandateId, mandateCalldata, nonce, "Unauthorized");
     }
+
+    function testPresetSelfRevokesAfterExecution() public {
+        // Mandate is active before execution.
+        (,, bool activeBefore) = daoMock.getAdoptedMandate(mandateId);
+        assertTrue(activeBefore);
+
+        mandateCalldata = abi.encode(true);
+
+        vm.prank(alice); // Alice has Role 1
+        daoMock.request(mandateId, mandateCalldata, nonce, "Execute Preset Action");
+
+        // Preset action still ran.
+        assertEq(daoMock.getRoleLabel(ROLE_ONE), "Member");
+        assertEq(daoMock.getRoleLabel(ROLE_TWO), "Delegate");
+
+        // Mandate revoked itself: it is now inactive.
+        (,, bool activeAfter) = daoMock.getAdoptedMandate(mandateId);
+        assertFalse(activeAfter);
+    }
+
+    function testPresetCannotBeExecutedTwice() public {
+        mandateCalldata = abi.encode(true);
+
+        vm.prank(alice);
+        daoMock.request(mandateId, mandateCalldata, nonce, "First execution");
+
+        // Second request reverts because the mandate revoked itself.
+        vm.prank(alice);
+        vm.expectRevert(PowersErrors.Powers__MandateNotActive.selector);
+        daoMock.request(mandateId, mandateCalldata, nonce + 1, "Second execution");
+    }
 }
 
 contract BespokeAction_OnReturnValueTest is TestSetupExecutive {

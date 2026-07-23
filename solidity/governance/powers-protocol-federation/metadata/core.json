@@ -1,0 +1,36 @@
+{
+  "icon": "",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeid2joysqhtkv47toqhdlsf4mbcst2phh7q4d2h24qpb4n5kdxclby/Gemini_Federation.resized.png",
+  "description":
+    "Core Governance is the central organisation of the Powers Protocol Federation. It holds the main treasury (the Powers contract itself, in test USDC), funds development and audits of the core protocol, and distributes funding downstream to the Mandates organisation. Core draws a recurring income stream from the Endowment and, as an organisation, can veto new Endowment investments. Core also owns and funds the single central PowersPaymaster that sponsors gasless participation across all three federation organisations. Elected Core Members govern spending; an elected Security Council holds a narrow, reversible emergency pause and a reform veto.",
+  "website": "https://github.com/publius-projects/powers-monorepo/tree/main/frontend/organisations",
+  "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md",
+  "disputeResolution": "",
+  "xmtpAgentAddress": "0xe65d5d40c878339596423b929058a13147f925e1",
+  "communicationChannels": {
+      "discord": "https://discordapp.com/users/1006928106487021638",
+      "telegram": "https://t.me/thd83",
+      "x": "https://x.com/7__Cedars",
+      "paragraph": "",
+      "youtube": "",
+      "facebook": "",
+      "github": "https://github.com/publius-projects/powers-monorepo",
+      "forum": "",
+      "documentation": "https://powers-docs.vercel.app/"
+  },
+  "parentContracts": [ ],
+  "childContracts": [ ],
+  "attributes": [
+    { "trait_type": "Federation", "value": "Powers Protocol Federation (1 of 3 — Core Governance)" },
+    { "trait_type": "Governance Model", "value": "Role-based, one-account-one-vote; nested enterprises (Ostrom DP8)" },
+    { "trait_type": "Roles", "value": "Admin, Public, Core Member, Security Council, Whitelisted Auditor, Funded Sub-org (Mandates contract)" },
+    { "trait_type": "Treasury", "value": "The Core Powers contract itself — no external multisig (test USDC)" },
+    { "trait_type": "Cross-org Links", "value": "Funds Mandates (C4); draws Endowment income stream (C8); vetoes Endowment investments (C9)" },
+    { "trait_type": "Cross-org Seat Held", "value": "Core Beneficiary (role 2) in Endowment Governance" },
+    { "trait_type": "Key Checks", "value": "Security Council pause/restart, reform veto, propose-vote-timelock spending, cross-org double consent" },
+    { "trait_type": "Paymaster", "value": "Owner of the central ERC-4337 PowersPaymaster (sponsors all three orgs)" },
+    { "trait_type": "Flows", "value": "Elect Members, Elect Council, Pay Invoice, Audit Whitelist, Commission Audit, Fund Mandates, Emergency Pause, Recover Tokens, Reform, Draw Income, Veto Investment, Fund/Withdraw Paymaster" },
+    { "trait_type": "Network", "value": "Ethereum Sepolia (11155111) — test deployment" },
+    { "trait_type": "Status", "value": "Draft reference deployment — tune founding cohort before live use" }
+  ]
+}

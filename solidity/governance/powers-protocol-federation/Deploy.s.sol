@@ -69,6 +69,10 @@ contract Deploy is DeployHelpers {
     address constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
     uint256 constant PAYMASTER_SEED = 0.05 ether;
 
+    // Base IPFS URI for organisation metadata; each org appends its own JSON file below.
+    string constant METADATA_BASE_URI =
+        "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeicsjbx7vu3vbam3kc6fp4of5k6sniebsua3bmi6khncxwgeeg6dzi/";
+
     // Ethereum Sepolia external addresses (verified against aave-address-book: AaveV3Sepolia).
     address constant AAVE_POOL = 0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951;
     address constant USDC = 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8;
@@ -83,10 +87,10 @@ contract Deploy is DeployHelpers {
 
         // ── Deploy all contracts up front so every address is known ────────────
         vm.startBroadcast();
-        // Three Powers instances (metadata URI left blank - see TODO below).
-        endowmentPowers = _newPowers("Powers Protocol - Endowment Governance");
-        corePowers = _newPowers("Powers Protocol - Core Governance");
-        mandatesPowers = _newPowers("Powers Protocol - Mandates Governance");
+        // Three Powers instances, each with its own metadata JSON on IPFS.
+        endowmentPowers = _newPowers("Powers Protocol - Endowment Governance", string.concat(METADATA_BASE_URI, "endowment.json"));
+        corePowers = _newPowers("Powers Protocol - Core Governance", string.concat(METADATA_BASE_URI, "core.json"));
+        mandatesPowers = _newPowers("Powers Protocol - Mandates Governance", string.concat(METADATA_BASE_URI, "mandates.json"));
 
         // One central paymaster owned by Core (constructor transfers ownership to corePowers),
         // seeded with the whole federation's gas budget. Core adds the other two orgs as
@@ -735,13 +739,11 @@ contract Deploy is DeployHelpers {
     //                              BUILD HELPERS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /// @notice Deploy a Powers instance with a blank metadata URI.
-    /// TODO: set metadata URI before deploying - upload a JSON file to Pinata
-    /// (https://pinata.cloud) and paste the resulting URL as the second argument.
-    function _newPowers(string memory name) internal returns (Powers) {
+    /// @notice Deploy a Powers instance with the given metadata URI.
+    function _newPowers(string memory name, string memory uri) internal returns (Powers) {
         return new Powers(
             name,
-            "", // TODO: set metadata URI before deploying
+            uri,
             helperConfig.getMaxCallDataLength(block.chainid),
             helperConfig.getMaxReturnDataLength(block.chainid),
             helperConfig.getMaxExecutionsLength(block.chainid),

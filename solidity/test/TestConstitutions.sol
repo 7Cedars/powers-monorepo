@@ -170,16 +170,16 @@ contract TestConstitutions is Test {
 
         // PresetActions
         // Set config
-        targets = new address[](4);
-        values = new uint256[](4);
-        calldatas = new bytes[](4);
+        targets = new address[](3);
+        values = new uint256[](3);
+        calldatas = new bytes[](3);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = daoMock; // = Powers contract.
         }
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate", "");
         calldatas[2] = abi.encodeWithSelector(IPowers.assignRole.selector, 5, makeAddr("alice"));
-        calldatas[3] = abi.encodeWithSelector(IPowers.revokeMandate.selector, 6); // revoke mandate after use.
+        // PresetActions now self-revokes automatically after execution — no manual revokeMandate call needed.
 
         // set conditions
         conditions.allowedRole = type(uint256).max; // = public role. .
@@ -290,15 +290,15 @@ contract TestConstitutions is Test {
 
         // PresetActions
         // Set config
-        targets = new address[](3);
-        values = new uint256[](3);
-        calldatas = new bytes[](3);
+        targets = new address[](2);
+        values = new uint256[](2);
+        calldatas = new bytes[](2);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = daoMock; // = Powers contract.
         }
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate", "");
-        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, 7); // revoke mandate after use.
+        // PresetActions now self-revokes automatically after execution — no manual revokeMandate call needed.
 
         // set conditions
         conditions.allowedRole = type(uint256).max; // = public role. .
@@ -424,15 +424,15 @@ contract TestConstitutions is Test {
 
         // PresetActions
         // Set config
-        targets = new address[](3);
-        values = new uint256[](3);
-        calldatas = new bytes[](3);
+        targets = new address[](2);
+        values = new uint256[](2);
+        calldatas = new bytes[](2);
         for (uint256 i = 0; i < targets.length; i++) {
             targets[i] = daoMock; // = Powers contract.
         }
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Member", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Delegate", "");
-        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, 7); // revoke mandate after use.
+        // PresetActions now self-revokes automatically after execution — no manual revokeMandate call needed.
 
         // set conditions
         conditions.allowedRole = type(uint256).max; // = public role. .
